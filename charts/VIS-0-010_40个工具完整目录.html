@@ -1,0 +1,419 @@
+<!DOCTYPE html>
+<!--
+  VIS-0-010 · 40个工具完整目录 · Complete Tool Directory
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · 40个工具完整目录</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root,[data-theme="dark"]{
+      --bg:#020617;--bg-card:rgba(15,23,42,0.5);--border:#1e293b;
+      --text:#f8fafc;--muted:#94a3b8;--subtle:#64748b;--footer-c:#475569;--pulse:#22d3ee;
+      --svg-bg:#020617;--svg-grid:#1e293b;--mask-fill:#0f172a;
+      --cat1-f:rgba(8,51,68,0.45);    --cat1-s:#22d3ee;  --cat1-t:#67e8f9;
+      --cat2-f:rgba(6,78,59,0.45);    --cat2-s:#34d399;  --cat2-t:#6ee7b7;
+      --cat3-f:rgba(154,52,18,0.45);  --cat3-s:#fb923c;  --cat3-t:#fdba74;
+      --cat4-f:rgba(76,29,149,0.45);  --cat4-s:#a78bfa;  --cat4-t:#c4b5fd;
+      --cat5-f:rgba(120,53,15,0.45);  --cat5-s:#fbbf24;  --cat5-t:#fcd34d;
+      --cat6-f:rgba(30,41,59,0.5);    --cat6-s:#94a3b8;  --cat6-t:#cbd5e1;
+      --tag-ro:rgba(6,78,59,0.5);--tag-ro-t:#34d399;
+      --tag-wr:rgba(136,19,55,0.5);--tag-wr-t:#fb7185;
+      --tag-de:rgba(120,53,15,0.4);--tag-de-t:#fbbf24;
+      --tag-co:rgba(30,41,59,0.6);--tag-co-t:#94a3b8;
+      --btn-bg:rgba(15,23,42,0.85);--btn-active:#22d3ee;
+      --svg-sub:#94a3b8;--svg-tiny:#64748b;
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3;--bg-card:rgba(255,255,255,0.85);--border:#e8e0d4;
+      --text:#1a1412;--muted:#6b5a4e;--subtle:#9c8878;--footer-c:#b5a99a;--pulse:#0891b2;
+      --svg-bg:#faf7f2;--svg-grid:#ddd4c4;--mask-fill:#faf7f2;
+      --cat1-f:rgba(8,51,68,0.1);     --cat1-s:#0891b2;  --cat1-t:#0e7490;
+      --cat2-f:rgba(6,78,59,0.1);     --cat2-s:#059669;  --cat2-t:#047857;
+      --cat3-f:rgba(154,52,18,0.1);   --cat3-s:#ea580c;  --cat3-t:#c2410c;
+      --cat4-f:rgba(76,29,149,0.1);   --cat4-s:#7c3aed;  --cat4-t:#6d28d9;
+      --cat5-f:rgba(180,83,9,0.12);   --cat5-s:#d97706;  --cat5-t:#b45309;
+      --cat6-f:rgba(100,116,139,0.1); --cat6-s:#78716c;  --cat6-t:#57534e;
+      --tag-ro:rgba(6,78,59,0.12);--tag-ro-t:#047857;
+      --tag-wr:rgba(136,19,55,0.12);--tag-wr-t:#be123c;
+      --tag-de:rgba(180,83,9,0.12);--tag-de-t:#b45309;
+      --tag-co:rgba(100,116,139,0.12);--tag-co-t:#78716c;
+      --btn-bg:rgba(255,255,255,0.9);--btn-active:#0891b2;
+      --svg-sub:#6b5a4e;--svg-tiny:#9c8878;
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--bg-card:rgba(248,250,252,0.95);--border:#e2e8f0;
+      --text:#0f172a;--muted:#475569;--subtle:#94a3b8;--footer-c:#94a3b8;--pulse:#0ea5e9;
+      --svg-bg:#f8fafc;--svg-grid:#e2e8f0;--mask-fill:#f1f5f9;
+      --cat1-f:rgba(6,182,212,0.08);  --cat1-s:#06b6d4;  --cat1-t:#0891b2;
+      --cat2-f:rgba(16,185,129,0.08); --cat2-s:#10b981;  --cat2-t:#059669;
+      --cat3-f:rgba(249,115,22,0.08); --cat3-s:#f97316;  --cat3-t:#ea580c;
+      --cat4-f:rgba(139,92,246,0.08); --cat4-s:#8b5cf6;  --cat4-t:#7c3aed;
+      --cat5-f:rgba(245,158,11,0.08); --cat5-s:#f59e0b;  --cat5-t:#d97706;
+      --cat6-f:rgba(100,116,139,0.08);--cat6-s:#94a3b8;  --cat6-t:#64748b;
+      --tag-ro:rgba(16,185,129,0.08);--tag-ro-t:#059669;
+      --tag-wr:rgba(244,63,94,0.08);--tag-wr-t:#e11d48;
+      --tag-de:rgba(245,158,11,0.08);--tag-de-t:#d97706;
+      --tag-co:rgba(100,116,139,0.08);--tag-co-t:#64748b;
+      --btn-bg:rgba(248,250,252,0.95);--btn-active:#0ea5e9;
+      --svg-sub:#475569;--svg-tiny:#94a3b8;
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:2rem;transition:background .25s,color .25s;}
+    .container{max-width:1200px;margin:0 auto;}
+
+    .controls{position:fixed;top:1rem;right:1rem;display:flex;gap:5px;z-index:100;
+      background:var(--btn-bg);border:1px solid var(--border);border-radius:10px;
+      padding:5px 7px;backdrop-filter:blur(8px);}
+    .cb{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;padding:4px 9px;
+      border-radius:5px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+    .cb:hover{color:var(--text);border-color:var(--border);}
+    .cb.active{border-color:var(--btn-active);color:var(--text);}
+    .cdiv{width:1px;background:var(--border);margin:2px;}
+
+    .header{margin-bottom:1.5rem;}
+    .header-row{display:flex;align-items:center;gap:.875rem;margin-bottom:.375rem;}
+    .pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--pulse);animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
+    h1{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;}
+    .subtitle{font-size:.75rem;color:var(--muted);letter-spacing:.06em;}
+    html[lang="en"] .lz{display:none;}
+    html[lang="zh"] .le{display:none;}
+
+    .chart-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;}
+    .chart-wrap svg{display:block;width:100%;height:auto;}
+
+    /* Tool catalog */
+    .cat-section{margin-bottom:2rem;}
+    .cat-header{display:flex;align-items:center;gap:.75rem;margin-bottom:.875rem;padding-bottom:.5rem;border-bottom:2px solid var(--border);}
+    .cat-dot{width:12px;height:12px;border-radius:50%;}
+    .cat-title{font-size:.9rem;font-weight:700;letter-spacing:.04em;}
+    .cat-count{font-size:.7rem;color:var(--muted);margin-left:auto;}
+    .cat-en{font-size:.72rem;color:var(--muted);}
+
+    .tools-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:.75rem;}
+    .tool-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:.75rem .875rem;
+      transition:background .25s,border-color .25s;}
+    .tool-name{font-size:.82rem;font-weight:700;margin-bottom:.3rem;}
+    .tool-desc{font-size:.68rem;color:var(--muted);line-height:1.5;margin-bottom:.5rem;}
+    .tool-tags{display:flex;flex-wrap:wrap;gap:.3rem;}
+    .tag{font-size:.6rem;font-weight:600;padding:2px 6px;border-radius:10px;}
+    .tag-ro{background:var(--tag-ro);color:var(--tag-ro-t);}
+    .tag-wr{background:var(--tag-wr);color:var(--tag-wr-t);}
+    .tag-de{background:var(--tag-de);color:var(--tag-de-t);}
+    .tag-co{background:var(--tag-co);color:var(--tag-co-t);}
+
+    /* Category colors via data-cat attr */
+    [data-cat="1"] .tool-name{color:var(--cat1-t);}
+    [data-cat="1"] .tool-card{border-left:2px solid var(--cat1-s);}
+    [data-cat="2"] .tool-name{color:var(--cat2-t);}
+    [data-cat="2"] .tool-card{border-left:2px solid var(--cat2-s);}
+    [data-cat="3"] .tool-name{color:var(--cat3-t);}
+    [data-cat="3"] .tool-card{border-left:2px solid var(--cat3-s);}
+    [data-cat="4"] .tool-name{color:var(--cat4-t);}
+    [data-cat="4"] .tool-card{border-left:2px solid var(--cat4-s);}
+    [data-cat="5"] .tool-name{color:var(--cat5-t);}
+    [data-cat="5"] .tool-card{border-left:2px solid var(--cat5-s);}
+    [data-cat="6"] .tool-name{color:var(--cat6-t);}
+    [data-cat="6"] .tool-card{border-left:2px solid var(--cat6-s);}
+
+    footer{font-size:.68rem;color:var(--footer-c);text-align:center;padding-top:1rem;border-top:1px solid var(--border);}
+  </style>
+</head>
+<body>
+<div class="controls">
+  <button class="cb active" onclick="setTheme('dark')"><span class="lz">深色</span><span class="le">Dark</span></button>
+  <button class="cb" onclick="setTheme('warm')"><span class="lz">暖色</span><span class="le">Warm</span></button>
+  <button class="cb" onclick="setTheme('light')"><span class="lz">浅色</span><span class="le">Light</span></button>
+  <div class="cdiv"></div>
+  <button class="cb active" onclick="toggleLang()"><span class="lz">中·EN</span><span class="le">EN·中</span></button>
+</div>
+
+<div class="container">
+  <div class="header">
+    <div class="header-row">
+      <div class="pulse-dot"></div>
+      <h1><span class="lz">40 个工具完整目录</span><span class="le">Complete Tool Directory (40 Tools)</span></h1>
+    </div>
+    <p class="subtitle">
+      <span class="lz">VIS-0-010 · Claude Code 2.1.88 · 源码扫描 2026-04-05 · 6 分类 / 40 工具</span>
+      <span class="le">VIS-0-010 · Claude Code 2.1.88 · Source scan 2026-04-05 · 6 categories / 40 tools</span>
+    </p>
+  </div>
+
+  <!-- Category overview SVG -->
+  <div class="chart-wrap">
+    <svg viewBox="0 0 960 120" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="grid10" width="32" height="32" patternUnits="userSpaceOnUse">
+          <path d="M 32 0 L 0 0 0 32" fill="none" style="stroke:var(--svg-grid)" stroke-width="0.5"/>
+        </pattern>
+      </defs>
+      <rect width="960" height="120" style="fill:var(--svg-bg)"/>
+      <rect width="960" height="120" fill="url(#grid10)"/>
+
+      <!-- Category bubbles -->
+      <!-- cat1: File Ops (8 tools) -->
+      <rect x="20" y="18" width="148" height="84" rx="8" style="fill:var(--cat1-f);stroke:var(--cat1-s)" stroke-width="1.5"/>
+      <text x="94" y="45" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" font-weight="700" style="fill:var(--cat1-s)">8</text>
+      <text x="94" y="62" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" style="fill:var(--cat1-t)"><tspan class="lz">文件操作</tspan><tspan class="le">File Ops</tspan></text>
+      <text x="94" y="76" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" style="fill:var(--svg-sub)">Read·Write·Edit·Glob…</text>
+      <text x="94" y="92" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" style="fill:var(--svg-sub)"><tspan class="lz">只读·可写·破坏性</tspan><tspan class="le">RO / RW / Destructive</tspan></text>
+
+      <!-- cat2: Search (4 tools) -->
+      <rect x="178" y="18" width="148" height="84" rx="8" style="fill:var(--cat2-f);stroke:var(--cat2-s)" stroke-width="1.5"/>
+      <text x="252" y="45" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" font-weight="700" style="fill:var(--cat2-s)">4</text>
+      <text x="252" y="62" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" style="fill:var(--cat2-t)"><tspan class="lz">搜索查询</tspan><tspan class="le">Search</tspan></text>
+      <text x="252" y="76" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" style="fill:var(--svg-sub)">Grep·Glob·CodeSearch…</text>
+      <text x="252" y="92" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" style="fill:var(--svg-sub)"><tspan class="lz">全部只读</tspan><tspan class="le">All read-only</tspan></text>
+
+      <!-- cat3: Execution (3 tools) -->
+      <rect x="336" y="18" width="148" height="84" rx="8" style="fill:var(--cat3-f);stroke:var(--cat3-s)" stroke-width="1.5"/>
+      <text x="410" y="45" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" font-weight="700" style="fill:var(--cat3-s)">3</text>
+      <text x="410" y="62" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" style="fill:var(--cat3-t)"><tspan class="lz">代码执行</tspan><tspan class="le">Execution</tspan></text>
+      <text x="410" y="76" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" style="fill:var(--svg-sub)">Bash·NodeEval·PythonEval</text>
+      <text x="410" y="92" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" style="fill:var(--svg-sub)"><tspan class="lz">需确认·高风险</tspan><tspan class="le">Confirm required</tspan></text>
+
+      <!-- cat4: Agent (7 tools) -->
+      <rect x="494" y="18" width="148" height="84" rx="8" style="fill:var(--cat4-f);stroke:var(--cat4-s)" stroke-width="1.5"/>
+      <text x="568" y="45" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" font-weight="700" style="fill:var(--cat4-s)">7</text>
+      <text x="568" y="62" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" style="fill:var(--cat4-t)"><tspan class="lz">Agent 协作</tspan><tspan class="le">Agent Collab</tspan></text>
+      <text x="568" y="76" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" style="fill:var(--svg-sub)">Agent·Task*·Monitor…</text>
+      <text x="568" y="92" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" style="fill:var(--svg-sub)"><tspan class="lz">子 Agent 管理</tspan><tspan class="le">Sub-agent management</tspan></text>
+
+      <!-- cat5: Web (2 tools) -->
+      <rect x="652" y="18" width="148" height="84" rx="8" style="fill:var(--cat5-f);stroke:var(--cat5-s)" stroke-width="1.5"/>
+      <text x="726" y="45" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" font-weight="700" style="fill:var(--cat5-s)">2</text>
+      <text x="726" y="62" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" style="fill:var(--cat5-t)"><tspan class="lz">网络交互</tspan><tspan class="le">Web</tspan></text>
+      <text x="726" y="76" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" style="fill:var(--svg-sub)">WebFetch·WebSearch</text>
+      <text x="726" y="92" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" style="fill:var(--svg-sub)"><tspan class="lz">只读·外部网络</tspan><tspan class="le">RO · External network</tspan></text>
+
+      <!-- cat6: Other (16 tools) -->
+      <rect x="810" y="18" width="132" height="84" rx="8" style="fill:var(--cat6-f);stroke:var(--cat6-s)" stroke-width="1.5"/>
+      <text x="876" y="45" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="22" font-weight="700" style="fill:var(--cat6-s)">16</text>
+      <text x="876" y="62" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" style="fill:var(--cat6-t)"><tspan class="lz">工具 · 控制流</tspan><tspan class="le">Utility / Control</tspan></text>
+      <text x="876" y="76" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" style="fill:var(--svg-sub)">Todo·Cron·Plan·Skill…</text>
+      <text x="876" y="92" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" style="fill:var(--svg-sub)"><tspan class="lz">混合权限</tspan><tspan class="le">Mixed permissions</tspan></text>
+    </svg>
+  </div>
+
+  <!-- ── Cat 1: File Operations ── -->
+  <div class="cat-section" data-cat="1">
+    <div class="cat-header">
+      <div class="cat-dot" style="background:var(--cat1-s)"></div>
+      <span class="cat-title" style="color:var(--cat1-t)"><span class="lz">文件操作</span><span class="le">File Operations</span></span>
+      <span class="cat-en lz">File Operations</span>
+      <span class="cat-count">8 tools</span>
+    </div>
+    <div class="tools-grid">
+      <div class="tool-card"><div class="tool-name">Read</div><div class="tool-desc"><span class="lz">读取文件内容，支持文本、图片、PDF、Notebook</span><span class="le">Read file contents — text, image, PDF, Notebook</span></div><div class="tool-tags"><span class="tag tag-ro">ReadOnly</span><span class="tag tag-co">Concurrent</span></div></div>
+      <div class="tool-card"><div class="tool-name">Write</div><div class="tool-desc"><span class="lz">创建新文件或完全覆盖已有文件</span><span class="le">Create or fully overwrite a file</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span><span class="tag tag-de">Destructive</span></div></div>
+      <div class="tool-card"><div class="tool-name">Edit</div><div class="tool-desc"><span class="lz">精确替换文件中指定的文本片段</span><span class="le">Precise string replacement in a file</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span></div></div>
+      <div class="tool-card"><div class="tool-name">MultiEdit</div><div class="tool-desc"><span class="lz">在同一文件中执行多处编辑操作</span><span class="le">Multiple edits in one file atomically</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span></div></div>
+      <div class="tool-card"><div class="tool-name">Glob</div><div class="tool-desc"><span class="lz">使用 glob 模式搜索文件路径</span><span class="le">Find files by glob pattern</span></div><div class="tool-tags"><span class="tag tag-ro">ReadOnly</span><span class="tag tag-co">Concurrent</span></div></div>
+      <div class="tool-card"><div class="tool-name">Grep</div><div class="tool-desc"><span class="lz">使用 ripgrep 搜索文件内容（正则支持）</span><span class="le">Search file contents via ripgrep (regex)</span></div><div class="tool-tags"><span class="tag tag-ro">ReadOnly</span><span class="tag tag-co">Concurrent</span></div></div>
+      <div class="tool-card"><div class="tool-name">NotebookEdit</div><div class="tool-desc"><span class="lz">编辑 Jupyter Notebook 的指定单元格</span><span class="le">Edit a specific Jupyter notebook cell</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span></div></div>
+      <div class="tool-card"><div class="tool-name">ReadMcpResource</div><div class="tool-desc"><span class="lz">从 MCP 服务器读取资源</span><span class="le">Read a resource from an MCP server</span></div><div class="tool-tags"><span class="tag tag-ro">ReadOnly</span><span class="tag tag-co">Concurrent</span></div></div>
+    </div>
+  </div>
+
+  <!-- ── Cat 2: Search ── -->
+  <div class="cat-section" data-cat="2">
+    <div class="cat-header">
+      <div class="cat-dot" style="background:var(--cat2-s)"></div>
+      <span class="cat-title" style="color:var(--cat2-t)"><span class="lz">搜索查询</span><span class="le">Search &amp; Query</span></span>
+      <span class="cat-en lz">Search &amp; Query</span>
+      <span class="cat-count">4 tools</span>
+    </div>
+    <div class="tools-grid">
+      <div class="tool-card"><div class="tool-name">Grep</div><div class="tool-desc"><span class="lz">正则表达式文件内容搜索</span><span class="le">Regex content search across files</span></div><div class="tool-tags"><span class="tag tag-ro">ReadOnly</span></div></div>
+      <div class="tool-card"><div class="tool-name">Glob</div><div class="tool-desc"><span class="lz">文件路径模式匹配搜索</span><span class="le">File path pattern matching</span></div><div class="tool-tags"><span class="tag tag-ro">ReadOnly</span></div></div>
+      <div class="tool-card"><div class="tool-name">WebSearch</div><div class="tool-desc"><span class="lz">执行网络搜索获取实时信息</span><span class="le">Search the web for real-time info</span></div><div class="tool-tags"><span class="tag tag-ro">ReadOnly</span><span class="tag tag-co">Concurrent</span></div></div>
+      <div class="tool-card"><div class="tool-name">ListMcpResources</div><div class="tool-desc"><span class="lz">列出 MCP 服务器可用资源</span><span class="le">List available MCP server resources</span></div><div class="tool-tags"><span class="tag tag-ro">ReadOnly</span></div></div>
+    </div>
+  </div>
+
+  <!-- ── Cat 3: Execution ── -->
+  <div class="cat-section" data-cat="3">
+    <div class="cat-header">
+      <div class="cat-dot" style="background:var(--cat3-s)"></div>
+      <span class="cat-title" style="color:var(--cat3-t)"><span class="lz">代码执行</span><span class="le">Code Execution</span></span>
+      <span class="cat-en lz">Code Execution</span>
+      <span class="cat-count">3 tools</span>
+    </div>
+    <div class="tools-grid">
+      <div class="tool-card"><div class="tool-name">Bash</div><div class="tool-desc"><span class="lz">执行 Shell 命令，支持 timeout 和 working directory</span><span class="le">Execute shell commands with timeout and cwd</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span><span class="tag tag-de">Destructive</span></div></div>
+      <div class="tool-card"><div class="tool-name">NodeEval</div><div class="tool-desc"><span class="lz">在沙箱中执行 JavaScript 代码</span><span class="le">Execute JavaScript in a sandboxed context</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span></div></div>
+      <div class="tool-card"><div class="tool-name">PythonEval</div><div class="tool-desc"><span class="lz">在沙箱中执行 Python 代码</span><span class="le">Execute Python in a sandboxed context</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span></div></div>
+    </div>
+  </div>
+
+  <!-- ── Cat 4: Agent Collaboration ── -->
+  <div class="cat-section" data-cat="4">
+    <div class="cat-header">
+      <div class="cat-dot" style="background:var(--cat4-s)"></div>
+      <span class="cat-title" style="color:var(--cat4-t)"><span class="lz">Agent 协作</span><span class="le">Agent Collaboration</span></span>
+      <span class="cat-en lz">Agent Collaboration</span>
+      <span class="cat-count">7 tools</span>
+    </div>
+    <div class="tools-grid">
+      <div class="tool-card"><div class="tool-name">Agent</div><div class="tool-desc"><span class="lz">创建子 Agent 执行独立任务，继承父权限</span><span class="le">Spawn a sub-agent for an independent task</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span><span class="tag tag-co">Concurrent</span></div></div>
+      <div class="tool-card"><div class="tool-name">TaskCreate</div><div class="tool-desc"><span class="lz">在任务列表中创建新任务</span><span class="le">Create a new task in the task list</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span></div></div>
+      <div class="tool-card"><div class="tool-name">TaskUpdate</div><div class="tool-desc"><span class="lz">更新任务状态（进行中/完成）</span><span class="le">Update task status (in_progress / completed)</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span></div></div>
+      <div class="tool-card"><div class="tool-name">TaskGet / TaskList</div><div class="tool-desc"><span class="lz">获取单个或全部任务</span><span class="le">Get one or all tasks</span></div><div class="tool-tags"><span class="tag tag-ro">ReadOnly</span></div></div>
+      <div class="tool-card"><div class="tool-name">TaskOutput</div><div class="tool-desc"><span class="lz">获取后台任务的输出结果</span><span class="le">Get background task output</span></div><div class="tool-tags"><span class="tag tag-ro">ReadOnly</span><span class="tag tag-co">Concurrent</span></div></div>
+      <div class="tool-card"><div class="tool-name">TaskStop</div><div class="tool-desc"><span class="lz">停止正在运行的后台任务</span><span class="le">Stop a running background task</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span></div></div>
+      <div class="tool-card"><div class="tool-name">Monitor</div><div class="tool-desc"><span class="lz">监听后台进程的事件流输出</span><span class="le">Stream events from a background process</span></div><div class="tool-tags"><span class="tag tag-ro">ReadOnly</span></div></div>
+    </div>
+  </div>
+
+  <!-- ── Cat 5: Web ── -->
+  <div class="cat-section" data-cat="5">
+    <div class="cat-header">
+      <div class="cat-dot" style="background:var(--cat5-s)"></div>
+      <span class="cat-title" style="color:var(--cat5-t)"><span class="lz">网络交互</span><span class="le">Web Interaction</span></span>
+      <span class="cat-en lz">Web Interaction</span>
+      <span class="cat-count">2 tools</span>
+    </div>
+    <div class="tools-grid">
+      <div class="tool-card"><div class="tool-name">WebFetch</div><div class="tool-desc"><span class="lz">获取并解析网页内容，支持 HTML 转 Markdown</span><span class="le">Fetch and parse web page content (HTML→Markdown)</span></div><div class="tool-tags"><span class="tag tag-ro">ReadOnly</span><span class="tag tag-co">Concurrent</span></div></div>
+      <div class="tool-card"><div class="tool-name">WebSearch</div><div class="tool-desc"><span class="lz">搜索网络并返回结果摘要</span><span class="le">Search web and return result summaries</span></div><div class="tool-tags"><span class="tag tag-ro">ReadOnly</span><span class="tag tag-co">Concurrent</span></div></div>
+    </div>
+  </div>
+
+  <!-- ── Cat 6: Utility & Control ── -->
+  <div class="cat-section" data-cat="6">
+    <div class="cat-header">
+      <div class="cat-dot" style="background:var(--cat6-s)"></div>
+      <span class="cat-title" style="color:var(--cat6-t)"><span class="lz">工具 &amp; 控制流</span><span class="le">Utility &amp; Control</span></span>
+      <span class="cat-en lz">Utility &amp; Control</span>
+      <span class="cat-count">16 tools</span>
+    </div>
+    <div class="tools-grid">
+      <div class="tool-card"><div class="tool-name">AskUserQuestion</div><div class="tool-desc"><span class="lz">向用户展示问题并获取选择</span><span class="le">Present a question and collect user choice</span></div><div class="tool-tags"><span class="tag tag-ro">ReadOnly</span></div></div>
+      <div class="tool-card"><div class="tool-name">TodoWrite</div><div class="tool-desc"><span class="lz">创建和管理待办事项列表</span><span class="le">Create and manage a to-do list</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span></div></div>
+      <div class="tool-card"><div class="tool-name">Memory</div><div class="tool-desc"><span class="lz">读写跨会话持久化记忆文件</span><span class="le">Read/write persistent cross-session memory</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span></div></div>
+      <div class="tool-card"><div class="tool-name">CronCreate</div><div class="tool-desc"><span class="lz">创建定时任务（cron 表达式）</span><span class="le">Create a scheduled cron job</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span></div></div>
+      <div class="tool-card"><div class="tool-name">CronDelete</div><div class="tool-desc"><span class="lz">删除已创建的定时任务</span><span class="le">Delete a scheduled cron job</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span><span class="tag tag-de">Destructive</span></div></div>
+      <div class="tool-card"><div class="tool-name">CronList</div><div class="tool-desc"><span class="lz">列出所有定时任务</span><span class="le">List all scheduled cron jobs</span></div><div class="tool-tags"><span class="tag tag-ro">ReadOnly</span></div></div>
+      <div class="tool-card"><div class="tool-name">RemoteTrigger</div><div class="tool-desc"><span class="lz">调用远程触发器 API</span><span class="le">Invoke a remote trigger API</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span><span class="tag tag-co">Concurrent</span></div></div>
+      <div class="tool-card"><div class="tool-name">Skill</div><div class="tool-desc"><span class="lz">执行指定的 Skill 工作流</span><span class="le">Execute a named Skill workflow</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span><span class="tag tag-co">Concurrent</span></div></div>
+      <div class="tool-card"><div class="tool-name">EnterPlanMode</div><div class="tool-desc"><span class="lz">进入规划模式（只读分析，不执行）</span><span class="le">Enter plan mode — analysis only, no execution</span></div><div class="tool-tags"><span class="tag tag-ro">ReadOnly</span></div></div>
+      <div class="tool-card"><div class="tool-name">ExitPlanMode</div><div class="tool-desc"><span class="lz">退出规划模式，恢复正常执行</span><span class="le">Exit plan mode, resume execution</span></div><div class="tool-tags"><span class="tag tag-ro">ReadOnly</span></div></div>
+      <div class="tool-card"><div class="tool-name">EnterWorktree</div><div class="tool-desc"><span class="lz">进入隔离的 git worktree 环境</span><span class="le">Enter an isolated git worktree</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span></div></div>
+      <div class="tool-card"><div class="tool-name">ExitWorktree</div><div class="tool-desc"><span class="lz">退出 worktree 环境（清理或保留）</span><span class="le">Exit worktree (clean up or keep)</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span></div></div>
+      <div class="tool-card"><div class="tool-name">WebFetch</div><div class="tool-desc"><span class="lz">（网络类共用）获取网页内容</span><span class="le">(Shared with Web) Fetch web content</span></div><div class="tool-tags"><span class="tag tag-ro">ReadOnly</span></div></div>
+      <div class="tool-card"><div class="tool-name">ToolSearch</div><div class="tool-desc"><span class="lz">按名称或关键字检索可用工具 schema</span><span class="le">Search deferred tool schemas by keyword</span></div><div class="tool-tags"><span class="tag tag-ro">ReadOnly</span></div></div>
+      <div class="tool-card"><div class="tool-name">SendMessage</div><div class="tool-desc"><span class="lz">向运行中的 Agent 发送消息</span><span class="le">Send a message to a running agent</span></div><div class="tool-tags"><span class="tag tag-wr">Writable</span></div></div>
+      <div class="tool-card"><div class="tool-name">ExitPlanMode / misc</div><div class="tool-desc"><span class="lz">其余内部工具（源码扫描共 40 个）</span><span class="le">Additional internal tools (40 total per source scan)</span></div><div class="tool-tags"><span class="tag tag-co">Internal</span></div></div>
+    </div>
+  </div>
+
+  <footer>
+    VIS-0-010 · Claude Code 2.1.88 · <span class="lz">工具源码扫描 2026-04-05 · 40 tools / 6 categories · tools/ 目录 50,828 行</span><span class="le">Source scan 2026-04-05 · 40 tools / 6 categories · tools/ dir 50,828 lines</span> · <span class="lz">CC 白皮书 v2</span><span class="le">CC Whitepaper v2</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  function setTheme(t){try{localStorage.setItem('vtheme',t);}catch(e){}
+    document.documentElement.setAttribute('data-theme',t);
+    document.querySelectorAll('.cb').forEach(b=>b.classList.remove('active'));
+    const map={dark:0,warm:1,light:2};
+    document.querySelectorAll('.cb')[map[t]]?.classList.add('active');
+  }
+  function toggleLang(){
+    const h=document.documentElement;
+    h.lang=h.lang==='zh'?'en':'zh';
+    try{localStorage.setItem('vlang',h.lang);}catch(e){}
+  }
+  // cc-restore-on-load
+  try{
+    var _t=localStorage.getItem('vtheme');
+    if(_t==='dark'||_t==='warm'||_t==='light')setTheme(_t);
+    var _l=localStorage.getItem('vlang');
+    if(_l==='en'&&document.documentElement.lang!=='en')toggleLang();
+  }catch(e){}
+  window.setTheme=setTheme;
+  window.toggleLang=toggleLang;
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

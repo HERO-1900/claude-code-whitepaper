@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<!--
+  VIS-1-007 · SystemPrompt 组装结构 · System Prompt Assembly
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  6层"三明治"架构 · 三级缓存优化 · Token计数可视化
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · SystemPrompt 组装结构</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    :root,[data-theme="dark"]{
+      --bg:#020617;--bg-card:rgba(15,23,42,0.5);--border:#1e293b;
+      --text:#f8fafc;--muted:#94a3b8;--subtle:#64748b;--footer-c:#475569;--pulse:#22d3ee;
+      --svg-bg:#020617;--svg-grid:#1e293b;--mask-fill:#0f172a;
+      --emerald-f:rgba(6,78,59,0.45);  --emerald-s:#34d399; --emerald-t:#6ee7b7;
+      --amber-f:rgba(120,53,15,0.45);  --amber-s:#fbbf24;   --amber-t:#fcd34d;
+      --cyan-f:rgba(8,51,68,0.5);      --cyan-s:#22d3ee;    --cyan-t:#67e8f9;
+      --violet-f:rgba(76,29,149,0.45); --violet-s:#a78bfa;  --violet-t:#c4b5fd;
+      --orange-f:rgba(154,52,18,0.45); --orange-s:#fb923c;  --orange-t:#fdba74;
+      --rose-f:rgba(136,19,55,0.45);   --rose-s:#fb7185;    --rose-t:#fda4af;
+      --slate-f:rgba(30,41,59,0.5);    --slate-s:#94a3b8;
+      --svg-text:#f8fafc;--svg-sub:#94a3b8;--svg-ann:#64748b;
+      --cache-global:#34d399;--cache-proj:#fbbf24;--cache-none:#fb7185;
+      --btn-bg:rgba(15,23,42,0.85);--btn-active:#22d3ee;
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3;--bg-card:rgba(255,255,255,0.85);--border:#e8e0d4;
+      --text:#1a1412;--muted:#6b5a4e;--subtle:#9c8878;--footer-c:#b5a99a;--pulse:#0891b2;
+      --svg-bg:#faf7f2;--svg-grid:#ddd4c4;--mask-fill:#faf7f2;
+      --emerald-f:rgba(6,78,59,0.12);  --emerald-s:#059669; --emerald-t:#047857;
+      --amber-f:rgba(180,83,9,0.12);   --amber-s:#d97706;   --amber-t:#b45309;
+      --cyan-f:rgba(8,51,68,0.1);      --cyan-s:#0891b2;    --cyan-t:#0e7490;
+      --violet-f:rgba(76,29,149,0.1);  --violet-s:#7c3aed;  --violet-t:#6d28d9;
+      --orange-f:rgba(154,52,18,0.1);  --orange-s:#ea580c;  --orange-t:#c2410c;
+      --rose-f:rgba(136,19,55,0.1);    --rose-s:#e11d48;    --rose-t:#be123c;
+      --slate-f:rgba(200,190,180,0.4); --slate-s:#9c8878;
+      --svg-text:#1a1412;--svg-sub:#6b5a4e;--svg-ann:#9c8878;
+      --cache-global:#059669;--cache-proj:#d97706;--cache-none:#e11d48;
+      --btn-bg:rgba(255,255,255,0.9);--btn-active:#0891b2;
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--bg-card:rgba(248,250,252,0.95);--border:#e2e8f0;
+      --text:#0f172a;--muted:#475569;--subtle:#94a3b8;--footer-c:#94a3b8;--pulse:#0ea5e9;
+      --svg-bg:#f8fafc;--svg-grid:#e2e8f0;--mask-fill:#f1f5f9;
+      --emerald-f:rgba(16,185,129,0.1); --emerald-s:#10b981; --emerald-t:#059669;
+      --amber-f:rgba(245,158,11,0.1);   --amber-s:#f59e0b;   --amber-t:#d97706;
+      --cyan-f:rgba(6,182,212,0.1);     --cyan-s:#06b6d4;    --cyan-t:#0891b2;
+      --violet-f:rgba(139,92,246,0.1);  --violet-s:#8b5cf6;  --violet-t:#7c3aed;
+      --orange-f:rgba(249,115,22,0.1);  --orange-s:#f97316;  --orange-t:#ea580c;
+      --rose-f:rgba(244,63,94,0.1);     --rose-s:#f43f5e;    --rose-t:#e11d48;
+      --slate-f:rgba(226,232,240,0.8);  --slate-s:#64748b;
+      --svg-text:#0f172a;--svg-sub:#475569;--svg-ann:#94a3b8;
+      --cache-global:#10b981;--cache-proj:#f59e0b;--cache-none:#f43f5e;
+      --btn-bg:rgba(248,250,252,0.95);--btn-active:#0ea5e9;
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:2rem;transition:background .25s,color .25s;}
+    .container{max-width:1100px;margin:0 auto;}
+    .controls{position:fixed;top:1rem;right:1rem;display:flex;gap:5px;z-index:100;
+      background:var(--btn-bg);border:1px solid var(--border);border-radius:10px;
+      padding:5px 7px;backdrop-filter:blur(8px);}
+    .cb{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;padding:4px 9px;
+      border-radius:5px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+    .cb:hover{color:var(--text);border-color:var(--border);}
+    .cb.active{border-color:var(--btn-active);color:var(--text);}
+    .cdiv{width:1px;background:var(--border);margin:2px;}
+    .header{margin-bottom:1.5rem;}
+    .header-row{display:flex;align-items:center;gap:.875rem;margin-bottom:.375rem;}
+    .pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--pulse);animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
+    h1{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;}
+    .subtitle{font-size:.75rem;color:var(--muted);letter-spacing:.06em;}
+    [lang="en"] .lz{display:none;}
+.chart-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;
+      padding:1.25rem;margin-bottom:1.5rem;overflow:hidden;}
+    .chart-wrap svg{display:block;width:100%;height:auto;}
+    /* Cache legend cards */
+    .cache-legend{display:flex;gap:1rem;margin-bottom:1.5rem;}
+    .cache-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;
+      padding:.65rem .875rem;display:flex;align-items:center;gap:.6rem;}
+    .cache-dot{width:12px;height:12px;border-radius:3px;}
+    .cache-card .cl{font-size:.72rem;font-weight:600;}
+    .cache-card .cd{font-size:.65rem;color:var(--subtle);margin-top:.1rem;}
+    /* Price comparison grid */
+    .price-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.875rem;margin-bottom:1.5rem;}
+    .price-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;padding:.75rem;}
+    .price-card .pt{font-size:.7rem;color:var(--subtle);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem;}
+    .price-card .pv{font-size:1.2rem;font-weight:700;margin-bottom:.15rem;}
+    .price-card .pd{font-size:.68rem;color:var(--muted);}
+    .price-card.g .pv{color:var(--emerald-s);}
+    .price-card.a .pv{color:var(--amber-s);}
+    .price-card.r .pv{color:var(--rose-s);}
+    .footer{text-align:center;font-size:.65rem;color:var(--footer-c);letter-spacing:.05em;
+      padding-top:.75rem;border-top:1px solid var(--border);}
+  </style>
+</head>
+<body data-theme="dark">
+<div class="controls">
+  <button class="cb active" onclick="setTheme('dark')"><span class="lz">暗</span><span class="le">Dark</span></button>
+  <button class="cb" onclick="setTheme('warm')"><span class="lz">暖</span><span class="le">Warm</span></button>
+  <button class="cb" onclick="setTheme('light')"><span class="lz">亮</span><span class="le">Light</span></button>
+  <div class="cdiv"></div>
+  <button class="cb" onclick="toggleLang()"><span class="lz">EN</span><span class="le">中</span></button>
+</div>
+
+<div class="container">
+  <div class="header">
+    <div class="header-row">
+      <div class="pulse-dot"></div>
+      <h1><span class="lz">SystemPrompt 组装结构</span><span class="le">SystemPrompt Assembly Structure</span></h1>
+    </div>
+    <div class="subtitle">
+      <span class="lz">VIS-1-007 · 6层"三明治"架构 · 三级缓存优化 · buildSystemPrompt() 函数</span>
+      <span class="le">VIS-1-007 · 6-layer "sandwich" architecture · 3-level cache · buildSystemPrompt()</span>
+    </div>
+  </div>
+
+  <!-- Cache legend -->
+  <div class="cache-legend">
+    <div class="cache-card">
+      <div class="cache-dot" style="background:var(--cache-global)"></div>
+      <div>
+        <div class="cl" style="color:var(--cache-global)"><span class="lz">全局缓存</span><span class="le">Global Cache</span></div>
+        <div class="cd"><span class="lz">所有会话共享 · 读取 90% 折扣</span><span class="le">Shared across sessions · 90% discount</span></div>
+      </div>
+    </div>
+    <div class="cache-card">
+      <div class="cache-dot" style="background:var(--cache-proj)"></div>
+      <div>
+        <div class="cl" style="color:var(--cache-proj)"><span class="lz">项目缓存</span><span class="le">Project Cache</span></div>
+        <div class="cd"><span class="lz">同项目会话共享 · 80% 折扣</span><span class="le">Shared per project · 80% discount</span></div>
+      </div>
+    </div>
+    <div class="cache-card">
+      <div class="cache-dot" style="background:var(--cache-none)"></div>
+      <div>
+        <div class="cl" style="color:var(--cache-none)"><span class="lz">无缓存 · 每次重算</span><span class="le">No Cache · Recomputed</span></div>
+        <div class="cd"><span class="lz">动态内容，随请求变化</span><span class="le">Dynamic content, varies per request</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-wrap">
+    <svg viewBox="0 0 1000 500" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="g7" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--svg-grid)" stroke-width="0.5"/>
+        </pattern>
+        <!-- Layer gradients -->
+        <linearGradient id="lGlobal" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="var(--emerald-s)" stop-opacity="0.4"/>
+          <stop offset="100%" stop-color="var(--emerald-s)" stop-opacity="0.1"/>
+        </linearGradient>
+        <linearGradient id="lProj" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="var(--amber-s)" stop-opacity="0.4"/>
+          <stop offset="100%" stop-color="var(--amber-s)" stop-opacity="0.1"/>
+        </linearGradient>
+        <linearGradient id="lNone" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="var(--rose-s)" stop-opacity="0.3"/>
+          <stop offset="100%" stop-color="var(--rose-s)" stop-opacity="0.07"/>
+        </linearGradient>
+        <linearGradient id="lViolet" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="var(--violet-s)" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="var(--violet-s)" stop-opacity="0.08"/>
+        </linearGradient>
+        <linearGradient id="lOrange" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="var(--orange-s)" stop-opacity="0.3"/>
+          <stop offset="100%" stop-color="var(--orange-s)" stop-opacity="0.07"/>
+        </linearGradient>
+        <linearGradient id="lSlate" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="var(--slate-s)" stop-opacity="0.3"/>
+          <stop offset="100%" stop-color="var(--slate-s)" stop-opacity="0.07"/>
+        </linearGradient>
+      </defs>
+
+      <rect width="1000" height="500" fill="var(--svg-bg)"/>
+      <rect width="1000" height="500" fill="url(#g7)"/>
+
+      <!-- Header row labels -->
+      <text x="30" y="24" fill="var(--svg-ann)" font-size="11" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">层</tspan><tspan class="le">Layer</tspan>
+      </text>
+      <text x="68" y="24" fill="var(--svg-ann)" font-size="11" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">名称 / 内容</tspan><tspan class="le">Name / Content</tspan>
+      </text>
+      <text x="660" y="24" fill="var(--svg-ann)" font-size="11" font-family="JetBrains Mono,monospace">Token</text>
+      <text x="740" y="24" fill="var(--svg-ann)" font-size="11" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">缓存</tspan><tspan class="le">Cache</tspan>
+      </text>
+      <text x="820" y="24" fill="var(--svg-ann)" font-size="11" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">变动频率</tspan><tspan class="le">Frequency</tspan>
+      </text>
+      <line x1="20" y1="30" x2="940" y2="30" stroke="var(--border)" stroke-width="1"/>
+
+      <!-- ═══ LAYER 1 (bottom/largest): 核心系统提示 ═══ -->
+      <!-- Row height 90px (L1 is largest - most tokens) -->
+      <rect x="20" y="35" width="920" height="72" rx="6" fill="var(--mask-fill)"/>
+      <rect x="20" y="35" width="920" height="72" rx="6" fill="url(#lGlobal)" stroke="var(--emerald-s)" stroke-width="1.5"/>
+      <!-- Layer number badge -->
+      <rect x="24" y="42" width="36" height="36" rx="5" fill="var(--emerald-f)" stroke="var(--emerald-s)" stroke-width="1"/>
+      <text x="42" y="65" fill="var(--emerald-t)" font-size="16" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">1</text>
+      <!-- Content -->
+      <text x="68" y="58" fill="var(--svg-text)" font-size="14" font-weight="700" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">核心系统提示 / Core System Prompt</tspan>
+        <tspan class="le">Core System Prompt</tspan>
+      </text>
+      <text x="68" y="76" fill="var(--emerald-s)" font-size="11" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Claude 身份定义 · 工具说明 · 安全指令 · 格式规范</tspan>
+        <tspan class="le">Claude identity · tool descriptions · safety instructions · format rules</tspan>
+      </text>
+      <text x="68" y="94" fill="var(--svg-ann)" font-size="11" font-family="JetBrains Mono,monospace">buildSystemPrompt() → getSystemPromptForModel()</text>
+      <!-- Token count -->
+      <text x="660" y="71" fill="var(--emerald-t)" font-size="13" font-weight="700" font-family="JetBrains Mono,monospace">~50K</text>
+      <!-- Cache badge -->
+      <rect x="730" y="56" width="74" height="20" rx="10" fill="var(--emerald-f)" stroke="var(--emerald-s)" stroke-width="1"/>
+      <text x="767" y="70" fill="var(--emerald-t)" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">全局</tspan><tspan class="le">Global</tspan>
+      </text>
+      <!-- Frequency -->
+      <text x="830" y="71" fill="var(--emerald-s)" font-size="12" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">极低 ▼</tspan><tspan class="le">Very low ▼</tspan>
+      </text>
+
+      <!-- ═══ LAYER 2: 工具定义 Built-in Tools ═══ -->
+      <rect x="20" y="113" width="920" height="65" rx="6" fill="var(--mask-fill)"/>
+      <rect x="20" y="113" width="920" height="65" rx="6" fill="url(#lGlobal)" stroke="var(--emerald-s)" stroke-width="1.5" stroke-dasharray="6,2"/>
+      <rect x="24" y="119" width="36" height="36" rx="5" fill="var(--emerald-f)" stroke="var(--emerald-s)" stroke-width="1"/>
+      <text x="42" y="142" fill="var(--emerald-t)" font-size="16" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">2</text>
+      <text x="68" y="136" fill="var(--svg-text)" font-size="14" font-weight="700" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">内置工具定义 / Built-in Tool Definitions</tspan>
+        <tspan class="le">Built-in Tool Definitions</tspan>
+      </text>
+      <text x="68" y="154" fill="var(--emerald-s)" font-size="11" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">40个工具的 JSON schema · BashTool / FileReadTool / GlobTool 等</tspan>
+        <tspan class="le">JSON schema for 40 tools · BashTool / FileReadTool / GlobTool etc.</tspan>
+      </text>
+      <text x="68" y="170" fill="var(--svg-ann)" font-size="11" font-family="JetBrains Mono,monospace">getToolDefinitions() → tools.map(t => t.prompt.ts)</text>
+      <text x="660" y="151" fill="var(--emerald-t)" font-size="13" font-weight="700" font-family="JetBrains Mono,monospace">~20K</text>
+      <rect x="730" y="133" width="74" height="20" rx="10" fill="var(--emerald-f)" stroke="var(--emerald-s)" stroke-width="1"/>
+      <text x="767" y="147" fill="var(--emerald-t)" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">全局</tspan><tspan class="le">Global</tspan>
+      </text>
+      <text x="830" y="151" fill="var(--emerald-s)" font-size="12" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">极低 ▼</tspan><tspan class="le">Very low ▼</tspan>
+      </text>
+
+      <!-- ═══ LAYER 3: CLAUDE.md 用户指令 ═══ -->
+      <rect x="20" y="184" width="920" height="65" rx="6" fill="var(--mask-fill)"/>
+      <rect x="20" y="184" width="920" height="65" rx="6" fill="url(#lProj)" stroke="var(--amber-s)" stroke-width="1.5"/>
+      <rect x="24" y="190" width="36" height="36" rx="5" fill="var(--amber-f)" stroke="var(--amber-s)" stroke-width="1"/>
+      <text x="42" y="213" fill="var(--amber-t)" font-size="16" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">3</text>
+      <text x="68" y="207" fill="var(--svg-text)" font-size="14" font-weight="700" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">CLAUDE.md 内容 / Project Memory</tspan>
+        <tspan class="le">CLAUDE.md Content / Project Memory</tspan>
+      </text>
+      <text x="68" y="225" fill="var(--amber-s)" font-size="11" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">6种来源合并 · dir/project/user/git-root CLAUDE.md · 优先级P1-P6</tspan>
+        <tspan class="le">6 sources merged · dir/project/user/git-root CLAUDE.md · priority P1-P6</tspan>
+      </text>
+      <text x="68" y="241" fill="var(--svg-ann)" font-size="11" font-family="JetBrains Mono,monospace">loadClaudeMd() → mergeWithPriority(P1..P6)</text>
+      <text x="660" y="222" fill="var(--amber-t)" font-size="13" font-weight="700" font-family="JetBrains Mono,monospace">~10K</text>
+      <rect x="730" y="203" width="74" height="20" rx="10" fill="var(--amber-f)" stroke="var(--amber-s)" stroke-width="1"/>
+      <text x="767" y="217" fill="var(--amber-t)" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">项目</tspan><tspan class="le">Project</tspan>
+      </text>
+      <text x="830" y="222" fill="var(--amber-s)" font-size="12" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">低 ▼</tspan><tspan class="le">Low ▼</tspan>
+      </text>
+
+      <!-- ═══ LAYER 4: MCP Tool Definitions ═══ -->
+      <rect x="20" y="255" width="920" height="60" rx="6" fill="var(--mask-fill)"/>
+      <rect x="20" y="255" width="920" height="60" rx="6" fill="url(#lViolet)" stroke="var(--violet-s)" stroke-width="1.5"/>
+      <rect x="24" y="261" width="36" height="36" rx="5" fill="var(--violet-f)" stroke="var(--violet-s)" stroke-width="1"/>
+      <text x="42" y="284" fill="var(--violet-t)" font-size="16" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">4</text>
+      <text x="68" y="278" fill="var(--svg-text)" font-size="14" font-weight="700" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">CLAUDE.md 动态内容 / Project-specific Config</tspan>
+        <tspan class="le">CLAUDE.md Dynamic Content / Project-specific Config</tspan>
+      </text>
+      <text x="68" y="296" fill="var(--violet-t)" font-size="11" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">项目级工具规则 · 代码规范 · 环境变量注入</tspan>
+        <tspan class="le">Project tool rules · code conventions · env variable injection</tspan>
+      </text>
+      <text x="660" y="290" fill="var(--violet-t)" font-size="13" font-weight="700" font-family="JetBrains Mono,monospace">~5K</text>
+      <rect x="730" y="271" width="74" height="20" rx="10" fill="var(--rose-f)" stroke="var(--rose-s)" stroke-width="1"/>
+      <text x="767" y="285" fill="var(--rose-t)" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">无</tspan><tspan class="le">None</tspan>
+      </text>
+      <text x="830" y="290" fill="var(--violet-s)" font-size="12" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">中 ▶</tspan><tspan class="le">Medium ▶</tspan>
+      </text>
+
+      <!-- ═══ LAYER 5: MCP Tool Definitions ═══ -->
+      <rect x="20" y="321" width="920" height="58" rx="6" fill="var(--mask-fill)"/>
+      <rect x="20" y="321" width="920" height="58" rx="6" fill="url(#lOrange)" stroke="var(--orange-s)" stroke-width="1.5"/>
+      <rect x="24" y="327" width="36" height="36" rx="5" fill="var(--orange-f)" stroke="var(--orange-s)" stroke-width="1"/>
+      <text x="42" y="350" fill="var(--orange-t)" font-size="16" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">5</text>
+      <text x="68" y="344" fill="var(--svg-text)" font-size="14" font-weight="700" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">MCP 工具定义 / MCP Tool Definitions</tspan>
+        <tspan class="le">MCP Tool Definitions</tspan>
+      </text>
+      <text x="68" y="362" fill="var(--orange-t)" font-size="11" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">外部 MCP 服务器的工具描述 · 5,718次引用 · 按需动态注入</tspan>
+        <tspan class="le">External MCP server tools · 5,718 refs · dynamically injected on demand</tspan>
+      </text>
+      <text x="660" y="355" fill="var(--orange-t)" font-size="13" font-weight="700" font-family="JetBrains Mono,monospace">~3K</text>
+      <rect x="730" y="337" width="74" height="20" rx="10" fill="var(--rose-f)" stroke="var(--rose-s)" stroke-width="1"/>
+      <text x="767" y="351" fill="var(--rose-t)" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">无</tspan><tspan class="le">None</tspan>
+      </text>
+      <text x="830" y="355" fill="var(--orange-s)" font-size="12" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">高 ▲</tspan><tspan class="le">High ▲</tspan>
+      </text>
+
+      <!-- ═══ LAYER 6 (top/dynamic): Dynamic Injection ═══ -->
+      <rect x="20" y="385" width="920" height="54" rx="6" fill="var(--mask-fill)"/>
+      <rect x="20" y="385" width="920" height="54" rx="6" fill="url(#lNone)" stroke="var(--rose-s)" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <rect x="24" y="391" width="36" height="36" rx="5" fill="var(--rose-f)" stroke="var(--rose-s)" stroke-width="1"/>
+      <text x="42" y="414" fill="var(--rose-t)" font-size="16" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">6</text>
+      <text x="68" y="408" fill="var(--svg-text)" font-size="14" font-weight="700" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">动态注入 / Dynamic Injection</tspan>
+        <tspan class="le">Dynamic Injection</tspan>
+      </text>
+      <text x="68" y="426" fill="var(--rose-t)" font-size="11" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">system-reminder 标签 · tool_result 上下文 · 实时状态快照</tspan>
+        <tspan class="le">system-reminder tags · tool_result context · real-time state snapshots</tspan>
+      </text>
+      <text x="660" y="419" fill="var(--rose-t)" font-size="13" font-weight="700" font-family="JetBrains Mono,monospace">~1K</text>
+      <rect x="730" y="401" width="74" height="20" rx="10" fill="var(--rose-f)" stroke="var(--rose-s)" stroke-width="1"/>
+      <text x="767" y="415" fill="var(--rose-t)" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">无</tspan><tspan class="le">None</tspan>
+      </text>
+      <text x="830" y="419" fill="var(--rose-s)" font-size="12" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">极高 ▲▲</tspan><tspan class="le">Very high ▲▲</tspan>
+      </text>
+
+      <!-- Bottom summary bar -->
+      <rect x="20" y="450" width="920" height="36" rx="6" fill="var(--mask-fill)" stroke="var(--border)" stroke-width="0.5"/>
+      <text x="42" y="465" fill="var(--svg-sub)" font-size="11" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">📊 全量系统提示总计:</tspan><tspan class="le">📊 Total system prompt:</tspan>
+      </text>
+      <text x="200" y="465" fill="var(--cyan-s)" font-size="13" font-weight="700" font-family="JetBrains Mono,monospace">~89K tokens</text>
+      <text x="340" y="465" fill="var(--svg-ann)" font-size="11" font-family="JetBrains Mono,monospace">· </text>
+      <text x="355" y="465" fill="var(--emerald-s)" font-size="11" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">L1+L2 全局缓存节省 ~80%</tspan><tspan class="le">L1+L2 global cache saves ~80%</tspan>
+      </text>
+      <text x="620" y="465" fill="var(--amber-s)" font-size="11" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">· L3 项目缓存 ~70%</tspan><tspan class="le">· L3 project cache ~70%</tspan>
+      </text>
+      <text x="780" y="465" fill="var(--rose-s)" font-size="11" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">· L4-6 无缓存</tspan><tspan class="le">· L4-6 no cache</tspan>
+      </text>
+
+      <!-- Side label: "Cacheable zone" -->
+      <rect x="950" y="35" width="36" height="214" rx="4" fill="var(--emerald-f)" stroke="var(--emerald-s)" stroke-width="1"/>
+      <text x="968" y="142" fill="var(--emerald-s)" font-size="13" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace" transform="rotate(-90 968 142)">
+        <tspan class="lz">可缓存区 L1-L3</tspan><tspan class="le">Cacheable L1-L3</tspan>
+      </text>
+      <rect x="950" y="255" width="36" height="184" rx="4" fill="var(--rose-f)" stroke="var(--rose-s)" stroke-width="1"/>
+      <text x="968" y="347" fill="var(--rose-s)" font-size="13" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace" transform="rotate(-90 968 347)">
+        <tspan class="lz">动态区 L4-L6</tspan><tspan class="le">Dynamic L4-L6</tspan>
+      </text>
+
+      <!-- Arrow indicating assembly direction -->
+      <text x="8" y="245" fill="var(--svg-ann)" font-size="11" text-anchor="middle" font-family="JetBrains Mono,monospace">↑</text>
+      <text x="8" y="258" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">L</text>
+      <text x="8" y="268" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">a</text>
+      <text x="8" y="278" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">s</text>
+      <text x="8" y="288" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">t</text>
+    </svg>
+  </div>
+
+  <!-- Price comparison grid -->
+  <div class="price-grid">
+    <div class="price-card g">
+      <div class="pt"><span class="lz">缓存命中 (L1+L2)</span><span class="le">Cache Hit (L1+L2)</span></div>
+      <div class="pv">$0.30/MTok</div>
+      <div class="pd"><span class="lz">正常价格的 10%，节省 90%</span><span class="le">10% of normal price, 90% saving</span></div>
+    </div>
+    <div class="price-card a">
+      <div class="pt"><span class="lz">项目缓存 (L3)</span><span class="le">Project Cache (L3)</span></div>
+      <div class="pv">$0.60/MTok</div>
+      <div class="pd"><span class="lz">正常价格的 20%，节省 80%</span><span class="le">20% of normal price, 80% saving</span></div>
+    </div>
+    <div class="price-card r">
+      <div class="pt"><span class="lz">无缓存 (L4-L6)</span><span class="le">No Cache (L4-L6)</span></div>
+      <div class="pv">$3.00/MTok</div>
+      <div class="pd"><span class="lz">全价计费，每次重新计算</span><span class="le">Full price, recomputed every time</span></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    VIS-1-007 · <span class="lz">SystemPrompt 组装结构</span><span class="le">SystemPrompt Assembly Structure</span>
+    · Claude Code 2.1.88 · buildSystemPrompt() · 6 Layers · 3-Level Cache
+    · v2 2026-04-15
+  </div>
+</div>
+
+<script>
+(function(){
+  function setTheme(t){try{localStorage.setItem('vtheme',t);}catch(e){}
+    document.body.setAttribute('data-theme',t);
+    document.querySelectorAll('.controls .cb').forEach(b=>{
+      b.classList.toggle('active',b.getAttribute('onclick').includes("'"+t+"'"));
+    });
+  }
+  function toggleLang(){
+    const cur=document.documentElement.getAttribute('lang')||'zh';
+    document.documentElement.setAttribute('lang',cur==='zh'?'en':'zh');
+  }
+  // cc-restore-on-load
+  try{
+    var _t=localStorage.getItem('vtheme');
+    if(_t==='dark'||_t==='warm'||_t==='light')setTheme(_t);
+    var _l=localStorage.getItem('vlang');
+    if(_l==='en'&&document.documentElement.lang!=='en')toggleLang();
+  }catch(e){}
+  window.setTheme=setTheme;
+  window.toggleLang=toggleLang;
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

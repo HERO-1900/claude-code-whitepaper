@@ -1,0 +1,923 @@
+<!DOCTYPE html>
+<!--
+  VIS-0-002 · Claude Code 源码统计仪表盘 · Source Code Statistics Dashboard
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  数据来源: cc-source-stats-report.md · 扫描日期 2026-04-05
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · 源码统计仪表盘</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    :root,[data-theme="dark"]{
+      --bg:#020617; --bg-card:#0f172a; --bg-elv:#1e293b;
+      --border:#1e293b; --border-subtle:#0f172a;
+      --text:#f8fafc; --muted:#94a3b8; --subtle:#475569; --footer-c:#334155;
+      --pulse:#22d3ee;
+      --acc-blue:#58a6ff; --acc-green:#34d399; --acc-orange:#fbbf24;
+      --acc-purple:#a78bfa; --acc-red:#fb7185; --acc-cyan:#22d3ee;
+      --bar-1:#58a6ff; --bar-2:#34d399; --bar-3:#fbbf24;
+      --bar-4:#a78bfa; --bar-5:#fb7185; --bar-6:#22d3ee;
+      --chart-bg:#0f172a; --chart-axis:#1e293b; --chart-text:#64748b;
+      --btn-bg:rgba(15,23,42,0.9); --btn-border:rgba(34,211,238,0.3);
+      --btn-active:#22d3ee; --btn-text:#94a3b8;
+      --heat-base:rgba(88,166,255,0.15); --heat-hi:rgba(88,166,255,0.9);
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3; --bg-card:#ffffff; --bg-elv:#faf7f2;
+      --border:#e8e0d4; --border-subtle:#f0e8dc;
+      --text:#1a1412; --muted:#6b5a4e; --subtle:#9c8878; --footer-c:#b5a99a;
+      --pulse:#0891b2;
+      --acc-blue:#2563eb; --acc-green:#059669; --acc-orange:#d97706;
+      --acc-purple:#7c3aed; --acc-red:#e11d48; --acc-cyan:#0891b2;
+      --bar-1:#3b82f6; --bar-2:#10b981; --bar-3:#f59e0b;
+      --bar-4:#8b5cf6; --bar-5:#f43f5e; --bar-6:#06b6d4;
+      --chart-bg:#faf7f2; --chart-axis:#e8e0d4; --chart-text:#9c8878;
+      --btn-bg:rgba(255,255,255,0.95); --btn-border:rgba(8,145,178,0.3);
+      --btn-active:#0891b2; --btn-text:#6b5a4e;
+      --heat-base:rgba(59,130,246,0.1); --heat-hi:rgba(59,130,246,0.8);
+    }
+    [data-theme="light"]{
+      --bg:#ffffff; --bg-card:#f8fafc; --bg-elv:#f1f5f9;
+      --border:#e2e8f0; --border-subtle:#f1f5f9;
+      --text:#0f172a; --muted:#475569; --subtle:#94a3b8; --footer-c:#94a3b8;
+      --pulse:#0ea5e9;
+      --acc-blue:#2563eb; --acc-green:#059669; --acc-orange:#d97706;
+      --acc-purple:#7c3aed; --acc-red:#e11d48; --acc-cyan:#0ea5e9;
+      --bar-1:#3b82f6; --bar-2:#10b981; --bar-3:#f59e0b;
+      --bar-4:#8b5cf6; --bar-5:#f43f5e; --bar-6:#06b6d4;
+      --chart-bg:#f8fafc; --chart-axis:#e2e8f0; --chart-text:#94a3b8;
+      --btn-bg:rgba(248,250,252,0.95); --btn-border:rgba(14,165,233,0.3);
+      --btn-active:#0ea5e9; --btn-text:#475569;
+      --heat-base:rgba(59,130,246,0.07); --heat-hi:rgba(59,130,246,0.75);
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      font-family:'JetBrains Mono',monospace;
+      background:var(--bg); color:var(--text);
+      min-height:100vh; padding:24px 28px;
+      transition:background .3s,color .3s;
+    }
+
+    /* ── Floating Controls ─────────────────────────────── */
+    .ctrl{
+      position:fixed; top:16px; right:16px; z-index:999;
+      display:flex; gap:6px; align-items:center;
+      background:var(--btn-bg); border:1px solid var(--btn-border);
+      border-radius:10px; padding:7px 10px;
+      backdrop-filter:blur(12px);
+    }
+    .ctrl button{
+      background:none; border:none; cursor:pointer;
+      font-family:'JetBrains Mono',monospace;
+      font-size:11px; font-weight:600;
+      color:var(--btn-text); padding:4px 8px; border-radius:6px;
+      transition:all .2s;
+    }
+    .ctrl button:hover{ color:var(--btn-active); }
+    .ctrl button.active{
+      color:var(--btn-active);
+      background:rgba(var(--btn-active-rgb,34,211,238),0.12);
+    }
+    .ctrl-sep{width:1px; height:16px; background:var(--border); margin:0 2px;}
+
+    /* ── Header ────────────────────────────────────────── */
+    .header{
+      margin-bottom:28px; padding-bottom:20px;
+      border-bottom:1px solid var(--border);
+      display:flex; align-items:center; gap:14px;
+    }
+    .pulse{
+      width:10px; height:10px; border-radius:50%;
+      background:var(--pulse);
+      box-shadow:0 0 8px var(--pulse);
+      animation:pulse 2s infinite;
+    }
+    @keyframes pulse{
+      0%,100%{opacity:1;transform:scale(1);}
+      50%{opacity:0.5;transform:scale(0.85);}
+    }
+    .header-text{}
+    .header h1{ font-size:22px; font-weight:700; letter-spacing:-0.5px; }
+    .header h1 .lz{ font-size:13px; margin-left:8px; color:var(--muted); font-weight:400; }
+    .header .sub{ color:var(--muted); font-size:12px; margin-top:5px; }
+    .header .sub .en{ color:var(--subtle); }
+
+    /* ── KPI Grid ──────────────────────────────────────── */
+    .kpi-grid{
+      display:grid;
+      grid-template-columns:repeat(6,1fr);
+      gap:14px; margin-bottom:22px;
+    }
+    @media(max-width:1200px){.kpi-grid{grid-template-columns:repeat(3,1fr);}}
+    @media(max-width:768px){.kpi-grid{grid-template-columns:repeat(2,1fr);}}
+    .kpi{
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:10px; padding:18px 16px;
+      transition:transform .2s,box-shadow .2s;
+    }
+    .kpi:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,0,0,0.15);}
+    .kpi-label{ font-size:10px; font-weight:600; letter-spacing:0.6px;
+      text-transform:uppercase; color:var(--subtle); margin-bottom:10px; }
+    .kpi-val{ font-size:30px; font-weight:700; line-height:1; }
+    .kpi-val.blue{color:var(--acc-blue);}
+    .kpi-val.green{color:var(--acc-green);}
+    .kpi-val.orange{color:var(--acc-orange);}
+    .kpi-val.purple{color:var(--acc-purple);}
+    .kpi-val.red{color:var(--acc-red);}
+    .kpi-sub{ font-size:10px; color:var(--muted); margin-top:6px; }
+
+    /* ── Charts Grid ───────────────────────────────────── */
+    .charts-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      grid-auto-rows:300px;
+      gap:14px;
+    }
+    @media(max-width:1200px){
+      .charts-grid{grid-template-columns:repeat(2,1fr);}
+    }
+    @media(max-width:768px){
+      .charts-grid{grid-template-columns:1fr;}
+    }
+    .chart-card{
+      background:var(--bg-card); border:1px solid var(--border);
+      border-radius:10px; padding:18px;
+      display:flex; flex-direction:column;
+      transition:background .3s,border-color .3s;
+    }
+    .chart-hdr{
+      display:flex; justify-content:space-between;
+      align-items:flex-start; margin-bottom:14px;
+    }
+    .chart-title{ font-size:13px; font-weight:600; }
+    .chart-title .en{ font-size:11px; color:var(--muted); font-weight:400; margin-top:2px;}
+    .chart-badge{
+      font-size:10px; padding:2px 8px; border-radius:12px;
+      background:var(--bg-elv); color:var(--muted);
+    }
+    .chart-body{ flex:1; position:relative; min-height:0; }
+    .chart-body svg{ width:100%; height:100%; }
+
+    /* ── Heatmap ───────────────────────────────────────── */
+    .heatmap{
+      display:grid; grid-template-columns:repeat(4,1fr);
+      gap:6px; height:100%;
+    }
+    .hm-cell{
+      border-radius:6px; padding:8px 10px;
+      display:flex; flex-direction:column; justify-content:space-between;
+      font-size:10px; cursor:default;
+      transition:transform .15s,opacity .2s;
+    }
+    .hm-cell:hover{transform:scale(1.04);}
+    .hm-name{ font-weight:700; color:var(--text); }
+    .hm-stats{ color:var(--muted); margin-top:4px; line-height:1.5; }
+
+    /* ── Footer ────────────────────────────────────────── */
+    .footer{
+      margin-top:24px; padding-top:16px;
+      border-top:1px solid var(--border);
+      display:flex; justify-content:space-between; align-items:center;
+      font-size:10px; color:var(--footer-c);
+    }
+    .footer-ref{ opacity:0.7; }
+
+    /* ── Tooltip ───────────────────────────────────────── */
+    #tip{
+      position:fixed;
+      background:var(--bg-elv); border:1px solid var(--border);
+      color:var(--text); font-family:'JetBrains Mono',monospace;
+      font-size:11px; padding:6px 10px; border-radius:6px;
+      pointer-events:none; opacity:0; transition:opacity .15s;
+      z-index:9999; max-width:240px;
+    }
+
+    /* Lang toggle */
+    [lang="en"] .lz{display:none;}
+</style>
+</head>
+<body>
+
+<!-- Floating Controls -->
+<div class="ctrl">
+  <button onclick="setTheme('dark')"  id="btn-dark"  class="active"><span class="lz">深色</span><span class="le">Dark</span></button>
+  <button onclick="setTheme('warm')"  id="btn-warm"><span class="lz">暖色</span><span class="le">Warm</span></button>
+  <button onclick="setTheme('light')" id="btn-light"><span class="lz">浅色</span><span class="le">Light</span></button>
+  <div class="ctrl-sep"></div>
+  <button onclick="toggleLang()" id="btn-lang">中·EN</button>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="pulse"></div>
+  <div class="header-text">
+    <h1>
+      <span class="lz">源码统计仪表盘</span>
+      <span class="le">Source Code Dashboard</span>
+      <span class="lz" style="font-size:12px;margin-left:10px;color:var(--muted);font-weight:400;">Source Code Statistics Dashboard</span>
+    </h1>
+    <div class="sub">
+      <span class="lz">Claude Code 2.1.88 全量扫描 · 1,902 个 TypeScript/TSX 文件 · </span>
+      <span class="le">Claude Code 2.1.88 Full Scan · 1,902 TypeScript/TSX Files · </span>
+      <span class="en">Scan Date: 2026-04-05</span>
+    </div>
+  </div>
+</div>
+
+<!-- KPI Cards -->
+<div class="kpi-grid">
+  <div class="kpi">
+    <div class="kpi-label">
+      <span class="lz">TS/TSX 文件数</span>
+      <span class="le">TS/TSX Files</span>
+    </div>
+    <div class="kpi-val blue" data-val="1902">0</div>
+    <div class="kpi-sub">.ts 1,332 · .tsx 552 · .js 18</div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">
+      <span class="lz">总代码行数</span>
+      <span class="le">Total Lines of Code</span>
+    </div>
+    <div class="kpi-val green" data-val="512695">0</div>
+    <div class="kpi-sub">
+      <span class="lz">有效代码 476,875 行 (93%)</span>
+      <span class="le">Effective 476,875 lines (93%)</span>
+    </div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">
+      <span class="lz">内置工具</span>
+      <span class="le">Built-in Tools</span>
+    </div>
+    <div class="kpi-val orange" data-val="40">0</div>
+    <div class="kpi-sub">
+      <span class="lz">40 个独立工具定义</span>
+      <span class="le">40 distinct tool definitions</span>
+    </div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">
+      <span class="lz">顶层子系统</span>
+      <span class="le">Top-level Modules</span>
+    </div>
+    <div class="kpi-val purple" data-val="35">0</div>
+    <div class="kpi-sub">
+      <span class="lz">301 个目录 · 最深 6 层</span>
+      <span class="le">301 dirs · max depth 6</span>
+    </div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">
+      <span class="lz">Prompt 文件</span>
+      <span class="le">Prompt Files</span>
+    </div>
+    <div class="kpi-val" style="color:var(--acc-cyan);" data-val="80">0</div>
+    <div class="kpi-sub">
+      <span class="lz">systemPrompt 模式 559 次</span>
+      <span class="le">systemPrompt pattern 559×</span>
+    </div>
+  </div>
+  <div class="kpi">
+    <div class="kpi-label">
+      <span class="lz">安全文件覆盖率</span>
+      <span class="le">Security File Coverage</span>
+    </div>
+    <div class="kpi-val red" data-val="621">0</div>
+    <div class="kpi-sub">
+      <span class="lz">32.7% 文件含安全逻辑</span>
+      <span class="le">32.7% files have security logic</span>
+    </div>
+  </div>
+</div>
+
+<!-- Charts Grid -->
+<div class="charts-grid">
+
+  <!-- Chart 1: File Size Histogram -->
+  <div class="chart-card">
+    <div class="chart-hdr">
+      <div class="chart-title">
+        <span class="lz">文件行数分布</span>
+        <span class="le">File Size Distribution</span>
+        <div class="en" style="font-size:10px;color:var(--muted);margin-top:2px;">Line count histogram · 1,902 files</div>
+      </div>
+      <div class="chart-badge">n=1,902</div>
+    </div>
+    <div class="chart-body" id="c-hist"></div>
+  </div>
+
+  <!-- Chart 2: Top 10 Largest Files -->
+  <div class="chart-card">
+    <div class="chart-hdr">
+      <div class="chart-title">
+        <span class="lz">最大文件 Top 10</span>
+        <span class="le">Top 10 Largest Files</span>
+        <div class="en" style="font-size:10px;color:var(--muted);margin-top:2px;">Lines of code per file</div>
+      </div>
+      <div class="chart-badge">LOC</div>
+    </div>
+    <div class="chart-body" id="c-top10"></div>
+  </div>
+
+  <!-- Chart 3: File Type Donut -->
+  <div class="chart-card">
+    <div class="chart-hdr">
+      <div class="chart-title">
+        <span class="lz">文件类型占比</span>
+        <span class="le">File Type Breakdown</span>
+        <div class="en" style="font-size:10px;color:var(--muted);margin-top:2px;">.ts / .tsx / .js distribution</div>
+      </div>
+      <div class="chart-badge">1,902 files</div>
+    </div>
+    <div class="chart-body" id="c-donut"></div>
+  </div>
+
+  <!-- Chart 4: Directory Heatmap -->
+  <div class="chart-card">
+    <div class="chart-hdr">
+      <div class="chart-title">
+        <span class="lz">子系统代码密度</span>
+        <span class="le">Subsystem Code Density</span>
+        <div class="en" style="font-size:10px;color:var(--muted);margin-top:2px;">Lines per top-level directory</div>
+      </div>
+      <div class="chart-badge">top 8</div>
+    </div>
+    <div class="chart-body" id="c-heat"></div>
+  </div>
+
+  <!-- Chart 5: Prompt Distribution -->
+  <div class="chart-card">
+    <div class="chart-hdr">
+      <div class="chart-title">
+        <span class="lz">Prompt 文件分布</span>
+        <span class="le">Prompt File Distribution</span>
+        <div class="en" style="font-size:10px;color:var(--muted);margin-top:2px;">By subsystem · 80 prompt files total</div>
+      </div>
+      <div class="chart-badge">80 files</div>
+    </div>
+    <div class="chart-body" id="c-prompt"></div>
+  </div>
+
+  <!-- Chart 6: Security Keywords -->
+  <div class="chart-card">
+    <div class="chart-hdr">
+      <div class="chart-title">
+        <span class="lz">安全/权限关键词统计</span>
+        <span class="le">Security / Permission Keywords</span>
+        <div class="en" style="font-size:10px;color:var(--muted);margin-top:2px;">Occurrences across codebase</div>
+      </div>
+      <div class="chart-badge">keyword freq</div>
+    </div>
+    <div class="chart-body" id="c-sec"></div>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <span>
+    <span class="lz">数据来源：cc-source-stats-report.md · 扫描路径：src/ · 扫描日期：2026-04-05</span>
+    <span class="le">Source: cc-source-stats-report.md · Path: src/ · Scan date: 2026-04-05</span>
+  </span>
+  <span class="footer-ref">VIS-0-002 · Claude Code Whitepaper v2</span>
+</div>
+
+<div id="tip"></div>
+
+<script>
+(function(){
+  /* ── Utilities ──────────────────────────────────────── */
+  const tip = document.getElementById('tip');
+  function showTip(e, txt){
+    tip.textContent = txt;
+    tip.style.opacity = '1';
+    tip.style.left = Math.min(e.clientX + 12, window.innerWidth - 250) + 'px';
+    tip.style.top = (e.clientY - 36) + 'px';
+  }
+  function hideTip(){ tip.style.opacity = '0'; }
+
+  function cv(name){
+    return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  }
+
+  function makeSVG(w,h){
+    const ns = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(ns,'svg');
+    svg.setAttribute('viewBox',`0 0 ${w} ${h}`);
+    svg.setAttribute('width','100%');
+    svg.setAttribute('height','100%');
+    return {svg, ns};
+  }
+
+  function svgEl(ns, tag, attrs, style){
+    const el = document.createElementNS(ns, tag);
+    if(attrs) Object.entries(attrs).forEach(([k,v]) => el.setAttribute(k, v));
+    if(style) Object.assign(el.style, style);
+    return el;
+  }
+
+  /* ── Clear helpers ──────────────────────────────────── */
+  function clearChart(id){ document.getElementById(id).innerHTML = ''; }
+
+  /* ── KPI number animation ───────────────────────────── */
+  function animateKPIs(){
+    document.querySelectorAll('[data-val]').forEach(el => {
+      const target = parseInt(el.dataset.val);
+      const dur = 1400;
+      const start = performance.now();
+      function tick(now){
+        const t = Math.min((now - start)/dur, 1);
+        const ease = 1 - Math.pow(1-t, 3);
+        el.textContent = Math.floor(ease * target).toLocaleString();
+        if(t < 1) requestAnimationFrame(tick);
+      }
+      requestAnimationFrame(tick);
+    });
+  }
+
+  /* ── Chart 1: Histogram ─────────────────────────────── */
+  function renderHist(){
+    clearChart('c-hist');
+    const c = document.getElementById('c-hist');
+    const data = [
+      {range:'0–100',    count:1017, pct:53.5, zh:'微型文件'},
+      {range:'101–200',  count:400,  pct:21.0, zh:'小型文件'},
+      {range:'201–500',  count:280,  pct:14.7, zh:'中型文件'},
+      {range:'501–1000', count:120,  pct:6.3,  zh:'大型文件'},
+      {range:'1001–2000',count:60,   pct:3.2,  zh:'超大文件'},
+      {range:'2000+',    count:25,   pct:1.3,  zh:'巨型文件'}
+    ];
+    const colors = ['--bar-1','--bar-2','--bar-3','--bar-4','--bar-5','--bar-6'];
+    const W=300, H=220, padL=12, padB=26, padT=16, barGap=4;
+    const {svg,ns} = makeSVG(W,H);
+    const chartW = W - padL - 6;
+    const chartH = H - padB - padT;
+    const bw = (chartW / data.length) - barGap;
+    const maxPct = 60;
+
+    data.forEach((d,i) => {
+      const x = padL + i*(bw + barGap);
+      const bh = (d.pct / maxPct) * chartH;
+      const y = padT + (chartH - bh);
+      const col = cv(colors[i]);
+      // Bar
+      const rect = svgEl(ns,'rect',{x,y,width:bw,height:bh,rx:3});
+      rect.style.fill = col;
+      rect.style.cursor = 'default';
+      rect.addEventListener('mousemove', e => showTip(e, `${d.range} lines: ${d.count.toLocaleString()} files (${d.pct}%)`));
+      rect.addEventListener('mouseleave', hideTip);
+      svg.appendChild(rect);
+      // Pct label inside bar
+      if(bh > 22){
+        const pctTxt = svgEl(ns,'text',{x:x+bw/2, y:y+14, 'text-anchor':'middle', 'font-size':9});
+        pctTxt.style.fill = '#fff';
+        pctTxt.textContent = d.pct + '%';
+        svg.appendChild(pctTxt);
+      }
+      // Range label
+      const lbl = svgEl(ns,'text',{x:x+bw/2, y:H-10, 'text-anchor':'middle', 'font-size':8});
+      lbl.style.fill = cv('--chart-text');
+      lbl.textContent = d.range;
+      svg.appendChild(lbl);
+    });
+
+    // Y-axis label
+    const yLbl = svgEl(ns,'text',{x:6,y:padT+chartH/2,'text-anchor':'middle','font-size':8,
+      transform:`rotate(-90,6,${padT+chartH/2})`});
+    yLbl.style.fill = cv('--chart-text');
+    yLbl.textContent = 'files';
+    svg.appendChild(yLbl);
+
+    c.appendChild(svg);
+  }
+
+  /* ── Chart 2: Top 10 largest files ─────────────────── */
+  function renderTop10(){
+    clearChart('c-top10');
+    const c = document.getElementById('c-top10');
+    const data = [
+      {name:'cli/print.ts',            lines:5594},
+      {name:'utils/messages.ts',        lines:5512},
+      {name:'utils/sessionStorage.ts',  lines:5105},
+      {name:'utils/hooks.ts',           lines:5022},
+      {name:'screens/REPL.tsx',         lines:5005},
+      {name:'main.tsx',                 lines:4684},
+      {name:'utils/bash/bashParser.ts', lines:4436},
+      {name:'utils/attachments.ts',     lines:3997},
+      {name:'services/api/claude.ts',   lines:3419},
+      {name:'services/mcp/client.ts',   lines:3348},
+    ];
+    const W=300, H=230, padL=148, padR=36, padT=6, padB=6;
+    const {svg,ns} = makeSVG(W,H);
+    const chartW = W - padL - padR;
+    const rowH = (H - padT - padB) / data.length;
+    const barH = rowH * 0.55;
+    const maxV = data[0].lines;
+    const barCol = cv('--bar-1');
+    const textCol = cv('--text');
+    const mutedCol = cv('--muted');
+
+    data.forEach((d,i) => {
+      const y = padT + i * rowH;
+      const bw = (d.lines / maxV) * chartW;
+      const by = y + (rowH - barH)/2;
+
+      // File name label
+      const lbl = svgEl(ns,'text',{x:padL-6, y:by+barH*0.65, 'text-anchor':'end', 'font-size':9});
+      lbl.style.fill = textCol;
+      // Shorten to last 2 path parts if long
+      const parts = d.name.split('/');
+      lbl.textContent = parts.length > 2 ? '…/' + parts.slice(-2).join('/') : d.name;
+      svg.appendChild(lbl);
+
+      // Bar
+      const rect = svgEl(ns,'rect',{x:padL, y:by, width:Math.max(bw,2), height:barH, rx:2});
+      rect.style.fill = barCol;
+      rect.style.cursor = 'default';
+      rect.addEventListener('mousemove', e => showTip(e, `${d.name}: ${d.lines.toLocaleString()} lines`));
+      rect.addEventListener('mouseleave', hideTip);
+      svg.appendChild(rect);
+
+      // Value label
+      const val = svgEl(ns,'text',{x:padL+bw+4, y:by+barH*0.65, 'font-size':9});
+      val.style.fill = mutedCol;
+      val.textContent = (d.lines/1000).toFixed(1)+'k';
+      svg.appendChild(val);
+    });
+
+    c.appendChild(svg);
+  }
+
+  /* ── Chart 3: Donut ─────────────────────────────────── */
+  function renderDonut(){
+    clearChart('c-donut');
+    const c = document.getElementById('c-donut');
+    const data = [
+      {label:'.ts',  count:1332, pct:'70.0'},
+      {label:'.tsx', count:552,  pct:'29.0'},
+      {label:'.js',  count:18,   pct:'0.9'},
+    ];
+    const colors = ['--bar-1','--bar-2','--bar-3'];
+    const W=280, H=220;
+    const {svg,ns} = makeSVG(W,H);
+    const cx=120, cy=H/2, R=78, r=46;
+    const total = data.reduce((s,d)=>s+d.count,0);
+    let angle = -Math.PI/2;
+
+    data.forEach((d,i) => {
+      const slice = (d.count/total)*Math.PI*2;
+      const x1 = cx + R*Math.cos(angle);
+      const y1 = cy + R*Math.sin(angle);
+      const x2 = cx + R*Math.cos(angle+slice);
+      const y2 = cy + R*Math.sin(angle+slice);
+      const large = slice > Math.PI ? 1 : 0;
+      const col = cv(colors[i]);
+
+      const path = svgEl(ns,'path',{
+        d:`M ${cx} ${cy} L ${x1} ${y1} A ${R} ${R} 0 ${large} 1 ${x2} ${y2} Z`,
+        stroke: cv('--bg-card'), 'stroke-width':2
+      });
+      path.style.fill = col;
+      path.style.cursor = 'default';
+      path.addEventListener('mousemove', e => showTip(e, `${d.label}: ${d.count.toLocaleString()} files (${d.pct}%)`));
+      path.addEventListener('mouseleave', hideTip);
+      svg.appendChild(path);
+      angle += slice;
+    });
+
+    // Donut hole
+    const hole = svgEl(ns,'circle',{cx,cy,r, stroke:'none'});
+    hole.style.fill = cv('--bg-card');
+    svg.appendChild(hole);
+
+    // Center text
+    const ct1 = svgEl(ns,'text',{x:cx,y:cy-6,'text-anchor':'middle','font-size':16,'font-weight':700});
+    ct1.style.fill = cv('--text');
+    ct1.textContent = '1,902';
+    svg.appendChild(ct1);
+    const ct2 = svgEl(ns,'text',{x:cx,y:cy+12,'text-anchor':'middle','font-size':9});
+    ct2.style.fill = cv('--muted');
+    ct2.textContent = 'files';
+    svg.appendChild(ct2);
+
+    // Legend on right
+    data.forEach((d,i) => {
+      const ly = cy - (data.length-1)*18/2 + i*20;
+      const dot = svgEl(ns,'rect',{x:cx+R+20, y:ly-8, width:10, height:10, rx:2});
+      dot.style.fill = cv(colors[i]);
+      svg.appendChild(dot);
+
+      const lt = svgEl(ns,'text',{x:cx+R+36, y:ly, 'font-size':11});
+      lt.style.fill = cv('--text');
+      lt.textContent = d.label;
+      svg.appendChild(lt);
+
+      const lv = svgEl(ns,'text',{x:cx+R+36, y:ly+13, 'font-size':9});
+      lv.style.fill = cv('--muted');
+      lv.textContent = `${d.count.toLocaleString()} (${d.pct}%)`;
+      svg.appendChild(lv);
+    });
+
+    c.appendChild(svg);
+  }
+
+  /* ── Chart 4: Heatmap ───────────────────────────────── */
+  function renderHeat(){
+    clearChart('c-heat');
+    const c = document.getElementById('c-heat');
+    const data = [
+      {name:'utils',      lines:180472, files:564},
+      {name:'components', lines:81546,  files:389},
+      {name:'services',   lines:53680,  files:130},
+      {name:'tools',      lines:50828,  files:184},
+      {name:'commands',   lines:26449,  files:207},
+      {name:'ink',        lines:19842,  files:96},
+      {name:'hooks',      lines:19204,  files:104},
+      {name:'bridge',     lines:12613,  files:31},
+    ];
+    const maxL = data[0].lines;
+    const grid = document.createElement('div');
+    grid.className = 'heatmap';
+    data.forEach(d => {
+      const inten = d.lines / maxL;
+      // Interpolate between base and hi color via opacity
+      const cell = document.createElement('div');
+      cell.className = 'hm-cell';
+      cell.style.background = `rgba(${cv('--bar-1').replace(/^#/,'')
+        .match(/.{2}/g).map(x=>parseInt(x,16)).join(',')}, ${0.12 + inten*0.78})`;
+      // Use inline rgb from CSS var (fallback to explicit)
+      cell.style.background = `linear-gradient(135deg,
+        rgba(88,166,255,${0.08 + inten*0.72}),
+        rgba(88,166,255,${0.04 + inten*0.5}))`;
+      cell.innerHTML = `
+        <div class="hm-name">${d.name}/</div>
+        <div class="hm-stats">${(d.lines/1000).toFixed(1)}k lines<br>${d.files} files</div>
+      `;
+      cell.addEventListener('mousemove', e => showTip(e,
+        `${d.name}/: ${d.lines.toLocaleString()} lines · ${d.files} files`));
+      cell.addEventListener('mouseleave', hideTip);
+      grid.appendChild(cell);
+    });
+    c.appendChild(grid);
+  }
+
+  /* ── Chart 5: Prompt Distribution ──────────────────── */
+  function renderPrompt(){
+    clearChart('c-prompt');
+    const c = document.getElementById('c-prompt');
+    const data = [
+      {dir:'tools/',      count:36, desc:'工具级 prompt.ts',      descEn:'Tool-level prompt.ts'},
+      {dir:'components/', count:21, desc:'UI 权限/输入组件',      descEn:'UI permission/input components'},
+      {dir:'utils/',      count:8,  desc:'systemPrompt 工具',     descEn:'systemPrompt utilities'},
+      {dir:'services/',   count:7,  desc:'服务级 prompt 文件',     descEn:'Service-level prompt files'},
+      {dir:'constants/',  count:2,  desc:'全局 prompts 常量',      descEn:'Global prompts constants'},
+      {dir:'hooks/',      count:2,  desc:'Hook 级 prompt',         descEn:'Hook-level prompts'},
+      {dir:'buddy/',      count:1,  desc:'Buddy 功能',             descEn:'Buddy feature'},
+    ];
+    const W=300, H=230, padL=90, padR=40, padT=8, padB=8;
+    const {svg,ns} = makeSVG(W,H);
+    const chartW = W - padL - padR;
+    const rowH = (H - padT - padB) / data.length;
+    const barH = rowH * 0.52;
+    const maxV = data[0].count;
+    const barCol = cv('--bar-4');
+    const textCol = cv('--text');
+    const mutedCol = cv('--muted');
+
+    data.forEach((d,i) => {
+      const y = padT + i * rowH;
+      const bw = (d.count / maxV) * chartW;
+      const by = y + (rowH - barH)/2;
+
+      const lbl = svgEl(ns,'text',{x:padL-6, y:by+barH*0.68, 'text-anchor':'end', 'font-size':10});
+      lbl.style.fill = textCol;
+      lbl.textContent = d.dir;
+      svg.appendChild(lbl);
+
+      const rect = svgEl(ns,'rect',{x:padL, y:by, width:Math.max(bw,2), height:barH, rx:2});
+      rect.style.fill = barCol;
+      rect.style.cursor = 'default';
+      rect.addEventListener('mousemove', e => showTip(e, `${d.dir}: ${d.count} files — ${isEn() ? d.descEn : d.desc}`));
+      rect.addEventListener('mouseleave', hideTip);
+      svg.appendChild(rect);
+
+      const val = svgEl(ns,'text',{x:padL+bw+5, y:by+barH*0.68, 'font-size':10});
+      val.style.fill = mutedCol;
+      val.textContent = d.count;
+      svg.appendChild(val);
+    });
+
+    // Total annotation
+    const ann = svgEl(ns,'text',{x:W/2,y:H-2,'text-anchor':'middle','font-size':8});
+    ann.style.fill = mutedCol;
+    ann.textContent = isEn() ? 'Total 80 prompt files · systemPrompt appears 559×' : 'Total 80 prompt files · systemPrompt 出现 559 次';
+    svg.appendChild(ann);
+
+    c.appendChild(svg);
+  }
+
+  /* ── Chart 6: Security Keywords ─────────────────────── */
+  function renderSec(){
+    clearChart('c-sec');
+    const c = document.getElementById('c-sec');
+    const data = [
+      {key:'Permission keywords', count:5160, files:626, col:'--bar-5',
+       zh:'权限关键词 (permission/allow/authorize)', en:'Permission keywords (permission/allow/authorize)'},
+      {key:'Security keywords',   count:4709, files:621, col:'--bar-3',
+       zh:'安全关键词 (deny/block/reject/security)', en:'Security keywords (deny/block/reject/security)'},
+      {key:'MCP keywords',        count:5718, files:422, col:'--bar-1',
+       zh:'MCP 关键词 (mcp/server/client)', en:'MCP keywords (mcp/server/client)'},
+    ];
+    const W=300, H=220, padL=12, padR=12, padT=14, padB=28;
+    const {svg,ns} = makeSVG(W,H);
+    const chartW = W - padL - padR;
+    const chartH = H - padT - padB;
+    const gw = chartW / data.length;
+    const barW = gw * 0.55;
+    const maxV = Math.max(...data.map(d=>d.count));
+
+    data.forEach((d,i) => {
+      const gx = padL + i*gw + gw/2;
+      const bh = (d.count/maxV) * chartH;
+      const bx = gx - barW/2;
+      const by = padT + (chartH - bh);
+      const col = cv(d.col);
+
+      // Files bar (secondary, lighter)
+      const fileRatio = d.files/1902;
+      const fbh = fileRatio * chartH;
+      const fby = padT + (chartH - fbh);
+      const fb = svgEl(ns,'rect',{x:bx+barW*0.55, y:fby, width:barW*0.38, height:fbh, rx:2});
+      fb.style.fill = col; fb.style.opacity = '0.35';
+      fb.addEventListener('mousemove', e => showTip(e, isEn() ? `${d.en}\nCovering ${d.files} files` : `${d.zh}\n覆盖 ${d.files} 个文件`));
+      fb.addEventListener('mouseleave', hideTip);
+      svg.appendChild(fb);
+
+      // Main bar (occurrences)
+      const rect = svgEl(ns,'rect',{x:bx, y:by, width:barW*0.5, height:bh, rx:2});
+      rect.style.fill = col;
+      rect.style.cursor = 'default';
+      rect.addEventListener('mousemove', e => showTip(e, isEn()
+        ? `${d.en}\n${d.count.toLocaleString()} occurrences · ${d.files} files (${(d.files/1902*100).toFixed(1)}%)`
+        : `${d.zh}\n出现 ${d.count.toLocaleString()} 次 · ${d.files} 个文件 (${(d.files/1902*100).toFixed(1)}%)`));
+      rect.addEventListener('mouseleave', hideTip);
+      svg.appendChild(rect);
+
+      // Count label
+      const cl = svgEl(ns,'text',{x:gx-barW*0.1, y:by-4, 'text-anchor':'middle', 'font-size':10, 'font-weight':600});
+      cl.style.fill = col;
+      cl.textContent = (d.count/1000).toFixed(1)+'k';
+      svg.appendChild(cl);
+
+      // X label
+      const xl = svgEl(ns,'text',{x:gx-barW*0.1, y:H-14, 'text-anchor':'middle', 'font-size':8});
+      xl.style.fill = cv('--chart-text');
+      xl.textContent = d.key.split(' ')[0];
+      svg.appendChild(xl);
+    });
+
+    // Legend
+    const legY = H - 4;
+    const lg1 = svgEl(ns,'rect',{x:10,y:legY-7,width:8,height:8,rx:1});
+    lg1.style.fill = cv('--muted');
+    svg.appendChild(lg1);
+    const lgt1 = svgEl(ns,'text',{x:22, y:legY, 'font-size':8});
+    lgt1.style.fill = cv('--chart-text');
+    lgt1.textContent = isEn() ? 'Dark=occurrences  Light=files' : '深色=出现次数  浅色=文件数';
+    svg.appendChild(lgt1);
+
+    c.appendChild(svg);
+  }
+
+  /* ── Render All ─────────────────────────────────────── */
+  function renderAll(){
+    renderHist();
+    renderTop10();
+    renderDonut();
+    renderHeat();
+    renderPrompt();
+    renderSec();
+  }
+
+  /* ── Theme ──────────────────────────────────────────── */
+  function setTheme(t){try{localStorage.setItem('vtheme',t);}catch(e){}
+    document.documentElement.setAttribute('data-theme', t);
+    ['dark','warm','light'].forEach(n => {
+      document.getElementById('btn-'+n).classList.toggle('active', n===t);
+    });
+    // Re-render charts with new color vars
+    requestAnimationFrame(renderAll);
+  }
+
+  /* ── Language ───────────────────────────────────────── */
+  function toggleLang(){
+    const isZh = document.documentElement.lang === 'zh';
+    document.documentElement.lang = isZh ? 'en' : 'zh';
+    document.getElementById('btn-lang').textContent = isZh ? 'EN·中' : '中·EN';
+    requestAnimationFrame(renderAll);
+  }
+  function isEn(){ return document.documentElement.lang === 'en'; }
+
+  /* ── Expose to global scope for onclick ─────────────── */
+  // cc-restore-on-load
+  try{
+    var _t=localStorage.getItem('vtheme');
+    if(_t==='dark'||_t==='warm'||_t==='light')setTheme(_t);
+    var _l=localStorage.getItem('vlang');
+    if(_l==='en'&&document.documentElement.lang!=='en')toggleLang();
+  }catch(e){}
+  window.setTheme = setTheme;
+  window.toggleLang = toggleLang;
+
+  /* ── Init ───────────────────────────────────────────── */
+  document.addEventListener('DOMContentLoaded', () => {
+    animateKPIs();
+    renderAll();
+  });
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

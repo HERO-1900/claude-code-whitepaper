@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<!--
+  VIS-2Q-005 · Claude 生命周期图 · Claude Conversation Lifecycle
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  6 个生命周期阶段 · 阶段 2→6 循环 · 数据来自 src/cli/ · src/runtime/
+-->
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-2Q-005 Claude 生命周期图 — Claude Code 白皮书</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:24px 28px 32px;transition:background .3s,color .3s;}
+.page{max-width:1020px;margin:0 auto;}
+.hdr{display:flex;align-items:flex-start;gap:12px;margin-bottom:22px;}
+.pulse{width:10px;height:10px;border-radius:50%;background:var(--cyan);animation:pulse 2s infinite;flex-shrink:0;margin-top:6px;box-shadow:0 0 12px var(--cyan);}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.82)}}
+h1{font-size:20px;font-weight:700;color:var(--text);letter-spacing:.2px;}
+.subtitle{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.65;}
+.diagram-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px 18px 18px;margin-bottom:16px;overflow:hidden;}
+.svg-bg{fill:var(--bg);}
+.panel-txt{fill:var(--text);}
+.muted-txt{fill:var(--muted);}
+.subtle-txt{fill:var(--subtle);}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.stat-v{font-size:20px;font-weight:700;letter-spacing:.3px;margin-bottom:4px;font-family:'JetBrains Mono',monospace;}
+.stat-l{font-size:10px;color:var(--muted);line-height:1.5;}
+.stat.s1 .stat-v{color:var(--cyan);}
+.stat.s2 .stat-v{color:var(--emerald);}
+.stat.s3 .stat-v{color:var(--orange);}
+
+.legend{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px;}
+.lg{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+.lg-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.lg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.lg-name{font-size:11px;font-weight:700;color:var(--text);}
+.lg-code{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.lg-desc{font-size:10px;color:var(--muted);line-height:1.65;}
+.lg-use{font-size:10px;color:var(--text);margin-top:6px;line-height:1.55;opacity:.82;}
+
+footer{margin-top:16px;text-align:center;font-size:10px;color:var(--subtle);line-height:1.7;}
+
+.controls{position:fixed;top:14px;right:14px;display:flex;flex-direction:column;gap:6px;z-index:100;}
+.ctrl{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text);cursor:pointer;transition:all .2s;}
+.ctrl:hover{border-color:var(--cyan);color:var(--cyan);}
+
+/* pulsing center loop indicator */
+@keyframes loopPulse{
+  0%,100%{opacity:.95;transform:scale(1);}
+  50%{opacity:.55;transform:scale(.9);}
+}
+.loop-core{transform-box:fill-box;transform-origin:center;animation:loopPulse 1.8s ease-in-out infinite;}
+
+@keyframes loopRing{
+  0%{opacity:.45;transform:scale(.92);}
+  100%{opacity:0;transform:scale(1.35);}
+}
+.loop-ring{transform-box:fill-box;transform-origin:center;animation:loopRing 2.4s ease-out infinite;}
+.loop-ring.r2{animation-delay:.8s;}
+.loop-ring.r3{animation-delay:1.6s;}
+
+/* flowing dash on arrows */
+@keyframes dashflow{to{stroke-dashoffset:-24;}}
+.flowarrow{stroke-dasharray:6 4;animation:dashflow 1.6s linear infinite;}
+
+/* subtle phase glow breathing */
+@keyframes breathe{
+  0%,100%{opacity:.92;}
+  50%{opacity:.68;}
+}
+.phase-node{animation:breathe 3.2s ease-in-out infinite;}
+.phase-node.p2{animation-delay:.5s;}
+.phase-node.p3{animation-delay:1.0s;}
+.phase-node.p4{animation-delay:1.5s;}
+.phase-node.p5{animation-delay:2.0s;}
+.phase-node.p6{animation-delay:2.5s;}
+
+/* cold start arrow emphasis */
+@keyframes coldblink{0%,100%{opacity:1}50%{opacity:.4}}
+.coldstart{animation:coldblink 1.8s ease-in-out infinite;}
+
+/* exit arrow */
+@keyframes exitFade{0%,100%{opacity:.75}50%{opacity:.35}}
+.exit-arrow{animation:exitFade 2.2s ease-in-out infinite;}
+</style>
+</head>
+<body>
+<div class="controls">
+  <button class="ctrl" onclick="window.cycleTheme()">Theme</button>
+  <button class="ctrl" onclick="window.toggleLang()">EN/中</button>
+</div>
+<div class="page">
+  <div class="hdr">
+    <div class="pulse"></div>
+    <div>
+      <h1><span class="lz">Claude 生命周期图</span><span class="le">Claude Conversation Lifecycle</span></h1>
+      <p class="subtitle"><span class="lz">从冷启动到会话终止 — 6 个阶段 · 阶段 2–6 构成主循环 · Claude Code 2.1.88</span><span class="le">From cold start to session end — 6 phases · phases 2–6 form the main loop · Claude Code 2.1.88</span></p>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat s1">
+      <div class="stat-v">6</div>
+      <div class="stat-l"><span class="lz">生命周期阶段</span><span class="le">lifecycle phases</span></div>
+    </div>
+    <div class="stat s2">
+      <div class="stat-v">2 → 6</div>
+      <div class="stat-l"><span class="lz">循环（阶段 6 回到阶段 2）</span><span class="le">loop (phase 6 back to 2)</span></div>
+    </div>
+    <div class="stat s3">
+      <div class="stat-v"><span class="lz">异步流式</span><span class="le">async streaming</span></div>
+      <div class="stat-l"><span class="lz">Token 级别实时输出</span><span class="le">token-level realtime output</span></div>
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <svg viewBox="0 0 920 540" width="100%" style="display:block" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- per-phase gradients -->
+        <radialGradient id="g-p1" cx=".35" cy=".3" r=".85">
+          <stop offset="0" stop-color="#22d3ee" stop-opacity=".75"/>
+          <stop offset="1" stop-color="#22d3ee" stop-opacity=".18"/>
+        </radialGradient>
+        <radialGradient id="g-p2" cx=".35" cy=".3" r=".85">
+          <stop offset="0" stop-color="#8b5cf6" stop-opacity=".75"/>
+          <stop offset="1" stop-color="#8b5cf6" stop-opacity=".18"/>
+        </radialGradient>
+        <radialGradient id="g-p3" cx=".35" cy=".3" r=".85">
+          <stop offset="0" stop-color="#f59e0b" stop-opacity=".75"/>
+          <stop offset="1" stop-color="#f59e0b" stop-opacity=".18"/>
+        </radialGradient>
+        <radialGradient id="g-p4" cx=".35" cy=".3" r=".85">
+          <stop offset="0" stop-color="#10b981" stop-opacity=".75"/>
+          <stop offset="1" stop-color="#10b981" stop-opacity=".18"/>
+        </radialGradient>
+        <radialGradient id="g-p5" cx=".35" cy=".3" r=".85">
+          <stop offset="0" stop-color="#f97316" stop-opacity=".75"/>
+          <stop offset="1" stop-color="#f97316" stop-opacity=".18"/>
+        </radialGradient>
+        <radialGradient id="g-p6" cx=".35" cy=".3" r=".85">
+          <stop offset="0" stop-color="#64748b" stop-opacity=".8"/>
+          <stop offset="1" stop-color="#64748b" stop-opacity=".22"/>
+        </radialGradient>
+
+        <!-- center core gradient -->
+        <radialGradient id="g-core" cx=".5" cy=".5" r=".5">
+          <stop offset="0" stop-color="#22d3ee" stop-opacity=".95"/>
+          <stop offset=".6" stop-color="#8b5cf6" stop-opacity=".55"/>
+          <stop offset="1" stop-color="#8b5cf6" stop-opacity="0"/>
+        </radialGradient>
+
+        <!-- arrow markers -->
+        <marker id="arr-flow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="var(--cyan)"/>
+        </marker>
+        <marker id="arr-cold" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#22d3ee"/>
+        </marker>
+        <marker id="arr-exit" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#f43f5e"/>
+        </marker>
+
+        <!-- glow filters -->
+        <filter id="node-glow"><feDropShadow stdDeviation="3" flood-opacity=".45"/></filter>
+      </defs>
+
+      <rect width="920" height="540" class="svg-bg"/>
+
+      <!-- Title inside SVG -->
+      <text x="460" y="26" text-anchor="middle" font-size="12" font-weight="700" class="panel-txt" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Claude 会话生命周期 — 冷启动 + 核心循环 (2→3→4→5→6→2)</tspan><tspan class="le">Claude Session Lifecycle — cold start + main loop (2→3→4→5→6→2)</tspan>
+      </text>
+
+      <!-- ========= Center: Conversation Loop indicator ========= -->
+      <g>
+        <!-- outer ring pulses -->
+        <circle cx="460" cy="280" r="62" fill="none" stroke="#22d3ee" stroke-width="1.2" opacity=".35" class="loop-ring"/>
+        <circle cx="460" cy="280" r="62" fill="none" stroke="#8b5cf6" stroke-width="1.2" opacity=".35" class="loop-ring r2"/>
+        <circle cx="460" cy="280" r="62" fill="none" stroke="#10b981" stroke-width="1.2" opacity=".35" class="loop-ring r3"/>
+        <!-- core disc -->
+        <circle cx="460" cy="280" r="54" fill="url(#g-core)" class="loop-core"/>
+        <circle cx="460" cy="280" r="54" fill="none" stroke="var(--border)" stroke-width="1"/>
+        <!-- label -->
+        <text x="460" y="270" text-anchor="middle" font-size="12" font-weight="700" fill="#f1f5f9" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">会话循环</tspan><tspan class="le">Conversation</tspan>
+        </text>
+        <text x="460" y="286" text-anchor="middle" font-size="11" font-weight="700" fill="#f1f5f9" font-family="JetBrains Mono,monospace" opacity=".9">
+          <tspan class="lz">Conversation Loop</tspan><tspan class="le">Loop</tspan>
+        </text>
+        <text x="460" y="302" text-anchor="middle" font-size="10" fill="#a5f3fc" font-family="JetBrains Mono,monospace" opacity=".85">
+          phase 2 → 6 → 2
+        </text>
+      </g>
+
+      <!-- ========= Flow arrows (behind nodes) 1→2→3→4→5→6→(loop back to 2) ========= -->
+      <!-- Phase positions (hexagonal around center 460,280, radius ~185):
+           P1 top-left     (310, 150)  angle 210°
+           P2 top          (460, 100)  angle 270°
+           P3 top-right    (610, 150)  angle 330°
+           P4 bottom-right (610, 410)  angle 30°
+           P5 bottom       (460, 460)  angle 90°
+           P6 bottom-left  (310, 410)  angle 150°
+      -->
+
+      <!-- 1 → 2  (cold start entry highlighted) -->
+      <path d="M 355,148 Q 405,115 432,108" fill="none" stroke="#22d3ee" stroke-width="2.2" marker-end="url(#arr-cold)" class="flowarrow coldstart" opacity=".95"/>
+
+      <!-- 2 → 3 -->
+      <path d="M 488,108 Q 555,115 582,148" fill="none" stroke="var(--cyan)" stroke-width="1.6" marker-end="url(#arr-flow)" class="flowarrow" opacity=".85"/>
+
+      <!-- 3 → 4 -->
+      <path d="M 610,185 Q 640,280 610,375" fill="none" stroke="var(--cyan)" stroke-width="1.6" marker-end="url(#arr-flow)" class="flowarrow" opacity=".85"/>
+
+      <!-- 4 → 5 -->
+      <path d="M 582,412 Q 555,445 488,452" fill="none" stroke="var(--cyan)" stroke-width="1.6" marker-end="url(#arr-flow)" class="flowarrow" opacity=".85"/>
+
+      <!-- 5 → 6 -->
+      <path d="M 432,452 Q 365,445 338,412" fill="none" stroke="var(--cyan)" stroke-width="1.6" marker-end="url(#arr-flow)" class="flowarrow" opacity=".85"/>
+
+      <!-- 6 → 2  (the repeating loop edge, bold, labeled) -->
+      <path d="M 300,378 Q 230,280 430,108" fill="none" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arr-flow)" class="flowarrow" opacity=".9" stroke-dasharray="5 5"/>
+      <text x="200" y="258" font-size="10" font-weight="700" fill="#a78bfa" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">↻ 下一轮</tspan><tspan class="le">↻ next turn</tspan>
+      </text>
+      <text x="200" y="272" font-size="10" fill="#a78bfa" font-family="JetBrains Mono,monospace" opacity=".8">
+        phase 6 → 2
+      </text>
+
+      <!-- ========= Phase nodes (hexagonal layout) ========= -->
+
+      <!-- ---- Phase 1: Startup (top-left, cyan) — entry point ---- -->
+      <g class="phase-node" filter="url(#node-glow)">
+        <!-- cold-start entry badge above node -->
+        <g>
+          <rect x="218" y="90" width="86" height="20" rx="10" fill="rgba(34,211,238,0.18)" stroke="#22d3ee" stroke-width="1" class="coldstart"/>
+          <text x="261" y="103" text-anchor="middle" font-size="10" font-weight="700" fill="#22d3ee" font-family="JetBrains Mono,monospace">
+            <tspan class="lz">❄ 冷启动</tspan><tspan class="le">❄ Cold start</tspan>
+          </text>
+        </g>
+        <!-- entry arrow from cold-start badge into P1 -->
+        <path d="M 261,112 L 280,135" fill="none" stroke="#22d3ee" stroke-width="1.4" marker-end="url(#arr-cold)" opacity=".85"/>
+
+        <rect x="218" y="130" width="184" height="98" rx="12" fill="url(#g-p1)" stroke="#22d3ee" stroke-width="1.3"/>
+        <!-- icon -->
+        <circle cx="242" cy="154" r="12" fill="rgba(34,211,238,0.3)" stroke="#22d3ee" stroke-width="1"/>
+        <text x="242" y="158" text-anchor="middle" font-size="11" font-weight="700" fill="#a5f3fc" font-family="JetBrains Mono,monospace">1</text>
+        <!-- title ZH+EN -->
+        <text x="262" y="152" font-size="12" font-weight="700" fill="#a5f3fc" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">启动</tspan><tspan class="le">Startup</tspan>
+        </text>
+        <text x="262" y="166" font-size="10" fill="#a5f3fc" font-family="JetBrains Mono,monospace" opacity=".8">
+          <tspan class="lz">Startup</tspan><tspan class="le">phase 1</tspan>
+        </text>
+        <!-- bullets -->
+        <text x="228" y="186" font-size="10" fill="#e0f2fe" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">· 加载 CLAUDE.md</tspan><tspan class="le">· load CLAUDE.md</tspan>
+        </text>
+        <text x="228" y="201" font-size="10" fill="#e0f2fe" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">· 初始化 40 个工具</tspan><tspan class="le">· init 40 tools</tspan>
+        </text>
+        <text x="228" y="216" font-size="10" fill="#e0f2fe" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">· 解析 CLI 参数</tspan><tspan class="le">· parse CLI args</tspan>
+        </text>
+      </g>
+
+      <!-- ---- Phase 2: Receive Input (top, violet) ---- -->
+      <g class="phase-node p2" filter="url(#node-glow)">
+        <rect x="368" y="130" width="184" height="98" rx="12" fill="url(#g-p2)" stroke="#8b5cf6" stroke-width="1.3"/>
+        <circle cx="392" cy="154" r="12" fill="rgba(139,92,246,0.3)" stroke="#8b5cf6" stroke-width="1"/>
+        <text x="392" y="158" text-anchor="middle" font-size="11" font-weight="700" fill="#ddd6fe" font-family="JetBrains Mono,monospace">2</text>
+        <text x="412" y="152" font-size="12" font-weight="700" fill="#ddd6fe" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">接收输入</tspan><tspan class="le">Receive Input</tspan>
+        </text>
+        <text x="412" y="166" font-size="10" fill="#ddd6fe" font-family="JetBrains Mono,monospace" opacity=".8">
+          <tspan class="lz">Receive Input</tspan><tspan class="le">phase 2</tspan>
+        </text>
+        <text x="378" y="186" font-size="10" fill="#ede9fe" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">· 用户消息读取</tspan><tspan class="le">· read user message</tspan>
+        </text>
+        <text x="378" y="201" font-size="10" fill="#ede9fe" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">· 附件 @file 加载</tspan><tspan class="le">· attach @file</tspan>
+        </text>
+        <text x="378" y="216" font-size="10" fill="#ede9fe" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">· 解析 /slash 命令</tspan><tspan class="le">· parse /slash cmds</tspan>
+        </text>
+      </g>
+
+      <!-- ---- Phase 3: LLM Inference (top-right, amber) ---- -->
+      <g class="phase-node p3" filter="url(#node-glow)">
+        <rect x="518" y="130" width="184" height="98" rx="12" fill="url(#g-p3)" stroke="#f59e0b" stroke-width="1.3"/>
+        <circle cx="542" cy="154" r="12" fill="rgba(245,158,11,0.3)" stroke="#f59e0b" stroke-width="1"/>
+        <text x="542" y="158" text-anchor="middle" font-size="11" font-weight="700" fill="#fde68a" font-family="JetBrains Mono,monospace">3</text>
+        <text x="562" y="152" font-size="12" font-weight="700" fill="#fde68a" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">LLM 推理</tspan><tspan class="le">LLM Inference</tspan>
+        </text>
+        <text x="562" y="166" font-size="10" fill="#fde68a" font-family="JetBrains Mono,monospace" opacity=".8">
+          <tspan class="lz">LLM Inference</tspan><tspan class="le">phase 3</tspan>
+        </text>
+        <text x="528" y="186" font-size="10" fill="#fef3c7" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">· 发送到 Anthropic API</tspan><tspan class="le">· POST Anthropic API</tspan>
+        </text>
+        <text x="528" y="201" font-size="10" fill="#fef3c7" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">· 流式接收 token</tspan><tspan class="le">· stream tokens</tspan>
+        </text>
+        <text x="528" y="216" font-size="10" fill="#fef3c7" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">· 解析 tool_use 意图</tspan><tspan class="le">· parse tool_use</tspan>
+        </text>
+      </g>
+
+      <!-- ---- Phase 4: Tool Execute (bottom-right, emerald) ---- -->
+      <g class="phase-node p4" filter="url(#node-glow)">
+        <rect x="518" y="332" width="184" height="98" rx="12" fill="url(#g-p4)" stroke="#10b981" stroke-width="1.3"/>
+        <circle cx="542" cy="356" r="12" fill="rgba(16,185,129,0.3)" stroke="#10b981" stroke-width="1"/>
+        <text x="542" y="360" text-anchor="middle" font-size="11" font-weight="700" fill="#a7f3d0" font-family="JetBrains Mono,monospace">4</text>
+        <text x="562" y="354" font-size="12" font-weight="700" fill="#a7f3d0" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">工具执行</tspan><tspan class="le">Tool Execute</tspan>
+        </text>
+        <text x="562" y="368" font-size="10" fill="#a7f3d0" font-family="JetBrains Mono,monospace" opacity=".8">
+          <tspan class="lz">Tool Execute</tspan><tspan class="le">phase 4</tspan>
+        </text>
+        <text x="528" y="388" font-size="10" fill="#d1fae5" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">· 权限检查 6 模式</tspan><tspan class="le">· permission check</tspan>
+        </text>
+        <text x="528" y="403" font-size="10" fill="#d1fae5" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">· 运行工具 handler</tspan><tspan class="le">· run tool handler</tspan>
+        </text>
+        <text x="528" y="418" font-size="10" fill="#d1fae5" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">· 捕获输出 → ctx</tspan><tspan class="le">· capture output</tspan>
+        </text>
+      </g>
+
+      <!-- ---- Phase 5: Respond (bottom, orange) ---- -->
+      <g class="phase-node p5" filter="url(#node-glow)">
+        <rect x="368" y="332" width="184" height="98" rx="12" fill="url(#g-p5)" stroke="#f97316" stroke-width="1.3"/>
+        <circle cx="392" cy="356" r="12" fill="rgba(249,115,22,0.3)" stroke="#f97316" stroke-width="1"/>
+        <text x="392" y="360" text-anchor="middle" font-size="11" font-weight="700" fill="#fed7aa" font-family="JetBrains Mono,monospace">5</text>
+        <text x="412" y="354" font-size="12" font-weight="700" fill="#fed7aa" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">响应输出</tspan><tspan class="le">Respond</tspan>
+        </text>
+        <text x="412" y="368" font-size="10" fill="#fed7aa" font-family="JetBrains Mono,monospace" opacity=".8">
+          <tspan class="lz">Respond</tspan><tspan class="le">phase 5</tspan>
+        </text>
+        <text x="378" y="388" font-size="10" fill="#ffedd5" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">· 渲染 Markdown</tspan><tspan class="le">· render Markdown</tspan>
+        </text>
+        <text x="378" y="403" font-size="10" fill="#ffedd5" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">· 流式写入终端</tspan><tspan class="le">· stream to TTY</tspan>
+        </text>
+        <text x="378" y="418" font-size="10" fill="#ffedd5" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">· 更新 UI / 高亮</tspan><tspan class="le">· update UI</tspan>
+        </text>
+      </g>
+
+      <!-- ---- Phase 6: Cleanup / Wait (bottom-left, slate) ---- -->
+      <g class="phase-node p6" filter="url(#node-glow)">
+        <rect x="218" y="332" width="184" height="98" rx="12" fill="url(#g-p6)" stroke="#64748b" stroke-width="1.3"/>
+        <circle cx="242" cy="356" r="12" fill="rgba(100,116,139,0.35)" stroke="#64748b" stroke-width="1"/>
+        <text x="242" y="360" text-anchor="middle" font-size="11" font-weight="700" fill="#e2e8f0" font-family="JetBrains Mono,monospace">6</text>
+        <text x="262" y="354" font-size="12" font-weight="700" fill="#e2e8f0" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">清理 / 等待</tspan><tspan class="le">Cleanup / Wait</tspan>
+        </text>
+        <text x="262" y="368" font-size="10" fill="#e2e8f0" font-family="JetBrains Mono,monospace" opacity=".8">
+          <tspan class="lz">Cleanup / Wait</tspan><tspan class="le">phase 6</tspan>
+        </text>
+        <text x="228" y="388" font-size="10" fill="#f1f5f9" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">· 保存 session.json</tspan><tspan class="le">· save session.json</tspan>
+        </text>
+        <text x="228" y="403" font-size="10" fill="#f1f5f9" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">· checkpoint 状态</tspan><tspan class="le">· checkpoint state</tspan>
+        </text>
+        <text x="228" y="418" font-size="10" fill="#f1f5f9" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">· 等待下一轮输入</tspan><tspan class="le">· wait for next input</tspan>
+        </text>
+      </g>
+
+      <!-- ========= Exit path: Phase 6 → Exit ========= -->
+      <g>
+        <path d="M 238,428 Q 155,460 105,478" fill="none" stroke="#f43f5e" stroke-width="1.4" marker-end="url(#arr-exit)" class="exit-arrow" stroke-dasharray="4 3"/>
+        <rect x="35" y="470" width="84" height="24" rx="6" fill="rgba(244,63,94,0.15)" stroke="#f43f5e" stroke-width="1"/>
+        <text x="77" y="481" text-anchor="middle" font-size="10" font-weight="700" fill="#f43f5e" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">✕ 终止</tspan><tspan class="le">✕ Exit</tspan>
+        </text>
+        <text x="77" y="492" text-anchor="middle" font-size="10" fill="#f43f5e" font-family="JetBrains Mono,monospace" opacity=".75">
+          <tspan class="lz">session end</tspan><tspan class="le">session end</tspan>
+        </text>
+      </g>
+
+      <!-- ========= Bottom legend strip ========= -->
+      <g>
+        <line x1="140" y1="512" x2="780" y2="512" stroke="var(--subtle)" stroke-width="0.6" stroke-dasharray="2,3" opacity=".5"/>
+        <text x="460" y="528" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">━━ 主循环 (phase 2→6 重复)     ┅┅ 循环回边     ⌁ 冷启动入口     - - 会话终止出口</tspan><tspan class="le">━━ main loop (phase 2→6 repeats)     ┅┅ loop-back edge     ⌁ cold-start entry     - - session-end exit</tspan>
+        </text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="legend">
+    <div class="lg">
+      <div class="lg-hdr">
+        <span class="lg-dot" style="background:#22d3ee"></span>
+        <span class="lg-name">1. <span class="lz">启动</span><span class="le">Startup</span></span>
+        <span class="lg-code">· cyan</span>
+      </div>
+      <div class="lg-desc"><span class="lz">冷启动一次。加载 CLAUDE.md、初始化 40 个工具、解析 CLI 参数。</span><span class="le">Cold start once. Load CLAUDE.md, init 40 tools, parse CLI args.</span></div>
+      <div class="lg-use"><span class="lz">入口：进程启动 → phase 2</span><span class="le">Entry: process start → phase 2</span></div>
+    </div>
+    <div class="lg">
+      <div class="lg-hdr">
+        <span class="lg-dot" style="background:#8b5cf6"></span>
+        <span class="lg-name">2. <span class="lz">接收输入</span><span class="le">Receive Input</span></span>
+        <span class="lg-code">· violet</span>
+      </div>
+      <div class="lg-desc"><span class="lz">读取用户消息、加载 @file 附件、解析 /slash 命令。</span><span class="le">Read user message, attach @file, parse /slash commands.</span></div>
+      <div class="lg-use"><span class="lz">循环起点：每轮从这里开始</span><span class="le">Loop entry: every turn starts here</span></div>
+    </div>
+    <div class="lg">
+      <div class="lg-hdr">
+        <span class="lg-dot" style="background:#f59e0b"></span>
+        <span class="lg-name">3. <span class="lz">LLM 推理</span><span class="le">LLM Inference</span></span>
+        <span class="lg-code">· amber</span>
+      </div>
+      <div class="lg-desc"><span class="lz">发送到 Anthropic API，流式接收 token，解析 tool_use 意图。</span><span class="le">POST to Anthropic API, stream tokens, parse tool_use intents.</span></div>
+      <div class="lg-use"><span class="lz">最耗时：占 60%+ wall time</span><span class="le">Dominant cost: 60%+ wall time</span></div>
+    </div>
+    <div class="lg">
+      <div class="lg-hdr">
+        <span class="lg-dot" style="background:#10b981"></span>
+        <span class="lg-name">4. <span class="lz">工具执行</span><span class="le">Tool Execute</span></span>
+        <span class="lg-code">· emerald</span>
+      </div>
+      <div class="lg-desc"><span class="lz">权限检查（6 模式）、运行 tool handler、捕获输出回注上下文。</span><span class="le">Permission check (6 modes), run handler, capture output to ctx.</span></div>
+      <div class="lg-use"><span class="lz">可多工具并发，可选回 3</span><span class="le">Parallel tools OK, may loop to 3</span></div>
+    </div>
+    <div class="lg">
+      <div class="lg-hdr">
+        <span class="lg-dot" style="background:#f97316"></span>
+        <span class="lg-name">5. <span class="lz">响应输出</span><span class="le">Respond</span></span>
+        <span class="lg-code">· orange</span>
+      </div>
+      <div class="lg-desc"><span class="lz">渲染 Markdown、流式写入终端、更新 UI 与代码高亮。</span><span class="le">Render Markdown, stream to TTY, update UI &amp; highlights.</span></div>
+      <div class="lg-use"><span class="lz">用户可见：token 级实时</span><span class="le">User-visible: token-level realtime</span></div>
+    </div>
+    <div class="lg">
+      <div class="lg-hdr">
+        <span class="lg-dot" style="background:#64748b"></span>
+        <span class="lg-name">6. <span class="lz">清理 / 等待</span><span class="le">Cleanup / Wait</span></span>
+        <span class="lg-code">· slate</span>
+      </div>
+      <div class="lg-desc"><span class="lz">保存 session.json、checkpoint 状态、等待下一轮输入。</span><span class="le">Save session.json, checkpoint state, wait for next input.</span></div>
+      <div class="lg-use"><span class="lz">回到 phase 2 或 ✕ 终止</span><span class="le">Back to phase 2 or ✕ exit</span></div>
+    </div>
+  </div>
+
+  <footer>
+    <span class="lz">数据来源：Claude Code 2.1.88 · src/cli/main.ts · src/runtime/session.ts · 生命周期由 REPL 主循环驱动</span>
+    <span class="le">Source: Claude Code 2.1.88 · src/cli/main.ts · src/runtime/session.ts · lifecycle driven by REPL main loop</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

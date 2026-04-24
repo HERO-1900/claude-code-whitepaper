@@ -1,0 +1,829 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>代码复杂度热力图 · Claude Code 源码研究</title>
+<style>
+  :root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+  :root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+  :root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+  :root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 24px 16px 32px;
+    transition: background 0.3s, color 0.3s;
+  }
+
+  .top-bar {
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+  }
+
+  .top-bar-title {
+    font-size: 13px;
+    color: var(--muted);
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+  }
+
+  .top-bar-controls {
+    display: flex;
+    gap: 8px;
+  }
+
+  .ctrl-btn {
+    background: var(--subtle);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    padding: 5px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+    font-family: inherit;
+  }
+
+  .ctrl-btn:hover {
+    background: var(--panel);
+    color: var(--text);
+  }
+
+  .chart-wrapper {
+    width: 100%;
+    max-width: 960px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.25);
+  }
+
+  .chart-header {
+    padding: 20px 28px 16px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .chart-title-zh {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .chart-title-en {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+  }
+
+  .chart-subtitle {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .svg-container {
+    padding: 20px 20px 0;
+    overflow: visible;
+  }
+
+  svg {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .stats-bar {
+    padding: 14px 28px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+    color: var(--muted);
+    flex-wrap: wrap;
+  }
+
+  .stats-pill {
+    background: var(--subtle);
+    color: var(--text);
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    letter-spacing: 0.02em;
+  }
+
+  /* Tooltip */
+  .tooltip {
+    position: fixed;
+    background: rgba(15,23,42,0.97);
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #f1f5f9;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s;
+    z-index: 9999;
+    max-width: 220px;
+    line-height: 1.55;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+
+  .tooltip.visible { opacity: 1; }
+
+  .tooltip-title {
+    font-weight: 700;
+    font-size: 14px;
+    margin-bottom: 6px;
+  }
+
+  .tooltip-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 12px;
+    color: #94a3b8;
+    margin-top: 3px;
+  }
+
+  .tooltip-row span:last-child {
+    color: #f1f5f9;
+    font-weight: 600;
+  }
+
+  .tooltip-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 700;
+    margin-top: 6px;
+    letter-spacing: 0.04em;
+  }
+
+  /* Module rect hover */
+  .module-rect {
+    cursor: pointer;
+    transition: filter 0.15s;
+  }
+
+  .module-rect:hover {
+    filter: brightness(1.2) drop-shadow(0 0 8px rgba(255,255,255,0.15));
+  }
+
+  /* Category label backgrounds adapt to theme */
+  [data-theme="light"] .cat-label-bg {
+    fill: rgba(0,0,0,0.06);
+  }
+
+  [data-theme="light"] svg text {
+    fill: #0f172a;
+  }
+</style>
+</head>
+<body>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+
+<div class="top-bar">
+  <div class="top-bar-title"><span class="lz">VIS-5-001 · Claude Code 源码研究</span><span class="le" style="display:none">VIS-5-001 · Claude Code Source Study</span></div>
+  <div class="top-bar-controls">
+    <button class="ctrl-btn" onclick="toggleLang()">ZH / EN</button>
+    <button class="ctrl-btn" onclick="cycleTheme()"><span class="lz">主题</span><span class="le" style="display:none">Theme</span></button>
+  </div>
+</div>
+
+<div class="chart-wrapper">
+  <div class="chart-header">
+    <div class="chart-title-zh lz">代码复杂度热力图</div>
+    <div class="chart-title-en le" style="display:none">Code Complexity Heatmap</div>
+    <div class="chart-subtitle lz">Claude Code 主要模块复杂度分布 · 按模块权重面积可视化</div>
+    <div class="chart-subtitle le" style="display:none">Complexity distribution across Claude Code's main modules · Area weighted by relative complexity score</div>
+  </div>
+
+  <div class="svg-container">
+    <!--
+      Layout plan (viewBox 0 0 920 540):
+      Left column  (x=12, w=280): 配置/Config (3 modules, stacked tall)
+      Middle-left  (x=304, w=220): 工具/Tools (3 modules, stacked)
+      Middle-right (x=536, w=190): 权限/Permission (1 module, tall)
+      Right column (x=738, w=170): 核心/Core (5 modules, stacked)
+      Bottom area: legend + grid overlays
+    -->
+    <svg viewBox="0 0 920 480" xmlns="http://www.w3.org/2000/svg" aria-label="代码复杂度热力图">
+      <defs>
+        <!-- High complexity gradient - red -->
+        <linearGradient id="grad-high" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#ef4444" stop-opacity="0.95"/>
+          <stop offset="100%" stop-color="#dc2626" stop-opacity="0.85"/>
+        </linearGradient>
+        <!-- Med-High gradient - orange -->
+        <linearGradient id="grad-medhigh" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#f97316" stop-opacity="0.95"/>
+          <stop offset="100%" stop-color="#ea580c" stop-opacity="0.85"/>
+        </linearGradient>
+        <!-- Medium gradient - amber -->
+        <linearGradient id="grad-medium" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.95"/>
+          <stop offset="100%" stop-color="#d97706" stop-opacity="0.85"/>
+        </linearGradient>
+        <!-- Med-Low gradient - lime -->
+        <linearGradient id="grad-medlow" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#84cc16" stop-opacity="0.95"/>
+          <stop offset="100%" stop-color="#65a30d" stop-opacity="0.85"/>
+        </linearGradient>
+        <!-- Low gradient - emerald -->
+        <linearGradient id="grad-low" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="#10b981" stop-opacity="0.95"/>
+          <stop offset="100%" stop-color="#059669" stop-opacity="0.85"/>
+        </linearGradient>
+
+        <!-- Glow filter for hover (applied via JS) -->
+        <filter id="glow-red" x="-10%" y="-10%" width="120%" height="120%">
+          <feGaussianBlur stdDeviation="4" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+
+        <!-- Pattern for category zone bg -->
+        <pattern id="hatch" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+          <line x1="0" y1="0" x2="0" y2="8" stroke="rgba(255,255,255,0.04)" stroke-width="1"/>
+        </pattern>
+      </defs>
+
+      <!-- ===== BACKGROUND ZONES ===== -->
+      <!-- Config zone bg -->
+      <rect x="10" y="28" width="288" height="382" rx="10" fill="rgba(239,68,68,0.06)" stroke="rgba(239,68,68,0.2)" stroke-width="1"/>
+      <!-- Tools zone bg -->
+      <rect x="306" y="28" width="222" height="382" rx="10" fill="rgba(245,158,11,0.06)" stroke="rgba(245,158,11,0.2)" stroke-width="1"/>
+      <!-- Permission zone bg -->
+      <rect x="536" y="28" width="178" height="382" rx="10" fill="rgba(249,115,22,0.06)" stroke="rgba(249,115,22,0.2)" stroke-width="1"/>
+      <!-- Core zone bg -->
+      <rect x="722" y="28" width="188" height="382" rx="10" fill="rgba(16,185,129,0.06)" stroke="rgba(16,185,129,0.2)" stroke-width="1"/>
+
+      <!-- ===== CATEGORY LABELS ===== -->
+      <!-- Config -->
+      <text x="154" y="18" text-anchor="middle" font-size="11" font-weight="700" fill="#ef4444" opacity="0.9" letter-spacing="0.08em" class="lz">配置 / CONFIG</text>
+      <text x="154" y="18" text-anchor="middle" font-size="11" font-weight="700" fill="#ef4444" opacity="0.9" letter-spacing="0.08em" class="le" display="none">CONFIG ZONE</text>
+      <!-- Tools -->
+      <text x="417" y="18" text-anchor="middle" font-size="11" font-weight="700" fill="#f59e0b" opacity="0.9" letter-spacing="0.08em" class="lz">工具 / TOOLS</text>
+      <text x="417" y="18" text-anchor="middle" font-size="11" font-weight="700" fill="#f59e0b" opacity="0.9" letter-spacing="0.08em" class="le" display="none">TOOLS ZONE</text>
+      <!-- Permission -->
+      <text x="625" y="18" text-anchor="middle" font-size="11" font-weight="700" fill="#f97316" opacity="0.9" letter-spacing="0.08em" class="lz">权限 / PERM</text>
+      <text x="625" y="18" text-anchor="middle" font-size="11" font-weight="700" fill="#f97316" opacity="0.9" letter-spacing="0.08em" class="le" display="none">PERM ZONE</text>
+      <!-- Core -->
+      <text x="816" y="18" text-anchor="middle" font-size="11" font-weight="700" fill="#10b981" opacity="0.9" letter-spacing="0.08em" class="lz">核心 / CORE</text>
+      <text x="816" y="18" text-anchor="middle" font-size="11" font-weight="700" fill="#10b981" opacity="0.9" letter-spacing="0.08em" class="le" display="none">CORE ZONE</text>
+
+      <!-- ===== CONFIG ZONE MODULES (x=10, w=288, y=28→410) ===== -->
+      <!-- 配置系统 Settings — HIGH — tallest in zone: h=140 -->
+      <g class="module-rect"
+         data-name-zh="配置系统 Settings"
+         data-name-en="Settings System"
+         data-level="HIGH"
+         data-desc-zh="9层地狱嵌套，配置优先级极其复杂"
+         data-desc-en="9-layer hell nesting, extremely complex priority chain"
+         data-color="#ef4444">
+        <rect x="18" y="36" width="272" height="138" rx="8" fill="url(#grad-high)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <!-- Complexity watermark number -->
+        <text x="272" y="88" text-anchor="end" font-size="52" font-weight="900" fill="rgba(255,255,255,0.1)">9</text>
+        <!-- Module name ZH -->
+        <text x="30" y="62" font-size="15" font-weight="700" fill="rgba(255,255,255,0.95)" class="lz">配置系统 Settings</text>
+        <!-- Module name EN -->
+        <text x="30" y="62" font-size="15" font-weight="700" fill="rgba(255,255,255,0.95)" class="le" display="none">Settings System</text>
+        <!-- Complexity tag ZH -->
+        <text x="30" y="84" font-size="11" fill="rgba(255,255,255,0.75)" class="lz">🔴 HIGH · 9层地狱嵌套</text>
+        <!-- Complexity tag EN -->
+        <text x="30" y="84" font-size="11" fill="rgba(255,255,255,0.75)" class="le" display="none">🔴 HIGH — 9-layer config merge hell</text>
+        <!-- Badge -->
+        <rect x="30" y="138" width="62" height="20" rx="4" fill="rgba(0,0,0,0.25)"/>
+        <text x="61" y="152" text-anchor="middle" font-size="10" font-weight="700" fill="rgba(255,255,255,0.9)" letter-spacing="0.06em" class="lz">极高复杂</text>
+        <text x="61" y="152" text-anchor="middle" font-size="10" font-weight="700" fill="rgba(255,255,255,0.9)" letter-spacing="0.06em" class="le" display="none">EXTREME</text>
+      </g>
+
+      <!-- Query循环 QueryLoop — HIGH — h=120 -->
+      <g class="module-rect"
+         data-name-zh="Query循环 QueryLoop"
+         data-name-en="QueryLoop"
+         data-level="HIGH"
+         data-desc-zh="深度嵌套回调，状态管理复杂度极高"
+         data-desc-en="Deep nested callbacks, extremely high state management complexity"
+         data-color="#ef4444">
+        <rect x="18" y="182" width="272" height="118" rx="8" fill="url(#grad-high)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <text x="272" y="248" text-anchor="end" font-size="42" font-weight="900" fill="rgba(255,255,255,0.1)">∞</text>
+        <text x="30" y="206" font-size="14" font-weight="700" fill="rgba(255,255,255,0.95)" class="lz">Query循环 QueryLoop</text>
+        <text x="30" y="206" font-size="14" font-weight="700" fill="rgba(255,255,255,0.95)" class="le" display="none">QueryLoop</text>
+        <text x="30" y="225" font-size="11" fill="rgba(255,255,255,0.75)" class="lz">🔴 HIGH · 深度嵌套回调</text>
+        <text x="30" y="225" font-size="11" fill="rgba(255,255,255,0.75)" class="le" display="none">🔴 HIGH — deeply nested control flow</text>
+        <rect x="30" y="280" width="62" height="20" rx="4" fill="rgba(0,0,0,0.25)"/>
+        <text x="61" y="294" text-anchor="middle" font-size="10" font-weight="700" fill="rgba(255,255,255,0.9)" letter-spacing="0.06em" class="lz">极高复杂</text>
+        <text x="61" y="294" text-anchor="middle" font-size="10" font-weight="700" fill="rgba(255,255,255,0.9)" letter-spacing="0.06em" class="le" display="none">EXTREME</text>
+      </g>
+
+      <!-- 消息格式 Message Format — HIGH — h=100 -->
+      <g class="module-rect"
+         data-name-zh="消息格式 Message Format"
+         data-name-en="Message Format"
+         data-level="HIGH"
+         data-desc-zh="供应商锁定严重，格式分支繁多"
+         data-desc-en="Severe vendor lock-in, many format branches"
+         data-color="#ef4444">
+        <rect x="18" y="308" width="272" height="96" rx="8" fill="url(#grad-high)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <text x="272" y="380" text-anchor="end" font-size="36" font-weight="900" fill="rgba(255,255,255,0.1)">🔒</text>
+        <text x="30" y="332" font-size="14" font-weight="700" fill="rgba(255,255,255,0.95)" class="lz">消息格式 Message Format</text>
+        <text x="30" y="332" font-size="14" font-weight="700" fill="rgba(255,255,255,0.95)" class="le" display="none">Message Format</text>
+        <text x="30" y="351" font-size="11" fill="rgba(255,255,255,0.75)" class="lz">🔴 HIGH · 供应商锁定</text>
+        <text x="30" y="351" font-size="11" fill="rgba(255,255,255,0.75)" class="le" display="none">🔴 HIGH — Anthropic vendor lock-in</text>
+        <rect x="30" y="384" width="62" height="20" rx="4" fill="rgba(0,0,0,0.25)"/>
+        <text x="61" y="398" text-anchor="middle" font-size="10" font-weight="700" fill="rgba(255,255,255,0.9)" letter-spacing="0.06em" class="lz">极高复杂</text>
+        <text x="61" y="398" text-anchor="middle" font-size="10" font-weight="700" fill="rgba(255,255,255,0.9)" letter-spacing="0.06em" class="le" display="none">EXTREME</text>
+      </g>
+
+      <!-- ===== TOOLS ZONE MODULES (x=306, w=222, y=28→410) ===== -->
+      <!-- 错误处理 Error Handling — MEDIUM — h=128 -->
+      <g class="module-rect"
+         data-name-zh="错误处理 Error Handling"
+         data-name-en="Error Handling"
+         data-level="MEDIUM"
+         data-desc-zh="风格不一致，缺乏统一错误处理规范"
+         data-desc-en="Inconsistent style, lacks unified error handling standards"
+         data-color="#f59e0b">
+        <rect x="314" y="36" width="206" height="126" rx="8" fill="url(#grad-medium)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <text x="506" y="96" text-anchor="end" font-size="44" font-weight="900" fill="rgba(255,255,255,0.1)">!</text>
+        <text x="326" y="60" font-size="13" font-weight="700" fill="rgba(255,255,255,0.95)" class="lz">错误处理</text>
+        <text x="326" y="60" font-size="13" font-weight="700" fill="rgba(255,255,255,0.95)" class="le" display="none">Error Handling</text>
+        <text x="326" y="78" font-size="11" fill="rgba(255,255,255,0.85)" class="lz">Error Handling</text>
+        <text x="326" y="78" font-size="11" fill="rgba(255,255,255,0.85)" class="le" display="none">Error Handling</text>
+        <text x="326" y="98" font-size="11" fill="rgba(255,255,255,0.8)" class="lz">🟡 MED · 风格不一致</text>
+        <text x="326" y="98" font-size="11" fill="rgba(255,255,255,0.8)" class="le" display="none">🟡 MED · Inconsistent</text>
+        <rect x="326" y="142" width="58" height="18" rx="4" fill="rgba(0,0,0,0.25)"/>
+        <text x="355" y="155" text-anchor="middle" font-size="10" font-weight="700" fill="rgba(255,255,255,0.9)" letter-spacing="0.04em" class="lz">中等复杂</text>
+        <text x="355" y="155" text-anchor="middle" font-size="10" font-weight="700" fill="rgba(255,255,255,0.9)" letter-spacing="0.04em" class="le" display="none">MEDIUM</text>
+      </g>
+
+      <!-- 类型定义 Type Definitions — MEDIUM — h=116 -->
+      <g class="module-rect"
+         data-name-zh="类型定义 Type Defs"
+         data-name-en="Type Definitions"
+         data-level="MEDIUM"
+         data-desc-zh="分散各处，跨文件类型依赖复杂"
+         data-desc-en="Scattered across files, complex cross-file type dependencies"
+         data-color="#f59e0b">
+        <rect x="314" y="170" width="206" height="114" rx="8" fill="url(#grad-medium)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <text x="506" y="248" text-anchor="end" font-size="40" font-weight="900" fill="rgba(255,255,255,0.1)">T</text>
+        <text x="326" y="194" font-size="13" font-weight="700" fill="rgba(255,255,255,0.95)" class="lz">类型定义</text>
+        <text x="326" y="194" font-size="13" font-weight="700" fill="rgba(255,255,255,0.95)" class="le" display="none">Type Definitions</text>
+        <text x="326" y="212" font-size="11" fill="rgba(255,255,255,0.85)" class="lz">Type Definitions</text>
+        <text x="326" y="212" font-size="11" fill="rgba(255,255,255,0.85)" class="le" display="none">Type Definitions</text>
+        <text x="326" y="232" font-size="11" fill="rgba(255,255,255,0.8)" class="lz">🟡 MED · 分散各处</text>
+        <text x="326" y="232" font-size="11" fill="rgba(255,255,255,0.8)" class="le" display="none">🟡 MED · Scattered</text>
+        <rect x="326" y="268" width="58" height="18" rx="4" fill="rgba(0,0,0,0.25)"/>
+        <text x="355" y="281" text-anchor="middle" font-size="10" font-weight="700" fill="rgba(255,255,255,0.9)" letter-spacing="0.04em" class="lz">中等复杂</text>
+        <text x="355" y="281" text-anchor="middle" font-size="10" font-weight="700" fill="rgba(255,255,255,0.9)" letter-spacing="0.04em" class="le" display="none">MEDIUM</text>
+      </g>
+
+      <!-- 工具实现 Tools impl — MEDIUM — h=104 -->
+      <g class="module-rect"
+         data-name-zh="工具实现 Tools impl"
+         data-name-en="Tools Implementation"
+         data-level="MEDIUM"
+         data-desc-zh="43个工具，风格各异，缺乏统一规范"
+         data-desc-en="43 tools, inconsistent style, lacks unified patterns"
+         data-color="#f59e0b">
+        <rect x="314" y="292" width="206" height="114" rx="8" fill="url(#grad-medium)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <text x="506" y="370" text-anchor="end" font-size="38" font-weight="900" fill="rgba(255,255,255,0.1)">43</text>
+        <text x="326" y="316" font-size="13" font-weight="700" fill="rgba(255,255,255,0.95)" class="lz">工具实现 Tools impl</text>
+        <text x="326" y="316" font-size="13" font-weight="700" fill="rgba(255,255,255,0.95)" class="le" display="none">Tools Implementation</text>
+        <text x="326" y="335" font-size="11" fill="rgba(255,255,255,0.8)" class="lz">🟡 MED · 43个工具·风格各异</text>
+        <text x="326" y="335" font-size="11" fill="rgba(255,255,255,0.8)" class="le" display="none">🟡 MED · 43 tools·varied</text>
+        <rect x="326" y="386" width="58" height="18" rx="4" fill="rgba(0,0,0,0.25)"/>
+        <text x="355" y="399" text-anchor="middle" font-size="10" font-weight="700" fill="rgba(255,255,255,0.9)" letter-spacing="0.04em" class="lz">中等复杂</text>
+        <text x="355" y="399" text-anchor="middle" font-size="10" font-weight="700" fill="rgba(255,255,255,0.9)" letter-spacing="0.04em" class="le" display="none">MEDIUM</text>
+      </g>
+
+      <!-- ===== PERMISSION ZONE (x=536, w=178, y=28→410) ===== -->
+      <!-- 权限系统 Permission — MED-HIGH — h=382 (full zone height) -->
+      <g class="module-rect"
+         data-name-zh="权限系统 Permission"
+         data-name-en="Permission System"
+         data-level="MED-HIGH"
+         data-desc-zh="9步状态机，权限检查链路复杂但结构清晰"
+         data-desc-en="9-step state machine, complex but structured permission chain"
+         data-color="#f97316">
+        <rect x="544" y="36" width="162" height="370" rx="8" fill="url(#grad-medhigh)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <!-- Big number watermark -->
+        <text x="685" y="400" text-anchor="end" font-size="90" font-weight="900" fill="rgba(255,255,255,0.05)" pointer-events="none">9</text>
+        <!-- Module name ZH (rotated vertical label feel with stacked lines) -->
+        <text x="554" y="62" font-size="13" font-weight="700" fill="rgba(255,255,255,0.95)" class="lz">权限系统</text>
+        <text x="554" y="62" font-size="13" font-weight="700" fill="rgba(255,255,255,0.95)" class="le" display="none">Permission</text>
+        <text x="554" y="80" font-size="11" fill="rgba(255,255,255,0.85)" class="lz">Permission</text>
+        <text x="554" y="80" font-size="11" fill="rgba(255,255,255,0.85)" class="le" display="none">System</text>
+        <text x="554" y="102" font-size="11" fill="rgba(255,255,255,0.8)" class="lz">🟠 MED-HIGH</text>
+        <text x="554" y="102" font-size="11" fill="rgba(255,255,255,0.8)" class="le" display="none">🟠 MED-HIGH</text>
+        <!-- State machine steps indicator -->
+        <text x="554" y="130" font-size="10" fill="rgba(255,255,255,0.65)" class="lz">9步状态机</text>
+        <text x="554" y="130" font-size="10" fill="rgba(255,255,255,0.65)" class="le" display="none">9-step FSM</text>
+        <!-- Vertical step dots -->
+        <circle cx="569" cy="160" r="5" fill="rgba(255,255,255,0.6)"/>
+        <circle cx="569" cy="185" r="5" fill="rgba(255,255,255,0.55)"/>
+        <circle cx="569" cy="210" r="5" fill="rgba(255,255,255,0.5)"/>
+        <circle cx="569" cy="235" r="5" fill="rgba(255,255,255,0.45)"/>
+        <circle cx="569" cy="260" r="5" fill="rgba(255,255,255,0.4)"/>
+        <circle cx="569" cy="285" r="5" fill="rgba(255,255,255,0.35)"/>
+        <circle cx="569" cy="310" r="5" fill="rgba(255,255,255,0.3)"/>
+        <circle cx="569" cy="335" r="5" fill="rgba(255,255,255,0.25)"/>
+        <circle cx="569" cy="360" r="5" fill="rgba(255,255,255,0.2)"/>
+        <line x1="569" y1="165" x2="569" y2="358" stroke="rgba(255,255,255,0.2)" stroke-width="1.5" stroke-dasharray="3,3"/>
+        <!-- Step labels ZH -->
+        <text x="582" y="164" font-size="10" fill="rgba(255,255,255,0.7)" class="lz">检查入口</text>
+        <text x="582" y="189" font-size="10" fill="rgba(255,255,255,0.65)" class="lz">身份验证</text>
+        <text x="582" y="214" font-size="10" fill="rgba(255,255,255,0.6)" class="lz">上下文评估</text>
+        <text x="582" y="239" font-size="10" fill="rgba(255,255,255,0.55)" class="lz">规则匹配</text>
+        <text x="582" y="264" font-size="10" fill="rgba(255,255,255,0.5)" class="lz">沙箱判断</text>
+        <text x="582" y="289" font-size="10" fill="rgba(255,255,255,0.45)" class="lz">危险评估</text>
+        <text x="582" y="314" font-size="10" fill="rgba(255,255,255,0.4)" class="lz">用户确认</text>
+        <text x="582" y="339" font-size="10" fill="rgba(255,255,255,0.35)" class="lz">执行决策</text>
+        <text x="582" y="364" font-size="10" fill="rgba(255,255,255,0.3)" class="lz">审计记录</text>
+        <!-- Step labels EN -->
+        <text x="582" y="164" font-size="10" fill="rgba(255,255,255,0.7)" class="le" display="none">Entry check</text>
+        <text x="582" y="189" font-size="10" fill="rgba(255,255,255,0.65)" class="le" display="none">Auth verify</text>
+        <text x="582" y="214" font-size="10" fill="rgba(255,255,255,0.6)" class="le" display="none">Ctx evaluate</text>
+        <text x="582" y="239" font-size="10" fill="rgba(255,255,255,0.55)" class="le" display="none">Rule match</text>
+        <text x="582" y="264" font-size="10" fill="rgba(255,255,255,0.5)" class="le" display="none">Sandbox check</text>
+        <text x="582" y="289" font-size="10" fill="rgba(255,255,255,0.45)" class="le" display="none">Risk assess</text>
+        <text x="582" y="314" font-size="10" fill="rgba(255,255,255,0.4)" class="le" display="none">User confirm</text>
+        <text x="582" y="339" font-size="10" fill="rgba(255,255,255,0.35)" class="le" display="none">Exec decision</text>
+        <text x="582" y="364" font-size="10" fill="rgba(255,255,255,0.3)" class="le" display="none">Audit log</text>
+        <!-- Badge -->
+        <rect x="554" y="388" width="68" height="18" rx="4" fill="rgba(0,0,0,0.25)"/>
+        <text x="588" y="401" text-anchor="middle" font-size="10" font-weight="700" fill="rgba(255,255,255,0.9)" letter-spacing="0.04em" class="lz">中高复杂</text>
+        <text x="588" y="401" text-anchor="middle" font-size="10" font-weight="700" fill="rgba(255,255,255,0.9)" letter-spacing="0.04em" class="le" display="none">MED-HIGH</text>
+      </g>
+
+      <!-- ===== CORE ZONE MODULES (x=722, w=188, y=28→410) ===== -->
+      <!-- Core modules: 5 modules stacked, each ~74px tall -->
+
+      <!-- MCP协议 — LOW — h=74 -->
+      <g class="module-rect"
+         data-name-zh="MCP协议"
+         data-name-en="MCP Protocol"
+         data-level="LOW"
+         data-desc-zh="标准协议实现，规范清晰"
+         data-desc-en="Standard protocol implementation, clean spec"
+         data-color="#10b981">
+        <rect x="730" y="36" width="172" height="72" rx="8" fill="url(#grad-low)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <text x="888" y="84" text-anchor="end" font-size="28" font-weight="900" fill="rgba(255,255,255,0.1)">✓</text>
+        <text x="742" y="58" font-size="12" font-weight="700" fill="rgba(255,255,255,0.95)" class="lz">MCP协议</text>
+        <text x="742" y="58" font-size="12" font-weight="700" fill="rgba(255,255,255,0.95)" class="le" display="none">MCP Protocol</text>
+        <text x="742" y="74" font-size="10" fill="rgba(255,255,255,0.8)" class="lz">🟢 LOW · 标准实现</text>
+        <text x="742" y="74" font-size="10" fill="rgba(255,255,255,0.8)" class="le" display="none">🟢 LOW · Standard impl</text>
+        <text x="742" y="98" font-size="10" fill="rgba(255,255,255,0.6)" class="lz">低复杂</text>
+        <text x="742" y="98" font-size="10" fill="rgba(255,255,255,0.6)" class="le" display="none">LOW</text>
+      </g>
+
+      <!-- Tool接口 Interface — LOW — h=74 -->
+      <g class="module-rect"
+         data-name-zh="Tool接口 Interface"
+         data-name-en="Tool Interface"
+         data-level="LOW"
+         data-desc-zh="抽象良好，接口设计清晰"
+         data-desc-en="Well abstracted, clean interface design"
+         data-color="#10b981">
+        <rect x="730" y="116" width="172" height="72" rx="8" fill="url(#grad-low)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <text x="888" y="164" text-anchor="end" font-size="28" font-weight="900" fill="rgba(255,255,255,0.1)">⌥</text>
+        <text x="742" y="138" font-size="12" font-weight="700" fill="rgba(255,255,255,0.95)" class="lz">Tool接口 Interface</text>
+        <text x="742" y="138" font-size="12" font-weight="700" fill="rgba(255,255,255,0.95)" class="le" display="none">Tool Interface</text>
+        <text x="742" y="154" font-size="10" fill="rgba(255,255,255,0.8)" class="lz">🟢 LOW · 抽象良好</text>
+        <text x="742" y="154" font-size="10" fill="rgba(255,255,255,0.8)" class="le" display="none">🟢 LOW · Well abstracted</text>
+        <text x="742" y="178" font-size="10" fill="rgba(255,255,255,0.6)" class="lz">低复杂</text>
+        <text x="742" y="178" font-size="10" fill="rgba(255,255,255,0.6)" class="le" display="none">LOW</text>
+      </g>
+
+      <!-- 核心引擎 Core Engine — LOW — h=74 -->
+      <g class="module-rect"
+         data-name-zh="核心引擎 Core Engine"
+         data-name-en="Core Engine"
+         data-level="LOW"
+         data-desc-zh="稳定可靠，内核设计成熟"
+         data-desc-en="Stable and reliable, mature kernel design"
+         data-color="#10b981">
+        <rect x="730" y="196" width="172" height="72" rx="8" fill="url(#grad-low)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <text x="888" y="244" text-anchor="end" font-size="28" font-weight="900" fill="rgba(255,255,255,0.1)">⚙</text>
+        <text x="742" y="218" font-size="12" font-weight="700" fill="rgba(255,255,255,0.95)" class="lz">核心引擎 Core Engine</text>
+        <text x="742" y="218" font-size="12" font-weight="700" fill="rgba(255,255,255,0.95)" class="le" display="none">Core Engine</text>
+        <text x="742" y="234" font-size="10" fill="rgba(255,255,255,0.8)" class="lz">🟢 LOW · 稳定可靠</text>
+        <text x="742" y="234" font-size="10" fill="rgba(255,255,255,0.8)" class="le" display="none">🟢 LOW · Stable</text>
+        <text x="742" y="258" font-size="10" fill="rgba(255,255,255,0.6)" class="lz">低复杂</text>
+        <text x="742" y="258" font-size="10" fill="rgba(255,255,255,0.6)" class="le" display="none">LOW</text>
+      </g>
+
+      <!-- Hook系统 — LOW — h=74 -->
+      <g class="module-rect"
+         data-name-zh="Hook系统"
+         data-name-en="Hook System"
+         data-level="LOW"
+         data-desc-zh="低耦合设计，事件驱动模式清晰"
+         data-desc-en="Low coupling, clean event-driven pattern"
+         data-color="#10b981">
+        <rect x="730" y="276" width="172" height="72" rx="8" fill="url(#grad-low)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <text x="888" y="324" text-anchor="end" font-size="28" font-weight="900" fill="rgba(255,255,255,0.1)">↗</text>
+        <text x="742" y="298" font-size="12" font-weight="700" fill="rgba(255,255,255,0.95)" class="lz">Hook系统</text>
+        <text x="742" y="298" font-size="12" font-weight="700" fill="rgba(255,255,255,0.95)" class="le" display="none">Hook System</text>
+        <text x="742" y="314" font-size="10" fill="rgba(255,255,255,0.8)" class="lz">🟢 LOW · 低耦合</text>
+        <text x="742" y="314" font-size="10" fill="rgba(255,255,255,0.8)" class="le" display="none">🟢 LOW · Low coupling</text>
+        <text x="742" y="338" font-size="10" fill="rgba(255,255,255,0.6)" class="lz">低复杂</text>
+        <text x="742" y="338" font-size="10" fill="rgba(255,255,255,0.6)" class="le" display="none">LOW</text>
+      </g>
+
+      <!-- 沙箱隔离 Sandbox — LOW — h=74 -->
+      <g class="module-rect"
+         data-name-zh="沙箱隔离 Sandbox"
+         data-name-en="Sandbox Isolation"
+         data-level="LOW"
+         data-desc-zh="边界清晰，隔离层设计优雅"
+         data-desc-en="Clear boundaries, elegant isolation layer design"
+         data-color="#10b981">
+        <rect x="730" y="356" width="172" height="50" rx="8" fill="url(#grad-low)" stroke="rgba(255,255,255,0.1)" stroke-width="1"/>
+        <text x="742" y="376" font-size="12" font-weight="700" fill="rgba(255,255,255,0.95)" class="lz">沙箱隔离 Sandbox</text>
+        <text x="742" y="376" font-size="12" font-weight="700" fill="rgba(255,255,255,0.95)" class="le" display="none">Sandbox Isolation</text>
+        <text x="742" y="393" font-size="10" fill="rgba(255,255,255,0.8)" class="lz">🟢 LOW · 边界清晰</text>
+        <text x="742" y="393" font-size="10" fill="rgba(255,255,255,0.8)" class="le" display="none">🟢 LOW · Clear boundary</text>
+      </g>
+
+      <!-- ===== LEGEND (y=420→460) ===== -->
+      <rect x="10" y="418" width="900" height="56" rx="8" fill="rgba(255,255,255,0.03)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+      <!-- Legend label ZH -->
+      <text x="22" y="438" font-size="10" fill="rgba(255,255,255,0.4)" letter-spacing="0.06em" class="lz">复杂度等级</text>
+      <text x="22" y="438" font-size="10" fill="rgba(255,255,255,0.4)" letter-spacing="0.06em" class="le" display="none">COMPLEXITY</text>
+
+      <!-- Gradient bar -->
+      <defs>
+        <linearGradient id="legend-grad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%"   stop-color="#ef4444"/>
+          <stop offset="25%"  stop-color="#f97316"/>
+          <stop offset="50%"  stop-color="#f59e0b"/>
+          <stop offset="75%"  stop-color="#84cc16"/>
+          <stop offset="100%" stop-color="#10b981"/>
+        </linearGradient>
+      </defs>
+      <rect x="90" y="430" width="460" height="12" rx="6" fill="url(#legend-grad)"/>
+
+      <!-- Tick marks -->
+      <line x1="90"  y1="444" x2="90"  y2="450" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+      <line x1="205" y1="444" x2="205" y2="450" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+      <line x1="320" y1="444" x2="320" y2="450" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+      <line x1="435" y1="444" x2="435" y2="450" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+      <line x1="550" y1="444" x2="550" y2="450" stroke="rgba(255,255,255,0.3)" stroke-width="1"/>
+
+      <!-- Tick labels ZH -->
+      <text x="90"  y="462" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.55)" class="lz">HIGH 极高</text>
+      <text x="205" y="462" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.55)" class="lz">MED-HIGH</text>
+      <text x="320" y="462" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.55)" class="lz">MEDIUM 中</text>
+      <text x="435" y="462" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.55)" class="lz">MED-LOW</text>
+      <text x="550" y="462" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.55)" class="lz">LOW 低</text>
+      <!-- Tick labels EN -->
+      <text x="90"  y="462" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.55)" class="le" display="none">HIGH</text>
+      <text x="205" y="462" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.55)" class="le" display="none">MED-HIGH</text>
+      <text x="320" y="462" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.55)" class="le" display="none">MEDIUM</text>
+      <text x="435" y="462" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.55)" class="le" display="none">MED-LOW</text>
+      <text x="550" y="462" text-anchor="middle" font-size="10" fill="rgba(255,255,255,0.55)" class="le" display="none">LOW</text>
+
+      <!-- Side note: area = complexity score -->
+      <text x="572" y="438" font-size="10" fill="rgba(255,255,255,0.35)" class="lz">面积 ∝ 复杂度权重</text>
+      <text x="572" y="438" font-size="10" fill="rgba(255,255,255,0.35)" class="le" display="none">Area ∝ complexity weight</text>
+      <text x="572" y="453" font-size="10" fill="rgba(255,255,255,0.25)" class="lz">数据来源：Claude Code 源码分析</text>
+      <text x="572" y="453" font-size="10" fill="rgba(255,255,255,0.25)" class="le" display="none">Source: Claude Code source analysis</text>
+
+      <!-- Complexity score table on right side of legend -->
+      <text x="760" y="432" font-size="10" fill="rgba(239,68,68,0.85)" class="lz">■ HIGH：配置/消息/循环</text>
+      <text x="760" y="432" font-size="10" fill="rgba(239,68,68,0.85)" class="le" display="none">■ HIGH: Config/Msg/Loop</text>
+      <text x="760" y="447" font-size="10" fill="rgba(249,115,22,0.85)" class="lz">■ MED-HIGH：权限系统</text>
+      <text x="760" y="447" font-size="10" fill="rgba(249,115,22,0.85)" class="le" display="none">■ MED-HIGH: Permission</text>
+      <text x="760" y="462" font-size="10" fill="rgba(16,185,129,0.85)" class="lz">■ LOW：核心/Hook/沙箱</text>
+      <text x="760" y="462" font-size="10" fill="rgba(16,185,129,0.85)" class="le" display="none">■ LOW: Core/Hook/Sandbox</text>
+    </svg>
+  </div>
+
+  <div class="stats-bar">
+    <span class="stats-pill lz">43 工具</span>
+    <span class="stats-pill le" style="display:none">43 Tools</span>
+    <span style="color:var(--border)">·</span>
+    <span class="stats-pill lz">3 复杂度层次</span>
+    <span class="stats-pill le" style="display:none">3 Complexity Tiers</span>
+    <span style="color:var(--border)">·</span>
+    <span class="stats-pill lz">11 核心模块</span>
+    <span class="stats-pill le" style="display:none">11 Core Modules</span>
+    <span style="color:var(--border)">·</span>
+    <span style="color:var(--muted)" class="lz">权威数据来源源码 · 面积按复杂度权重比例可视化</span>
+    <span style="color:var(--muted)" class="le" style="display:none">Authoritative source: Claude Code source · Area weighted by complexity score</span>
+  </div>
+</div>
+
+<!-- Tooltip element -->
+<div class="tooltip" id="tooltip">
+  <div class="tooltip-title" id="tt-title"></div>
+  <div class="tooltip-row"><span class="lz">复杂度等级</span><span class="le" style="display:none">Level</span><span id="tt-level"></span></div>
+  <div class="tooltip-row"><span class="lz">描述</span><span class="le" style="display:none">Desc</span><span id="tt-desc"></span></div>
+  <div id="tt-badge"></div>
+</div>
+
+<script>
+(function(){
+  var tooltip = document.getElementById('tooltip');
+  var ttTitle = document.getElementById('tt-title');
+  var ttLevel = document.getElementById('tt-level');
+  var ttDesc  = document.getElementById('tt-desc');
+  var ttBadge = document.getElementById('tt-badge');
+  var currentLang = localStorage.getItem('vlang') || 'zh';
+
+  var levelColors = {
+    'HIGH':     '#ef4444',
+    'MED-HIGH': '#f97316',
+    'MEDIUM':   '#f59e0b',
+    'MED-LOW':  '#84cc16',
+    'LOW':      '#10b981'
+  };
+
+  var levelLabels = {
+    'HIGH':     { zh: '极高复杂', en: 'Extreme' },
+    'MED-HIGH': { zh: '中高复杂', en: 'Med-High' },
+    'MEDIUM':   { zh: '中等复杂', en: 'Medium' },
+    'MED-LOW':  { zh: '中低复杂', en: 'Med-Low' },
+    'LOW':      { zh: '低复杂',   en: 'Low' }
+  };
+
+  function getLang() {
+    return localStorage.getItem('vlang') || 'zh';
+  }
+
+  document.querySelectorAll('.module-rect').forEach(function(el) {
+    var rect = el.querySelector('rect');
+
+    el.addEventListener('mouseenter', function(e) {
+      var lang = getLang();
+      var nameZh = el.getAttribute('data-name-zh');
+      var nameEn = el.getAttribute('data-name-en');
+      var level  = el.getAttribute('data-level');
+      var descZh = el.getAttribute('data-desc-zh');
+      var descEn = el.getAttribute('data-desc-en');
+      var color  = levelColors[level] || '#94a3b8';
+      var label  = levelLabels[level] || { zh: level, en: level };
+
+      ttTitle.textContent = lang === 'zh' ? nameZh : nameEn;
+      ttTitle.style.color = color;
+      ttLevel.textContent = level;
+      ttLevel.style.color = color;
+      ttDesc.textContent  = lang === 'zh' ? descZh : descEn;
+
+      ttBadge.innerHTML = '<span class="tooltip-badge" style="background:' + color + '22;color:' + color + ';border:1px solid ' + color + '44;">' + (lang === 'zh' ? label.zh : label.en) + '</span>';
+
+      tooltip.classList.add('visible');
+      if (rect) {
+        rect.style.filter = 'brightness(1.15)';
+      }
+    });
+
+    el.addEventListener('mousemove', function(e) {
+      var x = e.clientX + 16;
+      var y = e.clientY - 10;
+      // Boundary check
+      if (x + 220 > window.innerWidth) x = e.clientX - 236;
+      if (y + 120 > window.innerHeight) y = e.clientY - 130;
+      tooltip.style.left = x + 'px';
+      tooltip.style.top  = y + 'px';
+    });
+
+    el.addEventListener('mouseleave', function() {
+      tooltip.classList.remove('visible');
+      if (rect) {
+        rect.style.filter = '';
+      }
+    });
+  });
+
+  // Light theme: fix SVG text colors
+  function fixThemeColors() {
+    var theme = document.documentElement.getAttribute('data-theme');
+    var svgTexts = document.querySelectorAll('svg text');
+    if (theme === 'light') {
+      // For light theme, category labels need to stay colored, module text on colored rects stays white
+      // Only adjust non-rect texts (background zone labels)
+      document.querySelectorAll('.cat-label-bg').forEach(function(el){
+        el.style.fill = 'rgba(0,0,0,0.04)';
+      });
+    }
+  }
+
+  // Observe theme changes
+  var observer = new MutationObserver(fixThemeColors);
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+  fixThemeColors();
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<!--
+  VIS-0-004 · 数据流完整旅程图 · Complete Data Flow Journey
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  从一句话到一行代码的 10 个阶段 · 3 个泳道 · Agent Loop 回环
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · 数据流完整旅程图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root,[data-theme="dark"]{
+      --bg:#020617; --bg-card:#0f172a; --border:#1e293b;
+      --text:#f8fafc; --muted:#94a3b8; --subtle:#475569; --footer-c:#334155;
+      --pulse:#22d3ee;
+      --svg-bg:#020617; --svg-grid:#0f172a;
+      --lane-line:#1e293b; --lane-text:#475569;
+      --box-fill:rgba(15,23,42,0.92);
+      --box-blue:#58a6ff; --box-purple:#a78bfa; --box-green:#34d399;
+      --text-main:#f8fafc; --text-sub:#64748b; --text-data:#94a3b8;
+      --arr-blue:#58a6ff; --arr-purple:#a78bfa; --arr-green:#34d399;
+      --arr-orange:#fb923c; --arr-orange-glow:rgba(251,146,60,0.3);
+      --loop-dot:#fb923c;
+      --mask-fill:#0f172a;
+      --btn-bg:rgba(15,23,42,0.9); --btn-border:rgba(34,211,238,0.3);
+      --btn-active:#22d3ee; --btn-text:#94a3b8;
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3; --bg-card:#ffffff; --border:#e8e0d4;
+      --text:#1a1412; --muted:#6b5a4e; --subtle:#9c8878; --footer-c:#b5a99a;
+      --pulse:#0891b2;
+      --svg-bg:#faf7f2; --svg-grid:#ede8e0;
+      --lane-line:#ddd4c4; --lane-text:#9c8878;
+      --box-fill:rgba(255,255,255,0.92);
+      --box-blue:#2563eb; --box-purple:#7c3aed; --box-green:#059669;
+      --text-main:#1a1412; --text-sub:#9c8878; --text-data:#6b5a4e;
+      --arr-blue:#2563eb; --arr-purple:#7c3aed; --arr-green:#059669;
+      --arr-orange:#ea580c; --arr-orange-glow:rgba(234,88,12,0.15);
+      --loop-dot:#ea580c;
+      --mask-fill:#faf7f2;
+      --btn-bg:rgba(255,255,255,0.95); --btn-border:rgba(8,145,178,0.3);
+      --btn-active:#0891b2; --btn-text:#6b5a4e;
+    }
+    [data-theme="light"]{
+      --bg:#ffffff; --bg-card:#f8fafc; --border:#e2e8f0;
+      --text:#0f172a; --muted:#475569; --subtle:#94a3b8; --footer-c:#94a3b8;
+      --pulse:#0ea5e9;
+      --svg-bg:#f8fafc; --svg-grid:#eef2f7;
+      --lane-line:#e2e8f0; --lane-text:#94a3b8;
+      --box-fill:rgba(248,250,252,0.95);
+      --box-blue:#2563eb; --box-purple:#8b5cf6; --box-green:#10b981;
+      --text-main:#0f172a; --text-sub:#94a3b8; --text-data:#64748b;
+      --arr-blue:#3b82f6; --arr-purple:#8b5cf6; --arr-green:#10b981;
+      --arr-orange:#f97316; --arr-orange-glow:rgba(249,115,22,0.12);
+      --loop-dot:#f97316;
+      --mask-fill:#f1f5f9;
+      --btn-bg:rgba(248,250,252,0.95); --btn-border:rgba(14,165,233,0.3);
+      --btn-active:#0ea5e9; --btn-text:#475569;
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      font-family:'JetBrains Mono',monospace;
+      background:var(--bg); color:var(--text);
+      min-height:100vh; padding:24px 28px 32px;
+      transition:background .3s,color .3s;
+    }
+
+    /* ── Floating Controls ─────────────────────── */
+    .ctrl{
+      position:fixed;top:16px;right:16px;z-index:999;
+      display:flex;gap:6px;align-items:center;
+      background:var(--btn-bg);border:1px solid var(--btn-border);
+      border-radius:10px;padding:7px 10px;backdrop-filter:blur(12px);
+    }
+    .ctrl button{
+      background:none;border:none;cursor:pointer;
+      font-family:'JetBrains Mono',monospace;
+      font-size:11px;font-weight:600;
+      color:var(--btn-text);padding:4px 8px;border-radius:6px;
+      transition:all .2s;
+    }
+    .ctrl button:hover{color:var(--btn-active);}
+    .ctrl button.active{color:var(--btn-active);}
+    .ctrl-sep{width:1px;height:16px;background:var(--border);margin:0 2px;}
+
+    /* ── Header ────────────────────────────────── */
+    .header{
+      margin-bottom:20px;padding-bottom:18px;
+      border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:14px;
+    }
+    .pulse{
+      width:10px;height:10px;border-radius:50%;
+      background:var(--pulse);box-shadow:0 0 8px var(--pulse);
+      animation:pulse 2s infinite;flex-shrink:0;
+    }
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.85);}}
+    .header h1{font-size:21px;font-weight:700;letter-spacing:-0.5px;}
+    .header .sub{color:var(--muted);font-size:12px;margin-top:5px;}
+
+    /* ── Description ───────────────────────────── */
+    .desc{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:10px;padding:14px 18px;margin-bottom:18px;
+      font-size:12px;line-height:1.8;color:var(--muted);max-width:900px;
+    }
+
+    /* ── Diagram Wrapper ───────────────────────── */
+    .diagram-wrap{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:12px;overflow-x:auto;
+    }
+    .diagram-wrap svg{display:block;}
+
+    /* ── Info Cards ────────────────────────────── */
+    .cards{
+      display:grid;grid-template-columns:repeat(3,1fr);
+      gap:12px;margin-top:16px;
+    }
+    @media(max-width:900px){.cards{grid-template-columns:1fr;}}
+    .card{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:10px;padding:14px 16px;
+    }
+    .card-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+    .card-dot{width:8px;height:8px;border-radius:50%;}
+    .card h3{font-size:12px;font-weight:600;}
+    .card ul{list-style:none;font-size:11px;color:var(--muted);line-height:1.9;}
+
+    /* ── Footer ────────────────────────────────── */
+    .footer{
+      margin-top:16px;padding-top:14px;
+      border-top:1px solid var(--border);
+      display:flex;justify-content:space-between;
+      font-size:10px;color:var(--footer-c);
+    }
+
+    /* Lang */
+    html[lang="en"] .lz{display:none;}
+    html[lang="zh"] .le{display:none;}
+  </style>
+</head>
+<body>
+
+<!-- Floating Controls -->
+<div class="ctrl">
+  <button onclick="setTheme('dark')"  id="btn-dark"  class="active"><span class="lz">深色</span><span class="le">Dark</span></button>
+  <button onclick="setTheme('warm')"  id="btn-warm"><span class="lz">暖色</span><span class="le">Warm</span></button>
+  <button onclick="setTheme('light')" id="btn-light"><span class="lz">浅色</span><span class="le">Light</span></button>
+  <div class="ctrl-sep"></div>
+  <button onclick="toggleLang()" id="btn-lang">中·EN</button>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="pulse"></div>
+  <div>
+    <h1>
+      <span class="lz">数据流完整旅程图</span>
+      <span class="le">Complete Data Flow Journey</span>
+    </h1>
+    <div class="sub">
+      <span class="lz">从一句话到一行代码的 10 个阶段 · 3 个泳道 · Agent Loop 回环</span>
+      <span class="le">10 stages from prompt to output · 3 swimlanes · Agent Loop feedback</span>
+    </div>
+  </div>
+</div>
+
+<!-- Description -->
+<div class="desc">
+  <span class="lz">追踪一次典型用户交互（例如「帮我重构这个函数」）从键入到最终输出的完整数据旅程。10 个 Stage 标注了数据当前的形态（从 string → HumanMessage → JSON → SSE stream → Ink Component）。橙色虚线展示了 Agent Loop 回环 —— 当 API 返回包含 tool_use 时，执行工具并把 tool_result 回传 Stage 5，平均循环 2-5 轮才完成任务。</span>
+  <span class="le">Traces a typical user interaction ("help me refactor this function") from keypress to final output across 10 stages. Data transforms from string → HumanMessage → JSON → SSE stream → Ink Component. Orange dashed arc shows the Agent Loop — when the API returns tool_use, results feed back into Stage 5, averaging 2-5 iterations per task.</span>
+</div>
+
+<!-- Diagram -->
+<div class="diagram-wrap">
+  <svg viewBox="0 0 1380 500" width="1380" height="500" xmlns="http://www.w3.org/2000/svg"
+    style="font-family:'JetBrains Mono',monospace;">
+    <defs>
+      <!-- Background grid -->
+      <pattern id="grid" width="60" height="60" patternUnits="userSpaceOnUse">
+        <path d="M 60 0 L 0 0 0 60" fill="none" style="stroke:var(--svg-grid)" stroke-width="0.5"/>
+      </pattern>
+
+      <!-- Arrowheads -->
+      <marker id="arr-b" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+        <polygon points="0 0, 10 3.5, 0 7" style="fill:var(--arr-blue)"/>
+      </marker>
+      <marker id="arr-p" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+        <polygon points="0 0, 10 3.5, 0 7" style="fill:var(--arr-purple)"/>
+      </marker>
+      <marker id="arr-g" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+        <polygon points="0 0, 10 3.5, 0 7" style="fill:var(--arr-green)"/>
+      </marker>
+      <marker id="arr-o" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+        <polygon points="0 0, 10 3.5, 0 7" style="fill:var(--arr-orange)"/>
+      </marker>
+    </defs>
+
+    <!-- Background -->
+    <rect width="1380" height="500" fill="url(#grid)"/>
+    <rect width="1380" height="500" style="fill:var(--svg-bg)" opacity="0.75"/>
+
+    <!-- ── Swimlane separators ────────────────── -->
+    <!-- Client lane: y=0 to 130 -->
+    <line x1="0" y1="130" x2="1380" y2="130" style="stroke:var(--lane-line)" stroke-dasharray="3 8" stroke-width="1"/>
+    <!-- Network lane: y=130 to 240 -->
+    <line x1="0" y1="240" x2="1380" y2="240" style="stroke:var(--lane-line)" stroke-dasharray="3 8" stroke-width="1"/>
+    <!-- Tool Exec lane: y=240 to 360 -->
+    <line x1="0" y1="360" x2="1380" y2="360" style="stroke:var(--lane-line)" stroke-dasharray="3 8" stroke-width="1"/>
+
+    <!-- Swimlane Labels (left side) -->
+    <text x="14" y="68" style="fill:var(--lane-text)" font-size="11" font-weight="500">Client</text>
+    <text x="14" y="84" class="lz" style="fill:var(--lane-text)" font-size="10">客户端层</text>
+    <text x="14" y="84" class="le" style="fill:var(--lane-text)" font-size="10">Client Layer</text>
+    <text x="14" y="185" style="fill:var(--lane-text)" font-size="11" font-weight="500">Network</text>
+    <text x="14" y="200" class="lz" style="fill:var(--lane-text)" font-size="10">网络层</text>
+    <text x="14" y="200" class="le" style="fill:var(--lane-text)" font-size="10">Network Layer</text>
+    <text x="14" y="300" style="fill:var(--lane-text)" font-size="11" font-weight="500">Tool Exec</text>
+    <text x="14" y="315" class="lz" style="fill:var(--lane-text)" font-size="10">工具执行层</text>
+    <text x="14" y="315" class="le" style="fill:var(--lane-text)" font-size="10">Tool Exec Layer</text>
+    <text x="14" y="410" style="fill:var(--lane-text)" font-size="11" font-weight="500">Agent Loop</text>
+    <text x="14" y="425" class="lz" style="fill:var(--lane-text)" font-size="10">Agent 回环</text>
+    <text x="14" y="425" class="le" style="fill:var(--lane-text)" font-size="10">Agent Feedback</text>
+
+    <!-- Stage x positions: start=80, width=118, gap=8 → step=126 -->
+    <!-- S1=80, S2=206, S3=332, S4=458, S5=584, S6=710, S7=836, S8=962, S9=1088, S10=1214 -->
+
+    <!-- ── Connection arrows (draw first, behind boxes) ─── -->
+    <!-- S1→S2 -->
+    <line x1="198" y1="85" x2="206" y2="85" style="stroke:var(--arr-blue)" stroke-width="2" marker-end="url(#arr-b)"/>
+    <!-- S2→S3 -->
+    <line x1="324" y1="85" x2="332" y2="85" style="stroke:var(--arr-blue)" stroke-width="2" marker-end="url(#arr-b)"/>
+    <!-- S3→S4 -->
+    <line x1="450" y1="85" x2="458" y2="85" style="stroke:var(--arr-blue)" stroke-width="2" marker-end="url(#arr-p)"/>
+    <!-- S4→S5 (goes down to network lane) -->
+    <path d="M 517 115 L 517 165 L 584 165" fill="none" style="stroke:var(--arr-purple)" stroke-width="2" marker-end="url(#arr-p)"/>
+    <!-- S5→S6 -->
+    <line x1="702" y1="165" x2="710" y2="165" style="stroke:var(--arr-purple)" stroke-width="2" marker-end="url(#arr-p)"/>
+    <!-- S6→S7 (goes down to tool exec lane) -->
+    <path d="M 769 195 L 769 295 L 836 295" fill="none" style="stroke:var(--arr-purple)" stroke-width="2" marker-end="url(#arr-p)"/>
+    <!-- S7→S8 -->
+    <line x1="954" y1="295" x2="962" y2="295" style="stroke:var(--arr-purple)" stroke-width="2" marker-end="url(#arr-p)"/>
+    <!-- S8→S9 -->
+    <line x1="1080" y1="295" x2="1088" y2="295" style="stroke:var(--arr-purple)" stroke-width="2" marker-end="url(#arr-p)"/>
+    <!-- S9→S10 (goes up to client lane) -->
+    <path d="M 1147 265 L 1147 85 L 1214 85" fill="none" style="stroke:var(--arr-green)" stroke-width="2" marker-end="url(#arr-g)"/>
+
+    <!-- ── Agent Loop Arc ─── -->
+    <!-- From S9 bottom → down → left → up to S5 bottom -->
+    <path d="M 1147 325 L 1147 430 L 643 430 L 643 195"
+      fill="none" style="stroke:var(--arr-orange)" stroke-width="2.5"
+      stroke-dasharray="9 5" marker-end="url(#arr-o)"/>
+
+    <!-- Loop label -->
+    <rect x="845" y="418" width="180" height="22" rx="4" style="fill:var(--svg-bg)" opacity="0.85"/>
+    <text x="935" y="433" class="lz" style="fill:var(--arr-orange)" font-size="11" text-anchor="middle" font-weight="500">Agent Loop · 平均 2-5 轮</text>
+    <text x="935" y="433" class="le" style="fill:var(--arr-orange)" font-size="11" text-anchor="middle" font-weight="500">Agent Loop · avg 2-5 rounds</text>
+    <text x="935" y="455" style="fill:var(--arr-orange)" font-size="10" text-anchor="middle">tool_result → Stage 5 → re-request</text>
+
+    <!-- Loop endpoint dots -->
+    <circle cx="1147" cy="325" r="5" style="fill:var(--loop-dot)"/>
+    <circle cx="643"  cy="195" r="5" style="fill:var(--loop-dot)"/>
+
+    <!-- ── Stage Boxes (mask rect + styled rect + text) ── -->
+
+    <!-- S1: 用户输入  x=80, client lane y=50..120 -->
+    <rect x="80"  y="50" width="118" height="70" rx="8" style="fill:var(--mask-fill)"/>
+    <rect x="80"  y="50" width="118" height="70" rx="8" style="fill:var(--box-fill);stroke:var(--box-blue)" stroke-width="1.5"/>
+    <text x="139" y="72"  style="fill:var(--text-sub)" font-size="10" text-anchor="middle">Stage 1</text>
+    <text x="139" y="89" class="lz" style="fill:var(--box-blue)" font-size="13" font-weight="600" text-anchor="middle">用户输入</text>
+    <text x="139" y="89" class="le" style="fill:var(--box-blue)" font-size="13" font-weight="600" text-anchor="middle">User Input</text>
+    <text x="139" y="104" class="lz" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">User Input</text>
+    <text x="139" y="104" class="le" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">string</text>
+    <rect x="80"  y="122" width="118" height="16" rx="3" style="fill:var(--mask-fill)" opacity="0.7"/>
+    <text x="139" y="134" class="lz" style="fill:var(--text-data)" font-size="10" text-anchor="middle">string "重构函数"</text>
+    <text x="139" y="134" class="le" style="fill:var(--text-data)" font-size="10" text-anchor="middle">string "refactor fn"</text>
+
+    <!-- S2: 命令解析  x=206 -->
+    <rect x="206" y="50" width="118" height="70" rx="8" style="fill:var(--mask-fill)"/>
+    <rect x="206" y="50" width="118" height="70" rx="8" style="fill:var(--box-fill);stroke:var(--box-blue)" stroke-width="1.5"/>
+    <text x="265" y="72"  style="fill:var(--text-sub)" font-size="10" text-anchor="middle">Stage 2</text>
+    <text x="265" y="89" class="lz" style="fill:var(--box-blue)" font-size="13" font-weight="600" text-anchor="middle">命令解析</text>
+    <text x="265" y="89" class="le" style="fill:var(--box-blue)" font-size="13" font-weight="600" text-anchor="middle">Parse</text>
+    <text x="265" y="104" class="lz" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">Parse</text>
+    <text x="265" y="104" class="le" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">tokenize</text>
+    <rect x="206" y="122" width="118" height="16" rx="3" style="fill:var(--mask-fill)" opacity="0.7"/>
+    <text x="265" y="134" style="fill:var(--text-data)" font-size="10" text-anchor="middle">HumanMessage{}</text>
+
+    <!-- S3: 权限检查  x=332 -->
+    <rect x="332" y="50" width="118" height="70" rx="8" style="fill:var(--mask-fill)"/>
+    <rect x="332" y="50" width="118" height="70" rx="8" style="fill:var(--box-fill);stroke:var(--box-blue)" stroke-width="1.5"/>
+    <text x="391" y="72"  style="fill:var(--text-sub)" font-size="10" text-anchor="middle">Stage 3</text>
+    <text x="391" y="89" class="lz" style="fill:var(--box-blue)" font-size="12" font-weight="600" text-anchor="middle">权限检查</text>
+    <text x="391" y="89" class="le" style="fill:var(--box-blue)" font-size="12" font-weight="600" text-anchor="middle">Permission</text>
+    <text x="391" y="104" class="lz" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">Permission Check</text>
+    <text x="391" y="104" class="le" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">mode check</text>
+    <rect x="332" y="122" width="118" height="16" rx="3" style="fill:var(--mask-fill)" opacity="0.7"/>
+    <text x="391" y="134" style="fill:var(--text-data)" font-size="10" text-anchor="middle">mode: 'auto'</text>
+
+    <!-- S4: Prompt组装  x=458, transitions to purple/network -->
+    <rect x="458" y="50" width="118" height="70" rx="8" style="fill:var(--mask-fill)"/>
+    <rect x="458" y="50" width="118" height="70" rx="8" style="fill:var(--box-fill);stroke:var(--box-purple)" stroke-width="1.5"/>
+    <text x="517" y="72"  style="fill:var(--text-sub)" font-size="10" text-anchor="middle">Stage 4</text>
+    <text x="517" y="88" class="lz" style="fill:var(--box-purple)" font-size="11" font-weight="600" text-anchor="middle">Prompt 组装</text>
+    <text x="517" y="88" class="le" style="fill:var(--box-purple)" font-size="11" font-weight="600" text-anchor="middle">Build Prompt</text>
+    <text x="517" y="103" class="lz" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">Build Prompt</text>
+    <text x="517" y="103" class="le" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">assemble</text>
+    <rect x="458" y="122" width="118" height="16" rx="3" style="fill:var(--mask-fill)" opacity="0.7"/>
+    <text x="517" y="134" style="fill:var(--text-data)" font-size="10" text-anchor="middle">messages[N]</text>
+
+    <!-- S5: API请求  x=584, network lane y=140..210 -->
+    <rect x="584" y="140" width="118" height="70" rx="8" style="fill:var(--mask-fill)"/>
+    <rect x="584" y="140" width="118" height="70" rx="8" style="fill:var(--box-fill);stroke:var(--box-purple)" stroke-width="1.5"/>
+    <text x="643" y="162" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">Stage 5</text>
+    <text x="643" y="178" class="lz" style="fill:var(--box-purple)" font-size="13" font-weight="600" text-anchor="middle">API 请求</text>
+    <text x="643" y="178" class="le" style="fill:var(--box-purple)" font-size="13" font-weight="600" text-anchor="middle">API Call</text>
+    <text x="643" y="194" class="lz" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">API Call</text>
+    <text x="643" y="194" class="le" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">request</text>
+    <rect x="584" y="212" width="118" height="16" rx="3" style="fill:var(--mask-fill)" opacity="0.7"/>
+    <text x="643" y="224" style="fill:var(--text-data)" font-size="10" text-anchor="middle">POST /v1/messages</text>
+
+    <!-- S6: 流式响应  x=710, network lane -->
+    <rect x="710" y="140" width="118" height="70" rx="8" style="fill:var(--mask-fill)"/>
+    <rect x="710" y="140" width="118" height="70" rx="8" style="fill:var(--box-fill);stroke:var(--box-purple)" stroke-width="1.5"/>
+    <text x="769" y="162" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">Stage 6</text>
+    <text x="769" y="178" class="lz" style="fill:var(--box-purple)" font-size="13" font-weight="600" text-anchor="middle">流式响应</text>
+    <text x="769" y="178" class="le" style="fill:var(--box-purple)" font-size="13" font-weight="600" text-anchor="middle">SSE Stream</text>
+    <text x="769" y="194" class="lz" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">SSE Stream</text>
+    <text x="769" y="194" class="le" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">streaming</text>
+    <rect x="710" y="212" width="118" height="16" rx="3" style="fill:var(--mask-fill)" opacity="0.7"/>
+    <text x="769" y="224" style="fill:var(--text-data)" font-size="10" text-anchor="middle">event: delta{}</text>
+
+    <!-- S7: 工具判定  x=836, tool exec lane y=260..330 -->
+    <rect x="836" y="260" width="118" height="70" rx="8" style="fill:var(--mask-fill)"/>
+    <rect x="836" y="260" width="118" height="70" rx="8" style="fill:var(--box-fill);stroke:var(--box-purple)" stroke-width="1.5"/>
+    <text x="895" y="282" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">Stage 7</text>
+    <text x="895" y="298" class="lz" style="fill:var(--box-purple)" font-size="13" font-weight="600" text-anchor="middle">工具判定</text>
+    <text x="895" y="298" class="le" style="fill:var(--box-purple)" font-size="13" font-weight="600" text-anchor="middle">Tool Decision</text>
+    <text x="895" y="313" class="lz" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">Tool Decision</text>
+    <text x="895" y="313" class="le" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">dispatch</text>
+    <rect x="836" y="332" width="118" height="16" rx="3" style="fill:var(--mask-fill)" opacity="0.7"/>
+    <text x="895" y="344" style="fill:var(--text-data)" font-size="10" text-anchor="middle">tool_use{}</text>
+
+    <!-- S8: 工具执行  x=962 -->
+    <rect x="962" y="260" width="118" height="70" rx="8" style="fill:var(--mask-fill)"/>
+    <rect x="962" y="260" width="118" height="70" rx="8" style="fill:var(--box-fill);stroke:var(--box-purple)" stroke-width="1.5"/>
+    <text x="1021" y="282" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">Stage 8</text>
+    <text x="1021" y="298" class="lz" style="fill:var(--box-purple)" font-size="13" font-weight="600" text-anchor="middle">工具执行</text>
+    <text x="1021" y="298" class="le" style="fill:var(--box-purple)" font-size="13" font-weight="600" text-anchor="middle">Tool Execute</text>
+    <text x="1021" y="313" class="lz" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">Tool Execute</text>
+    <text x="1021" y="313" class="le" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">exec</text>
+    <rect x="962" y="332" width="118" height="16" rx="3" style="fill:var(--mask-fill)" opacity="0.7"/>
+    <text x="1021" y="344" style="fill:var(--text-data)" font-size="10" text-anchor="middle">exec/read/write</text>
+
+    <!-- S9: 结果回传  x=1088 -->
+    <rect x="1088" y="260" width="118" height="70" rx="8" style="fill:var(--mask-fill)"/>
+    <rect x="1088" y="260" width="118" height="70" rx="8" style="fill:var(--box-fill);stroke:var(--box-purple)" stroke-width="1.5"/>
+    <text x="1147" y="282" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">Stage 9</text>
+    <text x="1147" y="298" class="lz" style="fill:var(--box-purple)" font-size="13" font-weight="600" text-anchor="middle">结果回传</text>
+    <text x="1147" y="298" class="le" style="fill:var(--box-purple)" font-size="13" font-weight="600" text-anchor="middle">Return Result</text>
+    <text x="1147" y="313" class="lz" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">Return Result</text>
+    <text x="1147" y="313" class="le" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">response</text>
+    <rect x="1088" y="332" width="118" height="16" rx="3" style="fill:var(--mask-fill)" opacity="0.7"/>
+    <text x="1147" y="344" style="fill:var(--text-data)" font-size="10" text-anchor="middle">tool_result{}</text>
+
+    <!-- S10: 渲染输出  x=1214, client lane -->
+    <rect x="1214" y="50" width="118" height="70" rx="8" style="fill:var(--mask-fill)"/>
+    <rect x="1214" y="50" width="118" height="70" rx="8" style="fill:var(--box-fill);stroke:var(--box-green)" stroke-width="1.5"/>
+    <text x="1273" y="72"  style="fill:var(--text-sub)" font-size="10" text-anchor="middle">Stage 10</text>
+    <text x="1273" y="88" class="lz" style="fill:var(--box-green)" font-size="12" font-weight="600" text-anchor="middle">渲染输出</text>
+    <text x="1273" y="88" class="le" style="fill:var(--box-green)" font-size="12" font-weight="600" text-anchor="middle">Render</text>
+    <text x="1273" y="103" class="lz" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">Render Output</text>
+    <text x="1273" y="103" class="le" style="fill:var(--text-sub)" font-size="10" text-anchor="middle">display</text>
+    <rect x="1214" y="122" width="118" height="16" rx="3" style="fill:var(--mask-fill)" opacity="0.7"/>
+    <text x="1273" y="134" style="fill:var(--text-data)" font-size="10" text-anchor="middle">Ink Component</text>
+
+    <!-- ── Legend ─── -->
+    <rect x="80" y="465" width="360" height="26" rx="4" style="fill:var(--mask-fill)" opacity="0.6"/>
+    <!-- Blue arrow legend -->
+    <line x1="95" y1="478" x2="120" y2="478" style="stroke:var(--arr-blue)" stroke-width="2" marker-end="url(#arr-b)"/>
+    <text x="128" y="482" style="fill:var(--text-sub)" font-size="10">
+      <tspan class="lz">客户端流</tspan><tspan class="le">Client flow</tspan>
+    </text>
+    <!-- Purple arrow legend -->
+    <line x1="195" y1="478" x2="220" y2="478" style="stroke:var(--arr-purple)" stroke-width="2" marker-end="url(#arr-p)"/>
+    <text x="228" y="482" style="fill:var(--text-sub)" font-size="10">
+      <tspan class="lz">API/工具流</tspan><tspan class="le">API/tool flow</tspan>
+    </text>
+    <!-- Orange dashed legend -->
+    <line x1="305" y1="478" x2="330" y2="478" style="stroke:var(--arr-orange)" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#arr-o)"/>
+    <text x="338" y="482" style="fill:var(--text-sub)" font-size="10">Loop</text>
+  </svg>
+</div>
+
+<!-- Info Cards -->
+<div class="cards">
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-dot" style="background:var(--box-blue)"></div>
+      <h3><span class="lz">客户端处理</span><span class="le">Client Processing</span></h3>
+    </div>
+    <ul>
+      <li>• Stage 1: <span class="lz">用户输入 → string 原始文本</span><span class="le">User input → raw string</span></li>
+      <li>• Stage 2: <span class="lz">解析为 HumanMessage 对象</span><span class="le">Parsed to HumanMessage</span></li>
+      <li>• Stage 3: <span class="lz">权限检查 · 模式判定</span><span class="le">Permission check · mode</span></li>
+      <li>• Stage 4: <span class="lz">组装 messages[] 数组</span><span class="le">Assemble messages[] array</span></li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-dot" style="background:var(--box-purple)"></div>
+      <h3><span class="lz">网络 / 工具执行</span><span class="le">Network / Tool Exec</span></h3>
+    </div>
+    <ul>
+      <li>• Stage 5: <span class="lz">POST /v1/messages 发起请求</span><span class="le">POST /v1/messages</span></li>
+      <li>• Stage 6: <span class="lz">SSE 流式接收 delta 事件</span><span class="le">SSE stream delta events</span></li>
+      <li>• Stage 7: <span class="lz">判定 tool_use / text 响应</span><span class="le">Detect tool_use vs text</span></li>
+      <li>• Stage 8–9: <span class="lz">工具执行 + tool_result 回传</span><span class="le">Execute + return result</span></li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-dot" style="background:var(--arr-orange)"></div>
+      <h3>Agent Loop</h3>
+    </div>
+    <ul>
+      <li>• <span class="lz">平均循环</span><span class="le">Avg iterations:</span> 2–5 <span class="lz">轮</span><span class="le">rounds</span></li>
+      <li>• <span class="lz">触发条件：响应含 tool_use block</span><span class="le">Triggered by: tool_use block</span></li>
+      <li>• <span class="lz">Stage 9 → Stage 5 短路回环</span><span class="le">Stage 9 → Stage 5 feedback</span></li>
+      <li>• Stage 10: <span class="lz">最终渲染为 Ink Component</span><span class="le">Final Ink Component render</span></li>
+    </ul>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <span>
+    <span class="lz">数据来源：cc-source-stats-report.md + 源码分析 · 2026-04-05</span>
+    <span class="le">Source: cc-source-stats-report.md + code analysis · 2026-04-05</span>
+  </span>
+  <span>VIS-0-004 · Claude Code Whitepaper v2</span>
+</div>
+
+<script>
+(function(){
+  function setTheme(t){try{localStorage.setItem('vtheme',t);}catch(e){}
+    document.documentElement.setAttribute('data-theme',t);
+    ['dark','warm','light'].forEach(n=>{
+      document.getElementById('btn-'+n).classList.toggle('active',n===t);
+    });
+  }
+  function toggleLang(){
+    const isZh = document.documentElement.lang==='zh';
+    const next = isZh ? 'en' : 'zh';
+    document.documentElement.lang = next;
+    document.getElementById('btn-lang').textContent = isZh ? 'EN·中' : '中·EN';
+    try{localStorage.setItem('vlang', next);}catch(e){}
+  }
+  // cc-restore-on-load
+  try{
+    var _t=localStorage.getItem('vtheme');
+    if(_t==='dark'||_t==='warm'||_t==='light')setTheme(_t);
+    var _l=localStorage.getItem('vlang');
+    if(_l==='en'&&document.documentElement.lang!=='en')toggleLang();
+  }catch(e){}
+  window.setTheme = setTheme;
+  window.toggleLang = toggleLang;
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

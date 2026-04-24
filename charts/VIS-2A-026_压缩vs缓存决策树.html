@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-2A-026 压缩 vs 缓存决策树 — Claude Code 白皮书</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--bg2:#0f172a;--bg3:#1e293b;--txt:#f1f5f9;--txt2:#94a3b8;--txt3:#475569;--brd:rgba(148,163,184,0.15);--card-bg:rgba(15,23,42,0.85);--ctrl-bg:rgba(30,41,59,0.9);--node-bg:#020617;--grid-stroke:#1e293b;}
+[data-theme="warm"]{--bg:#f8f6f3;--bg2:#f1ede8;--bg3:#e8e2d9;--txt:#1e293b;--txt2:#475569;--txt3:#94a3b8;--brd:rgba(100,116,139,0.2);--card-bg:rgba(241,237,232,0.9);--ctrl-bg:rgba(241,237,232,0.95);--node-bg:#f8f6f3;--grid-stroke:#e0d8cc;}
+[data-theme="light"]{--bg:#ffffff;--bg2:#f8fafc;--bg3:#f1f5f9;--txt:#0f172a;--txt2:#64748b;--txt3:#94a3b8;--brd:rgba(100,116,139,0.15);--card-bg:rgba(248,250,252,0.95);--ctrl-bg:rgba(248,250,252,0.95);--node-bg:#ffffff;--grid-stroke:#e2e8f0;}
+[lang="en"] .lz{display:none}*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--txt);min-height:100vh;transition:background .3s,color .3s}
+.page{max-width:1020px;margin:0 auto;padding:32px 20px}
+.hdr{display:flex;align-items:flex-start;gap:12px;margin-bottom:24px}
+.pulse{width:10px;height:10px;border-radius:50%;background:#22d3ee;animation:pulse 2s infinite;flex-shrink:0;margin-top:5px}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.85)}}
+h1{font-size:20px;font-weight:700;color:var(--txt)}
+.subtitle{font-size:11px;color:var(--txt2);margin-top:4px}
+.diagram-card{background:var(--card-bg);border:1px solid var(--brd);border-radius:14px;padding:20px 16px;margin-bottom:16px;overflow:hidden}
+.svg-bg{fill:var(--bg)}.grid-line{stroke:var(--grid-stroke)}.node-bg{fill:var(--node-bg)}.node-title{fill:var(--txt)}.node-meta{fill:var(--txt2)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card{background:var(--card-bg);border:1px solid var(--brd);border-radius:10px;padding:14px}
+.card-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.card h3{font-size:11px;font-weight:600;color:var(--txt)}
+.card p{font-size:10px;color:var(--txt2);line-height:1.7;margin-top:4px}
+footer{margin-top:16px;text-align:center;font-size:10px;color:var(--txt3)}
+.controls{position:fixed;top:14px;right:14px;display:flex;flex-direction:column;gap:6px;z-index:100}
+.ctrl{background:var(--ctrl-bg);border:1px solid var(--brd);border-radius:6px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--txt);cursor:pointer;transition:all .2s}
+.ctrl:hover{border-color:#22d3ee;color:#22d3ee}
+</style>
+</head>
+<body>
+<div class="controls">
+  <button class="ctrl" onclick="window.cycleTheme()">Theme</button>
+  <button class="ctrl" onclick="window.toggleLang()">EN/中</button>
+</div>
+<div class="page">
+  <div class="hdr">
+    <div class="pulse"></div>
+    <div>
+      <h1><span class="lz">压缩 vs 缓存决策树</span><span class="le">Compression vs Cache Decision Tree</span></h1>
+      <p class="subtitle"><span class="lz">Context 超阈值后六层递进压缩策略 · 越激进压缩缓存命中率损耗越大</span><span class="le">6-layer escalating compression strategy · Aggressive compression costs cache hit rate</span></p>
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <svg viewBox="0 0 960 660" width="100%" style="display:block" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Grid pattern -->
+        <pattern id="g26" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" class="grid-line" stroke-width="0.5"/>
+        </pattern>
+
+        <!-- Arrow markers -->
+        <marker id="arr-e" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="#34d399"/>
+        </marker>
+        <marker id="arr-a" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="#fbbf24"/>
+        </marker>
+        <marker id="arr-o" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="#f97316"/>
+        </marker>
+        <marker id="arr-r" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="#fb7185"/>
+        </marker>
+        <marker id="arr-s" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="#64748b"/>
+        </marker>
+
+        <!-- Scale gradient: emerald top → rose bottom -->
+        <linearGradient id="scaleGrad" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#34d399"/>
+          <stop offset="40%" stop-color="#fbbf24"/>
+          <stop offset="70%" stop-color="#f97316"/>
+          <stop offset="100%" stop-color="#fb7185"/>
+        </linearGradient>
+
+        <!-- Drop shadow for root node -->
+        <filter id="glow26"><feDropShadow stdDeviation="4" flood-color="#22d3ee" flood-opacity="0.35"/></filter>
+      </defs>
+
+      <!-- Background -->
+      <rect width="960" height="660" class="svg-bg"/>
+      <rect width="960" height="660" fill="url(#g26)"/>
+
+      <!-- ═══════════════════════════════════════════
+           LEFT SCALE: 缓存命中率 / Cache Hit Rate
+           x=20-65, y=80-580
+      ═══════════════════════════════════════════ -->
+
+      <!-- Scale gradient bar -->
+      <rect x="35" y="100" width="10" height="440" rx="5" fill="url(#scaleGrad)" opacity="0.9"/>
+
+      <!-- Scale border -->
+      <rect x="35" y="100" width="10" height="440" rx="5" fill="none" stroke="rgba(148,163,184,0.2)" stroke-width="1"/>
+
+      <!-- Tick marks and labels -->
+      <!-- 95% at y=120 -->
+      <line x1="30" y1="120" x2="50" y2="120" stroke="#34d399" stroke-width="1.5"/>
+      <text x="28" y="124" fill="#34d399" font-size="10" font-weight="600" text-anchor="end" font-family="JetBrains Mono,monospace">95%</text>
+
+      <!-- 70% at y=220 -->
+      <line x1="30" y1="220" x2="50" y2="220" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="28" y="224" fill="#fbbf24" font-size="10" font-weight="600" text-anchor="end" font-family="JetBrains Mono,monospace">70%</text>
+
+      <!-- 40% at y=340 -->
+      <line x1="30" y1="340" x2="50" y2="340" stroke="#f97316" stroke-width="1.5"/>
+      <text x="28" y="344" fill="#f97316" font-size="10" font-weight="600" text-anchor="end" font-family="JetBrains Mono,monospace">40%</text>
+
+      <!-- 10% at y=490 -->
+      <line x1="30" y1="490" x2="50" y2="490" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="28" y="494" fill="#fb7185" font-size="10" font-weight="600" text-anchor="end" font-family="JetBrains Mono,monospace">10%</text>
+
+      <!-- Rotated label -->
+      <text transform="rotate(-90,18,320)" x="18" y="320" fill="#64748b" font-size="10" font-weight="500" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">缓存命中率</tspan><tspan class="le">Cache Hit Rate</tspan>
+      </text>
+
+      <!-- ═══════════════════════════════════════════
+           ROOT NODE (y=28-72, center x=480)
+      ═══════════════════════════════════════════ -->
+      <rect x="340" y="28" width="280" height="44" rx="10" class="node-bg" filter="url(#glow26)"/>
+      <rect x="340" y="28" width="280" height="44" rx="10" fill="rgba(34,211,238,0.08)" stroke="#22d3ee" stroke-width="1.5"/>
+      <text x="480" y="47" class="node-title" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">当前 Context 状态</tspan><tspan class="le">Current Context State</tspan>
+      </text>
+      <text x="480" y="63" class="node-meta" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">监控使用率 → 触发决策</tspan><tspan class="le">Monitor usage → Trigger decision</tspan>
+      </text>
+
+      <!-- Arrow root → D1 -->
+      <line x1="480" y1="72" x2="480" y2="103" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr-s)"/>
+
+      <!-- ═══════════════════════════════════════════
+           D1 DIAMOND: 使用率超过阈值？ center(480,140) hw=70 hh=35
+      ═══════════════════════════════════════════ -->
+      <!-- Diamond shape: top, right, bottom, left -->
+      <polygon points="480,105 550,140 480,175 410,140" class="node-bg"/>
+      <polygon points="480,105 550,140 480,175 410,140" fill="rgba(251,191,36,0.08)" stroke="#fbbf24" stroke-width="2"/>
+      <text x="480" y="136" fill="#fbbf24" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">使用率超过阈值？</tspan><tspan class="le">Above Threshold?</tspan>
+      </text>
+      <text x="480" y="151" fill="#fbbf24" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace" opacity="0.75">token usage</text>
+
+      <!-- D1 → Left (No) → GREEN leaf -->
+      <line x1="410" y1="140" x2="322" y2="140" stroke="#34d399" stroke-width="1.5" marker-end="url(#arr-e)"/>
+      <!-- "No" label -->
+      <rect x="350" y="128" width="28" height="14" rx="3" class="node-bg"/>
+      <text x="364" y="139" fill="#34d399" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">No</text>
+
+      <!-- D1 → Down (Yes) arrow label -->
+      <rect x="468" y="178" width="24" height="14" rx="3" class="node-bg"/>
+      <text x="480" y="189" fill="#fbbf24" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">Yes</text>
+      <line x1="480" y1="175" x2="480" y2="213" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arr-a)"/>
+
+      <!-- GREEN LEAF: 不压缩 x=200-320, y=100-175 -->
+      <rect x="200" y="102" width="120" height="75" rx="8" class="node-bg"/>
+      <rect x="200" y="102" width="120" height="75" rx="8" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/>
+      <text x="260" y="124" fill="#34d399" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">不压缩</tspan><tspan class="le">No Compress</tspan>
+      </text>
+      <text x="260" y="140" fill="#34d399" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace" opacity="0.85">No Compression</text>
+      <text x="260" y="158" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">缓存影响 0%</tspan><tspan class="le">Cache impact 0%</tspan>
+      </text>
+      <text x="260" y="171" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Token节省 0%</tspan><tspan class="le">Token saved 0%</tspan>
+      </text>
+
+      <!-- ═══════════════════════════════════════════
+           D2 DIAMOND: 轻量压缩足够？ center(480,250) hw=70 hh=35
+      ═══════════════════════════════════════════ -->
+      <polygon points="480,215 550,250 480,285 410,250" class="node-bg"/>
+      <polygon points="480,215 550,250 480,285 410,250" fill="rgba(251,191,36,0.08)" stroke="#fbbf24" stroke-width="2"/>
+      <text x="480" y="246" fill="#fbbf24" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">轻量压缩足够？</tspan><tspan class="le">Light Compression OK?</tspan>
+      </text>
+      <text x="480" y="261" fill="#fbbf24" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace" opacity="0.75">L1-L3</text>
+
+      <!-- D2 → Right (Yes) → YELLOW leaf -->
+      <line x1="550" y1="250" x2="598" y2="250" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arr-a)"/>
+      <rect x="554" y="238" width="38" height="14" rx="3" class="node-bg"/>
+      <text x="573" y="249" fill="#fbbf24" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">Yes</text>
+
+      <!-- D2 → Down (No) label -->
+      <rect x="468" y="288" width="24" height="14" rx="3" class="node-bg"/>
+      <text x="480" y="299" fill="#fbbf24" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">No</text>
+      <line x1="480" y1="285" x2="480" y2="338" stroke="#f97316" stroke-width="1.5" marker-end="url(#arr-o)"/>
+
+      <!-- YELLOW LEAF: Layer 1-3 轻量压缩 x=600-770, y=215-287 -->
+      <rect x="600" y="215" width="170" height="72" rx="8" class="node-bg"/>
+      <rect x="600" y="215" width="170" height="72" rx="8" fill="rgba(251,191,36,0.12)" stroke="#fbbf24" stroke-width="1.5"/>
+      <text x="685" y="237" fill="#fbbf24" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Layer 1-3 轻量压缩</tspan><tspan class="le">L1-3 Light Compress</tspan>
+      </text>
+      <text x="685" y="251" fill="#fbbf24" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace" opacity="0.85">Light Compression</text>
+      <text x="685" y="268" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">缓存影响 20-30%</tspan><tspan class="le">Cache impact 20-30%</tspan>
+      </text>
+      <text x="685" y="281" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Token节省 10-25%</tspan><tspan class="le">Token saved 10-25%</tspan>
+      </text>
+
+      <!-- ═══════════════════════════════════════════
+           D3 DIAMOND: 需要重度压缩？ center(480,375) hw=70 hh=35
+      ═══════════════════════════════════════════ -->
+      <polygon points="480,340 550,375 480,410 410,375" class="node-bg"/>
+      <polygon points="480,340 550,375 480,410 410,375" fill="rgba(249,115,22,0.08)" stroke="#f97316" stroke-width="2"/>
+      <text x="480" y="371" fill="#f97316" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">需要重度压缩？</tspan><tspan class="le">Heavy Compression?</tspan>
+      </text>
+      <text x="480" y="386" fill="#f97316" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace" opacity="0.75">L4-L5</text>
+
+      <!-- D3 → Right (Yes) → ORANGE leaf -->
+      <line x1="550" y1="375" x2="598" y2="375" stroke="#f97316" stroke-width="1.5" marker-end="url(#arr-o)"/>
+      <rect x="554" y="363" width="38" height="14" rx="3" class="node-bg"/>
+      <text x="573" y="374" fill="#f97316" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">Yes</text>
+
+      <!-- D3 → Down (No) label -->
+      <rect x="468" y="413" width="24" height="14" rx="3" class="node-bg"/>
+      <text x="480" y="424" fill="#f97316" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">No</text>
+      <line x1="480" y1="410" x2="480" y2="453" stroke="#fb7185" stroke-width="1.5" marker-end="url(#arr-r)"/>
+
+      <!-- ORANGE LEAF: Layer 4-5 重度压缩 x=600-770, y=340-412 -->
+      <rect x="600" y="340" width="170" height="72" rx="8" class="node-bg"/>
+      <rect x="600" y="340" width="170" height="72" rx="8" fill="rgba(249,115,22,0.10)" stroke="#f97316" stroke-width="1.5"/>
+      <text x="685" y="362" fill="#f97316" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Layer 4-5 重度压缩</tspan><tspan class="le">L4-5 Heavy Compress</tspan>
+      </text>
+      <text x="685" y="376" fill="#f97316" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace" opacity="0.85">Heavy Compression</text>
+      <text x="685" y="393" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">缓存影响 60-80%</tspan><tspan class="le">Cache impact 60-80%</tspan>
+      </text>
+      <text x="685" y="406" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Token节省 30-50%</tspan><tspan class="le">Token saved 30-50%</tspan>
+      </text>
+
+      <!-- ═══════════════════════════════════════════
+           D4 DIAMOND: 遇到 413 错误？ center(480,490) hw=70 hh=35
+      ═══════════════════════════════════════════ -->
+      <polygon points="480,455 550,490 480,525 410,490" class="node-bg"/>
+      <polygon points="480,455 550,490 480,525 410,490" fill="rgba(251,113,133,0.08)" stroke="#fb7185" stroke-width="2"/>
+      <text x="480" y="486" fill="#fb7185" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">遇到 413 错误？</tspan><tspan class="le">413 Error?</tspan>
+      </text>
+      <text x="480" y="501" fill="#fb7185" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace" opacity="0.75">payload too large</text>
+
+      <!-- D4 → Right (Yes) → RED leaf -->
+      <line x1="550" y1="490" x2="598" y2="490" stroke="#fb7185" stroke-width="1.5" marker-end="url(#arr-r)"/>
+      <rect x="554" y="478" width="38" height="14" rx="3" class="node-bg"/>
+      <text x="573" y="489" fill="#fb7185" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">Yes</text>
+
+      <!-- D4 → Down (No) label -->
+      <rect x="468" y="527" width="24" height="14" rx="3" class="node-bg"/>
+      <text x="480" y="538" fill="#64748b" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">No</text>
+      <line x1="480" y1="525" x2="480" y2="558" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr-s)"/>
+
+      <!-- RED LEAF: Layer 6 紧急压缩 x=600-770, y=455-527 -->
+      <rect x="600" y="455" width="170" height="72" rx="8" class="node-bg"/>
+      <rect x="600" y="455" width="170" height="72" rx="8" fill="rgba(251,113,133,0.10)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="685" y="477" fill="#fb7185" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Layer 6 紧急压缩</tspan><tspan class="le">L6 Emergency Compact</tspan>
+      </text>
+      <text x="685" y="491" fill="#fb7185" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace" opacity="0.85">Emergency Compact</text>
+      <text x="685" y="508" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">缓存影响 95%+</tspan><tspan class="le">Cache impact 95%+</tspan>
+      </text>
+      <text x="685" y="521" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Token节省 50%+</tspan><tspan class="le">Token saved 50%+</tspan>
+      </text>
+
+      <!-- END NODE: 正常继续 y=558-590 -->
+      <rect x="420" y="558" width="120" height="34" rx="8" class="node-bg"/>
+      <rect x="420" y="558" width="120" height="34" rx="8" fill="rgba(148,163,184,0.1)" stroke="#64748b" stroke-width="1.5"/>
+      <text x="480" y="572" fill="#94a3b8" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">正常继续</tspan><tspan class="le">Continue</tspan>
+      </text>
+      <text x="480" y="585" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">Normal End</text>
+
+      <!-- ═══════════════════════════════════════════
+           RIGHT SIDEBAR: 六层递进压缩 x=830-960
+      ═══════════════════════════════════════════ -->
+
+      <!-- Sidebar title -->
+      <text x="895" y="88" fill="#94a3b8" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">六层递进压缩</tspan><tspan class="le">6-Layer Escalation</tspan>
+      </text>
+
+      <!-- Dashed connector line -->
+      <line x1="830" y1="100" x2="830" y2="310" stroke="#334155" stroke-width="1" stroke-dasharray="4,4"/>
+
+      <!-- L1 applyToolResultBudget — amber, y=100 -->
+      <rect x="832" y="100" width="122" height="28" rx="5" fill="rgba(251,191,36,0.12)" stroke="#fbbf24" stroke-width="1"/>
+      <text x="843" y="114" fill="#fbbf24" font-size="10" font-weight="600" font-family="JetBrains Mono,monospace">L1</text>
+      <text x="858" y="114" fill="#fbbf24" font-size="10" font-family="JetBrains Mono,monospace">applyToolResult</text>
+      <text x="858" y="124" fill="#fbbf24" font-size="10" font-family="JetBrains Mono,monospace" opacity="0.75">Budget</text>
+
+      <!-- L2 snipCompact — amber, y=135 -->
+      <rect x="836" y="135" width="118" height="28" rx="5" fill="rgba(251,191,36,0.10)" stroke="#fbbf24" stroke-width="1" opacity="0.85"/>
+      <text x="847" y="149" fill="#fbbf24" font-size="10" font-weight="600" font-family="JetBrains Mono,monospace">L2</text>
+      <text x="862" y="149" fill="#fbbf24" font-size="10" font-family="JetBrains Mono,monospace">snipCompact</text>
+      <text x="862" y="159" fill="#fbbf24" font-size="10" font-family="JetBrains Mono,monospace" opacity="0.75">snippet trim</text>
+
+      <!-- L3 microcompact — amber, y=170 -->
+      <rect x="840" y="170" width="114" height="28" rx="5" fill="rgba(251,191,36,0.08)" stroke="#fbbf24" stroke-width="1" opacity="0.8"/>
+      <text x="851" y="184" fill="#fbbf24" font-size="10" font-weight="600" font-family="JetBrains Mono,monospace">L3</text>
+      <text x="866" y="184" fill="#fbbf24" font-size="10" font-family="JetBrains Mono,monospace">microcompact</text>
+      <text x="866" y="194" fill="#fbbf24" font-size="10" font-family="JetBrains Mono,monospace" opacity="0.75">micro trim</text>
+
+      <!-- L4 applyCollapses — orange, y=205 -->
+      <rect x="844" y="205" width="110" height="28" rx="5" fill="rgba(249,115,22,0.10)" stroke="#f97316" stroke-width="1"/>
+      <text x="855" y="219" fill="#f97316" font-size="10" font-weight="600" font-family="JetBrains Mono,monospace">L4</text>
+      <text x="870" y="219" fill="#f97316" font-size="10" font-family="JetBrains Mono,monospace">applyCollapses</text>
+      <text x="870" y="229" fill="#f97316" font-size="10" font-family="JetBrains Mono,monospace" opacity="0.75">block collapse</text>
+
+      <!-- L5 autocompact — orange, y=240 -->
+      <rect x="848" y="240" width="106" height="28" rx="5" fill="rgba(249,115,22,0.08)" stroke="#f97316" stroke-width="1" opacity="0.85"/>
+      <text x="859" y="254" fill="#f97316" font-size="10" font-weight="600" font-family="JetBrains Mono,monospace">L5</text>
+      <text x="874" y="254" fill="#f97316" font-size="10" font-family="JetBrains Mono,monospace">autocompact</text>
+      <text x="874" y="264" fill="#f97316" font-size="10" font-family="JetBrains Mono,monospace" opacity="0.75">auto summarize</text>
+
+      <!-- L6 reactiveCompact — rose, y=275 -->
+      <rect x="852" y="275" width="102" height="28" rx="5" fill="rgba(251,113,133,0.10)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="863" y="289" fill="#fb7185" font-size="10" font-weight="600" font-family="JetBrains Mono,monospace">L6</text>
+      <text x="878" y="289" fill="#fb7185" font-size="10" font-family="JetBrains Mono,monospace">reactive</text>
+      <text x="878" y="299" fill="#fb7185" font-size="10" font-family="JetBrains Mono,monospace" opacity="0.8">Compact ⚡</text>
+
+      <!-- Sidebar divider -->
+      <line x1="820" y1="92" x2="958" y2="92" stroke="#334155" stroke-width="0.5" stroke-dasharray="3,3"/>
+
+      <!-- Section label: Light -->
+      <text x="818" y="132" fill="#64748b" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">轻量</tspan><tspan class="le">Light</tspan>
+      </text>
+      <!-- Section bracket light -->
+      <line x1="821" y1="103" x2="821" y2="195" stroke="#fbbf24" stroke-width="1.5" opacity="0.5"/>
+
+      <!-- Section label: Heavy -->
+      <text x="818" y="230" fill="#64748b" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">重度</tspan><tspan class="le">Heavy</tspan>
+      </text>
+      <!-- Section bracket heavy -->
+      <line x1="821" y1="208" x2="821" y2="265" stroke="#f97316" stroke-width="1.5" opacity="0.5"/>
+
+      <!-- Section label: Emergency -->
+      <text x="818" y="295" fill="#64748b" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">紧急</tspan><tspan class="le">Emerg</tspan>
+      </text>
+      <!-- Section bracket emergency -->
+      <line x1="821" y1="278" x2="821" y2="300" stroke="#fb7185" stroke-width="1.5" opacity="0.5"/>
+
+      <!-- ═══════════════════════════════════════════
+           DIVIDER LINE center ↔ right sidebar
+      ═══════════════════════════════════════════ -->
+      <line x1="790" y1="80" x2="790" y2="580" stroke="#1e293b" stroke-width="1" stroke-dasharray="6,6"/>
+
+    </svg>
+  </div>
+
+  <!-- Bottom 3 summary cards -->
+  <div class="cards">
+    <div class="card">
+      <div class="card-hdr">
+        <div class="dot" style="background:#34d399"></div>
+        <h3><span class="lz">95%→0% 缓存命中率谱系</span><span class="le">95%→0% Cache Hit Spectrum</span></h3>
+      </div>
+      <p class="lz">越激进的压缩策略，缓存命中率损耗越大。不压缩时完整保留缓存；Layer 6 紧急压缩后缓存几乎归零。</p>
+      <p class="le">More aggressive compression = greater cache hit rate loss. No compression preserves full cache; L6 emergency compact nearly resets it.</p>
+    </div>
+    <div class="card">
+      <div class="card-hdr">
+        <div class="dot" style="background:#fbbf24"></div>
+        <h3><span class="lz">6层递进策略</span><span class="le">6-Layer Escalation</span></h3>
+      </div>
+      <p class="lz">L1-L3 轻量（applyToolResultBudget / snipCompact / microcompact）→ L4-L5 重度（applyCollapses / autocompact）→ L6 紧急（reactiveCompact）。</p>
+      <p class="le">L1-L3 light (applyToolResultBudget / snipCompact / microcompact) → L4-L5 heavy (applyCollapses / autocompact) → L6 emergency (reactiveCompact).</p>
+    </div>
+    <div class="card">
+      <div class="card-hdr">
+        <div class="dot" style="background:#fb7185"></div>
+        <h3><span class="lz">413 错误 = 最后防线</span><span class="le">413 Error = Last Resort</span></h3>
+      </div>
+      <p class="lz">HTTP 413 Payload Too Large 是触发 reactiveCompact 的强制信号，此时系统强制最激进压缩以恢复可用性，缓存损耗不可避免。</p>
+      <p class="le">HTTP 413 Payload Too Large forces reactiveCompact — the system applies maximum compression to restore usability. Cache loss is unavoidable.</p>
+    </div>
+  </div>
+
+  <footer>
+    <span class="lz">VIS-2A-026 · 压缩 vs 缓存决策树 · Claude Code 白皮书 · 2026</span>
+    <span class="le">VIS-2A-026 · Compression vs Cache Decision Tree · Claude Code Whitepaper · 2026</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var themes = ['dark','warm','light'];
+  var ti = 0;
+  try{
+    var _t = localStorage.getItem('vtheme');
+    var _i = themes.indexOf(_t);
+    if(_i>=0){ ti = _i; document.documentElement.setAttribute('data-theme', themes[ti]); }
+  }catch(e){}
+  window.cycleTheme = function(){
+    ti = (ti+1)%themes.length;
+    document.documentElement.setAttribute('data-theme', themes[ti]);
+    try{ localStorage.setItem('vtheme', themes[ti]); }catch(e){}
+  };
+  window.toggleLang = function(){
+    var html = document.documentElement;
+    var next = html.lang === 'zh' ? 'en' : 'zh';
+    html.lang = next;
+    document.querySelectorAll('.lz').forEach(function(e){ e.style.display = next==='en'?'none':''; if(e.tagName==='text'||e.closest('svg')) e.setAttribute('display', next==='en'?'none':''); });
+    document.querySelectorAll('.le').forEach(function(e){ e.style.display = next==='en'?'':'none'; if(e.tagName==='text'||e.closest('svg')) e.setAttribute('display', next==='en'?'':'none'); });
+    try{ localStorage.setItem('vlang', next); }catch(e){}
+  };
+  try{
+    var _l = localStorage.getItem('vlang');
+    if(_l==='en') window.toggleLang();
+  }catch(e){}
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

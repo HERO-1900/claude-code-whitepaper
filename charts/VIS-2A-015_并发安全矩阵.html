@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<!--
+  VIS-2A-015 · 并发安全矩阵 · Concurrent Safety Matrix
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  8×8 工具并发安全矩阵 · 数据来自源码 isConcurrencySafe 声明
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · 并发安全矩阵</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    :root {
+      --bg: #020617;
+      --panel: #0f172a;
+      --card: #0f172a;
+      --border: #1e293b;
+      --text: #e2e8f0;
+      --muted: #64748b;
+    }
+    [data-theme="warm"] {
+      --bg: #f8f6f3;
+      --panel: #ffffff;
+      --card: #faf9f7;
+      --border: #e2d9cc;
+      --text: #1c1917;
+      --muted: #78716c;
+    }
+    [data-theme="light"] {
+      --bg: #ffffff;
+      --panel: #f8fafc;
+      --card: #f8fafc;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+    }
+
+    /* Semantic cell colors — fixed regardless of theme */
+    .cell-safe-ro  { background: rgba(13,59,46,0.9);  color: #2dd4a8; border: 1px solid #1a7f5e; }
+    .cell-safe-mix { background: rgba(13,59,46,0.5);  color: #5ee9c0; border: 1px solid #1a7f5e; }
+    .cell-unsafe   { background: rgba(59,13,21,0.9);  color: #ff4d6d; border: 1px solid #a61e3b; }
+    .cell-diag     { background: rgba(42,47,63,0.8);  color: #6b7280; border: 1px solid #3a4055; }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 28px 40px;
+      transition: background .3s, color .3s;
+    }
+
+    /* ── Toggle Controls ──────────────────────────── */
+    .ctrl {
+      position: fixed; top: 16px; right: 16px; z-index: 999;
+      display: flex; gap: 6px; align-items: center;
+      background: rgba(15,23,42,0.92);
+      border: 1px solid rgba(34,211,238,0.2);
+      border-radius: 10px; padding: 7px 10px;
+      backdrop-filter: blur(12px);
+    }
+    [data-theme="warm"] .ctrl { background: rgba(255,255,255,0.95); border-color: rgba(8,145,178,0.25); }
+    [data-theme="light"] .ctrl { background: rgba(248,250,252,0.95); border-color: rgba(14,165,233,0.2); }
+    .ctrl button {
+      background: none; border: none; cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 600;
+      color: var(--muted); padding: 4px 8px; border-radius: 6px; transition: all .2s;
+    }
+    .ctrl button:hover { color: #22d3ee; }
+    .ctrl-sep { width: 1px; height: 16px; background: var(--border); margin: 0 2px; }
+
+    /* ── Header ───────────────────────────────────── */
+    .vis-header {
+      margin-bottom: 24px; padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 14px;
+    }
+    .pulse {
+      width: 11px; height: 11px; border-radius: 50%;
+      background: #a855f7;
+      box-shadow: 0 0 8px #a855f7;
+      animation: pulse-anim 2s infinite; flex-shrink: 0;
+    }
+    @keyframes pulse-anim {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: .45; transform: scale(.82); }
+    }
+    .vis-header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.4px; }
+    .vis-header .sub { color: var(--muted); font-size: 12px; margin-top: 5px; }
+
+    /* ── Matrix Wrapper ───────────────────────────── */
+    .svg-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 20px;
+      overflow-x: auto;
+      margin-bottom: 16px;
+    }
+
+    /* ── Matrix Table ─────────────────────────────── */
+    .matrix-table {
+      border-collapse: separate;
+      border-spacing: 5px;
+      margin: 0 auto;
+    }
+
+    /* Header cells (column / row labels) */
+    .th-corner {
+      width: 80px; height: 72px;
+      background: transparent;
+    }
+    .th-col {
+      width: 80px; min-width: 80px; height: 72px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-align: center;
+      vertical-align: middle;
+      padding: 6px 4px;
+    }
+    .th-row {
+      width: 80px; min-width: 80px; height: 72px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-align: center;
+      vertical-align: middle;
+      padding: 6px 4px;
+    }
+    .th-tool-name {
+      font-size: 12px; font-weight: 700;
+      color: var(--text);
+      display: block; margin-bottom: 4px;
+    }
+    .th-tool-sub {
+      font-size: 10px; color: var(--muted);
+      display: block; margin-bottom: 5px;
+      line-height: 1.3;
+    }
+    .badge-safe   { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 6px; background: rgba(13,59,46,0.6); color: #2dd4a8; }
+    .badge-unsafe { display: inline-block; font-size: 10px; font-weight: 600; padding: 2px 6px; border-radius: 6px; background: rgba(59,13,21,0.6); color: #ff4d6d; }
+
+    /* Data cells */
+    .matrix-table td.cell-safe-ro,
+    .matrix-table td.cell-safe-mix,
+    .matrix-table td.cell-unsafe,
+    .matrix-table td.cell-diag {
+      width: 80px; min-width: 80px; height: 72px;
+      text-align: center; vertical-align: middle;
+      font-size: 12px; font-weight: 700;
+      border-radius: 8px;
+      cursor: default;
+      transition: filter .15s;
+      line-height: 1.3;
+    }
+    .matrix-table td.cell-safe-ro:hover,
+    .matrix-table td.cell-safe-mix:hover,
+    .matrix-table td.cell-unsafe:hover {
+      filter: brightness(1.15);
+    }
+
+    /* ── Rule Box ─────────────────────────────────── */
+    .rule-box {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-left: 3px solid #a855f7;
+      border-radius: 10px;
+      padding: 16px 20px;
+      margin-bottom: 16px;
+    }
+    .rule-title {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.07em; text-transform: uppercase;
+      color: var(--muted); margin-bottom: 10px;
+    }
+    .rule-box ul { list-style: none; }
+    .rule-box ul li {
+      font-size: 12px; color: var(--muted);
+      line-height: 1.8; margin-bottom: 2px;
+    }
+    .rule-box ul li strong { color: var(--text); }
+
+    /* ── Info Cards ───────────────────────────────── */
+    .info-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+    @media (max-width: 900px) { .info-cards { grid-template-columns: 1fr; } }
+    .info-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 16px;
+    }
+    .info-card-title {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 700;
+      margin-bottom: 8px;
+    }
+    .dot {
+      width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+    }
+    .dot-emerald { background: #2dd4a8; box-shadow: 0 0 5px #2dd4a8; }
+    .dot-violet  { background: #a855f7; box-shadow: 0 0 5px #a855f7; }
+    .dot-rose    { background: #ff4d6d; box-shadow: 0 0 5px #ff4d6d; }
+    .info-card-body { font-size: 11px; color: var(--muted); line-height: 1.75; }
+
+    /* ── Footer ───────────────────────────────────── */
+    .footer {
+      margin-top: 16px; padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between;
+      font-size: 10px; color: var(--muted);
+    }
+
+</style>
+</head>
+<body>
+
+<!-- Theme + Lang Toggle -->
+<div class="ctrl">
+  <button onclick="cycleTheme()"><span class="lz">主题</span><span class="le">Theme</span></button>
+  <div class="ctrl-sep"></div>
+  <button onclick="toggleLang()">中·EN</button>
+</div>
+
+<!-- Header -->
+<div class="vis-header">
+  <div class="pulse"></div>
+  <div>
+    <h1>
+      <span class="lz">并发安全矩阵</span>
+      <span class="le">Concurrent Safety Matrix</span>
+    </h1>
+    <div class="sub">
+      <span class="lz">VIS-2A-015 · 8×8 工具并发安全矩阵 · 数据来自源码 isConcurrencySafe 声明</span>
+      <span class="le">VIS-2A-015 · 8×8 Tool Concurrent Safety Matrix · Data from isConcurrencySafe declarations</span>
+    </div>
+  </div>
+</div>
+
+<!-- Matrix -->
+<div class="svg-wrap">
+  <table class="matrix-table" id="matrix">
+    <!-- JS will generate rows here -->
+  </table>
+</div>
+
+<!-- Rule Box -->
+<div class="rule-box">
+  <div class="rule-title">
+    <span class="lz">核心规则</span>
+    <span class="le">Core Rules</span>
+  </div>
+  <ul>
+    <li>• <span class="lz">两个 <strong>isConcurrencySafe=true</strong> 的工具可以并行执行</span><span class="le">Two tools with <strong>isConcurrencySafe=true</strong> can execute in parallel</span></li>
+    <li>• <span class="lz">只要一方为 <strong>isConcurrencySafe=false</strong>，整个组合必须串行</span><span class="le">If either tool has <strong>isConcurrencySafe=false</strong>, the pair must be serial</span></li>
+    <li>• <span class="lz">系统信任工具自身的声明；声明错误可能导致竞态条件</span><span class="le">System trusts the tool's own declaration; wrong declaration may cause race conditions</span></li>
+  </ul>
+</div>
+
+<!-- Info Cards -->
+<div class="info-cards">
+  <div class="info-card">
+    <div class="info-card-title">
+      <div class="dot dot-emerald"></div>
+      <span class="lz">只读工具组合</span>
+      <span class="le">Read-only Combos</span>
+    </div>
+    <div class="info-card-body">
+      <span class="lz">Read / Glob / Grep 互相之间均可并行，3×3 = 9 个组合全部安全，isConcurrencySafe=true</span>
+      <span class="le">Read / Glob / Grep can all run in parallel with each other — all 9 combinations (3×3) are safe, isConcurrencySafe=true</span>
+    </div>
+  </div>
+  <div class="info-card">
+    <div class="info-card-title">
+      <div class="dot dot-violet"></div>
+      <span class="lz">混合安全组合</span>
+      <span class="le">Mixed-safe Combos</span>
+    </div>
+    <div class="info-card-body">
+      <span class="lz">Agent 与只读工具可并行，Agent 本身声明了 isConcurrencySafe=true，但不属于纯只读类型</span>
+      <span class="le">Agent can run in parallel with read-only tools — it declares isConcurrencySafe=true but is not strictly read-only</span>
+    </div>
+  </div>
+  <div class="info-card">
+    <div class="info-card-title">
+      <div class="dot dot-rose"></div>
+      <span class="lz">必须串行</span>
+      <span class="le">Must Be Serial</span>
+    </div>
+    <div class="info-card-body">
+      <span class="lz">任何涉及 Edit / Write / NBEdit / Bash 的组合都必须串行执行，这四个工具声明了 isConcurrencySafe=false</span>
+      <span class="le">Any combination involving Edit / Write / NBEdit / Bash must execute serially — these four tools declare isConcurrencySafe=false</span>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <span><span class="lz">VIS-2A-015 · CC 白皮书 v2 · 并发安全矩阵</span><span class="le">VIS-2A-015 · CC Whitepaper v2 · Concurrent Safety Matrix</span></span>
+  <span>Claude Code 2.1.88 · isConcurrencySafe declarations</span>
+</div>
+
+<script>
+// ── Matrix Data ──────────────────────────────────────────
+var TOOLS = [
+  { name: "Read",   safe: true,  readonly: true,  zh: "读取文件",   en: "Read file" },
+  { name: "Glob",   safe: true,  readonly: true,  zh: "文件匹配",   en: "File glob" },
+  { name: "Grep",   safe: true,  readonly: true,  zh: "内容搜索",   en: "Content search" },
+  { name: "Agent",  safe: true,  readonly: false, zh: "子 Agent",   en: "Sub-agent" },
+  { name: "Edit",   safe: false, readonly: false, zh: "编辑文件",   en: "Edit file" },
+  { name: "Write",  safe: false, readonly: false, zh: "写入文件",   en: "Write file" },
+  { name: "NBEdit", safe: false, readonly: false, zh: "NB 编辑",    en: "Notebook edit" },
+  { name: "Bash",   safe: false, readonly: false, zh: "Shell 命令", en: "Shell cmd" }
+];
+
+function cellClass(a, b) {
+  if (a === b) return 'cell-diag';
+  if (!TOOLS[a].safe || !TOOLS[b].safe) return 'cell-unsafe';
+  if (TOOLS[a].readonly && TOOLS[b].readonly) return 'cell-safe-ro';
+  return 'cell-safe-mix';
+}
+
+function buildMatrix() {
+  var table = document.getElementById('matrix');
+  var n = TOOLS.length;
+
+  // Header row
+  var thead = document.createElement('thead');
+  var headerRow = document.createElement('tr');
+
+  // Corner cell
+  var corner = document.createElement('th');
+  corner.className = 'th-corner';
+  headerRow.appendChild(corner);
+
+  // Column headers
+  for (var c = 0; c < n; c++) {
+    var th = document.createElement('th');
+    th.className = 'th-col';
+    var t = TOOLS[c];
+    var badgeClass = t.safe ? 'badge-safe' : 'badge-unsafe';
+    var badgeText  = t.safe ? '✓ safe' : '✗ unsafe';
+    th.innerHTML =
+      '<span class="th-tool-name">' + t.name + '</span>' +
+      '<span class="th-tool-sub lz">' + t.zh + '</span>' +
+      '<span class="th-tool-sub le">' + t.en + '</span>' +
+      '<span class="' + badgeClass + '">' + badgeText + '</span>';
+    headerRow.appendChild(th);
+  }
+  thead.appendChild(headerRow);
+  table.appendChild(thead);
+
+  // Body rows
+  var tbody = document.createElement('tbody');
+  for (var r = 0; r < n; r++) {
+    var tr = document.createElement('tr');
+
+    // Row header
+    var rowTh = document.createElement('th');
+    rowTh.className = 'th-row';
+    var rt = TOOLS[r];
+    var rBadgeClass = rt.safe ? 'badge-safe' : 'badge-unsafe';
+    var rBadgeText  = rt.safe ? '✓ safe' : '✗ unsafe';
+    rowTh.innerHTML =
+      '<span class="th-tool-name">' + rt.name + '</span>' +
+      '<span class="th-tool-sub lz">' + rt.zh + '</span>' +
+      '<span class="th-tool-sub le">' + rt.en + '</span>' +
+      '<span class="' + rBadgeClass + '">' + rBadgeText + '</span>';
+    tr.appendChild(rowTh);
+
+    // Data cells
+    for (var c = 0; c < n; c++) {
+      var td = document.createElement('td');
+      var cls = cellClass(r, c);
+      td.className = cls;
+      if (cls === 'cell-diag') {
+        td.textContent = '—';
+      } else if (cls === 'cell-unsafe') {
+        td.innerHTML = '<span class="lz">✗ 串行</span><span class="le">✗ Serial</span>';
+      } else {
+        td.innerHTML = '<span class="lz">✓ 并行</span><span class="le">✓ Parallel</span>';
+      }
+      tr.appendChild(td);
+    }
+    tbody.appendChild(tr);
+  }
+  table.appendChild(tbody);
+}
+
+buildMatrix();
+</script>
+
+<script>
+// ── Theme + Lang IIFE ────────────────────────────────────
+(function(){
+  var THEMES = ['dark', 'warm', 'light'];
+
+  function applyTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('vtheme', t);
+  }
+
+  function applyLang(l){
+    document.documentElement.setAttribute('data-lang', l);
+    localStorage.setItem('vlang', l);
+  }
+
+  window.cycleTheme = function() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(THEMES[(THEMES.indexOf(cur) + 1) % THEMES.length]);
+  };
+
+  window.toggleLang = function() {
+    var cur = localStorage.getItem('vlang') || 'zh';
+    applyLang(cur === 'zh' ? 'en' : 'zh');
+  };
+
+  var st = localStorage.getItem('vtheme'); if (st) applyTheme(st);
+  var sl = localStorage.getItem('vlang');  if (sl) applyLang(sl);
+})();
+</script>
+
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

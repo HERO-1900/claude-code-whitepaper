@@ -1,0 +1,926 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>VIS-5-002 技术债务分布图 | Technical Debt Distribution Map</title>
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:20px 16px 32px;
+}
+
+/* ── Header ── */
+.header{
+  width:100%;
+  max-width:960px;
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:12px;
+  margin-bottom:16px;
+}
+.header-left{display:flex;flex-direction:column;gap:4px;}
+.chart-id{font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--muted);text-transform:uppercase;}
+.chart-title{font-size:20px;font-weight:700;color:var(--text);line-height:1.3;}
+.chart-subtitle{font-size:13px;color:var(--muted);}
+.controls{display:flex;gap:8px;flex-shrink:0;}
+.btn{
+  padding:6px 14px;
+  border-radius:6px;
+  border:1px solid var(--border);
+  background:var(--card);
+  color:var(--muted);
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+  transition:color .15s,border-color .15s,background .15s;
+}
+.btn:hover{color:var(--text);border-color:var(--amber);background:var(--subtle);}
+
+/* ── Stats row ── */
+.stats-row{
+  width:100%;
+  max-width:960px;
+  display:flex;
+  gap:10px;
+  margin-bottom:14px;
+}
+.stat-chip{
+  flex:1;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:10px 14px;
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+}
+.stat-value{font-size:18px;font-weight:700;color:var(--amber);}
+.stat-label{font-size:11px;color:var(--muted);}
+
+/* ── Main card ── */
+.main-card{
+  width:100%;
+  max-width:960px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:20px;
+  overflow:hidden;
+}
+
+/* ── SVG container ── */
+.svg-wrap{width:100%;overflow:visible;}
+.svg-wrap svg{width:100%;height:auto;display:block;}
+
+/* ── Tooltip ── */
+.tooltip{
+  position:fixed;
+  pointer-events:none;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:10px 14px;
+  font-size:12px;
+  color:var(--text);
+  z-index:999;
+  opacity:0;
+  transition:opacity .15s;
+  max-width:220px;
+  box-shadow:0 8px 24px rgba(0,0,0,.35);
+}
+.tooltip.visible{opacity:1;}
+.tooltip-title{font-weight:700;font-size:13px;margin-bottom:4px;}
+.tooltip-badge{
+  display:inline-block;
+  padding:2px 7px;
+  border-radius:4px;
+  font-size:10px;
+  font-weight:700;
+  letter-spacing:.06em;
+  margin-bottom:6px;
+}
+.badge-red{background:rgba(244,63,94,.18);color:#f43f5e;}
+.badge-yellow{background:rgba(245,158,11,.18);color:#f59e0b;}
+.badge-green{background:rgba(16,185,129,.18);color:#10b981;}
+.tooltip-desc{color:var(--muted);line-height:1.5;}
+
+/* ── Priority list ── */
+.priority-section{
+  width:100%;
+  max-width:960px;
+  margin-top:12px;
+}
+.section-label{
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.09em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:8px;
+}
+.priority-list{display:flex;flex-direction:column;gap:6px;}
+.priority-item{
+  display:flex;
+  align-items:center;
+  gap:12px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:8px;
+  padding:10px 14px;
+  border-left:3px solid;
+}
+.priority-item.p1{border-left-color:#f43f5e;}
+.priority-item.p2{border-left-color:#f59e0b;}
+.priority-item.p3{border-left-color:#f97316;}
+.priority-rank{
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.05em;
+  color:var(--muted);
+  width:20px;
+  flex-shrink:0;
+}
+.priority-name{font-size:13px;font-weight:600;color:var(--text);flex:1;}
+.priority-tag{
+  font-size:11px;
+  color:var(--muted);
+  background:var(--subtle);
+  border-radius:4px;
+  padding:2px 7px;
+}
+.priority-effort{
+  font-size:11px;
+  font-weight:600;
+  color:var(--amber);
+  flex-shrink:0;
+}
+
+/* ── Footer ── */
+.footer{
+  margin-top:16px;
+  font-size:11px;
+  color:var(--muted);
+  text-align:center;
+}
+
+/* Light mode SVG overrides via CSS variables */
+[data-theme="light"] .axis-line{stroke:rgba(0,0,0,.15);}
+[data-theme="light"] .axis-label{fill:#64748b;}
+[data-theme="light"] .grid-line{stroke:rgba(0,0,0,.06);}
+[data-theme="light"] .axis-arrow{fill:rgba(0,0,0,.2);}
+</style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+  <div class="header-left">
+    <div class="chart-id">VIS-5-002</div>
+    <div class="chart-title">
+      <span class="lz">技术债务分布图</span>
+      <span class="le" style="display:none">Technical Debt Distribution Map</span>
+    </div>
+    <div class="chart-subtitle">
+      <span class="lz">Claude Code 架构模块债务评估 · 11 模块全量分析</span>
+      <span class="le" style="display:none">Debt assessment across Claude Code architecture · 11 modules analyzed</span>
+    </div>
+  </div>
+  <div class="controls">
+    <button class="btn" onclick="cycleTheme()">🎨 Theme</button>
+    <button class="btn" onclick="toggleLang()">
+      <span class="lz">EN</span><span class="le" style="display:none">中文</span>
+    </button>
+  </div>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-row">
+  <div class="stat-chip">
+    <div class="stat-value">11</div>
+    <div class="stat-label">
+      <span class="lz">模块分析</span>
+      <span class="le" style="display:none">Modules Analyzed</span>
+    </div>
+  </div>
+  <div class="stat-chip">
+    <div class="stat-value" style="color:var(--orange)">70/100</div>
+    <div class="stat-label">
+      <span class="lz">债务评分</span>
+      <span class="le" style="display:none">Debt Score</span>
+    </div>
+  </div>
+  <div class="stat-chip">
+    <div class="stat-value" style="color:var(--rose)">3</div>
+    <div class="stat-label">
+      <span class="lz">项优先修复</span>
+      <span class="le" style="display:none">Priority Fixes</span>
+    </div>
+  </div>
+  <div class="stat-chip">
+    <div class="stat-value" style="color:var(--rose)">35%</div>
+    <div class="stat-label">
+      <span class="lz">高债务占比</span>
+      <span class="le" style="display:none">High Debt Share</span>
+    </div>
+  </div>
+  <div class="stat-chip">
+    <div class="stat-value" style="color:var(--emerald)">35%</div>
+    <div class="stat-label">
+      <span class="lz">低债务占比</span>
+      <span class="le" style="display:none">Low Debt Share</span>
+    </div>
+  </div>
+</div>
+
+<!-- Main Card -->
+<div class="main-card">
+  <div class="svg-wrap">
+    <svg id="mainSvg" viewBox="0 0 920 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Technical Debt Distribution Scatter Map">
+      <defs>
+        <!-- Background grid pattern -->
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="rgba(255,255,255,0.04)" stroke-width="0.5" class="grid-line"/>
+        </pattern>
+
+        <!-- Red glow filter -->
+        <filter id="glowRed" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="4" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <!-- Amber glow filter -->
+        <filter id="glowAmber" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <!-- Green glow filter -->
+        <filter id="glowGreen" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <!-- Drop shadow -->
+        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="rgba(0,0,0,0.5)" flood-opacity="0.5"/>
+        </filter>
+
+        <!-- Gradient for legend bar -->
+        <linearGradient id="legendGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#f43f5e"/>
+          <stop offset="50%" stop-color="#f59e0b"/>
+          <stop offset="100%" stop-color="#10b981"/>
+        </linearGradient>
+
+        <!-- Gauge arc gradient -->
+        <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" stop-color="#f43f5e"/>
+          <stop offset="50%" stop-color="#f59e0b"/>
+          <stop offset="100%" stop-color="#10b981"/>
+        </linearGradient>
+
+        <!-- Donut segments -->
+        <!-- Clippath for scatter area -->
+        <clipPath id="scatterClip">
+          <rect x="30" y="20" width="530" height="420"/>
+        </clipPath>
+
+        <!-- Subtle zone fills -->
+        <linearGradient id="zoneRed" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="rgba(244,63,94,0.12)"/>
+          <stop offset="100%" stop-color="rgba(244,63,94,0.03)"/>
+        </linearGradient>
+        <linearGradient id="zoneYellow" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="rgba(245,158,11,0.10)"/>
+          <stop offset="100%" stop-color="rgba(245,158,11,0.02)"/>
+        </linearGradient>
+        <linearGradient id="zoneGreen" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" stop-color="rgba(16,185,129,0.10)"/>
+          <stop offset="100%" stop-color="rgba(16,185,129,0.02)"/>
+        </linearGradient>
+      </defs>
+
+      <!-- ══════════════════════════════════
+           LEFT: Scatter/Bubble Chart
+           x=40..560, y=30..450
+           Axes: x=Refactor Difficulty (low→high), y=Debt Level (low→high)
+      ═══════════════════════════════════ -->
+
+      <!-- Background grid -->
+      <rect x="40" y="30" width="520" height="420" fill="url(#grid)" rx="4"/>
+
+      <!-- Zone bands (horizontal) -->
+      <!-- High debt zone: y 30→170 -->
+      <rect x="40" y="30" width="520" height="140" fill="url(#zoneRed)" rx="4"/>
+      <!-- Medium debt zone: y 170→310 -->
+      <rect x="40" y="170" width="520" height="140" fill="url(#zoneYellow)"/>
+      <!-- Low debt zone: y 310→450 -->
+      <rect x="40" y="310" width="520" height="140" fill="url(#zoneGreen)" rx="4"/>
+
+      <!-- Zone labels -->
+      <!-- High -->
+      <text x="48" y="46" font-size="10" font-weight="700" letter-spacing="0.08em" fill="#f43f5e" opacity="0.7" class="lz">高债务区</text>
+      <text x="48" y="46" font-size="10" font-weight="700" letter-spacing="0.08em" fill="#f43f5e" opacity="0.7" class="le" display="none">HIGH DEBT</text>
+      <!-- Medium -->
+      <text x="48" y="186" font-size="10" font-weight="700" letter-spacing="0.08em" fill="#f59e0b" opacity="0.7" class="lz">中债务区</text>
+      <text x="48" y="186" font-size="10" font-weight="700" letter-spacing="0.08em" fill="#f59e0b" opacity="0.7" class="le" display="none">MEDIUM DEBT</text>
+      <!-- Low -->
+      <text x="48" y="326" font-size="10" font-weight="700" letter-spacing="0.08em" fill="#10b981" opacity="0.7" class="lz">低债务区</text>
+      <text x="48" y="326" font-size="10" font-weight="700" letter-spacing="0.08em" fill="#10b981" opacity="0.7" class="le" display="none">LOW DEBT</text>
+
+      <!-- Dividing dashes -->
+      <line x1="40" y1="170" x2="560" y2="170" stroke="#f59e0b" stroke-width="0.8" stroke-dasharray="6,4" opacity="0.35"/>
+      <line x1="40" y1="310" x2="560" y2="310" stroke="#10b981" stroke-width="0.8" stroke-dasharray="6,4" opacity="0.35"/>
+
+      <!-- Y-axis -->
+      <line x1="40" y1="450" x2="40" y2="30" stroke="rgba(148,163,184,0.4)" stroke-width="1.2" class="axis-line"/>
+      <!-- Y arrow -->
+      <polygon points="40,22 35,34 45,34" fill="rgba(148,163,184,0.4)" class="axis-arrow"/>
+      <!-- Y ticks & labels -->
+      <text x="36" y="96" font-size="10" fill="rgba(148,163,184,0.6)" text-anchor="end" class="axis-label lz">高</text>
+      <text x="36" y="96" font-size="10" fill="rgba(148,163,184,0.6)" text-anchor="end" class="axis-label le" display="none">Hi</text>
+      <text x="36" y="240" font-size="10" fill="rgba(148,163,184,0.6)" text-anchor="end" class="axis-label lz">中</text>
+      <text x="36" y="240" font-size="10" fill="rgba(148,163,184,0.6)" text-anchor="end" class="axis-label le" display="none">Mid</text>
+      <text x="36" y="390" font-size="10" fill="rgba(148,163,184,0.6)" text-anchor="end" class="axis-label lz">低</text>
+      <text x="36" y="390" font-size="10" fill="rgba(148,163,184,0.6)" text-anchor="end" class="axis-label le" display="none">Lo</text>
+      <!-- Y axis title -->
+      <text transform="translate(12,240) rotate(-90)" font-size="10" font-weight="600" fill="rgba(148,163,184,0.7)" text-anchor="middle" class="axis-label lz">债务等级</text>
+      <text transform="translate(12,240) rotate(-90)" font-size="10" font-weight="600" fill="rgba(148,163,184,0.7)" text-anchor="middle" class="axis-label le" display="none">Debt Level</text>
+
+      <!-- X-axis -->
+      <line x1="40" y1="450" x2="560" y2="450" stroke="rgba(148,163,184,0.4)" stroke-width="1.2" class="axis-line"/>
+      <!-- X arrow -->
+      <polygon points="568,450 556,445 556,455" fill="rgba(148,163,184,0.4)" class="axis-arrow"/>
+      <!-- X labels -->
+      <text x="120" y="468" font-size="10" fill="rgba(148,163,184,0.6)" text-anchor="middle" class="axis-label lz">难度低</text>
+      <text x="120" y="468" font-size="10" fill="rgba(148,163,184,0.6)" text-anchor="middle" class="axis-label le" display="none">Easy Fix</text>
+      <text x="300" y="468" font-size="10" fill="rgba(148,163,184,0.6)" text-anchor="middle" class="axis-label lz">中等</text>
+      <text x="300" y="468" font-size="10" fill="rgba(148,163,184,0.6)" text-anchor="middle" class="axis-label le" display="none">Moderate</text>
+      <text x="490" y="468" font-size="10" fill="rgba(148,163,184,0.6)" text-anchor="middle" class="axis-label lz">难度高</text>
+      <text x="490" y="468" font-size="10" fill="rgba(148,163,184,0.6)" text-anchor="middle" class="axis-label le" display="none">Hard Fix</text>
+      <!-- X axis title -->
+      <text x="300" y="484" font-size="10" font-weight="600" fill="rgba(148,163,184,0.7)" text-anchor="middle" class="axis-label lz">重构难度 →</text>
+      <text x="300" y="484" font-size="10" font-weight="600" fill="rgba(148,163,184,0.7)" text-anchor="middle" class="axis-label le" display="none">Refactor Difficulty →</text>
+
+      <!-- ── Connection lines between related modules ── -->
+      <!-- Query Loop ↔ Message Format (both red, related) -->
+      <line x1="380" y1="90" x2="480" y2="70" stroke="#f43f5e" stroke-width="1" stroke-dasharray="5,3" opacity="0.35"/>
+      <!-- Error Handling ↔ Type Definitions (both yellow) -->
+      <line x1="160" y1="230" x2="310" y2="210" stroke="#f59e0b" stroke-width="1" stroke-dasharray="5,3" opacity="0.35"/>
+      <!-- MCP ↔ Tool Interface (both green) -->
+      <line x1="100" y1="380" x2="200" y2="400" stroke="#10b981" stroke-width="1" stroke-dasharray="5,3" opacity="0.35"/>
+      <!-- Tool Interface ↔ Tools 43 (yellow to green link) -->
+      <line x1="200" y1="400" x2="420" y2="250" stroke="#94a3b8" stroke-width="1" stroke-dasharray="4,4" opacity="0.2"/>
+      <!-- Core Engine ↔ Hook System -->
+      <line x1="310" y1="360" x2="430" y2="390" stroke="#10b981" stroke-width="1" stroke-dasharray="5,3" opacity="0.3"/>
+      <!-- Sandbox ↔ Core Engine -->
+      <line x1="310" y1="360" x2="155" y2="350" stroke="#10b981" stroke-width="1" stroke-dasharray="5,3" opacity="0.3"/>
+
+      <!-- ═══ MODULE BUBBLES ═══ -->
+      <!-- Each bubble: circle + label. Positions (cx,cy): higher Y=lower debt (inverted for chart) -->
+
+      <!-- RED modules (y ≈ 50..160) -->
+
+      <!-- 配置系统 Settings: x=480, cy=75 (high debt, hard to fix) -->
+      <g class="module-node" data-id="settings" style="cursor:pointer;">
+        <circle cx="480" cy="75" r="30" fill="rgba(244,63,94,0.15)" stroke="#f43f5e" stroke-width="2" filter="url(#glowRed)"/>
+        <circle cx="480" cy="75" r="24" fill="rgba(244,63,94,0.25)" stroke="none"/>
+        <text x="480" y="68" font-size="10" font-weight="700" fill="#f43f5e" text-anchor="middle" class="lz">配置系统</text>
+        <text x="480" y="68" font-size="10" font-weight="700" fill="#f43f5e" text-anchor="middle" class="le" display="none">Settings</text>
+        <text x="480" y="82" font-size="10" fill="#f87171" text-anchor="middle" class="lz">🔥 9层</text>
+        <text x="480" y="82" font-size="10" fill="#f87171" text-anchor="middle" class="le" display="none">🔥 9-lvl</text>
+      </g>
+
+      <!-- Query循环 QueryLoop: x=380, cy=90 (high debt, medium-hard) -->
+      <g class="module-node" data-id="queryloop" style="cursor:pointer;">
+        <circle cx="380" cy="90" r="27" fill="rgba(244,63,94,0.15)" stroke="#f43f5e" stroke-width="2" filter="url(#glowRed)"/>
+        <circle cx="380" cy="90" r="21" fill="rgba(244,63,94,0.22)" stroke="none"/>
+        <text x="380" y="84" font-size="10" font-weight="700" fill="#f43f5e" text-anchor="middle" class="lz">Query循环</text>
+        <text x="380" y="84" font-size="10" font-weight="700" fill="#f43f5e" text-anchor="middle" class="le" display="none">QueryLoop</text>
+        <text x="380" y="98" font-size="10" fill="#f87171" text-anchor="middle" class="lz">⚠️ 嵌套</text>
+        <text x="380" y="98" font-size="10" fill="#f87171" text-anchor="middle" class="le" display="none">⚠️ Nested</text>
+      </g>
+
+      <!-- 消息格式 Message Format: x=480, cy=140 (high debt, hard to fix - vendor lock-in) -->
+      <g class="module-node" data-id="msgformat" style="cursor:pointer;">
+        <circle cx="490" cy="145" r="25" fill="rgba(244,63,94,0.15)" stroke="#f43f5e" stroke-width="2" filter="url(#glowRed)"/>
+        <circle cx="490" cy="145" r="19" fill="rgba(244,63,94,0.22)" stroke="none"/>
+        <text x="490" y="139" font-size="10" font-weight="700" fill="#f43f5e" text-anchor="middle" class="lz">消息格式</text>
+        <text x="490" y="139" font-size="10" font-weight="700" fill="#f43f5e" text-anchor="middle" class="le" display="none">Msg Format</text>
+        <text x="490" y="153" font-size="10" fill="#f87171" text-anchor="middle" class="lz">🔒 锁定</text>
+        <text x="490" y="153" font-size="10" fill="#f87171" text-anchor="middle" class="le" display="none">🔒 Locked</text>
+      </g>
+
+      <!-- YELLOW modules (y ≈ 180..300) -->
+
+      <!-- 错误处理 Error Handling: x=160, cy=230 (medium debt, easy) -->
+      <g class="module-node" data-id="errorhandling" style="cursor:pointer;">
+        <circle cx="160" cy="230" r="24" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="1.8" filter="url(#glowAmber)"/>
+        <circle cx="160" cy="230" r="18" fill="rgba(245,158,11,0.22)" stroke="none"/>
+        <text x="160" y="224" font-size="10" font-weight="700" fill="#f59e0b" text-anchor="middle" class="lz">错误处理</text>
+        <text x="160" y="224" font-size="10" font-weight="700" fill="#f59e0b" text-anchor="middle" class="le" display="none">Error Handle</text>
+        <text x="160" y="238" font-size="10" fill="#fbbf24" text-anchor="middle" class="lz">不一致</text>
+        <text x="160" y="238" font-size="10" fill="#fbbf24" text-anchor="middle" class="le" display="none">Inconsistent</text>
+      </g>
+
+      <!-- 类型定义 Type Definitions: x=310, cy=210 (medium debt, medium) -->
+      <g class="module-node" data-id="typedefs" style="cursor:pointer;">
+        <circle cx="310" cy="210" r="24" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="1.8" filter="url(#glowAmber)"/>
+        <circle cx="310" cy="210" r="18" fill="rgba(245,158,11,0.22)" stroke="none"/>
+        <text x="310" y="204" font-size="10" font-weight="700" fill="#f59e0b" text-anchor="middle" class="lz">类型定义</text>
+        <text x="310" y="204" font-size="10" font-weight="700" fill="#f59e0b" text-anchor="middle" class="le" display="none">Type Defs</text>
+        <text x="310" y="218" font-size="10" fill="#fbbf24" text-anchor="middle" class="lz">分散各处</text>
+        <text x="310" y="218" font-size="10" fill="#fbbf24" text-anchor="middle" class="le" display="none">Scattered</text>
+      </g>
+
+      <!-- 工具实现 Tools 43: x=420, cy=250 (medium debt, medium-hard — 43 tools different styles) -->
+      <g class="module-node" data-id="tools43" style="cursor:pointer;">
+        <circle cx="420" cy="250" r="28" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="1.8" filter="url(#glowAmber)"/>
+        <circle cx="420" cy="250" r="22" fill="rgba(245,158,11,0.22)" stroke="none"/>
+        <text x="420" y="244" font-size="10" font-weight="700" fill="#f59e0b" text-anchor="middle" class="lz">工具实现</text>
+        <text x="420" y="244" font-size="10" font-weight="700" fill="#f59e0b" text-anchor="middle" class="le" display="none">Tools (43)</text>
+        <text x="420" y="258" font-size="10" fill="#fbbf24" text-anchor="middle" class="lz">风格各异</text>
+        <text x="420" y="258" font-size="10" fill="#fbbf24" text-anchor="middle" class="le" display="none">43 styles</text>
+      </g>
+
+      <!-- GREEN modules (y ≈ 320..440) -->
+
+      <!-- MCP协议: x=100, cy=380 (low debt, easy) -->
+      <g class="module-node" data-id="mcp" style="cursor:pointer;">
+        <circle cx="100" cy="380" r="22" fill="rgba(16,185,129,0.15)" stroke="#10b981" stroke-width="1.5" filter="url(#glowGreen)"/>
+        <circle cx="100" cy="380" r="16" fill="rgba(16,185,129,0.22)" stroke="none"/>
+        <text x="100" y="374" font-size="10" font-weight="700" fill="#10b981" text-anchor="middle" class="lz">MCP协议</text>
+        <text x="100" y="374" font-size="10" font-weight="700" fill="#10b981" text-anchor="middle" class="le" display="none">MCP Protocol</text>
+        <text x="100" y="388" font-size="10" fill="#34d399" text-anchor="middle" class="lz">✓ 标准</text>
+        <text x="100" y="388" font-size="10" fill="#34d399" text-anchor="middle" class="le" display="none">✓ Std</text>
+      </g>
+
+      <!-- Tool接口 Interface: x=200, cy=400 (low debt, easy) -->
+      <g class="module-node" data-id="toolinterface" style="cursor:pointer;">
+        <circle cx="200" cy="400" r="22" fill="rgba(16,185,129,0.15)" stroke="#10b981" stroke-width="1.5" filter="url(#glowGreen)"/>
+        <circle cx="200" cy="400" r="16" fill="rgba(16,185,129,0.22)" stroke="none"/>
+        <text x="200" y="394" font-size="10" font-weight="700" fill="#10b981" text-anchor="middle" class="lz">Tool接口</text>
+        <text x="200" y="394" font-size="10" font-weight="700" fill="#10b981" text-anchor="middle" class="le" display="none">Tool Interface</text>
+        <text x="200" y="408" font-size="10" fill="#34d399" text-anchor="middle" class="lz">✓ 抽象</text>
+        <text x="200" y="408" font-size="10" fill="#34d399" text-anchor="middle" class="le" display="none">✓ Abstract</text>
+      </g>
+
+      <!-- 核心引擎 Core Engine: x=310, cy=360 (low debt, medium) -->
+      <g class="module-node" data-id="coreengine" style="cursor:pointer;">
+        <circle cx="310" cy="360" r="26" fill="rgba(16,185,129,0.15)" stroke="#10b981" stroke-width="1.5" filter="url(#glowGreen)"/>
+        <circle cx="310" cy="360" r="20" fill="rgba(16,185,129,0.22)" stroke="none"/>
+        <text x="310" y="354" font-size="10" font-weight="700" fill="#10b981" text-anchor="middle" class="lz">核心引擎</text>
+        <text x="310" y="354" font-size="10" font-weight="700" fill="#10b981" text-anchor="middle" class="le" display="none">Core Engine</text>
+        <text x="310" y="368" font-size="10" fill="#34d399" text-anchor="middle" class="lz">✓ 稳定</text>
+        <text x="310" y="368" font-size="10" fill="#34d399" text-anchor="middle" class="le" display="none">✓ Stable</text>
+      </g>
+
+      <!-- Hook系统: x=430, cy=390 (low debt, medium) -->
+      <g class="module-node" data-id="hook" style="cursor:pointer;">
+        <circle cx="430" cy="390" r="22" fill="rgba(16,185,129,0.15)" stroke="#10b981" stroke-width="1.5" filter="url(#glowGreen)"/>
+        <circle cx="430" cy="390" r="16" fill="rgba(16,185,129,0.22)" stroke="none"/>
+        <text x="430" y="384" font-size="10" font-weight="700" fill="#10b981" text-anchor="middle" class="lz">Hook系统</text>
+        <text x="430" y="384" font-size="10" font-weight="700" fill="#10b981" text-anchor="middle" class="le" display="none">Hook System</text>
+        <text x="430" y="398" font-size="10" fill="#34d399" text-anchor="middle" class="lz">✓ 低耦合</text>
+        <text x="430" y="398" font-size="10" fill="#34d399" text-anchor="middle" class="le" display="none">✓ Decoupled</text>
+      </g>
+
+      <!-- 沙箱隔离 Sandbox: x=155, cy=350 (low debt, easy) -->
+      <g class="module-node" data-id="sandbox" style="cursor:pointer;">
+        <circle cx="155" cy="350" r="22" fill="rgba(16,185,129,0.15)" stroke="#10b981" stroke-width="1.5" filter="url(#glowGreen)"/>
+        <circle cx="155" cy="350" r="16" fill="rgba(16,185,129,0.22)" stroke="none"/>
+        <text x="155" y="344" font-size="10" font-weight="700" fill="#10b981" text-anchor="middle" class="lz">沙箱隔离</text>
+        <text x="155" y="344" font-size="10" font-weight="700" fill="#10b981" text-anchor="middle" class="le" display="none">Sandbox</text>
+        <text x="155" y="358" font-size="10" fill="#34d399" text-anchor="middle" class="lz">✓ 清晰</text>
+        <text x="155" y="358" font-size="10" fill="#34d399" text-anchor="middle" class="le" display="none">✓ Clear</text>
+      </g>
+
+      <!-- ══════════════════════════════════
+           Legend bar (bottom of scatter)
+      ═══════════════════════════════════ -->
+      <rect x="40" y="498" width="520" height="8" rx="4" fill="url(#legendGrad)" opacity="0.8"/>
+      <text x="40" y="513" font-size="10" fill="#f43f5e" class="lz">高债务</text>
+      <text x="40" y="513" font-size="10" fill="#f43f5e" class="le" display="none">High</text>
+      <text x="295" y="513" font-size="10" fill="#f59e0b" text-anchor="middle" class="lz">中债务</text>
+      <text x="295" y="513" font-size="10" fill="#f59e0b" text-anchor="middle" class="le" display="none">Medium</text>
+      <text x="560" y="513" font-size="10" fill="#10b981" text-anchor="end" class="lz">低债务</text>
+      <text x="560" y="513" font-size="10" fill="#10b981" text-anchor="end" class="le" display="none">Low</text>
+
+      <!-- ══════════════════════════════════
+           RIGHT COLUMN
+           x=590..910, split into:
+           Top: Donut chart (y=30..260)
+           Bottom: Gauge (y=270..480)
+      ═══════════════════════════════════ -->
+
+      <!-- Right panel background -->
+      <rect x="585" y="20" width="325" height="490" rx="10" fill="rgba(255,255,255,0.025)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+      <!-- ── Donut chart ── -->
+      <!-- Center: cx=748, cy=155, r=70 -->
+      <!-- Red 35%: 0.35*360=126°, Amber 30%: 108°, Green 35%: 126° -->
+      <!-- SVG arcs using path. Start angle = -90° (top) -->
+
+      <!-- Donut title -->
+      <text x="748" y="38" font-size="11" font-weight="700" fill="rgba(148,163,184,0.9)" text-anchor="middle" class="lz">债务分布占比</text>
+      <text x="748" y="38" font-size="11" font-weight="700" fill="rgba(148,163,184,0.9)" text-anchor="middle" class="le" display="none">Debt Distribution</text>
+
+      <!-- Donut segments -->
+      <!-- Red: 35% = 126deg, from -90 to 36 -->
+      <!-- Using large-arc-flag carefully -->
+      <!-- Red segment (35%): from top (-90°) clockwise 126° -->
+      <path d="M 748 85
+               L 748 155
+               M 748 85
+               A 70 70 0 0 1 807.8 191.3
+               L 748 155 Z"
+            fill="#f43f5e" opacity="0.85" id="donutRed"/>
+      <!-- Actually, let's recalculate properly using arc commands -->
+      <!-- I'll use the stroke-dasharray technique on circles for clarity -->
+
+      <!-- Donut via overlapping stroked circles -->
+      <!-- Total circumference for r=65: 2π*65 ≈ 408.4 -->
+      <!-- Red 35%: 408.4*0.35=142.9, offset=0 -->
+      <!-- Amber 30%: 408.4*0.30=122.5, offset=-142.9 (so starts after red) -->
+      <!-- Green 35%: 408.4*0.35=142.9, offset=-(142.9+122.5)=-265.4 -->
+
+      <!-- Base circle (track) -->
+      <circle cx="748" cy="155" r="65" fill="none" stroke="rgba(255,255,255,0.06)" stroke-width="24"/>
+
+      <!-- Red segment -->
+      <circle cx="748" cy="155" r="65" fill="none" stroke="#f43f5e" stroke-width="24"
+              stroke-dasharray="142.9 265.5"
+              stroke-dashoffset="102.1"
+              transform="rotate(-90 748 155)" opacity="0.85"/>
+
+      <!-- Amber segment -->
+      <circle cx="748" cy="155" r="65" fill="none" stroke="#f59e0b" stroke-width="24"
+              stroke-dasharray="122.5 285.9"
+              stroke-dashoffset="-40.8"
+              transform="rotate(-90 748 155)" opacity="0.85"/>
+
+      <!-- Green segment -->
+      <circle cx="748" cy="155" r="65" fill="none" stroke="#10b981" stroke-width="24"
+              stroke-dasharray="142.9 265.5"
+              stroke-dashoffset="-163.3"
+              transform="rotate(-90 748 155)" opacity="0.85"/>
+
+      <!-- Donut center text -->
+      <circle cx="748" cy="155" r="42" fill="var(--panel,#1e293b)" stroke="none"/>
+      <text x="748" y="148" font-size="22" font-weight="800" fill="var(--text,#f1f5f9)" text-anchor="middle">11</text>
+      <text x="748" y="164" font-size="10" fill="rgba(148,163,184,0.8)" text-anchor="middle" class="lz">模块</text>
+      <text x="748" y="164" font-size="10" fill="rgba(148,163,184,0.8)" text-anchor="middle" class="le" display="none">modules</text>
+
+      <!-- Donut legend items -->
+      <!-- Red -->
+      <rect x="605" y="233" width="10" height="10" rx="2" fill="#f43f5e"/>
+      <text x="620" y="243" font-size="10" fill="rgba(148,163,184,0.9)" class="lz">高债务 35%</text>
+      <text x="620" y="243" font-size="10" fill="rgba(148,163,184,0.9)" class="le" display="none">High 35%</text>
+      <!-- Amber -->
+      <rect x="695" y="233" width="10" height="10" rx="2" fill="#f59e0b"/>
+      <text x="710" y="243" font-size="10" fill="rgba(148,163,184,0.9)" class="lz">中 30%</text>
+      <text x="710" y="243" font-size="10" fill="rgba(148,163,184,0.9)" class="le" display="none">Med 30%</text>
+      <!-- Green -->
+      <rect x="770" y="233" width="10" height="10" rx="2" fill="#10b981"/>
+      <text x="785" y="243" font-size="10" fill="rgba(148,163,184,0.9)" class="lz">低 35%</text>
+      <text x="785" y="243" font-size="10" fill="rgba(148,163,184,0.9)" class="le" display="none">Low 35%</text>
+
+      <!-- ── Gauge ── -->
+      <!-- Gauge title -->
+      <text x="748" y="280" font-size="11" font-weight="700" fill="rgba(148,163,184,0.9)" text-anchor="middle" class="lz">整体债务评分</text>
+      <text x="748" y="280" font-size="11" font-weight="700" fill="rgba(148,163,184,0.9)" text-anchor="middle" class="le" display="none">Overall Debt Score</text>
+
+      <!-- Gauge arc: semicircle, cx=748 cy=400, r=80 -->
+      <!-- Track: 180° semicircle from 180° to 0° (left to right, bottom half of circle) -->
+      <!-- Using path for half-circle arc -->
+
+      <!-- Track arc (background) -->
+      <path d="M 668 400 A 80 80 0 0 1 828 400"
+            fill="none" stroke="rgba(255,255,255,0.08)" stroke-width="18" stroke-linecap="round"/>
+
+      <!-- Colored gradient track -->
+      <!-- Split into segments: 0-33 red, 33-66 amber, 66-100 green -->
+      <!-- 180° total. 0→33%: 0→59.4°, 33→66%: 59.4→118.8°, 66→100%: 118.8→180° -->
+      <!-- Starting from left (180°), going clockwise to right (0°) -->
+      <!-- Red portion (first 33%): arc from 180° to 120.6° -->
+      <path d="M 668 400 A 80 80 0 0 1 708 330.6"
+            fill="none" stroke="#f43f5e" stroke-width="18" stroke-linecap="butt" opacity="0.7"/>
+      <!-- Amber portion (33-66%): -->
+      <path d="M 708 330.6 A 80 80 0 0 1 788 330.6"
+            fill="none" stroke="#f59e0b" stroke-width="18" stroke-linecap="butt" opacity="0.7"/>
+      <!-- Green portion (66-100%): -->
+      <path d="M 788 330.6 A 80 80 0 0 1 828 400"
+            fill="none" stroke="#10b981" stroke-width="18" stroke-linecap="round" opacity="0.7"/>
+
+      <!-- Score indicator: 70/100 = 70% = 126° from left -->
+      <!-- Angle at 70%: 180° - (70/100)*180° = 180° - 126° = 54° from horizontal -->
+      <!-- cx+r*cos(54°)=748+80*0.588=795.0, cy-r*sin(54°)=400-80*0.809=335.3 -->
+      <circle cx="795" cy="335" r="10" fill="#f59e0b" stroke="var(--panel,#1e293b)" stroke-width="3" filter="url(#shadow)"/>
+
+      <!-- Indicator needle line -->
+      <line x1="748" y1="400" x2="795" y2="335" stroke="#f59e0b" stroke-width="2.5" stroke-linecap="round" opacity="0.8"/>
+      <!-- Pivot dot -->
+      <circle cx="748" cy="400" r="5" fill="#f59e0b" opacity="0.9"/>
+
+      <!-- Score text -->
+      <text x="748" y="388" font-size="28" font-weight="800" fill="#f59e0b" text-anchor="middle">70</text>
+      <text x="748" y="406" font-size="11" fill="rgba(148,163,184,0.7)" text-anchor="middle">/100</text>
+
+      <!-- Gauge range labels -->
+      <text x="662" y="418" font-size="10" fill="#f43f5e" text-anchor="middle" class="lz">低</text>
+      <text x="662" y="418" font-size="10" fill="#f43f5e" text-anchor="middle" class="le" display="none">Low</text>
+      <text x="835" y="418" font-size="10" fill="#10b981" text-anchor="middle" class="lz">高</text>
+      <text x="835" y="418" font-size="10" fill="#10b981" text-anchor="middle" class="le" display="none">High</text>
+      <text x="748" y="432" font-size="10" fill="rgba(148,163,184,0.6)" text-anchor="middle" class="lz">（数值越高债务越重）</text>
+      <text x="748" y="432" font-size="10" fill="rgba(148,163,184,0.6)" text-anchor="middle" class="le" display="none">(Higher = more debt)</text>
+
+      <!-- Gauge status badge -->
+      <rect x="710" y="444" width="76" height="22" rx="11" fill="rgba(245,158,11,0.15)" stroke="#f59e0b" stroke-width="1"/>
+      <text x="748" y="459" font-size="10" font-weight="700" fill="#f59e0b" text-anchor="middle" class="lz">需要关注</text>
+      <text x="748" y="459" font-size="10" font-weight="700" fill="#f59e0b" text-anchor="middle" class="le" display="none">NEEDS ATTENTION</text>
+
+    </svg>
+  </div>
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tooltip">
+  <div class="tooltip-title" id="tt-title"></div>
+  <div class="tooltip-badge" id="tt-badge"></div>
+  <div class="tooltip-desc" id="tt-desc"></div>
+</div>
+
+<!-- Priority List -->
+<div class="priority-section">
+  <div class="section-label">
+    <span class="lz">优先修复清单</span>
+    <span class="le" style="display:none">Priority Fix List</span>
+  </div>
+  <div class="priority-list">
+    <div class="priority-item p1">
+      <div class="priority-rank">#1</div>
+      <div class="priority-name">
+        <span class="lz">配置系统 Settings — 9层嵌套地狱</span>
+        <span class="le" style="display:none">Settings System — 9-layer nesting hell</span>
+      </div>
+      <div class="priority-tag">
+        <span class="lz">影响: 极高</span>
+        <span class="le" style="display:none">Impact: Critical</span>
+      </div>
+      <div class="priority-effort">
+        <span class="lz">难度 ★★★★★</span>
+        <span class="le" style="display:none">Effort ★★★★★</span>
+      </div>
+    </div>
+    <div class="priority-item p2">
+      <div class="priority-rank">#2</div>
+      <div class="priority-name">
+        <span class="lz">Query循环 — 深度嵌套回调链</span>
+        <span class="le" style="display:none">QueryLoop — Deep nested callback chain</span>
+      </div>
+      <div class="priority-tag">
+        <span class="lz">影响: 高</span>
+        <span class="le" style="display:none">Impact: High</span>
+      </div>
+      <div class="priority-effort">
+        <span class="lz">难度 ★★★★☆</span>
+        <span class="le" style="display:none">Effort ★★★★☆</span>
+      </div>
+    </div>
+    <div class="priority-item p3">
+      <div class="priority-rank">#3</div>
+      <div class="priority-name">
+        <span class="lz">消息格式 — Anthropic API 供应商锁定</span>
+        <span class="le" style="display:none">Message Format — Anthropic API vendor lock-in</span>
+      </div>
+      <div class="priority-tag">
+        <span class="lz">影响: 高</span>
+        <span class="le" style="display:none">Impact: High</span>
+      </div>
+      <div class="priority-effort">
+        <span class="lz">难度 ★★★★★</span>
+        <span class="le" style="display:none">Effort ★★★★★</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <span class="lz">Claude Code 源码研究 · 技术债务评估 · 数据来源: cc-recovered-main 源码分析</span>
+  <span class="le" style="display:none">Claude Code Source Study · Technical Debt Assessment · Source: cc-recovered-main analysis</span>
+</div>
+
+<script>
+/* ── Tooltip data ── */
+var moduleData = {
+  settings: {
+    zh: { title:'配置系统 Settings', badge:'高债务', badgeClass:'badge-red', desc:'9层嵌套地狱：globalSettings → localSettings → projectSettings → userSettings → envSettings → runtimeOverride → commandLineArgs → envVar → defaultValues。极难维护，合并逻辑复杂。' },
+    en: { title:'Settings System', badge:'HIGH DEBT', badgeClass:'badge-red', desc:'9-layer nesting hell: global → local → project → user → env → runtime → CLI args → env vars → defaults. Extremely hard to maintain, merge logic complex.' }
+  },
+  queryloop: {
+    zh: { title:'Query循环 QueryLoop', badge:'高债务', badgeClass:'badge-red', desc:'深度嵌套回调链。主循环函数超过500行，状态管理分散在多个闭包中，难以追踪执行流程和错误传播路径。' },
+    en: { title:'QueryLoop', badge:'HIGH DEBT', badgeClass:'badge-red', desc:'Deep nested callback chain. Main loop >500 lines, state scattered across closures, hard to trace execution flow and error propagation.' }
+  },
+  msgformat: {
+    zh: { title:'消息格式 Message Format', badge:'高债务', badgeClass:'badge-red', desc:'供应商锁定：消息格式与Anthropic API紧密耦合，切换模型提供商需要大量重构。ContentBlock类型散落全库。' },
+    en: { title:'Message Format', badge:'HIGH DEBT', badgeClass:'badge-red', desc:'Vendor lock-in: tightly coupled to Anthropic API message format. Switching providers requires major refactor. ContentBlock types scattered throughout.' }
+  },
+  errorhandling: {
+    zh: { title:'错误处理 Error Handling', badge:'中债务', badgeClass:'badge-yellow', desc:'风格不一致：部分模块使用Error对象，部分使用字符串，部分使用枚举码。没有统一的错误层次结构或标准化处理链路。' },
+    en: { title:'Error Handling', badge:'MEDIUM DEBT', badgeClass:'badge-yellow', desc:'Inconsistent style: some modules use Error objects, some strings, some enum codes. No unified error hierarchy or standardized handling chain.' }
+  },
+  typedefs: {
+    zh: { title:'类型定义 Type Definitions', badge:'中债务', badgeClass:'badge-yellow', desc:'分散各处：TypeScript类型定义散落在43+个文件，部分重复定义，部分隐式any类型。缺少集中式类型声明文件。' },
+    en: { title:'Type Definitions', badge:'MEDIUM DEBT', badgeClass:'badge-yellow', desc:'Scattered: TS type definitions spread across 43+ files, some duplicate, some implicit any. Missing centralized type declaration file.' }
+  },
+  tools43: {
+    zh: { title:'工具实现 Tools (43个)', badge:'中债务', badgeClass:'badge-yellow', desc:'43个工具实现风格各异：参数校验方式不统一，错误返回格式不一致，部分工具缺少超时处理。接口层较好但实现层混乱。' },
+    en: { title:'Tools Implementation (43)', badge:'MEDIUM DEBT', badgeClass:'badge-yellow', desc:'43 tools with inconsistent implementation styles: different param validation, error return formats vary, some missing timeout handling. Interface OK, impl messy.' }
+  },
+  mcp: {
+    zh: { title:'MCP协议', badge:'低债务', badgeClass:'badge-green', desc:'标准实现：严格遵循MCP规范，传输层抽象良好，支持stdio/SSE/HTTP多种传输方式。代码清晰，易于扩展新的传输类型。' },
+    en: { title:'MCP Protocol', badge:'LOW DEBT', badgeClass:'badge-green', desc:'Standard implementation: strictly follows MCP spec, transport layer well abstracted, supports stdio/SSE/HTTP. Clean code, easy to extend.' }
+  },
+  toolinterface: {
+    zh: { title:'Tool接口 Interface', badge:'低债务', badgeClass:'badge-green', desc:'抽象良好：统一的Tool接口定义，所有工具遵循相同契约。依赖注入模式，易于测试和Mock。接口与实现分离清晰。' },
+    en: { title:'Tool Interface', badge:'LOW DEBT', badgeClass:'badge-green', desc:'Well abstracted: unified Tool interface definition, all tools follow same contract. Dependency injection pattern, easy to test and mock.' }
+  },
+  coreengine: {
+    zh: { title:'核心引擎 Core Engine', badge:'低债务', badgeClass:'badge-green', desc:'稳定可靠：核心调度逻辑经过充分测试，函数职责单一，副作用隔离。是整个系统最健康的模块，可以作为重构其他模块的参考标准。' },
+    en: { title:'Core Engine', badge:'LOW DEBT', badgeClass:'badge-green', desc:'Stable & reliable: core scheduling logic well-tested, single responsibility, side effects isolated. Healthiest module in the system, reference for refactoring others.' }
+  },
+  hook: {
+    zh: { title:'Hook系统', badge:'低债务', badgeClass:'badge-green', desc:'低耦合：事件驱动设计，27个生命周期钩子定义清晰，订阅/发布模式实现干净。扩展新Hook不影响现有代码。' },
+    en: { title:'Hook System', badge:'LOW DEBT', badgeClass:'badge-green', desc:'Low coupling: event-driven design, 27 lifecycle hooks clearly defined, clean pub/sub pattern. Adding new hooks doesn\'t affect existing code.' }
+  },
+  sandbox: {
+    zh: { title:'沙箱隔离 Sandbox', badge:'低债务', badgeClass:'badge-green', desc:'边界清晰：沙箱与主进程的通信接口定义明确，进程隔离机制健全，权限边界清晰。macOS Seatbelt配置规则结构化良好。' },
+    en: { title:'Sandbox', badge:'LOW DEBT', badgeClass:'badge-green', desc:'Clear boundaries: sandbox-to-main communication interface clearly defined, process isolation sound, permission boundaries explicit. macOS Seatbelt config well structured.' }
+  }
+};
+
+var tooltip = document.getElementById('tooltip');
+var ttTitle = document.getElementById('tt-title');
+var ttBadge = document.getElementById('tt-badge');
+var ttDesc  = document.getElementById('tt-desc');
+
+function getLang(){return localStorage.getItem('vlang')||'zh';}
+
+function showTooltip(e, id){
+  var l = getLang();
+  var d = moduleData[id];
+  if(!d) return;
+  var info = d[l] || d['zh'];
+  ttTitle.textContent = info.title;
+  ttBadge.textContent = info.badge;
+  ttBadge.className = 'tooltip-badge ' + info.badgeClass;
+  ttDesc.textContent = info.desc;
+  tooltip.classList.add('visible');
+  moveTooltip(e);
+}
+
+function moveTooltip(e){
+  var x = e.clientX + 16;
+  var y = e.clientY + 16;
+  var w = tooltip.offsetWidth || 220;
+  var h = tooltip.offsetHeight || 100;
+  if(x + w > window.innerWidth - 10) x = e.clientX - w - 16;
+  if(y + h > window.innerHeight - 10) y = e.clientY - h - 16;
+  tooltip.style.left = x + 'px';
+  tooltip.style.top  = y + 'px';
+}
+
+function hideTooltip(){
+  tooltip.classList.remove('visible');
+}
+
+/* Attach events to module nodes */
+document.querySelectorAll('.module-node').forEach(function(node){
+  var id = node.getAttribute('data-id');
+  node.addEventListener('mouseenter', function(e){ showTooltip(e, id); });
+  node.addEventListener('mousemove',  function(e){ moveTooltip(e); });
+  node.addEventListener('mouseleave', hideTooltip);
+  /* Hover highlight: scale up slightly */
+  node.addEventListener('mouseenter', function(){
+    var c = node.querySelector('circle:first-child');
+    if(c) c.setAttribute('transform','scale(1.08)');
+    node.style.transform = 'scale(1.04)';
+    node.style.transformOrigin = 'center';
+  });
+  node.addEventListener('mouseleave', function(){
+    node.style.transform = '';
+  });
+});
+
+/* Subtle entrance animation via opacity */
+document.querySelectorAll('.module-node').forEach(function(node, i){
+  node.style.opacity = '0';
+  node.style.transition = 'opacity 0.4s ease ' + (i * 0.07) + 's';
+  setTimeout(function(){
+    node.style.opacity = '1';
+  }, 50);
+});
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

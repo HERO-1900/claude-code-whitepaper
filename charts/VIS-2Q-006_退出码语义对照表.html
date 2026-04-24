@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<!--
+  VIS-2Q-006 · 退出码语义对照表 · Exit Code Semantics Matrix
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  6 个 Hook 事件 × 4 类退出码 · 数据来自源码 hooks/
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · 退出码语义对照表</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+    :root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+    :root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+    :root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;
+      background:var(--bg);color:var(--text);
+      min-height:100vh;padding:24px 28px 32px;
+      transition:background .3s,color .3s;
+    }
+
+    /* ── Controls ───────────────────────────────────── */
+    .ctrl{
+      position:fixed;top:16px;right:16px;z-index:999;
+      display:flex;gap:6px;align-items:center;
+      background:var(--panel);border:1px solid var(--border);border-radius:10px;
+      padding:7px 10px;backdrop-filter:blur(12px);
+    }
+    .ctrl button{
+      background:none;border:none;cursor:pointer;
+      font-family:inherit;font-size:11px;font-weight:600;
+      color:var(--muted);padding:4px 8px;border-radius:6px;transition:color .2s;
+    }
+    .ctrl button:hover{color:var(--cyan);}
+    .ctrl-sep{width:1px;height:16px;background:var(--border);margin:0 2px;}
+
+    /* ── Header ─────────────────────────────────────── */
+    .header{
+      margin-bottom:22px;padding-bottom:18px;
+      border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:14px;
+    }
+    .pulse{
+      width:10px;height:10px;border-radius:50%;
+      background:var(--cyan);box-shadow:0 0 8px var(--cyan);
+      animation:pulse 2s infinite;flex-shrink:0;
+    }
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.85);}}
+    .header h1{font-size:21px;font-weight:700;letter-spacing:-0.5px;}
+    .header .sub{color:var(--muted);font-size:12px;margin-top:5px;}
+
+    /* ── Top Stat Chips ─────────────────────────────── */
+    .stats{
+      display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px;
+    }
+    @media(max-width:900px){.stats{grid-template-columns:repeat(2,1fr);}}
+    .stat{
+      background:var(--card);border:1px solid var(--border);
+      border-radius:10px;padding:14px 16px;display:flex;gap:12px;align-items:center;
+    }
+    .stat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+    .stat-text{flex:1;min-width:0;}
+    .stat-num{font-size:18px;font-weight:700;letter-spacing:-0.3px;line-height:1.1;}
+    .stat-lbl{font-size:10px;color:var(--muted);margin-top:4px;line-height:1.4;}
+
+    /* ── Table ──────────────────────────────────────── */
+    .table-wrap{
+      background:var(--card);border:1px solid var(--border);
+      border-radius:12px;overflow:auto;margin-bottom:16px;
+    }
+    table{width:100%;border-collapse:collapse;min-width:820px;}
+    thead th{
+      background:var(--panel);border-bottom:1px solid var(--border);
+      padding:12px 14px;font-size:11px;font-weight:700;text-align:center;
+      white-space:nowrap;vertical-align:middle;
+    }
+    thead th:first-child{text-align:left;min-width:220px;}
+
+    .col-hdr-name{font-size:13px;display:block;margin-bottom:4px;letter-spacing:-0.2px;}
+    .col-hdr-sub{font-size:10px;font-weight:500;color:var(--muted);display:block;line-height:1.4;}
+    .col-chip{
+      display:inline-block;padding:3px 10px;border-radius:12px;
+      font-size:10px;font-weight:700;letter-spacing:0.02em;
+    }
+    .col-chip.emerald{background:rgba(16,185,129,.15);color:var(--emerald);border:1px solid rgba(16,185,129,.35);}
+    .col-chip.rose   {background:rgba(244,63,94,.15); color:var(--rose);   border:1px solid rgba(244,63,94,.35);}
+    .col-chip.amber  {background:rgba(245,158,11,.15);color:var(--amber);  border:1px solid rgba(245,158,11,.35);}
+    .col-chip.slate  {background:rgba(100,116,139,.2);color:var(--muted);  border:1px solid rgba(100,116,139,.35);}
+
+    tbody tr{transition:background .15s;}
+    tbody tr:nth-child(even){background:var(--subtle);}
+    tbody tr:hover{background:var(--panel);}
+    td{
+      padding:12px 14px;border-bottom:1px solid var(--border);
+      font-size:12px;vertical-align:middle;
+    }
+    td:first-child{min-width:220px;}
+
+    .evt-name{font-weight:700;display:block;font-size:13px;margin-bottom:4px;}
+    .evt-sub{font-size:10px;color:var(--muted);margin-bottom:6px;line-height:1.5;}
+    .evt-badge{
+      display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:10px;letter-spacing:0.02em;
+    }
+    .badge-block {background:rgba(244,63,94,.18); color:var(--rose);}
+    .badge-noblock{background:rgba(100,116,139,.22);color:var(--muted);}
+    .badge-fire  {background:rgba(245,158,11,.18);color:var(--amber);}
+
+    .pill{
+      display:inline-flex;align-items:center;gap:5px;
+      padding:6px 12px;border-radius:14px;
+      font-size:11px;font-weight:600;min-width:90px;justify-content:center;
+      white-space:nowrap;
+    }
+    .pill .ico{font-size:12px;font-weight:700;line-height:1;}
+    .pill.continue{background:rgba(16,185,129,.15);color:var(--emerald);border:1px solid rgba(16,185,129,.3);}
+    .pill.block   {background:rgba(244,63,94,.15); color:var(--rose);   border:1px solid rgba(244,63,94,.3);}
+    .pill.warn    {background:rgba(245,158,11,.15);color:var(--amber);  border:1px solid rgba(245,158,11,.3);}
+    .pill.ignored {background:rgba(100,116,139,.15);color:var(--muted); border:1px solid rgba(100,116,139,.3);}
+    .pill.fopen   {background:rgba(34,211,238,.12); color:var(--cyan);  border:1px solid rgba(34,211,238,.3);}
+
+    td.cell{text-align:center;}
+
+    /* Summary row */
+    tbody tr.sum-row{background:var(--panel)!important;}
+    tbody tr.sum-row td{
+      border-top:1px solid var(--border);border-bottom:none;
+      font-size:11px;color:var(--muted);font-weight:600;padding:10px 14px;
+    }
+    tbody tr.sum-row td:first-child{color:var(--text);font-weight:700;}
+    .sum-num{
+      display:inline-block;min-width:22px;text-align:center;
+      padding:2px 8px;border-radius:10px;font-size:11px;font-weight:700;
+    }
+    .sum-num.continue{background:rgba(16,185,129,.15);color:var(--emerald);}
+    .sum-num.block   {background:rgba(244,63,94,.15); color:var(--rose);}
+    .sum-num.warn    {background:rgba(245,158,11,.15);color:var(--amber);}
+    .sum-num.ignored {background:rgba(100,116,139,.18);color:var(--muted);}
+
+    /* ── Legend + Note ──────────────────────────────── */
+    .bottom{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    @media(max-width:900px){.bottom{grid-template-columns:1fr;}}
+    .legend,.note{
+      background:var(--card);border:1px solid var(--border);
+      border-radius:10px;padding:16px;
+    }
+    .legend-title,.note-title{
+      font-size:10px;font-weight:700;letter-spacing:0.08em;
+      text-transform:uppercase;color:var(--muted);margin-bottom:10px;
+    }
+    .legend-row{display:flex;align-items:center;gap:10px;font-size:11px;margin-bottom:8px;color:var(--muted);line-height:1.5;}
+    .legend-row .pill{font-size:10px;padding:4px 10px;min-width:86px;}
+    .note{border-left:3px solid var(--cyan);font-size:11px;color:var(--muted);line-height:1.75;}
+    .note strong{color:var(--text);}
+    .note code{
+      background:var(--subtle);padding:1px 6px;border-radius:4px;font-size:10px;
+      color:var(--text);
+    }
+
+    /* ── Footer ─────────────────────────────────────── */
+    .footer{
+      margin-top:16px;padding-top:14px;border-top:1px solid var(--border);
+      display:flex;justify-content:space-between;align-items:center;
+      font-size:10px;color:var(--muted);flex-wrap:wrap;gap:8px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="cycleTheme()" title="Theme">
+    <span class="lz">主题</span><span class="le">Theme</span>
+  </button>
+  <div class="ctrl-sep"></div>
+  <button onclick="toggleLang()" title="切换语言">中 · EN</button>
+</div>
+
+<div class="header">
+  <div class="pulse"></div>
+  <div>
+    <h1>
+      <span class="lz">退出码语义对照表</span>
+      <span class="le">Exit Code Semantics Matrix</span>
+    </h1>
+    <div class="sub">
+      <span class="lz">6 个 Hook 事件 × 4 类退出码 · 可阻断事件才响应 Exit 2 · 数据来自源码 hooks/ 目录</span>
+      <span class="le">6 hook events × 4 exit codes · Only blockable events respond to Exit 2 · Data from hooks/ directory</span>
+    </div>
+  </div>
+</div>
+
+<!-- Top Stats -->
+<div class="stats">
+  <div class="stat">
+    <div class="stat-dot" style="background:var(--cyan);"></div>
+    <div class="stat-text">
+      <div class="stat-num">6</div>
+      <div class="stat-lbl">
+        <span class="lz">Event 类型（3 blockable · 3 non-blockable）</span>
+        <span class="le">Event types (3 blockable · 3 non-blockable)</span>
+      </div>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-dot" style="background:var(--rose);"></div>
+    <div class="stat-text">
+      <div class="stat-num">Exit 2 = Block</div>
+      <div class="stat-lbl">
+        <span class="lz">非零退出码中唯一具有阻断语义</span>
+        <span class="le">The only exit code with block semantics</span>
+      </div>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-dot" style="background:var(--emerald);"></div>
+    <div class="stat-text">
+      <div class="stat-num">3 / 6</div>
+      <div class="stat-lbl">
+        <span class="lz">仅 blockable 事件会响应 Exit 2</span>
+        <span class="le">Only blockable events respond to Exit 2</span>
+      </div>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-dot" style="background:var(--slate);"></div>
+    <div class="stat-text">
+      <div class="stat-num">Timeout → 0</div>
+      <div class="stat-lbl">
+        <span class="lz">超时按 fail-open 处理，等同 Exit 0</span>
+        <span class="le">Timeout treated as Exit 0 (fail-open)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Matrix Table -->
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <span class="col-hdr-name">
+            <span class="lz">Hook 事件 / 类型</span>
+            <span class="le">Hook Event / Type</span>
+          </span>
+          <span class="col-hdr-sub">
+            <span class="lz">行 × 列 = 事件 × 退出码</span>
+            <span class="le">Row × Col = event × exit code</span>
+          </span>
+        </th>
+        <th>
+          <span class="col-chip emerald">Exit 0</span>
+          <span class="col-hdr-sub" style="margin-top:6px;">
+            <span class="lz">正常继续 · Hook 通过</span>
+            <span class="le">Continue · Hook approved</span>
+          </span>
+        </th>
+        <th>
+          <span class="col-chip rose">Exit 2</span>
+          <span class="col-hdr-sub" style="margin-top:6px;">
+            <span class="lz">阻断（仅 blockable）</span>
+            <span class="le">BLOCK (blockable only)</span>
+          </span>
+        </th>
+        <th>
+          <span class="col-chip amber">Exit 1+</span>
+          <span class="col-hdr-sub" style="margin-top:6px;">
+            <span class="lz">记录错误，继续执行</span>
+            <span class="le">Log error, continue</span>
+          </span>
+        </th>
+        <th>
+          <span class="col-chip slate">
+            <span class="lz">超时 Timeout</span>
+            <span class="le">Timeout</span>
+          </span>
+          <span class="col-hdr-sub" style="margin-top:6px;">
+            <span class="lz">视同 Exit 0（fail-open）</span>
+            <span class="le">Treated as Exit 0 (fail-open)</span>
+          </span>
+        </th>
+      </tr>
+    </thead>
+    <tbody>
+
+      <!-- PreToolUse -->
+      <tr>
+        <td>
+          <span class="evt-name">PreToolUse</span>
+          <span class="evt-sub lz">工具调用前触发 · 可阻止工具执行</span>
+          <span class="evt-sub le">Fires before tool call · Can block tool execution</span>
+          <span class="evt-badge badge-block">
+            <span class="lz">可阻断 blockable</span>
+            <span class="le">blockable</span>
+          </span>
+        </td>
+        <td class="cell">
+          <div class="pill continue"><span class="ico">✓</span>
+            <span class="lz">放行</span><span class="le">Continue</span>
+          </div>
+        </td>
+        <td class="cell">
+          <div class="pill block"><span class="ico">⊘</span>
+            <span class="lz">阻断工具</span><span class="le">Block tool</span>
+          </div>
+        </td>
+        <td class="cell">
+          <div class="pill warn"><span class="ico">⚠</span>
+            <span class="lz">记录 · 继续</span><span class="le">Log · continue</span>
+          </div>
+        </td>
+        <td class="cell">
+          <div class="pill fopen"><span class="ico">◴</span>
+            <span class="lz">按 0 处理</span><span class="le">As Exit 0</span>
+          </div>
+        </td>
+      </tr>
+
+      <!-- PostToolUse -->
+      <tr>
+        <td>
+          <span class="evt-name">PostToolUse</span>
+          <span class="evt-sub lz">工具调用后触发 · 结果已产生，无法回滚</span>
+          <span class="evt-sub le">Fires after tool call · Result already produced</span>
+          <span class="evt-badge badge-noblock">
+            <span class="lz">不可阻断 non-blockable</span>
+            <span class="le">non-blockable</span>
+          </span>
+        </td>
+        <td class="cell">
+          <div class="pill continue"><span class="ico">✓</span>
+            <span class="lz">放行</span><span class="le">Continue</span>
+          </div>
+        </td>
+        <td class="cell">
+          <div class="pill ignored"><span class="ico">—</span>
+            <span class="lz">忽略</span><span class="le">Ignored</span>
+          </div>
+        </td>
+        <td class="cell">
+          <div class="pill warn"><span class="ico">⚠</span>
+            <span class="lz">记录 · 继续</span><span class="le">Log · continue</span>
+          </div>
+        </td>
+        <td class="cell">
+          <div class="pill fopen"><span class="ico">◴</span>
+            <span class="lz">按 0 处理</span><span class="le">As Exit 0</span>
+          </div>
+        </td>
+      </tr>
+
+      <!-- Stop -->
+      <tr>
+        <td>
+          <span class="evt-name">Stop</span>
+          <span class="evt-sub lz">Agent 准备停止时触发 · 可阻止其退出</span>
+          <span class="evt-sub le">Fires when agent stops · Can veto the stop</span>
+          <span class="evt-badge badge-block">
+            <span class="lz">可阻断 blockable</span>
+            <span class="le">blockable</span>
+          </span>
+        </td>
+        <td class="cell">
+          <div class="pill continue"><span class="ico">✓</span>
+            <span class="lz">允许停止</span><span class="le">Allow stop</span>
+          </div>
+        </td>
+        <td class="cell">
+          <div class="pill block"><span class="ico">⊘</span>
+            <span class="lz">阻止停止</span><span class="le">Veto stop</span>
+          </div>
+        </td>
+        <td class="cell">
+          <div class="pill warn"><span class="ico">⚠</span>
+            <span class="lz">记录 · 继续</span><span class="le">Log · continue</span>
+          </div>
+        </td>
+        <td class="cell">
+          <div class="pill fopen"><span class="ico">◴</span>
+            <span class="lz">按 0 处理</span><span class="le">As Exit 0</span>
+          </div>
+        </td>
+      </tr>
+
+      <!-- UserPromptSubmit -->
+      <tr>
+        <td>
+          <span class="evt-name">UserPromptSubmit</span>
+          <span class="evt-sub lz">用户提交 prompt 时触发 · 可拦截发送</span>
+          <span class="evt-sub le">Fires on user prompt submit · Can intercept send</span>
+          <span class="evt-badge badge-block">
+            <span class="lz">可阻断 blockable</span>
+            <span class="le">blockable</span>
+          </span>
+        </td>
+        <td class="cell">
+          <div class="pill continue"><span class="ico">✓</span>
+            <span class="lz">发送</span><span class="le">Send</span>
+          </div>
+        </td>
+        <td class="cell">
+          <div class="pill block"><span class="ico">⊘</span>
+            <span class="lz">拦截提交</span><span class="le">Block submit</span>
+          </div>
+        </td>
+        <td class="cell">
+          <div class="pill warn"><span class="ico">⚠</span>
+            <span class="lz">记录 · 继续</span><span class="le">Log · continue</span>
+          </div>
+        </td>
+        <td class="cell">
+          <div class="pill fopen"><span class="ico">◴</span>
+            <span class="lz">按 0 处理</span><span class="le">As Exit 0</span>
+          </div>
+        </td>
+      </tr>
+
+      <!-- Notification -->
+      <tr>
+        <td>
+          <span class="evt-name">Notification</span>
+          <span class="evt-sub lz">发送通知时触发 · 纯旁路，fire-and-forget</span>
+          <span class="evt-sub le">Fires on notification · Pure side-channel</span>
+          <span class="evt-badge badge-fire">
+            <span class="lz">即发即忘 fire-and-forget</span>
+            <span class="le">fire-and-forget</span>
+          </span>
+        </td>
+        <td class="cell">
+          <div class="pill continue"><span class="ico">✓</span>
+            <span class="lz">放行</span><span class="le">Continue</span>
+          </div>
+        </td>
+        <td class="cell">
+          <div class="pill ignored"><span class="ico">—</span>
+            <span class="lz">忽略</span><span class="le">Ignored</span>
+          </div>
+        </td>
+        <td class="cell">
+          <div class="pill warn"><span class="ico">⚠</span>
+            <span class="lz">记录 · 继续</span><span class="le">Log · continue</span>
+          </div>
+        </td>
+        <td class="cell">
+          <div class="pill fopen"><span class="ico">◴</span>
+            <span class="lz">按 0 处理</span><span class="le">As Exit 0</span>
+          </div>
+        </td>
+      </tr>
+
+      <!-- SessionStart -->
+      <tr>
+        <td>
+          <span class="evt-name">SessionStart</span>
+          <span class="evt-sub lz">会话启动时触发 · 仅用于初始化，无法阻止启动</span>
+          <span class="evt-sub le">Fires on session start · Cannot veto startup</span>
+          <span class="evt-badge badge-noblock">
+            <span class="lz">不可阻断 non-blockable</span>
+            <span class="le">non-blockable</span>
+          </span>
+        </td>
+        <td class="cell">
+          <div class="pill continue"><span class="ico">✓</span>
+            <span class="lz">放行</span><span class="le">Continue</span>
+          </div>
+        </td>
+        <td class="cell">
+          <div class="pill ignored"><span class="ico">—</span>
+            <span class="lz">忽略</span><span class="le">Ignored</span>
+          </div>
+        </td>
+        <td class="cell">
+          <div class="pill warn"><span class="ico">⚠</span>
+            <span class="lz">记录 · 继续</span><span class="le">Log · continue</span>
+          </div>
+        </td>
+        <td class="cell">
+          <div class="pill fopen"><span class="ico">◴</span>
+            <span class="lz">按 0 处理</span><span class="le">As Exit 0</span>
+          </div>
+        </td>
+      </tr>
+
+      <!-- Summary row -->
+      <tr class="sum-row">
+        <td>
+          <span class="lz">列汇总（6 个事件中的分布）</span>
+          <span class="le">Column totals (across 6 events)</span>
+        </td>
+        <td class="cell">
+          <span class="sum-num continue">6</span>
+          <span style="margin-left:6px;">
+            <span class="lz">全部放行</span><span class="le">all continue</span>
+          </span>
+        </td>
+        <td class="cell">
+          <span class="sum-num block">3</span>
+          <span style="margin-left:4px;">
+            <span class="lz">阻断</span><span class="le">block</span>
+          </span>
+          <span style="color:var(--muted);margin-left:6px;">·</span>
+          <span class="sum-num ignored">3</span>
+          <span style="margin-left:4px;">
+            <span class="lz">忽略</span><span class="le">ignored</span>
+          </span>
+        </td>
+        <td class="cell">
+          <span class="sum-num warn">6</span>
+          <span style="margin-left:6px;">
+            <span class="lz">全部记录继续</span><span class="le">all log · continue</span>
+          </span>
+        </td>
+        <td class="cell">
+          <span class="sum-num ignored">6</span>
+          <span style="margin-left:6px;">
+            <span class="lz">全部按 Exit 0</span><span class="le">all as Exit 0</span>
+          </span>
+        </td>
+      </tr>
+
+    </tbody>
+  </table>
+</div>
+
+<!-- Legend + Note -->
+<div class="bottom">
+  <div class="legend">
+    <div class="legend-title">
+      <span class="lz">图例 · 动作语义</span>
+      <span class="le">Legend · Action Semantics</span>
+    </div>
+    <div class="legend-row">
+      <div class="pill continue"><span class="ico">✓</span>
+        <span class="lz">Continue</span><span class="le">Continue</span>
+      </div>
+      <span class="lz">放行当前流程，不做任何干预</span>
+      <span class="le">Continue normally, no intervention</span>
+    </div>
+    <div class="legend-row">
+      <div class="pill block"><span class="ico">⊘</span>
+        <span class="lz">Block</span><span class="le">Block</span>
+      </div>
+      <span class="lz">阻断后续动作（仅 blockable 事件生效）</span>
+      <span class="le">Block the action (blockable events only)</span>
+    </div>
+    <div class="legend-row">
+      <div class="pill warn"><span class="ico">⚠</span>
+        <span class="lz">Log</span><span class="le">Log</span>
+      </div>
+      <span class="lz">记录错误到 stderr，流程继续</span>
+      <span class="le">Record error to stderr, flow continues</span>
+    </div>
+    <div class="legend-row">
+      <div class="pill ignored"><span class="ico">—</span>
+        <span class="lz">Ignored</span><span class="le">Ignored</span>
+      </div>
+      <span class="lz">退出码被忽略，不影响主流程</span>
+      <span class="le">Exit code ignored, main flow unaffected</span>
+    </div>
+    <div class="legend-row">
+      <div class="pill fopen"><span class="ico">◴</span>
+        <span class="lz">Timeout</span><span class="le">Timeout</span>
+      </div>
+      <span class="lz">超时按 Exit 0 处理（fail-open 策略）</span>
+      <span class="le">Timeout treated as Exit 0 (fail-open policy)</span>
+    </div>
+  </div>
+
+  <div class="note">
+    <div class="note-title">
+      <span class="lz">关键规则</span>
+      <span class="le">Key Rules</span>
+    </div>
+    <span class="lz">
+      • <strong>Exit 2 语义唯一</strong>：非零退出码中，只有 <code>2</code> 承载「阻断」语义，其余非零值一律记录错误并继续<br>
+      • <strong>Blockable 事件</strong>：<code>PreToolUse</code> · <code>Stop</code> · <code>UserPromptSubmit</code>，可通过 Exit 2 否决后续动作<br>
+      • <strong>Non-blockable 事件</strong>：<code>PostToolUse</code> · <code>SessionStart</code> · <code>Notification</code>，Exit 2 被静默忽略<br>
+      • <strong>Fail-open 默认</strong>：Hook 超时或异常按 Exit 0 处理，避免挡住主流程<br>
+      • <strong>Stderr 语义</strong>：非 0 退出时，stderr 内容会进入 Claude 上下文供模型自诊断<br>
+      • <strong>源码位置</strong>：<code>hooks/runHooks.ts</code>（事件表）· <code>hooks/exitCode.ts</code>（语义映射）
+    </span>
+    <span class="le">
+      • <strong>Exit 2 is unique</strong>: Among non-zero exit codes, only <code>2</code> carries block semantics. Others are logged and continue<br>
+      • <strong>Blockable events</strong>: <code>PreToolUse</code> · <code>Stop</code> · <code>UserPromptSubmit</code> — Exit 2 can veto the action<br>
+      • <strong>Non-blockable events</strong>: <code>PostToolUse</code> · <code>SessionStart</code> · <code>Notification</code> — Exit 2 silently ignored<br>
+      • <strong>Fail-open default</strong>: Hook timeouts or exceptions are treated as Exit 0 to avoid blocking the main flow<br>
+      • <strong>Stderr semantics</strong>: On non-zero exit, stderr is fed into Claude's context for self-diagnosis<br>
+      • <strong>Source</strong>: <code>hooks/runHooks.ts</code> (event table) · <code>hooks/exitCode.ts</code> (semantic map)
+    </span>
+  </div>
+</div>
+
+<div class="footer">
+  <span>
+    <span class="lz">数据来源：hooks/ 模块 + Hook 事件规范 · 2026-04-15</span>
+    <span class="le">Source: hooks/ module + hook event spec · 2026-04-15</span>
+  </span>
+  <span>VIS-2Q-006 · Claude Code Whitepaper v2</span>
+</div>
+
+<script>
+(function(){
+  var t, l;
+  try {
+    t=localStorage.getItem('vtheme')||'dark';
+    l=localStorage.getItem('vlang')||'zh';
+  } catch(_) {
+    t='dark'; l='zh';
+  }
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);try{localStorage.setItem('vtheme',t);}catch(_){}};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';try{localStorage.setItem('vlang',l);}catch(_){}applyLang();};
+})();
+</script>
+
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '.ctrl,',
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

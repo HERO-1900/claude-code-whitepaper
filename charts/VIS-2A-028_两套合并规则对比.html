@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<!--
+  VIS-2A-028 · 两套合并规则对比 · Merge Strategy Comparison
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  跨源合并 (first-source-wins) vs 同源合并 (last-write-wins + deep-merge)
+-->
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIS-2A-028 两套合并规则对比 · Two Merge Rules Comparison</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* ── Design tokens ────────────────────────────────────── */
+    :root {
+      --bg:#020617;--panel:#0f172a;--card:#0f172a;--border:#1e293b;
+      --text:#e2e8f0;--muted:#64748b;--subtle:#334155;
+      --amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;
+      --emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#f97316;
+      --cyan-dim:rgba(34,211,238,0.12);--amber-dim:rgba(251,191,36,0.12);
+      --emerald-dim:rgba(52,211,153,0.12);--rose-dim:rgba(251,113,133,0.12);
+    }
+    [data-theme="warm"] {
+      --bg:#f8f6f3;--panel:#ffffff;--card:#faf9f7;--border:#e2d9cc;
+      --text:#1c1917;--muted:#78716c;--subtle:#d6ccc2;
+      --amber:#b45309;--cyan:#0891b2;--violet:#7c3aed;
+      --emerald:#059669;--rose:#e11d48;--slate:#78716c;--orange:#c2410c;
+      --cyan-dim:rgba(8,145,178,0.1);--amber-dim:rgba(180,83,9,0.1);
+      --emerald-dim:rgba(5,150,105,0.1);--rose-dim:rgba(225,29,72,0.1);
+    }
+    [data-theme="light"] {
+      --bg:#ffffff;--panel:#f8fafc;--card:#f8fafc;--border:#e2e8f0;
+      --text:#0f172a;--muted:#64748b;--subtle:#cbd5e1;
+      --amber:#d97706;--cyan:#0ea5e9;--violet:#7c3aed;
+      --emerald:#059669;--rose:#e11d48;--slate:#64748b;--orange:#ea580c;
+      --cyan-dim:rgba(14,165,233,0.08);--amber-dim:rgba(217,119,6,0.08);
+      --emerald-dim:rgba(5,150,105,0.08);--rose-dim:rgba(225,29,72,0.08);
+    }
+
+    /* ── Reset ────────────────────────────────────────────── */
+    *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+    body {
+      background:var(--bg);
+      color:var(--text);
+      font-family:'JetBrains Mono',monospace;
+      min-height:100vh;
+      padding:20px 24px 48px;
+    }
+
+    /* ── Theme controls ───────────────────────────────────── */
+    /* i18n: .lz shown by default; .le hidden via inline style until JS toggles.
+       No CSS rule on .le — JS fully controls visibility via inline display. */
+    .ctrl {
+      position:fixed; top:16px; right:16px;
+      display:flex; gap:6px; z-index:999;
+    }
+    .ctrl button {
+      background:var(--panel); border:1px solid var(--border);
+      color:var(--text); font-family:'JetBrains Mono',monospace;
+      font-size:10px; padding:5px 10px; border-radius:6px; cursor:pointer;
+      transition:border-color .2s, color .2s;
+    }
+    .ctrl button:hover { border-color:var(--cyan); color:var(--cyan); }
+    .ctrl button.active { border-color:var(--cyan); color:var(--cyan); }
+
+    /* ── Page header ──────────────────────────────────────── */
+    .page-header {
+      text-align:center;
+      margin-bottom:32px;
+      padding-top:8px;
+    }
+    .page-header .badge {
+      display:inline-block;
+      font-size:10px; font-weight:700; letter-spacing:.12em;
+      color:var(--muted); border:1px solid var(--border);
+      border-radius:4px; padding:3px 10px; margin-bottom:14px;
+      text-transform:uppercase;
+    }
+    .page-header h1 {
+      font-size:22px; font-weight:700; letter-spacing:-.01em;
+      color:var(--text); margin-bottom:8px;
+    }
+    .page-header .subtitle {
+      font-size:12px; color:var(--muted);
+    }
+
+    /* ── Main comparison grid ─────────────────────────────── */
+    .compare-wrapper {
+      display:grid;
+      grid-template-columns:1fr 64px 1fr;
+      gap:0;
+      align-items:start;
+      max-width:1100px;
+      margin:0 auto 32px;
+    }
+
+    /* ── Panel card ───────────────────────────────────────── */
+    .panel {
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:12px;
+      overflow:hidden;
+    }
+    .panel-left  { border-color: rgba(34,211,238,.35); }
+    .panel-right { border-color: rgba(251,191,36,.35);  }
+
+    /* Panel header */
+    .panel-head {
+      padding:20px 22px 18px;
+      border-bottom:1px solid var(--border);
+    }
+    .panel-left  .panel-head { background: rgba(34,211,238,.06); }
+    .panel-right .panel-head { background: rgba(251,191,36,.06); }
+
+    .panel-head-top {
+      display:flex; align-items:center; gap:10px; margin-bottom:10px;
+    }
+    .panel-icon {
+      width:36px; height:36px; border-radius:8px;
+      display:flex; align-items:center; justify-content:center;
+      font-size:16px; flex-shrink:0;
+    }
+    .panel-left  .panel-icon { background:var(--cyan-dim); color:var(--cyan); }
+    .panel-right .panel-icon { background:var(--amber-dim); color:var(--amber); }
+
+    .panel-title { font-size:15px; font-weight:700; line-height:1.3; }
+    .panel-left  .panel-title { color:var(--cyan); }
+    .panel-right .panel-title { color:var(--amber); }
+
+    .panel-subtitle { font-size:11px; color:var(--muted); margin-top:2px; }
+
+    .rule-badge {
+      display:inline-flex; align-items:center; gap:6px;
+      font-size:11px; font-weight:700; letter-spacing:.04em;
+      padding:5px 12px; border-radius:20px;
+    }
+    .panel-left  .rule-badge {
+      background:var(--cyan-dim); color:var(--cyan);
+      border:1px solid rgba(34,211,238,.3);
+    }
+    .panel-right .rule-badge {
+      background:var(--amber-dim); color:var(--amber);
+      border:1px solid rgba(251,191,36,.3);
+    }
+    .rule-dot {
+      width:6px; height:6px; border-radius:50%;
+      background:currentColor; display:inline-block;
+    }
+
+    /* Panel body */
+    .panel-body { padding:20px 22px; display:flex; flex-direction:column; gap:18px; }
+
+    /* Code block */
+    .code-block {
+      background:#010b18;
+      border:1px solid var(--border);
+      border-radius:8px;
+      overflow:hidden;
+    }
+    [data-theme="warm"] .code-block { background:#f5f0eb; }
+    [data-theme="light"] .code-block { background:#f1f5f9; }
+
+    .code-label {
+      font-size:10px; font-weight:700; letter-spacing:.1em;
+      padding:7px 14px; border-bottom:1px solid var(--border);
+      display:flex; align-items:center; gap:6px;
+      text-transform:uppercase;
+    }
+    .panel-left  .code-label { color:var(--cyan);  background:rgba(34,211,238,.05); }
+    .panel-right .code-label { color:var(--amber); background:rgba(251,191,36,.05); }
+
+    pre {
+      font-family:'JetBrains Mono',monospace;
+      font-size:11.5px;
+      line-height:1.7;
+      padding:14px 16px;
+      overflow-x:auto;
+      white-space:pre;
+    }
+
+    /* Syntax tokens */
+    .tok-comment  { color:var(--muted); font-style:italic; }
+    .tok-key      { color:var(--cyan); }
+    .tok-key-a    { color:var(--amber); }
+    .tok-string   { color:var(--emerald); }
+    .tok-bracket  { color:var(--slate); }
+    .tok-keyword  { color:var(--violet); }
+    .tok-win      { color:var(--rose); font-weight:600; }
+
+    /* Section label */
+    .section-label {
+      font-size:10px; font-weight:700; letter-spacing:.1em;
+      text-transform:uppercase; color:var(--muted);
+      margin-bottom:8px;
+    }
+
+    /* Scenario list */
+    .scenario-list { display:flex; flex-direction:column; gap:6px; }
+    .scenario-item {
+      display:flex; align-items:flex-start; gap:8px;
+      font-size:11.5px; color:var(--text); line-height:1.55;
+    }
+    .scenario-dot {
+      width:16px; height:16px; border-radius:4px;
+      display:flex; align-items:center; justify-content:center;
+      font-size: 10px; flex-shrink:0; margin-top:1px;
+    }
+    .panel-left  .scenario-dot { background:var(--cyan-dim); color:var(--cyan); }
+    .panel-right .scenario-dot { background:var(--amber-dim); color:var(--amber); }
+
+    /* Gotcha box */
+    .gotcha {
+      border-radius:8px;
+      padding:12px 14px;
+      font-size:11.5px;
+      line-height:1.6;
+    }
+    .panel-left  .gotcha {
+      background:rgba(251,113,133,.07);
+      border:1px solid rgba(251,113,133,.25);
+      color:var(--rose);
+    }
+    .panel-right .gotcha {
+      background:rgba(251,191,36,.07);
+      border:1px solid rgba(251,191,36,.25);
+      color:var(--amber);
+    }
+    .gotcha-title {
+      font-weight:700; font-size:10px; letter-spacing:.08em;
+      text-transform:uppercase; margin-bottom:5px;
+      display:flex; align-items:center; gap:5px;
+    }
+    .gotcha-body { color:var(--text); }
+
+    /* ── Center divider ───────────────────────────────────── */
+    .divider {
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:flex-start;
+      padding-top:100px;
+      position:relative;
+    }
+    .divider-line {
+      position:absolute;
+      top:0; bottom:0; left:50%;
+      transform:translateX(-50%);
+      width:1px;
+      background: linear-gradient(
+        to bottom,
+        transparent 0%,
+        rgba(34,211,238,.4) 20%,
+        rgba(34,211,238,.4) 45%,
+        rgba(251,191,36,.4) 55%,
+        rgba(251,191,36,.4) 80%,
+        transparent 100%
+      );
+    }
+    .vs-badge {
+      position:relative; z-index:2;
+      width:40px; height:40px;
+      border-radius:50%;
+      display:flex; align-items:center; justify-content:center;
+      font-size:11px; font-weight:700;
+      background:var(--bg);
+      border:1px solid var(--border);
+    }
+    .vs-text-l { color:var(--cyan); }
+    .vs-text-r { color:var(--amber); }
+
+    /* ── Bottom key insight ───────────────────────────────── */
+    .insight-box {
+      max-width:1100px; margin:0 auto 28px;
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:20px 24px;
+      display:flex; gap:14px; align-items:flex-start;
+    }
+    .insight-icon {
+      font-size:20px; flex-shrink:0; line-height:1;
+    }
+    .insight-label {
+      font-size:10px; font-weight:700; letter-spacing:.1em;
+      text-transform:uppercase; color:var(--violet);
+      margin-bottom:6px;
+    }
+    .insight-text {
+      font-size:12.5px; line-height:1.7; color:var(--text);
+    }
+    .insight-text em { font-style:normal; font-weight:700; }
+    .insight-text .hl-cyan  { color:var(--cyan); }
+    .insight-text .hl-amber { color:var(--amber); }
+
+    /* ── Summary cards ────────────────────────────────────── */
+    .summary-cards {
+      max-width:1100px; margin:0 auto;
+      display:grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap:16px;
+    }
+    .s-card {
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:16px 18px;
+    }
+    .s-card-cyan   { border-top:3px solid var(--cyan); }
+    .s-card-amber  { border-top:3px solid var(--amber); }
+    .s-card-emerald{ border-top:3px solid var(--emerald); }
+
+    .s-card-tag {
+      font-size:10px; font-weight:700; letter-spacing:.06em;
+      text-transform:uppercase; margin-bottom:6px;
+    }
+    .s-card-cyan    .s-card-tag { color:var(--cyan); }
+    .s-card-amber   .s-card-tag { color:var(--amber); }
+    .s-card-emerald .s-card-tag { color:var(--emerald); }
+
+    .s-card-title {
+      font-size:13px; font-weight:700; color:var(--text);
+      margin-bottom:5px; font-family:'JetBrains Mono',monospace;
+    }
+    .s-card-desc {
+      font-size:11px; color:var(--muted); line-height:1.55;
+    }
+
+    /* ── Responsive ───────────────────────────────────────── */
+    @media(max-width:820px) {
+      .compare-wrapper {
+        grid-template-columns:1fr;
+        grid-template-rows:auto auto auto;
+        gap:16px;
+      }
+      .divider { flex-direction:row; padding-top:0; padding-left:32px; }
+      .divider-line {
+        top:50%; left:0; right:0; bottom:auto;
+        height:1px; width:100%;
+        transform:translateY(-50%);
+        background:linear-gradient(to right,
+          rgba(34,211,238,.4) 0%,
+          rgba(251,191,36,.4) 100%
+        );
+      }
+      .summary-cards { grid-template-columns:1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Theme + Language controls -->
+<div class="ctrl">
+  <button onclick="cycleTheme()" id="btn-theme">Theme</button>
+  <button onclick="toggleLang()" id="btn-lang">EN/中</button>
+</div>
+
+<!-- Page header -->
+<div class="page-header">
+  <div class="badge">VIS-2A-028 · Config Merge Strategies</div>
+  <h1>
+    <span class="lz">两套合并规则对比</span><span class="le" style="display:none">Two Merge Rules Comparison</span>
+  </h1>
+  <div class="subtitle">
+    <span class="lz">Cross-Source Merge vs Same-Source Merge · Claude Code 配置合并策略</span>
+    <span class="le" style="display:none">Cross-Source Merge vs Same-Source Merge · Claude Code Config Merge Strategies</span>
+  </div>
+</div>
+
+<!-- Main comparison -->
+<div class="compare-wrapper">
+
+  <!-- LEFT: Cross-Source Merge -->
+  <div class="panel panel-left">
+    <div class="panel-head">
+      <div class="panel-head-top">
+        <div class="panel-icon">⬆</div>
+        <div>
+          <div class="panel-title">
+            <span class="lz">跨源合并</span><span class="le" style="display:none">Cross-Source Merge</span>
+          </div>
+          <div class="panel-subtitle">
+            <span class="lz">Cross-Source Merge · CLI / Policy / Project / User / Default</span>
+            <span class="le" style="display:none">Across config sources · CLI / Policy / Project / User / Default</span>
+          </div>
+        </div>
+      </div>
+      <div class="rule-badge">
+        <span class="rule-dot"></span>
+        first-source-wins
+      </div>
+    </div>
+
+    <div class="panel-body">
+      <!-- Code example -->
+      <div>
+        <div class="section-label">
+          <span class="lz">示例 / Example</span><span class="le" style="display:none">Example</span>
+        </div>
+        <div class="code-block">
+          <div class="code-label">
+            <span class="lz">合并过程</span><span class="le" style="display:none">Merge Process</span>
+          </div>
+          <pre><span class="tok-comment">// Source P1 — CLI (<span class="lz">最高优先级</span><span class="le" style="display:none">highest priority</span>)</span>
+<span class="tok-bracket">{</span> <span class="tok-key">"model"</span><span class="tok-bracket">:</span> <span class="tok-string">"claude-opus"</span> <span class="tok-bracket">}</span>
+
+<span class="tok-comment">// Source P2 — Policy (<span class="lz">次高</span><span class="le" style="display:none">second highest</span>)</span>
+<span class="tok-bracket">{</span>
+  <span class="tok-key">"model"</span><span class="tok-bracket">:</span>        <span class="tok-string">"claude-haiku"</span><span class="tok-bracket">,</span>
+  <span class="tok-key">"allowedTools"</span><span class="tok-bracket">:</span> <span class="tok-bracket">[]</span>
+<span class="tok-bracket">}</span>
+
+<span class="tok-comment">// ↓ Result: P1 wins on "model"; P2 fills gap</span>
+<span class="tok-bracket">{</span>
+  <span class="tok-key">"model"</span><span class="tok-bracket">:</span>        <span class="tok-string tok-win">"claude-opus"</span><span class="tok-bracket">,</span>  <span class="tok-comment">// ← P1 <span class="lz">保留</span><span class="le" style="display:none">keep</span></span>
+  <span class="tok-key">"allowedTools"</span><span class="tok-bracket">:</span> <span class="tok-bracket">[]</span>            <span class="tok-comment">// ← P2 <span class="lz">补空</span><span class="le" style="display:none">fill gap</span></span>
+<span class="tok-bracket">}</span></pre>
+        </div>
+      </div>
+
+      <!-- When it applies -->
+      <div>
+        <div class="section-label">
+          <span class="lz">适用场景 / When It Applies</span><span class="le" style="display:none">When It Applies</span>
+        </div>
+        <div class="scenario-list">
+          <div class="scenario-item">
+            <div class="scenario-dot">▸</div>
+            <span>
+              <span class="lz">CLI flag（<code>--flag-name</code>）优先于所有其他来源</span>
+              <span class="le" style="display:none">CLI flags (<code>--flag-name</code>) take precedence over all other sources</span>
+            </span>
+          </div>
+          <div class="scenario-item">
+            <div class="scenario-dot">▸</div>
+            <span>
+              <span class="lz">Policy 层覆盖 Enterprise → Project → Local 层</span>
+              <span class="le" style="display:none">Policy layer overrides Enterprise → Project → Local layers</span>
+            </span>
+          </div>
+          <div class="scenario-item">
+            <div class="scenario-dot">▸</div>
+            <span>
+              <span class="lz">User 级配置（<code>~/.claude/settings.json</code>）覆盖 Default</span>
+              <span class="le" style="display:none">User-level config (<code>~/.claude/settings.json</code>) overrides Default</span>
+            </span>
+          </div>
+          <div class="scenario-item">
+            <div class="scenario-dot">▸</div>
+            <span>
+              <span class="lz">不同 source 的同名 key 冲突时，优先级高者胜出</span>
+              <span class="le" style="display:none">When different sources conflict on the same key, the higher-priority one wins</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gotcha -->
+      <div class="gotcha">
+        <div class="gotcha-title">
+          <span class="lz">⚠ GOTCHA 说明</span><span class="le" style="display:none">⚠ GOTCHA</span>
+        </div>
+        <div class="gotcha-body">
+          <span class="lz">低优先级来源<strong>永远无法覆盖</strong>高优先级来源中已定义的 key。
+          即使 Project 层写了 <code>"model": "claude-haiku"</code>，
+          用户的 CLI flag 也始终生效。这是安全设计，防止项目配置劫持用户意图。</span>
+          <span class="le" style="display:none">A lower-priority source <strong>can never override</strong> a key already defined in a higher-priority source.
+          Even if the Project layer sets <code>"model": "claude-haiku"</code>,
+          the user's CLI flag always takes effect. This is a safety design that prevents project config from hijacking user intent.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CENTER divider -->
+  <div class="divider">
+    <div class="divider-line"></div>
+    <div class="vs-badge">
+      <span class="vs-text-l">V</span><span class="vs-text-r">S</span>
+    </div>
+  </div>
+
+  <!-- RIGHT: Same-Source Merge -->
+  <div class="panel panel-right">
+    <div class="panel-head">
+      <div class="panel-head-top">
+        <div class="panel-icon">↩</div>
+        <div>
+          <div class="panel-title">
+            <span class="lz">同源合并</span><span class="le" style="display:none">Same-Source Merge</span>
+          </div>
+          <div class="panel-subtitle">
+            <span class="lz">Same-Source Merge · CLAUDE.md 目录树继承链</span>
+            <span class="le" style="display:none">Same-Source Merge · CLAUDE.md directory-tree inheritance chain</span>
+          </div>
+        </div>
+      </div>
+      <div class="rule-badge">
+        <span class="rule-dot"></span>
+        last-write-wins + deep merge
+      </div>
+    </div>
+
+    <div class="panel-body">
+      <!-- Code example -->
+      <div>
+        <div class="section-label">
+          <span class="lz">示例 / Example</span><span class="le" style="display:none">Example</span>
+        </div>
+        <div class="code-block">
+          <div class="code-label">
+            <span class="lz">合并过程</span><span class="le" style="display:none">Merge Process</span>
+          </div>
+          <pre><span class="tok-comment">// Parent — ./CLAUDE.md</span>
+<span class="tok-bracket">{</span>
+  <span class="tok-key-a">"tools"</span><span class="tok-bracket">:</span> <span class="tok-bracket">[</span><span class="tok-string">"Read"</span><span class="tok-bracket">,</span> <span class="tok-string">"Edit"</span><span class="tok-bracket">]</span>
+<span class="tok-bracket">}</span>
+
+<span class="tok-comment">// Child — ./subdir/CLAUDE.md</span>
+<span class="tok-bracket">{</span>
+  <span class="tok-key-a">"tools"</span><span class="tok-bracket">:</span> <span class="tok-bracket">[</span><span class="tok-string">"Bash"</span><span class="tok-bracket">],</span>
+  <span class="tok-key-a">"rules"</span><span class="tok-bracket">:</span> <span class="tok-bracket">[</span><span class="tok-string">"no-sudo"</span><span class="tok-bracket">]</span>
+<span class="tok-bracket">}</span>
+
+<span class="tok-comment">// ↓ Result: deep merge, arrays concatenated</span>
+<span class="tok-bracket">{</span>
+  <span class="tok-key-a">"tools"</span><span class="tok-bracket">:</span> <span class="tok-bracket">[</span>
+    <span class="tok-string tok-win">"Read"</span><span class="tok-bracket">,</span> <span class="tok-string tok-win">"Edit"</span><span class="tok-bracket">,</span>  <span class="tok-comment">// ← parent</span>
+    <span class="tok-string tok-win">"Bash"</span>               <span class="tok-comment">// ← child <span class="lz">追加</span><span class="le" style="display:none">append</span></span>
+  <span class="tok-bracket">],</span>
+  <span class="tok-key-a">"rules"</span><span class="tok-bracket">:</span> <span class="tok-bracket">[</span><span class="tok-string tok-win">"no-sudo"</span><span class="tok-bracket">]</span>   <span class="tok-comment">// ← child <span class="lz">独有</span><span class="le" style="display:none">unique</span></span>
+<span class="tok-bracket">}</span></pre>
+        </div>
+      </div>
+
+      <!-- When it applies -->
+      <div>
+        <div class="section-label">
+          <span class="lz">适用场景 / When It Applies</span><span class="le" style="display:none">When It Applies</span>
+        </div>
+        <div class="scenario-list">
+          <div class="scenario-item">
+            <div class="scenario-dot">▸</div>
+            <span>
+              <span class="lz">子目录 <code>CLAUDE.md</code> 继承并扩展父目录的配置</span>
+              <span class="le" style="display:none">Child <code>CLAUDE.md</code> inherits and extends parent-directory config</span>
+            </span>
+          </div>
+          <div class="scenario-item">
+            <div class="scenario-dot">▸</div>
+            <span>
+              <span class="lz">数组（如 tools / rules）全部拼接，不去重</span>
+              <span class="le" style="display:none">Arrays (e.g. tools / rules) are fully concatenated, without dedup</span>
+            </span>
+          </div>
+          <div class="scenario-item">
+            <div class="scenario-dot">▸</div>
+            <span>
+              <span class="lz">对象字段递归深合并（nested objects deep-merged）</span>
+              <span class="le" style="display:none">Object fields are recursively deep-merged (nested objects deep-merged)</span>
+            </span>
+          </div>
+          <div class="scenario-item">
+            <div class="scenario-dot">▸</div>
+            <span>
+              <span class="lz">同 source 内后定义的 scalar key 覆盖先定义（last-write-wins）</span>
+              <span class="le" style="display:none">Within the same source, later scalar keys override earlier ones (last-write-wins)</span>
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Gotcha -->
+      <div class="gotcha">
+        <div class="gotcha-title">
+          <span class="lz">⚠ GOTCHA 说明</span><span class="le" style="display:none">⚠ GOTCHA</span>
+        </div>
+        <div class="gotcha-body">
+          <span class="lz">数组拼接是<strong>累积式</strong>的，不会去重。
+          若父目录和子目录都声明了同一工具，工具会被调用两次或重复列出。
+          若需覆盖而非追加，必须切换到不同的 source 层（跨源合并）。</span>
+          <span class="le" style="display:none">Array concatenation is <strong>cumulative</strong> and does not deduplicate.
+          If parent and child directories declare the same tool, that tool gets invoked twice or listed redundantly.
+          To override instead of append, you must switch to a different source layer (cross-source merge).</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div><!-- /compare-wrapper -->
+
+<!-- Key insight -->
+<div class="insight-box">
+  <div class="insight-icon">⚡</div>
+  <div>
+    <div class="insight-label">
+      <span class="lz">关键区别 / Key Difference</span><span class="le" style="display:none">Key Difference</span>
+    </div>
+    <div class="insight-text">
+      <span class="lz"><span class="hl-cyan">跨源合并</span>用 <em>first-source-wins</em>——
+      防止低优先级来源覆盖高优先级来源，最高优先级（CLI）始终胜出，保护用户意图不被项目配置劫持；
+      &nbsp;
+      <span class="hl-amber">同源合并</span>用 <em>last-write-wins + 深合并</em>——
+      后代目录的 CLAUDE.md 继承祖先配置并叠加扩展，数组拼接、对象递归，让子目录获得更丰富能力而不是重写父级规则。</span>
+      <span class="le" style="display:none"><span class="hl-cyan">Cross-source merge</span> uses <em>first-source-wins</em>——
+      it prevents lower-priority sources from overriding higher-priority ones, and the highest-priority source (CLI) always wins, protecting user intent from being hijacked by project config;
+      &nbsp;
+      <span class="hl-amber">same-source merge</span> uses <em>last-write-wins + deep merge</em>——
+      descendant CLAUDE.md files inherit ancestor config and stack extensions on top, arrays concatenate and objects recurse, so child directories gain richer capability instead of rewriting parent rules.</span>
+    </div>
+  </div>
+</div>
+
+<!-- Summary cards -->
+<div class="summary-cards">
+  <div class="s-card s-card-cyan">
+    <div class="s-card-tag">
+      <span class="lz">跨源合并 · Cross-Source</span><span class="le" style="display:none">Cross-Source</span>
+    </div>
+    <div class="s-card-title">first-source-wins</div>
+    <div class="s-card-desc">
+      <span class="lz">高优先级来源的 key 不可被低优先级覆盖。CLI &gt; Policy &gt; Enterprise &gt; Project &gt; Local &gt; User &gt; Default。</span>
+      <span class="le" style="display:none">Keys from a higher-priority source cannot be overridden by a lower one. CLI &gt; Policy &gt; Enterprise &gt; Project &gt; Local &gt; User &gt; Default.</span>
+    </div>
+  </div>
+  <div class="s-card s-card-amber">
+    <div class="s-card-tag">
+      <span class="lz">同源合并 · Same-Source</span><span class="le" style="display:none">Same-Source</span>
+    </div>
+    <div class="s-card-title">deep-merge</div>
+    <div class="s-card-desc">
+      <span class="lz">数组拼接（concat），对象递归深合并（recursive merge），scalar 值后写覆盖先写（last-write-wins）。</span>
+      <span class="le" style="display:none">Arrays concatenate (concat), objects recursively deep-merge (recursive merge), scalar values are overridden later-over-earlier (last-write-wins).</span>
+    </div>
+  </div>
+  <div class="s-card s-card-emerald">
+    <div class="s-card-tag">
+      <span class="lz">典型场景 · Typical Use</span><span class="le" style="display:none">Typical Use</span>
+    </div>
+    <div class="s-card-title">
+      <span class="lz">CLAUDE.md 继承链</span><span class="le" style="display:none">CLAUDE.md inheritance chain</span>
+    </div>
+    <div class="s-card-desc">
+      <span class="lz">子目录 CLAUDE.md 自动扩展父目录配置，无需重复声明，实现项目级工具与规则的分层定义。</span>
+      <span class="le" style="display:none">Child CLAUDE.md automatically extends parent-directory config without repeating declarations, enabling layered definition of project-level tools and rules.</span>
+    </div>
+  </div>
+</div>
+
+<!-- IIFE script (standard v2 pattern) -->
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+
+/* ── Additional hover effects (separate from IIFE) ── */
+(function(){
+  document.querySelectorAll('.panel').forEach(function(panel) {
+    panel.addEventListener('mouseenter', function() {
+      panel.style.transition = 'box-shadow .25s ease';
+      var isLeft = panel.classList.contains('panel-left');
+      var color  = isLeft ? 'rgba(34,211,238,.15)' : 'rgba(251,191,36,.15)';
+      panel.style.boxShadow = '0 0 32px ' + color;
+    });
+    panel.addEventListener('mouseleave', function() {
+      panel.style.boxShadow = 'none';
+    });
+  });
+  document.querySelectorAll('.s-card').forEach(function(card) {
+    card.addEventListener('mouseenter', function() {
+      card.style.transition = 'transform .18s ease, box-shadow .18s ease';
+      card.style.transform  = 'translateY(-2px)';
+    });
+    card.addEventListener('mouseleave', function() {
+      card.style.transform  = '';
+      card.style.boxShadow  = '';
+    });
+  });
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

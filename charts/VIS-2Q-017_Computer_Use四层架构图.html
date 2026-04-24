@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-2Q-017 · Computer Use 四层架构图</title>
+<style>
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;}
+body{min-height:100vh;padding:24px;display:flex;flex-direction:column;align-items:center;}
+.wrap{width:100%;max-width:1040px;}
+.toolbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;gap:12px;flex-wrap:wrap;}
+.titleblk h1{font-size:20px;font-weight:700;letter-spacing:.2px;}
+.titleblk .sub{font-size:12px;color:var(--muted);margin-top:4px;}
+.btns{display:flex;gap:8px;}
+.btn{background:var(--panel);color:var(--text);border:1px solid var(--border);padding:8px 14px;font-size:12px;border-radius:8px;cursor:pointer;font-family:inherit;transition:all .18s ease;}
+.btn:hover{background:var(--subtle);}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;}
+svg{display:block;width:100%;height:auto;}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center;}
+.stat .v{font-size:18px;font-weight:700;color:var(--cyan);letter-spacing:.3px;}
+.stat .l{font-size:11px;color:var(--muted);margin-top:4px;}
+.foot{margin-top:12px;font-size:11px;color:var(--muted);text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="toolbar">
+    <div class="titleblk">
+      <h1>
+        <span class="lz">Computer Use 四层架构</span>
+        <span class="le" style="display:none">Computer Use 4-Layer Architecture</span>
+      </h1>
+      <div class="sub">
+        <span class="lz">VIS-2Q-017 · 意图 → 规划 → 执行 → 验证</span>
+        <span class="le" style="display:none">VIS-2Q-017 · Intent → Planning → Execution → Verification</span>
+      </div>
+    </div>
+    <div class="btns">
+      <button class="btn" onclick="cycleTheme()">
+        <span class="lz">主题</span><span class="le" style="display:none">Theme</span>
+      </button>
+      <button class="btn" onclick="toggleLang()">
+        <span class="lz">EN</span><span class="le" style="display:none">中文</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="card">
+    <svg viewBox="0 0 920 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Computer Use 4-Layer Architecture">
+      <defs>
+        <linearGradient id="gCyan" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#22d3ee" stop-opacity=".22"/>
+          <stop offset="1" stop-color="#22d3ee" stop-opacity=".06"/>
+        </linearGradient>
+        <linearGradient id="gViolet" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#8b5cf6" stop-opacity=".22"/>
+          <stop offset="1" stop-color="#8b5cf6" stop-opacity=".06"/>
+        </linearGradient>
+        <linearGradient id="gEmerald" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#10b981" stop-opacity=".22"/>
+          <stop offset="1" stop-color="#10b981" stop-opacity=".06"/>
+        </linearGradient>
+        <linearGradient id="gAmber" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stop-color="#f59e0b" stop-opacity=".22"/>
+          <stop offset="1" stop-color="#f59e0b" stop-opacity=".06"/>
+        </linearGradient>
+
+        <marker id="arrDown" viewBox="0 0 10 10" refX="5" refY="9" markerWidth="8" markerHeight="8" orient="auto">
+          <path d="M1,1 L5,9 L9,1" fill="none" stroke="#94a3b8" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+        <marker id="arrUp" viewBox="0 0 10 10" refX="5" refY="1" markerWidth="8" markerHeight="8" orient="auto">
+          <path d="M1,9 L5,1 L9,9" fill="none" stroke="#f43f5e" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+        </marker>
+      </defs>
+
+      <!-- Background frame -->
+      <rect x="0" y="0" width="920" height="540" fill="var(--bg)"/>
+
+      <!-- Header band -->
+      <text x="32" y="28" font-size="13" font-weight="700" fill="var(--text)" class="lz">Claude Code · Computer Use 四层架构</text>
+      <text x="32" y="28" font-size="13" font-weight="700" fill="var(--text)" class="le" display="none">Claude Code · Computer Use 4-Layer Architecture</text>
+      <text x="32" y="46" font-size="11" fill="var(--muted)" class="lz">从自然语言到屏幕操作 · 视觉 + 执行 + 验证闭环</text>
+      <text x="32" y="46" font-size="11" fill="var(--muted)" class="le" display="none">From natural language to GUI actuation · vision + execution + verification loop</text>
+
+      <!-- ===================== LAYER 1: INTENT ===================== -->
+      <g>
+        <rect x="32" y="60" width="560" height="100" rx="10" fill="url(#gCyan)" stroke="#22d3ee" stroke-opacity=".55" stroke-width="1.2"/>
+        <!-- Layer label chip -->
+        <rect x="44" y="72" width="54" height="20" rx="10" fill="#22d3ee" fill-opacity=".18" stroke="#22d3ee" stroke-opacity=".6"/>
+        <text x="71" y="86" font-size="11" font-weight="700" text-anchor="middle" fill="#22d3ee">L1</text>
+        <!-- Icon: speech bubble -->
+        <g transform="translate(112,72)">
+          <rect x="0" y="2" width="22" height="16" rx="4" fill="none" stroke="#22d3ee" stroke-width="1.4"/>
+          <path d="M5,18 L5,22 L10,18" fill="none" stroke="#22d3ee" stroke-width="1.4" stroke-linejoin="round"/>
+          <circle cx="7" cy="10" r="1.2" fill="#22d3ee"/>
+          <circle cx="11" cy="10" r="1.2" fill="#22d3ee"/>
+          <circle cx="15" cy="10" r="1.2" fill="#22d3ee"/>
+        </g>
+        <!-- Title ZH/EN -->
+        <text x="148" y="88" font-size="15" font-weight="700" fill="var(--text)" class="lz">意图层 · Intent</text>
+        <text x="148" y="88" font-size="15" font-weight="700" fill="var(--text)" class="le" display="none">Intent Layer</text>
+        <text x="148" y="106" font-size="11" fill="var(--muted)" class="lz">自然语言指令 → 动作意图抽取</text>
+        <text x="148" y="106" font-size="11" fill="var(--muted)" class="le" display="none">Natural-language command → action intent extraction</text>
+
+        <!-- Components -->
+        <rect x="148" y="118" width="130" height="28" rx="6" fill="var(--card)" stroke="var(--border)"/>
+        <text x="213" y="136" font-size="10.5" text-anchor="middle" fill="var(--text)" class="lz">NLP 解析</text>
+        <text x="213" y="136" font-size="10.5" text-anchor="middle" fill="var(--text)" class="le" display="none">NLP parsing</text>
+
+        <rect x="286" y="118" width="130" height="28" rx="6" fill="var(--card)" stroke="var(--border)"/>
+        <text x="351" y="136" font-size="10.5" text-anchor="middle" fill="var(--text)" class="lz">意图抽取</text>
+        <text x="351" y="136" font-size="10.5" text-anchor="middle" fill="var(--text)" class="le" display="none">Intent extraction</text>
+
+        <rect x="424" y="118" width="150" height="28" rx="6" fill="var(--card)" stroke="var(--border)"/>
+        <text x="499" y="136" font-size="10.5" text-anchor="middle" fill="var(--text)" class="lz">参数与约束识别</text>
+        <text x="499" y="136" font-size="10.5" text-anchor="middle" fill="var(--text)" class="le" display="none">Params &amp; constraints</text>
+      </g>
+
+      <!-- Arrow L1 -> L2 (forward) -->
+      <line x1="312" y1="160" x2="312" y2="178" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrDown)"/>
+      <text x="320" y="173" font-size="10" fill="var(--muted)" class="lz">解析</text>
+      <text x="320" y="173" font-size="10" fill="var(--muted)" class="le" display="none">parsed</text>
+
+      <!-- ===================== LAYER 2: PLANNING ===================== -->
+      <g>
+        <rect x="32" y="180" width="560" height="100" rx="10" fill="url(#gViolet)" stroke="#8b5cf6" stroke-opacity=".55" stroke-width="1.2"/>
+        <rect x="44" y="192" width="54" height="20" rx="10" fill="#8b5cf6" fill-opacity=".18" stroke="#8b5cf6" stroke-opacity=".6"/>
+        <text x="71" y="206" font-size="11" font-weight="700" text-anchor="middle" fill="#8b5cf6">L2</text>
+        <!-- Icon: brain/plan -->
+        <g transform="translate(112,192)">
+          <path d="M3,10 C3,5 8,3 12,5 C16,3 21,5 21,10 C21,15 16,17 12,15 C8,17 3,15 3,10 Z" fill="none" stroke="#8b5cf6" stroke-width="1.4"/>
+          <path d="M7,10 L10,13 L17,7" fill="none" stroke="#8b5cf6" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+        <text x="148" y="208" font-size="15" font-weight="700" fill="var(--text)" class="lz">规划层 · Planning</text>
+        <text x="148" y="208" font-size="15" font-weight="700" fill="var(--text)" class="le" display="none">Planning Layer</text>
+        <text x="148" y="226" font-size="11" fill="var(--muted)" class="lz">多步动作计划 + 视觉理解</text>
+        <text x="148" y="226" font-size="11" fill="var(--muted)" class="le" display="none">Multi-step plan + screen understanding</text>
+
+        <rect x="148" y="238" width="130" height="28" rx="6" fill="var(--card)" stroke="var(--border)"/>
+        <text x="213" y="256" font-size="10.5" text-anchor="middle" fill="var(--text)" class="lz">视觉模型理解</text>
+        <text x="213" y="256" font-size="10.5" text-anchor="middle" fill="var(--text)" class="le" display="none">Vision model</text>
+
+        <rect x="286" y="238" width="130" height="28" rx="6" fill="var(--card)" stroke="var(--border)"/>
+        <text x="351" y="256" font-size="10.5" text-anchor="middle" fill="var(--text)" class="lz">任务分解</text>
+        <text x="351" y="256" font-size="10.5" text-anchor="middle" fill="var(--text)" class="le" display="none">Task decomposition</text>
+
+        <rect x="424" y="238" width="150" height="28" rx="6" fill="var(--card)" stroke="var(--border)"/>
+        <text x="499" y="256" font-size="10.5" text-anchor="middle" fill="var(--text)" class="lz">动作序列生成</text>
+        <text x="499" y="256" font-size="10.5" text-anchor="middle" fill="var(--text)" class="le" display="none">Action sequence</text>
+      </g>
+
+      <!-- Arrow L2 -> L3 (forward) -->
+      <line x1="312" y1="280" x2="312" y2="298" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrDown)"/>
+      <text x="320" y="293" font-size="10" fill="var(--muted)" class="lz">下发</text>
+      <text x="320" y="293" font-size="10" fill="var(--muted)" class="le" display="none">dispatch</text>
+
+      <!-- ===================== LAYER 3: EXECUTION ===================== -->
+      <g>
+        <rect x="32" y="300" width="560" height="100" rx="10" fill="url(#gEmerald)" stroke="#10b981" stroke-opacity=".55" stroke-width="1.2"/>
+        <rect x="44" y="312" width="54" height="20" rx="10" fill="#10b981" fill-opacity=".18" stroke="#10b981" stroke-opacity=".6"/>
+        <text x="71" y="326" font-size="11" font-weight="700" text-anchor="middle" fill="#10b981">L3</text>
+        <!-- Icon: mouse/keyboard -->
+        <g transform="translate(112,312)">
+          <rect x="1" y="2" width="20" height="12" rx="2" fill="none" stroke="#10b981" stroke-width="1.4"/>
+          <circle cx="6" cy="8" r="1" fill="#10b981"/>
+          <circle cx="11" cy="8" r="1" fill="#10b981"/>
+          <circle cx="16" cy="8" r="1" fill="#10b981"/>
+          <rect x="7" y="16" width="8" height="6" rx="1.5" fill="none" stroke="#10b981" stroke-width="1.4"/>
+        </g>
+        <text x="148" y="328" font-size="15" font-weight="700" fill="var(--text)" class="lz">执行层 · Execution</text>
+        <text x="148" y="328" font-size="15" font-weight="700" fill="var(--text)" class="le" display="none">Execution Layer</text>
+        <text x="148" y="346" font-size="11" fill="var(--muted)" class="lz">OS 级鼠标/键盘 + 跨平台适配</text>
+        <text x="148" y="346" font-size="11" fill="var(--muted)" class="le" display="none">OS-level mouse/keyboard + cross-platform adapters</text>
+
+        <rect x="148" y="358" width="130" height="28" rx="6" fill="var(--card)" stroke="var(--border)"/>
+        <text x="213" y="376" font-size="10.5" text-anchor="middle" fill="var(--text)" class="lz">鼠标/键盘驱动</text>
+        <text x="213" y="376" font-size="10.5" text-anchor="middle" fill="var(--text)" class="le" display="none">Mouse/KB driver</text>
+
+        <rect x="286" y="358" width="130" height="28" rx="6" fill="var(--card)" stroke="var(--border)"/>
+        <text x="351" y="376" font-size="10.5" text-anchor="middle" fill="var(--text)" class="lz">截屏采集</text>
+        <text x="351" y="376" font-size="10.5" text-anchor="middle" fill="var(--text)" class="le" display="none">Screenshot</text>
+
+        <rect x="424" y="358" width="150" height="28" rx="6" fill="var(--card)" stroke="var(--border)"/>
+        <text x="499" y="376" font-size="10.5" text-anchor="middle" fill="var(--text)" class="lz">macOS / Win / Linux</text>
+        <text x="499" y="376" font-size="10.5" text-anchor="middle" fill="var(--text)" class="le" display="none">macOS / Win / Linux</text>
+      </g>
+
+      <!-- Arrow L3 -> L4 (forward) -->
+      <line x1="312" y1="400" x2="312" y2="418" stroke="#94a3b8" stroke-width="1.6" marker-end="url(#arrDown)"/>
+      <text x="320" y="413" font-size="10" fill="var(--muted)" class="lz">结果</text>
+      <text x="320" y="413" font-size="10" fill="var(--muted)" class="le" display="none">result</text>
+
+      <!-- Feedback arrow L4 -> L2 (upward) bending around -->
+      <path d="M 260 418 C 220 418, 210 300, 210 280" fill="none" stroke="#f43f5e" stroke-width="1.6" stroke-dasharray="4,3" marker-end="url(#arrUp)"/>
+      <text x="170" y="350" font-size="10" fill="#f43f5e" class="lz">反馈重规划</text>
+      <text x="170" y="350" font-size="10" fill="#f43f5e" class="le" display="none">feedback</text>
+
+      <!-- ===================== LAYER 4: VERIFICATION ===================== -->
+      <g>
+        <rect x="32" y="420" width="560" height="100" rx="10" fill="url(#gAmber)" stroke="#f59e0b" stroke-opacity=".55" stroke-width="1.2"/>
+        <rect x="44" y="432" width="54" height="20" rx="10" fill="#f59e0b" fill-opacity=".18" stroke="#f59e0b" stroke-opacity=".6"/>
+        <text x="71" y="446" font-size="11" font-weight="700" text-anchor="middle" fill="#f59e0b">L4</text>
+        <!-- Icon: check/magnifier -->
+        <g transform="translate(112,432)">
+          <circle cx="9" cy="9" r="7" fill="none" stroke="#f59e0b" stroke-width="1.4"/>
+          <line x1="14" y1="14" x2="20" y2="20" stroke="#f59e0b" stroke-width="1.4" stroke-linecap="round"/>
+          <path d="M6,9 L8.5,11.5 L12.5,7" fill="none" stroke="#f59e0b" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/>
+        </g>
+        <text x="148" y="448" font-size="15" font-weight="700" fill="var(--text)" class="lz">验证层 · Verification</text>
+        <text x="148" y="448" font-size="15" font-weight="700" fill="var(--text)" class="le" display="none">Verification Layer</text>
+        <text x="148" y="466" font-size="11" fill="var(--muted)" class="lz">事后截屏 + 意图完成判定 + 重试</text>
+        <text x="148" y="466" font-size="11" fill="var(--muted)" class="le" display="none">Post-action screenshot + intent check + retry</text>
+
+        <rect x="148" y="478" width="130" height="28" rx="6" fill="var(--card)" stroke="var(--border)"/>
+        <text x="213" y="496" font-size="10.5" text-anchor="middle" fill="var(--text)" class="lz">事后截屏对比</text>
+        <text x="213" y="496" font-size="10.5" text-anchor="middle" fill="var(--text)" class="le" display="none">Post-action diff</text>
+
+        <rect x="286" y="478" width="130" height="28" rx="6" fill="var(--card)" stroke="var(--border)"/>
+        <text x="351" y="496" font-size="10.5" text-anchor="middle" fill="var(--text)" class="lz">意图完成判定</text>
+        <text x="351" y="496" font-size="10.5" text-anchor="middle" fill="var(--text)" class="le" display="none">Intent check</text>
+
+        <rect x="424" y="478" width="150" height="28" rx="6" fill="var(--card)" stroke="var(--border)"/>
+        <text x="499" y="496" font-size="10.5" text-anchor="middle" fill="var(--text)" class="lz">失败重试 / 回退</text>
+        <text x="499" y="496" font-size="10.5" text-anchor="middle" fill="var(--text)" class="le" display="none">Retry / fallback</text>
+      </g>
+
+      <!-- ===================== RIGHT PANE: DESKTOP ICON + TRACE ===================== -->
+      <!-- Desktop silhouette -->
+      <g transform="translate(620,72)">
+        <rect x="0" y="0" width="268" height="100" rx="10" fill="var(--card)" stroke="var(--border)"/>
+        <text x="134" y="20" font-size="11" font-weight="700" text-anchor="middle" fill="var(--cyan)" class="lz">Computer Use · 目标设备</text>
+        <text x="134" y="20" font-size="11" font-weight="700" text-anchor="middle" fill="var(--cyan)" class="le" display="none">Computer Use · Target Device</text>
+
+        <!-- Monitor -->
+        <rect x="86" y="32" width="96" height="52" rx="4" fill="none" stroke="#22d3ee" stroke-width="1.5"/>
+        <rect x="92" y="38" width="84" height="40" rx="2" fill="#22d3ee" fill-opacity=".12"/>
+        <!-- Mini window on screen -->
+        <rect x="96" y="42" width="76" height="10" rx="1" fill="#22d3ee" fill-opacity=".4"/>
+        <circle cx="100" cy="47" r="1.2" fill="#0f172a"/>
+        <circle cx="104" cy="47" r="1.2" fill="#0f172a"/>
+        <circle cx="108" cy="47" r="1.2" fill="#0f172a"/>
+        <rect x="96" y="56" width="50" height="4" rx="1" fill="#8b5cf6" fill-opacity=".5"/>
+        <rect x="96" y="64" width="60" height="4" rx="1" fill="#10b981" fill-opacity=".5"/>
+        <rect x="96" y="72" width="40" height="4" rx="1" fill="#f59e0b" fill-opacity=".6"/>
+        <!-- Stand -->
+        <rect x="124" y="84" width="20" height="4" fill="#22d3ee" fill-opacity=".5"/>
+        <rect x="114" y="88" width="40" height="3" rx="1" fill="#22d3ee" fill-opacity=".5"/>
+      </g>
+
+      <!-- Task trace panel -->
+      <g transform="translate(620,180)">
+        <rect x="0" y="0" width="268" height="340" rx="10" fill="var(--card)" stroke="var(--border)"/>
+        <text x="14" y="20" font-size="11" font-weight="700" fill="var(--text)" class="lz">示例任务执行轨迹</text>
+        <text x="14" y="20" font-size="11" font-weight="700" fill="var(--text)" class="le" display="none">Example task trace</text>
+        <text x="14" y="36" font-size="10" fill="var(--muted)" class="lz">用户："打开浏览器查找 Anthropic 官网"</text>
+        <text x="14" y="36" font-size="10" fill="var(--muted)" class="le" display="none">User: "Open browser and find Anthropic"</text>
+
+        <!-- Step 1 -->
+        <circle cx="22" cy="62" r="8" fill="#22d3ee" fill-opacity=".2" stroke="#22d3ee" stroke-width="1.2"/>
+        <text x="22" y="65" font-size="10" font-weight="700" text-anchor="middle" fill="#22d3ee">1</text>
+        <text x="38" y="60" font-size="10.5" font-weight="600" fill="#22d3ee" class="lz">L1 意图解析</text>
+        <text x="38" y="60" font-size="10.5" font-weight="600" fill="#22d3ee" class="le" display="none">L1 intent parse</text>
+        <text x="38" y="74" font-size="10" fill="var(--muted)" class="lz">意图 = 搜索，目标 = Anthropic</text>
+        <text x="38" y="74" font-size="10" fill="var(--muted)" class="le" display="none">intent=search, target=Anthropic</text>
+        <line x1="22" y1="70" x2="22" y2="92" stroke="var(--subtle)" stroke-width="1"/>
+
+        <!-- Step 2 -->
+        <circle cx="22" cy="104" r="8" fill="#8b5cf6" fill-opacity=".2" stroke="#8b5cf6" stroke-width="1.2"/>
+        <text x="22" y="107" font-size="10" font-weight="700" text-anchor="middle" fill="#8b5cf6">2</text>
+        <text x="38" y="102" font-size="10.5" font-weight="600" fill="#8b5cf6" class="lz">L2 规划 3 步动作</text>
+        <text x="38" y="102" font-size="10.5" font-weight="600" fill="#8b5cf6" class="le" display="none">L2 plan 3 actions</text>
+        <text x="38" y="116" font-size="10" fill="var(--muted)" class="lz">截屏 → 点击 Safari → 输入</text>
+        <text x="38" y="116" font-size="10" fill="var(--muted)" class="le" display="none">snap → click Safari → type</text>
+        <line x1="22" y1="112" x2="22" y2="134" stroke="var(--subtle)" stroke-width="1"/>
+
+        <!-- Step 3 -->
+        <circle cx="22" cy="146" r="8" fill="#10b981" fill-opacity=".2" stroke="#10b981" stroke-width="1.2"/>
+        <text x="22" y="149" font-size="10" font-weight="700" text-anchor="middle" fill="#10b981">3</text>
+        <text x="38" y="144" font-size="10.5" font-weight="600" fill="#10b981" class="lz">L3 执行 · Click(120,80)</text>
+        <text x="38" y="144" font-size="10.5" font-weight="600" fill="#10b981" class="le" display="none">L3 exec · Click(120,80)</text>
+        <text x="38" y="158" font-size="10" fill="var(--muted)" class="lz">CGEvent · macOS 系统调用</text>
+        <text x="38" y="158" font-size="10" fill="var(--muted)" class="le" display="none">CGEvent · macOS syscall</text>
+        <line x1="22" y1="154" x2="22" y2="176" stroke="var(--subtle)" stroke-width="1"/>
+
+        <!-- Step 4 -->
+        <circle cx="22" cy="188" r="8" fill="#10b981" fill-opacity=".2" stroke="#10b981" stroke-width="1.2"/>
+        <text x="22" y="191" font-size="10" font-weight="700" text-anchor="middle" fill="#10b981">4</text>
+        <text x="38" y="186" font-size="10.5" font-weight="600" fill="#10b981" class="lz">L3 输入 · Type("anthropic")</text>
+        <text x="38" y="186" font-size="10.5" font-weight="600" fill="#10b981" class="le" display="none">L3 type · "anthropic"</text>
+        <text x="38" y="200" font-size="10" fill="var(--muted)" class="lz">模拟键盘 · 地址栏聚焦</text>
+        <text x="38" y="200" font-size="10" fill="var(--muted)" class="le" display="none">KB emu · addr bar focus</text>
+        <line x1="22" y1="196" x2="22" y2="218" stroke="var(--subtle)" stroke-width="1"/>
+
+        <!-- Step 5 -->
+        <circle cx="22" cy="230" r="8" fill="#f59e0b" fill-opacity=".2" stroke="#f59e0b" stroke-width="1.2"/>
+        <text x="22" y="233" font-size="10" font-weight="700" text-anchor="middle" fill="#f59e0b">5</text>
+        <text x="38" y="228" font-size="10.5" font-weight="600" fill="#f59e0b" class="lz">L4 截屏核对</text>
+        <text x="38" y="228" font-size="10.5" font-weight="600" fill="#f59e0b" class="le" display="none">L4 verify</text>
+        <text x="38" y="242" font-size="10" fill="var(--muted)" class="lz">页面标题 = "Anthropic"?</text>
+        <text x="38" y="242" font-size="10" fill="var(--muted)" class="le" display="none">title = "Anthropic"?</text>
+        <line x1="22" y1="238" x2="22" y2="260" stroke="var(--subtle)" stroke-width="1"/>
+
+        <!-- Step 6 -->
+        <circle cx="22" cy="272" r="8" fill="#10b981" fill-opacity=".3" stroke="#10b981" stroke-width="1.4"/>
+        <text x="22" y="275" font-size="10" font-weight="700" text-anchor="middle" fill="#10b981">✓</text>
+        <text x="38" y="270" font-size="10.5" font-weight="600" fill="#10b981" class="lz">完成 · 意图已达成</text>
+        <text x="38" y="270" font-size="10.5" font-weight="600" fill="#10b981" class="le" display="none">Done · intent fulfilled</text>
+        <text x="38" y="284" font-size="10" fill="var(--muted)" class="lz">总耗时 ≈ 4.8s · 0 次重试</text>
+        <text x="38" y="284" font-size="10" fill="var(--muted)" class="le" display="none">total ≈ 4.8s · 0 retries</text>
+
+        <!-- Divider + legend -->
+        <line x1="14" y1="298" x2="254" y2="298" stroke="var(--border)" stroke-width="1"/>
+        <rect x="14" y="308" width="12" height="3" fill="#94a3b8"/>
+        <text x="32" y="312" font-size="10" fill="var(--muted)" class="lz">正向流（解析 → 执行）</text>
+        <text x="32" y="312" font-size="10" fill="var(--muted)" class="le" display="none">Forward flow</text>
+        <rect x="14" y="322" width="12" height="3" fill="#f43f5e"/>
+        <text x="32" y="326" font-size="10" fill="var(--muted)" class="lz">反馈流（验证 → 重规划）</text>
+        <text x="32" y="326" font-size="10" fill="var(--muted)" class="le" display="none">Feedback flow</text>
+      </g>
+    </svg>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="v">4</div>
+        <div class="l">
+          <span class="lz">层架构（意图/规划/执行/验证）</span>
+          <span class="le" style="display:none">layers (Intent/Plan/Exec/Verify)</span>
+        </div>
+      </div>
+      <div class="stat">
+        <div class="v" style="color:var(--violet)">V + E + V</div>
+        <div class="l">
+          <span class="lz">视觉 + 执行 + 验证闭环</span>
+          <span class="le" style="display:none">Vision + Execution + Verification loop</span>
+        </div>
+      </div>
+      <div class="stat">
+        <div class="v" style="color:var(--emerald)">3 OS</div>
+        <div class="l">
+          <span class="lz">多平台适配（macOS / Win / Linux）</span>
+          <span class="le" style="display:none">Multi-platform (macOS / Win / Linux)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span class="lz">来源：Claude Code 2.1.88 Computer Use 能力分析 · VIS-2Q-017</span>
+      <span class="le" style="display:none">Source: Claude Code 2.1.88 Computer Use capability · VIS-2Q-017</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

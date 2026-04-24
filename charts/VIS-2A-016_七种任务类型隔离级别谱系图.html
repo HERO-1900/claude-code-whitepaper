@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<!--
+  VIS-2A-016 · 七种任务类型隔离级别谱系图 · Seven Task-Type Isolation Spectrum
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  Part 1: 横向隔离谱系 (7 种任务类型) · Part 2: 6 维隔离矩阵 · Part 3: 通信成本梯度条
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · 七种任务类型隔离级别谱系图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    /* ── Design Tokens ──────────────────────────── */
+    :root {
+      --bg: #020617;
+      --panel: #0f172a;
+      --card: #0f172a;
+      --border: #1e293b;
+      --text: #e2e8f0;
+      --muted: #64748b;
+      --subtle: #334155;
+    }
+    [data-theme="warm"] {
+      --bg: #f8f6f3;
+      --panel: #ffffff;
+      --card: #faf9f7;
+      --border: #e2d9cc;
+      --text: #1c1917;
+      --muted: #78716c;
+    }
+    [data-theme="light"] {
+      --bg: #ffffff;
+      --panel: #f8fafc;
+      --card: #f8fafc;
+      --border: #e2e8f0;
+      --text: #0f172a;
+      --muted: #64748b;
+    }
+
+    /* ── Badge Colors (semantic, theme-independent) ── */
+    .badge-shared   { background: rgba(96,165,250,0.15);  color: #60a5fa; border: 1px solid rgba(96,165,250,0.3); }
+    .badge-isolated { background: rgba(251,113,133,0.15); color: #fb7185; border: 1px solid rgba(251,113,133,0.3); }
+    .badge-partial  { background: rgba(167,139,250,0.15); color: #a78bfa; border: 1px solid rgba(167,139,250,0.3); }
+
+    /* ── Reset & Base ───────────────────────────── */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'JetBrains Mono', monospace;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      padding: 24px 28px 48px;
+      transition: background .3s, color .3s;
+    }
+
+    /* ── Toggle Controls ────────────────────────── */
+    .ctrl {
+      position: fixed; top: 16px; right: 16px; z-index: 999;
+      display: flex; gap: 6px; align-items: center;
+      background: rgba(15,23,42,0.92);
+      border: 1px solid rgba(96,165,250,0.2);
+      border-radius: 10px; padding: 7px 10px;
+      backdrop-filter: blur(12px);
+    }
+    [data-theme="warm"] .ctrl { background: rgba(255,255,255,0.95); border-color: rgba(96,165,250,0.25); }
+    [data-theme="light"] .ctrl { background: rgba(248,250,252,0.95); border-color: rgba(96,165,250,0.2); }
+    .ctrl button {
+      background: none; border: none; cursor: pointer;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 11px; font-weight: 600;
+      color: var(--muted); padding: 4px 8px; border-radius: 6px; transition: all .2s;
+    }
+    .ctrl button:hover { color: #60a5fa; }
+    .ctrl-sep { width: 1px; height: 16px; background: var(--border); margin: 0 2px; }
+
+    /* ── Header ─────────────────────────────────── */
+    .vis-header {
+      margin-bottom: 28px; padding-bottom: 18px;
+      border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; gap: 14px;
+    }
+    .pulse {
+      width: 11px; height: 11px; border-radius: 50%;
+      background: #60a5fa;
+      box-shadow: 0 0 8px #60a5fa;
+      animation: pulse-anim 2s infinite; flex-shrink: 0;
+    }
+    @keyframes pulse-anim {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50%      { opacity: .45; transform: scale(.82); }
+    }
+    .vis-header h1 { font-size: 20px; font-weight: 700; letter-spacing: -0.4px; }
+    .vis-header .sub { color: var(--muted); font-size: 12px; margin-top: 5px; }
+
+    /* ── Section Title ──────────────────────────── */
+    .section-title {
+      font-size: 11px; font-weight: 700;
+      letter-spacing: 0.09em; text-transform: uppercase;
+      color: var(--muted);
+      margin: 24px 0 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-title::before {
+      content: '';
+      display: inline-block; width: 3px; height: 14px;
+      background: #60a5fa; border-radius: 2px; flex-shrink: 0;
+    }
+
+    /* ── svg-wrap panel ─────────────────────────── */
+    .svg-wrap {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 28px 24px 32px;
+      overflow-x: auto;
+      margin-bottom: 20px;
+    }
+
+    /* ═══════════════════════════════════════════
+       PART 1 — SPECTRUM
+    ═══════════════════════════════════════════ */
+    .spectrum-container {
+      position: relative;
+      padding: 64px 0 72px;
+      min-width: 720px;
+    }
+
+    /* gradient bar */
+    .spectrum-bar {
+      position: absolute;
+      left: 0; right: 0;
+      top: 50%; transform: translateY(-50%);
+      height: 8px;
+      border-radius: 4px;
+      background: linear-gradient(
+        to right,
+        #60a5fa 0%,
+        #7dd3fc 20%,
+        #a78bfa 42%,
+        #c084fc 58%,
+        #e879f9 68%,
+        #f472b6 80%,
+        #dc2626 100%
+      );
+      opacity: .85;
+    }
+
+    /* node */
+    .spec-node {
+      position: absolute;
+      top: 50%; transform: translateY(-50%);
+      display: flex; flex-direction: column; align-items: center;
+      cursor: default;
+    }
+    .spec-node .node-circle {
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px;
+      position: relative; z-index: 2;
+      transition: transform .2s;
+      box-shadow: 0 0 12px currentColor;
+      border: 2px solid rgba(255,255,255,0.12);
+    }
+    .spec-node .node-circle:hover { transform: scale(1.12); }
+    .node-major .node-circle { width: 60px; height: 60px; }
+    .node-minor .node-circle { width: 42px; height: 42px; font-size: 13px; }
+
+    /* labels — alternating above/below via .label-above / .label-below */
+    .spec-node .label-above {
+      position: absolute;
+      bottom: calc(100% + 10px);
+      left: 50%; transform: translateX(-50%);
+      text-align: center; white-space: nowrap;
+    }
+    .spec-node .label-below {
+      position: absolute;
+      top: calc(100% + 10px);
+      left: 50%; transform: translateX(-50%);
+      text-align: center; white-space: nowrap;
+    }
+    .spec-node .node-name {
+      font-size: 12px; font-weight: 700; color: var(--text);
+      display: block; line-height: 1.3;
+    }
+    .spec-node .node-analogy {
+      font-size: 11px; color: var(--muted);
+      display: block; margin-top: 2px;
+    }
+
+    /* isolation end-labels */
+    .spec-endlabel {
+      position: absolute; top: 50%; transform: translateY(-50%);
+      font-size: 10px; font-weight: 600; letter-spacing: 0.05em;
+      color: var(--muted);
+    }
+    .spec-endlabel-left  { left: 0; }
+    .spec-endlabel-right { right: 0; text-align: right; }
+
+    /* ═══════════════════════════════════════════
+       PART 2 — MATRIX
+    ═══════════════════════════════════════════ */
+    .matrix-wrap {
+      overflow-x: auto;
+      padding-bottom: 4px;
+    }
+    .iso-table {
+      border-collapse: separate;
+      border-spacing: 4px;
+      min-width: 760px;
+      margin: 0 auto;
+    }
+
+    /* column header */
+    .th-col-iso {
+      min-width: 110px; height: 64px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-align: center; vertical-align: middle;
+      padding: 6px 8px;
+      font-size: 11px; font-weight: 700;
+      color: var(--text);
+      line-height: 1.4;
+    }
+    .th-col-iso .col-sub {
+      font-size: 10px; color: var(--muted);
+      font-weight: 400; display: block; margin-top: 2px;
+    }
+
+    /* row header */
+    .th-row-iso {
+      min-width: 130px; max-width: 150px; height: 56px;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-align: left; vertical-align: middle;
+      padding: 8px 10px;
+    }
+    .th-row-iso .row-name {
+      font-size: 11px; font-weight: 700; color: var(--text);
+      display: block;
+    }
+    .th-row-iso .row-emoji {
+      font-size: 13px; margin-right: 4px;
+    }
+    .th-row-iso .row-sub {
+      font-size: 10px; color: var(--muted);
+      display: block; margin-top: 2px;
+    }
+
+    /* data cell */
+    .iso-table td.cell-iso {
+      min-width: 110px; height: 56px;
+      text-align: center; vertical-align: middle;
+      border-radius: 8px;
+      padding: 4px;
+      cursor: default;
+      transition: filter .15s;
+    }
+    .iso-table td.cell-iso:hover { filter: brightness(1.15); }
+    .badge {
+      display: inline-block;
+      font-size: 11px; font-weight: 600;
+      padding: 3px 8px; border-radius: 6px;
+      line-height: 1.4; white-space: nowrap;
+    }
+
+    /* corner spacer */
+    .th-corner-iso {
+      min-width: 130px; height: 64px;
+      background: transparent;
+    }
+
+    /* ═══════════════════════════════════════════
+       PART 3 — COMM COST BAR
+    ═══════════════════════════════════════════ */
+    .cost-bar-wrap {
+      margin-top: 8px; padding: 20px 24px;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      margin-bottom: 20px;
+    }
+    .cost-bar-title {
+      font-size: 11px; font-weight: 700;
+      text-transform: uppercase; letter-spacing: 0.07em;
+      color: var(--muted); margin-bottom: 14px;
+    }
+    .cost-bar-track {
+      position: relative; height: 10px;
+      border-radius: 5px;
+      background: linear-gradient(to right, #3b82f6 0%, #8b5cf6 50%, #dc2626 100%);
+      margin-bottom: 28px;
+    }
+    .cost-labels {
+      display: flex; justify-content: space-between; align-items: flex-start;
+      position: relative; margin-top: -22px;
+    }
+    .cost-tick {
+      display: flex; flex-direction: column; align-items: center;
+      position: absolute;
+      transform: translateX(-50%);
+    }
+    .cost-tick .tick-line {
+      width: 1px; height: 12px;
+      background: var(--border);
+      margin-bottom: 4px;
+    }
+    .cost-tick .tick-label {
+      font-size: 10px; color: var(--muted); white-space: nowrap;
+      text-align: center; line-height: 1.3;
+    }
+    .cost-endpoints {
+      display: flex; justify-content: space-between;
+      margin-top: 48px;
+    }
+    .cost-ep {
+      font-size: 11px; font-weight: 600;
+    }
+    .cost-ep-left  { color: #60a5fa; }
+    .cost-ep-right { color: #fb7185; text-align: right; }
+    .cost-ep-sub { font-size: 10px; font-weight: 400; color: var(--muted); display: block; margin-top: 2px; }
+
+    /* ═══════════════════════════════════════════
+       SUMMARY CARDS
+    ═══════════════════════════════════════════ */
+    .info-cards {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+    @media (max-width: 900px) { .info-cards { grid-template-columns: 1fr; } }
+    .info-card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 18px;
+    }
+    .info-card-title {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 13px; font-weight: 700;
+      margin-bottom: 10px; color: var(--text);
+      line-height: 1.35;
+    }
+    .dot {
+      width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0;
+    }
+    .dot-blue   { background: #60a5fa; box-shadow: 0 0 6px #60a5fa; }
+    .dot-violet { background: #a78bfa; box-shadow: 0 0 6px #a78bfa; }
+    .dot-red    { background: #dc2626; box-shadow: 0 0 6px #dc2626; }
+    .info-card-body {
+      font-size: 11px; color: var(--muted); line-height: 1.8;
+    }
+    .info-card-body li {
+      list-style: none; padding-left: 0; margin-bottom: 2px;
+    }
+    .info-card-body li::before { content: '· '; color: var(--subtle); }
+
+    /* ── Footer ─────────────────────────────────── */
+    .vis-footer {
+      margin-top: 20px; padding-top: 14px;
+      border-top: 1px solid var(--border);
+      display: flex; justify-content: space-between;
+      font-size: 10px; color: var(--muted);
+      flex-wrap: wrap; gap: 6px;
+    }
+
+    /* i18n */
+    .lz { display: inline; }</style>
+</head>
+<body>
+
+<!-- Theme + Lang Controls -->
+<div class="ctrl">
+  <button onclick="cycleTheme()"><span class="lz">主题</span><span class="le">Theme</span></button>
+  <div class="ctrl-sep"></div>
+  <button onclick="toggleLang()">中·EN</button>
+</div>
+
+<!-- ── Header ──────────────────────────────────────── -->
+<div class="vis-header">
+  <div class="pulse"></div>
+  <div>
+    <h1>
+      <span class="lz">七种任务类型隔离级别谱系图</span>
+      <span class="le">Seven Task-Type Isolation Spectrum</span>
+    </h1>
+    <div class="sub">
+      <span class="lz">VIS-2A-016 · 7 种任务类型 × 6 隔离维度 · 从进程内协作到完全远程隔离的完整谱系</span>
+      <span class="le">VIS-2A-016 · 7 Task Types × 6 Isolation Dimensions · Full spectrum from in-process to fully remote isolation</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PART 1: SPECTRUM
+════════════════════════════════════════════════════ -->
+<div class="section-title">
+  <span class="lz">① 隔离级别横向谱系</span>
+  <span class="le">① Isolation Level Horizontal Spectrum</span>
+</div>
+
+<div class="svg-wrap">
+  <div class="spectrum-container" id="spectrum-root">
+
+    <!-- Gradient bar -->
+    <div class="spectrum-bar"></div>
+
+    <!-- End labels rendered via JS -->
+
+    <!-- Nodes injected by JS -->
+
+  </div><!-- /spectrum-container -->
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PART 2: ISOLATION MATRIX
+════════════════════════════════════════════════════ -->
+<div class="section-title">
+  <span class="lz">② 六维隔离属性对照矩阵</span>
+  <span class="le">② Six-Dimension Isolation Attribute Matrix</span>
+</div>
+
+<div class="svg-wrap">
+  <div class="matrix-wrap">
+    <table class="iso-table" id="iso-matrix">
+      <!-- JS will fill this -->
+    </table>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     PART 3: COMM COST BAR
+════════════════════════════════════════════════════ -->
+<div class="section-title">
+  <span class="lz">③ 通信方式成本梯度</span>
+  <span class="le">③ Communication Method Cost Gradient</span>
+</div>
+
+<div class="cost-bar-wrap">
+  <div class="cost-bar-title">
+    <span class="lz">通信开销 — 从最低到最高</span>
+    <span class="le">Communication Overhead — Low to High</span>
+  </div>
+
+  <div class="cost-bar-track"></div>
+
+  <!-- tick marks positioned via inline style -->
+  <div style="position:relative; height:42px; margin-top:-8px;">
+    <div class="cost-tick" style="left:2%;">
+      <div class="tick-line"></div>
+      <div class="tick-label" style="color:#60a5fa; font-weight:700;">
+        <span class="lz">函数调用</span><span class="le">Function Call</span>
+      </div>
+    </div>
+    <div class="cost-tick" style="left:33%;">
+      <div class="tick-line"></div>
+      <div class="tick-label">
+        <span class="lz">Stdio / Signal</span><span class="le">Stdio / Signal</span>
+      </div>
+    </div>
+    <div class="cost-tick" style="left:55%;">
+      <div class="tick-line"></div>
+      <div class="tick-label">
+        <span class="lz">Task Notification</span><span class="le">Task Notification</span>
+      </div>
+    </div>
+    <div class="cost-tick" style="left:75%;">
+      <div class="tick-line"></div>
+      <div class="tick-label">
+        <span class="lz">MCP Protocol</span><span class="le">MCP Protocol</span>
+      </div>
+    </div>
+    <div class="cost-tick" style="left:98%;">
+      <div class="tick-line"></div>
+      <div class="tick-label" style="color:#fb7185; font-weight:700;">
+        <span class="lz">Bridge Protocol</span><span class="le">Bridge Protocol</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="cost-endpoints">
+    <div class="cost-ep cost-ep-left">
+      <span class="lz">函数调用</span><span class="le">Function Call</span>
+      <span class="cost-ep-sub"><span class="lz">最低成本 · 同进程零拷贝</span><span class="le">Lowest cost · zero-copy in-process</span></span>
+    </div>
+    <div class="cost-ep cost-ep-right">
+      <span class="lz">Bridge Protocol</span><span class="le">Bridge Protocol</span>
+      <span class="cost-ep-sub"><span class="lz">最高成本 · 跨机器序列化</span><span class="le">Highest cost · cross-machine serialization</span></span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════════
+     SUMMARY CARDS
+════════════════════════════════════════════════════ -->
+<div class="section-title">
+  <span class="lz">④ 隔离模式分类总结</span>
+  <span class="le">④ Isolation Pattern Summary</span>
+</div>
+
+<div class="info-cards">
+  <!-- Card 1 -->
+  <div class="info-card">
+    <div class="info-card-title">
+      <div class="dot dot-blue"></div>
+      <span>
+        <span class="lz">轻隔离类型</span><span class="le">Light Isolation</span>
+        <span style="display:block; font-size:11px; font-weight:400; color:var(--muted);">in_process + local_bash</span>
+      </span>
+    </div>
+    <ul class="info-card-body">
+      <li><span class="lz">共享进程内存和权限上下文</span><span class="le">Shared process memory &amp; permission context</span></li>
+      <li><span class="lz">函数调用或 stdio 通信，成本极低</span><span class="le">Function call or stdio, minimal overhead</span></li>
+      <li><span class="lz">适合同机高频协作场景</span><span class="le">Ideal for high-frequency same-machine collaboration</span></li>
+    </ul>
+  </div>
+
+  <!-- Card 2 -->
+  <div class="info-card">
+    <div class="info-card-title">
+      <div class="dot dot-violet"></div>
+      <span>
+        <span class="lz">中度隔离类型</span><span class="le">Medium Isolation</span>
+        <span style="display:block; font-size:11px; font-weight:400; color:var(--muted);">local_agent + local_workflow + monitor_mcp</span>
+      </span>
+    </div>
+    <ul class="info-card-body">
+      <li><span class="lz">消息历史完全独立隔离</span><span class="le">Message history fully isolated</span></li>
+      <li><span class="lz">权限上下文可选共享或独立</span><span class="le">Permission context: selectively shared or isolated</span></li>
+      <li><span class="lz">通信使用 Task Notification 或 MCP Protocol</span><span class="le">Uses Task Notification or MCP Protocol</span></li>
+    </ul>
+  </div>
+
+  <!-- Card 3 -->
+  <div class="info-card">
+    <div class="info-card-title">
+      <div class="dot dot-red"></div>
+      <span>
+        <span class="lz">完全隔离类型</span><span class="le">Full Isolation</span>
+        <span style="display:block; font-size:11px; font-weight:400; color:var(--muted);">dream + remote_agent</span>
+      </span>
+    </div>
+    <ul class="info-card-body">
+      <li><span class="lz">所有 6 个维度完全独立</span><span class="le">All 6 dimensions fully isolated</span></li>
+      <li><span class="lz">Bridge Protocol 通信，成本最高</span><span class="le">Bridge Protocol communication, highest cost</span></li>
+      <li><span class="lz">适合高安全要求的远程 Agent 场景</span><span class="le">Ideal for high-security remote agent scenarios</span></li>
+    </ul>
+  </div>
+</div>
+
+<!-- ── Footer ──────────────────────────────────────── -->
+<div class="vis-footer">
+  <span>
+    <span class="lz">VIS-2A-016 · Claude Code 源码白皮书 · CC 2.1.88</span>
+    <span class="le">VIS-2A-016 · Claude Code Source Whitepaper · CC 2.1.88</span>
+  </span>
+  <span>
+    <span class="lz">数据来源：源码任务类型声明 · 7 种类型 × 6 维度 = 42 个属性点</span>
+    <span class="le">Data: source task-type declarations · 7 types × 6 dimensions = 42 attribute points</span>
+  </span>
+</div>
+
+<script>
+(function(){
+  /* ══════════════════════════════════════════════
+     DATA
+  ══════════════════════════════════════════════ */
+  var NODES = [
+    {
+      id: 'in_process_teammate',
+      nameZh: 'in_process_teammate',
+      nameEn: 'in_process',
+      pos: 5,
+      size: 'major',
+      color: '#60a5fa',
+      emoji: '◆',
+      analogyZh: '同一间办公室',
+      analogyEn: 'Same Office',
+      labelSide: 'above'   // name above, analogy below
+    },
+    {
+      id: 'local_bash',
+      nameZh: 'local_bash',
+      nameEn: 'local_bash',
+      pos: 28,
+      size: 'minor',
+      color: '#7dd3fc',
+      emoji: '◈',
+      analogyZh: '独立工位',
+      analogyEn: 'Private Desk',
+      labelSide: 'below'
+    },
+    {
+      id: 'local_agent',
+      nameZh: 'local_agent',
+      nameEn: 'local_agent',
+      pos: 45,
+      size: 'major',
+      color: '#a78bfa',
+      emoji: '◆',
+      analogyZh: '同楼不同部门',
+      analogyEn: 'Different Dept',
+      labelSide: 'above'
+    },
+    {
+      id: 'local_workflow',
+      nameZh: 'local_workflow',
+      nameEn: 'local_workflow',
+      pos: 55,
+      size: 'minor',
+      color: '#c084fc',
+      emoji: '◈',
+      analogyZh: '流程外包',
+      analogyEn: 'Workflow Outsource',
+      labelSide: 'below'
+    },
+    {
+      id: 'monitor_mcp',
+      nameZh: 'monitor_mcp',
+      nameEn: 'monitor_mcp',
+      pos: 65,
+      size: 'minor',
+      color: '#e879f9',
+      emoji: '◈',
+      analogyZh: '监控室',
+      analogyEn: 'Monitor Room',
+      labelSide: 'above'
+    },
+    {
+      id: 'dream',
+      nameZh: 'dream',
+      nameEn: 'dream',
+      pos: 78,
+      size: 'minor',
+      color: '#f472b6',
+      emoji: '◈',
+      analogyZh: '远程办公',
+      analogyEn: 'Remote Work',
+      labelSide: 'below'
+    },
+    {
+      id: 'remote_agent',
+      nameZh: 'remote_agent',
+      nameEn: 'remote_agent',
+      pos: 95,
+      size: 'major',
+      color: '#dc2626',
+      emoji: '◆',
+      analogyZh: '外包公司',
+      analogyEn: 'Outsourced Co.',
+      labelSide: 'above'
+    }
+  ];
+
+  /* ── Columns ── */
+  var COLUMNS = [
+    { zh: '进程内存',   en: 'Process Memory',    subZh: 'Process Memory',     subEn: 'Process Memory' },
+    { zh: '消息历史',   en: 'Message History',   subZh: 'Message History',    subEn: 'Message History' },
+    { zh: '权限上下文', en: 'Permission Ctx',    subZh: 'Permission Context', subEn: 'Permission Context' },
+    { zh: 'MCP连接',    en: 'MCP Connection',    subZh: 'MCP Connection',     subEn: 'MCP Connection' },
+    { zh: '文件系统',   en: 'Filesystem',        subZh: 'Filesystem',         subEn: 'Filesystem' },
+    { zh: '通信方式',   en: 'Communication',     subZh: 'Communication',      subEn: 'Communication' }
+  ];
+
+  /* badge type: 'shared' | 'isolated' | 'partial' */
+  /* [type, zh-text, en-text] */
+  var ROWS = [
+    {
+      id: 'in_process_teammate', emoji: '◆', color: '#60a5fa',
+      nameZh: 'in_process_teammate', nameEn: 'in_process',
+      subZh: '进程内协作', subEn: 'In-process',
+      cells: [
+        ['shared',   '共享',         'Shared'],
+        ['isolated', '独立',         'Isolated'],
+        ['shared',   '共享',         'Shared'],
+        ['shared',   '共享',         'Shared'],
+        ['shared',   '共享',         'Shared'],
+        ['shared',   '函数调用',     'Func Call']
+      ]
+    },
+    {
+      id: 'local_bash', emoji: '◈', color: '#7dd3fc',
+      nameZh: 'local_bash', nameEn: 'local_bash',
+      subZh: '本地Shell', subEn: 'Local Shell',
+      cells: [
+        ['isolated', '子进程',       'Subprocess'],
+        ['isolated', '独立',         'Isolated'],
+        ['partial',  '受限',         'Restricted'],
+        ['shared',   '共享',         'Shared'],
+        ['shared',   '本机',         'Local FS'],
+        ['partial',  'Stdio/Signal', 'Stdio/Signal']
+      ]
+    },
+    {
+      id: 'local_agent', emoji: '◆', color: '#a78bfa',
+      nameZh: 'local_agent', nameEn: 'local_agent',
+      subZh: '本地Agent', subEn: 'Local Agent',
+      cells: [
+        ['shared',   '共享',          'Shared'],
+        ['isolated', '独立',          'Isolated'],
+        ['isolated', '独立',          'Isolated'],
+        ['partial',  '可选',          'Optional'],
+        ['partial',  '可选Worktree',  'Opt. Worktree'],
+        ['partial',  'Task Notify',   'Task Notify']
+      ]
+    },
+    {
+      id: 'local_workflow', emoji: '◈', color: '#c084fc',
+      nameZh: 'local_workflow', nameEn: 'local_workflow',
+      subZh: '本地工作流', subEn: 'Local Workflow',
+      cells: [
+        ['partial',  '工作流隔离',    'Workflow Iso.'],
+        ['isolated', '独立',          'Isolated'],
+        ['partial',  '继承',          'Inherited'],
+        ['shared',   '共享',          'Shared'],
+        ['shared',   '共享',          'Shared'],
+        ['partial',  'Internal Evt',  'Internal Evt']
+      ]
+    },
+    {
+      id: 'monitor_mcp', emoji: '◈', color: '#e879f9',
+      nameZh: 'monitor_mcp', nameEn: 'monitor_mcp',
+      subZh: 'MCP监控', subEn: 'MCP Monitor',
+      cells: [
+        ['partial',  '监控沙箱',      'Monitor SB'],
+        ['isolated', '独立',          'Isolated'],
+        ['partial',  '只读',          'Read-only'],
+        ['isolated', '监控模式',      'Monitor Mode'],
+        ['partial',  '观测',          'Observe'],
+        ['partial',  'MCP Protocol',  'MCP Protocol']
+      ]
+    },
+    {
+      id: 'dream', emoji: '◈', color: '#f472b6',
+      nameZh: 'dream', nameEn: 'dream',
+      subZh: '梦境沙箱', subEn: 'Dream Sandbox',
+      cells: [
+        ['partial',  '未确认',        'Unconfirmed'],
+        ['isolated', '独立',          'Isolated'],
+        ['partial',  '梦境ctx',       'Dream Ctx'],
+        ['partial',  '梦境连接',      'Dream Conn'],
+        ['partial',  '虚拟',          'Virtual'],
+        ['partial',  'Scratchpad',    'Scratchpad']
+      ]
+    },
+    {
+      id: 'remote_agent', emoji: '◆', color: '#dc2626',
+      nameZh: 'remote_agent', nameEn: 'remote_agent',
+      subZh: '远程Agent', subEn: 'Remote Agent',
+      cells: [
+        ['isolated', '独立进程',      'Isolated Proc'],
+        ['isolated', '独立',          'Isolated'],
+        ['isolated', '独立',          'Isolated'],
+        ['isolated', '独立',          'Isolated'],
+        ['isolated', '独立机器',      'Isolated Mach.'],
+        ['isolated', 'Bridge Proto',  'Bridge Proto']
+      ]
+    }
+  ];
+
+  /* ══════════════════════════════════════════════
+     BUILD SPECTRUM
+  ══════════════════════════════════════════════ */
+  function buildSpectrum() {
+    var root = document.getElementById('spectrum-root');
+
+    /* Left/Right isolation labels */
+    var ll = document.createElement('div');
+    ll.className = 'spec-endlabel spec-endlabel-left';
+    ll.style.top = '50%';
+    ll.innerHTML = '<span class="lz">← 轻隔离</span><span class="le">← Light</span>';
+    root.appendChild(ll);
+
+    var lr = document.createElement('div');
+    lr.className = 'spec-endlabel spec-endlabel-right';
+    lr.style.top = '50%';
+    lr.innerHTML = '<span class="lz">重隔离 →</span><span class="le">Heavy →</span>';
+    root.appendChild(lr);
+
+    NODES.forEach(function(n) {
+      var wrap = document.createElement('div');
+      wrap.className = 'spec-node ' + (n.size === 'major' ? 'node-major' : 'node-minor');
+      wrap.style.left = n.pos + '%';
+
+      /* circle */
+      var circ = document.createElement('div');
+      circ.className = 'node-circle';
+      circ.style.background = n.color + '22';
+      circ.style.borderColor = n.color + '55';
+      circ.style.color = n.color;
+      circ.style.boxShadow = '0 0 14px ' + n.color + '55';
+      circ.textContent = n.emoji;
+      wrap.appendChild(circ);
+
+      /* labels */
+      var labelAbove = document.createElement('div');
+      labelAbove.className = n.labelSide === 'above' ? 'label-above' : 'label-below';
+
+      var nameSpan = document.createElement('span');
+      nameSpan.className = 'node-name';
+
+      var nzh = document.createElement('span');
+      nzh.className = 'lz';
+      nzh.style.cssText = 'font-size:12px;font-weight:700;color:' + n.color;
+      nzh.textContent = n.nameZh;
+
+      var nen = document.createElement('span');
+      nen.className = 'le';
+      nen.style.cssText = 'font-size:12px;font-weight:700;color:' + n.color;
+      nen.textContent = n.nameEn;
+
+      nameSpan.appendChild(nzh);
+      nameSpan.appendChild(nen);
+      labelAbove.appendChild(nameSpan);
+
+      var analogySpan = document.createElement('span');
+      analogySpan.className = 'node-analogy';
+
+      var azh = document.createElement('span');
+      azh.className = 'lz';
+      azh.textContent = n.analogyZh;
+
+      var aen = document.createElement('span');
+      aen.className = 'le';
+      aen.textContent = n.analogyEn;
+
+      analogySpan.appendChild(azh);
+      analogySpan.appendChild(aen);
+      labelAbove.appendChild(analogySpan);
+
+      wrap.appendChild(labelAbove);
+      root.appendChild(wrap);
+    });
+  }
+
+  /* ══════════════════════════════════════════════
+     BUILD MATRIX
+  ══════════════════════════════════════════════ */
+  function buildMatrix() {
+    var table = document.getElementById('iso-matrix');
+
+    /* header row */
+    var thead = document.createElement('thead');
+    var headerRow = document.createElement('tr');
+
+    /* corner */
+    var corner = document.createElement('th');
+    corner.className = 'th-corner-iso';
+    headerRow.appendChild(corner);
+
+    COLUMNS.forEach(function(col) {
+      var th = document.createElement('th');
+      th.className = 'th-col-iso';
+      th.innerHTML =
+        '<span class="lz">' + col.zh + '</span>' +
+        '<span class="le">' + col.en + '</span>';
+      headerRow.appendChild(th);
+    });
+    thead.appendChild(headerRow);
+    table.appendChild(thead);
+
+    /* body */
+    var tbody = document.createElement('tbody');
+    ROWS.forEach(function(row) {
+      var tr = document.createElement('tr');
+
+      /* row header */
+      var th = document.createElement('th');
+      th.className = 'th-row-iso';
+      th.innerHTML =
+        '<span class="row-name">' +
+          '<span class="row-emoji" style="color:' + row.color + '">' + row.emoji + '</span>' +
+          '<span class="lz">' + row.nameZh + '</span>' +
+          '<span class="le">' + row.nameEn + '</span>' +
+        '</span>' +
+        '<span class="row-sub">' +
+          '<span class="lz">' + row.subZh + '</span>' +
+          '<span class="le">' + row.subEn + '</span>' +
+        '</span>';
+      tr.appendChild(th);
+
+      /* data cells */
+      row.cells.forEach(function(cell) {
+        var type = cell[0], zh = cell[1], en = cell[2];
+        var td = document.createElement('td');
+        td.className = 'cell-iso';
+
+        /* background tint */
+        var tints = {
+          shared:   'rgba(96,165,250,0.05)',
+          isolated: 'rgba(251,113,133,0.05)',
+          partial:  'rgba(167,139,250,0.05)'
+        };
+        td.style.background = tints[type] || 'transparent';
+
+        var badge = document.createElement('span');
+        badge.className = 'badge badge-' + type;
+        badge.innerHTML =
+          '<span class="lz">' + zh + '</span>' +
+          '<span class="le">' + en + '</span>';
+        td.appendChild(badge);
+        tr.appendChild(td);
+      });
+
+      tbody.appendChild(tr);
+    });
+    table.appendChild(tbody);
+  }
+
+  /* ══════════════════════════════════════════════
+     THEME & LANG
+  ══════════════════════════════════════════════ */
+  var THEMES = ['dark', 'warm', 'light'];
+
+  function applyTheme(t) {
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('vtheme', t);
+  }
+  function applyLang(l){
+    document.documentElement.setAttribute('data-lang', l);
+    localStorage.setItem('vlang', l);
+  }
+  window.cycleTheme = function() {
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    applyTheme(THEMES[(THEMES.indexOf(cur) + 1) % THEMES.length]);
+  };
+  window.toggleLang = function() {
+    var cur = localStorage.getItem('vlang') || 'zh';
+    applyLang(cur === 'zh' ? 'en' : 'zh');
+  };
+
+  /* init from localStorage */
+  var st = localStorage.getItem('vtheme'); if (st) applyTheme(st);
+  var sl = localStorage.getItem('vlang');  if (sl) applyLang(sl);
+
+  /* ══════════════════════════════════════════════
+     INIT
+  ══════════════════════════════════════════════ */
+  buildSpectrum();
+  buildMatrix();
+
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

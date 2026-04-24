@@ -1,0 +1,1175 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-3-013 设置合并优先级全景图</title>
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<style>
+/* ── CSS Custom Properties ── */
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+/* ── Reset & Base ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:16px;-webkit-font-smoothing:antialiased;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  min-height:100vh;
+  padding:0;
+}
+
+/* ── Layout ── */
+.page-wrap{
+  max-width:1100px;
+  margin:0 auto;
+  padding:32px 24px 56px;
+}
+
+/* ── Header ── */
+.page-header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:16px;
+  margin-bottom:40px;
+  flex-wrap:wrap;
+}
+.header-left{}
+.chart-id{
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:6px;
+}
+.chart-title{
+  font-size:26px;
+  font-weight:700;
+  line-height:1.25;
+  color:var(--text);
+}
+.chart-subtitle{
+  font-size:13px;
+  color:var(--muted);
+  margin-top:6px;
+  line-height:1.5;
+}
+.header-controls{
+  display:flex;
+  gap:8px;
+  align-items:center;
+  flex-shrink:0;
+  margin-top:4px;
+}
+.ctrl-btn{
+  border:1px solid var(--border);
+  background:var(--panel);
+  color:var(--muted);
+  font-size:12px;
+  font-weight:500;
+  padding:6px 14px;
+  border-radius:6px;
+  cursor:pointer;
+  transition:all .18s ease;
+  white-space:nowrap;
+}
+.ctrl-btn:hover{
+  color:var(--text);
+  border-color:rgba(255,255,255,.2);
+  background:var(--subtle);
+}
+
+/* ── Main Grid ── */
+.main-grid{
+  display:grid;
+  grid-template-columns:1fr 320px;
+  gap:28px;
+  align-items:start;
+}
+@media(max-width:820px){
+  .main-grid{grid-template-columns:1fr;}
+}
+
+/* ── Priority Stack ── */
+.stack-col{}
+.stack-label{
+  font-size:11px;
+  font-weight:600;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:14px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.stack-label::after{
+  content:'';
+  flex:1;
+  height:1px;
+  background:var(--border);
+}
+
+.priority-stack{
+  display:flex;
+  flex-direction:column-reverse;
+  gap:0;
+  position:relative;
+}
+
+/* Arrow connector between layers */
+.layer-arrow{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  height:22px;
+  position:relative;
+  z-index:2;
+}
+.layer-arrow-inner{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:0;
+}
+.arrow-line{
+  width:2px;
+  height:10px;
+  background:var(--subtle);
+}
+.arrow-head{
+  width:0;height:0;
+  border-left:5px solid transparent;
+  border-right:5px solid transparent;
+  border-bottom:7px solid var(--subtle);
+}
+.arrow-label{
+  position:absolute;
+  right:calc(50% + 14px);
+  top:50%;
+  transform:translateY(-50%);
+  font-size:10px;
+  color:var(--muted);
+  white-space:nowrap;
+  letter-spacing:.06em;
+}
+
+/* ── Layer Card ── */
+.layer-card{
+  position:relative;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:var(--panel);
+  overflow:hidden;
+  cursor:pointer;
+  transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+}
+.layer-card:hover{
+  transform:translateX(4px);
+  box-shadow:0 4px 20px rgba(0,0,0,.28);
+}
+.layer-card.active{
+  transform:translateX(6px);
+  box-shadow:0 6px 28px rgba(0,0,0,.35);
+}
+
+/* Left accent bar */
+.layer-card::before{
+  content:'';
+  position:absolute;
+  left:0;top:0;bottom:0;
+  width:5px;
+}
+
+/* Layer 1 — Plugin (slate) */
+.layer-1::before{background:var(--slate);}
+.layer-1.active,
+.layer-1:hover{border-color:var(--slate);}
+.layer-1 .layer-badge{background:var(--slate);}
+.layer-1 .layer-num{color:var(--slate);}
+
+/* Layer 2 — User (cyan) */
+.layer-2::before{background:var(--cyan);}
+.layer-2.active,
+.layer-2:hover{border-color:var(--cyan);}
+.layer-2 .layer-badge{background:var(--cyan);}
+.layer-2 .layer-num{color:var(--cyan);}
+
+/* Layer 3 — Project (emerald) */
+.layer-3::before{background:var(--emerald);}
+.layer-3.active,
+.layer-3:hover{border-color:var(--emerald);}
+.layer-3 .layer-badge{background:var(--emerald);}
+.layer-3 .layer-num{color:var(--emerald);}
+
+/* Layer 4 — Local (amber) */
+.layer-4::before{background:var(--amber);}
+.layer-4.active,
+.layer-4:hover{border-color:var(--amber);}
+.layer-4 .layer-badge{background:var(--amber);}
+.layer-4 .layer-num{color:var(--amber);}
+
+/* Layer 5 — CLI Flags (orange) */
+.layer-5::before{background:var(--orange);}
+.layer-5.active,
+.layer-5:hover{border-color:var(--orange);}
+.layer-5 .layer-badge{background:var(--orange);}
+.layer-5 .layer-num{color:var(--orange);}
+
+/* Layer 6 — Policy (rose) — bigger & bolder */
+.layer-6::before{background:var(--rose);width:7px;}
+.layer-6.active,
+.layer-6:hover{border-color:var(--rose);}
+.layer-6 .layer-badge{background:var(--rose);}
+.layer-6 .layer-num{color:var(--rose);}
+.layer-6{border-width:2px;border-color:rgba(244,63,94,.35);}
+
+.layer-body{
+  padding:14px 16px 14px 22px;
+  display:flex;
+  align-items:center;
+  gap:14px;
+}
+.layer-6 .layer-body{
+  padding:20px 18px 20px 24px;
+}
+
+.layer-icon{
+  font-size:20px;
+  flex-shrink:0;
+  width:32px;
+  text-align:center;
+  line-height:1;
+}
+.layer-6 .layer-icon{font-size:26px;width:38px;}
+
+.layer-info{flex:1;min-width:0;}
+
+.layer-top-row{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  margin-bottom:4px;
+}
+.layer-num{
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+}
+.layer-6 .layer-num{font-size:12px;}
+
+.layer-name-zh{
+  font-size:15px;
+  font-weight:700;
+  color:var(--text);
+}
+.layer-6 .layer-name-zh{font-size:18px;}
+
+.layer-name-en{
+  font-size:13px;
+  font-weight:600;
+  color:var(--text);
+}
+.layer-6 .layer-name-en{font-size:15px;}
+
+.layer-badge{
+  margin-left:auto;
+  font-size:10px;
+  font-weight:700;
+  color:#fff;
+  padding:2px 8px;
+  border-radius:20px;
+  letter-spacing:.06em;
+  white-space:nowrap;
+  flex-shrink:0;
+}
+.layer-6 .layer-badge{font-size:11px;padding:3px 10px;}
+
+.layer-path{
+  font-size:11px;
+  font-family:'JetBrains Mono','Fira Mono','Consolas',monospace;
+  color:var(--muted);
+  margin-bottom:3px;
+  word-break:break-all;
+}
+.layer-6 .layer-path{font-size:12px;}
+
+.layer-desc{
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.45;
+}
+.layer-6 .layer-desc{font-size:13px;}
+
+/* Policy sub-types row */
+.policy-subtypes{
+  display:flex;
+  gap:6px;
+  flex-wrap:wrap;
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid var(--border);
+}
+.policy-tag{
+  font-size:11px;
+  font-weight:600;
+  color:var(--rose);
+  background:rgba(244,63,94,.12);
+  border:1px solid rgba(244,63,94,.25);
+  padding:3px 9px;
+  border-radius:4px;
+  white-space:nowrap;
+}
+
+/* ── Right Panel ── */
+.side-col{
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+.info-card{
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--panel);
+  overflow:hidden;
+}
+.info-card-header{
+  padding:12px 16px;
+  border-bottom:1px solid var(--border);
+  background:var(--subtle);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--muted);
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.info-card-header span{font-size:16px;}
+.info-card-body{padding:14px 16px;}
+
+/* Detail panel — shown on layer hover */
+.detail-panel{
+  border:1px solid var(--border);
+  border-radius:10px;
+  background:var(--panel);
+  overflow:hidden;
+  transition:opacity .2s ease;
+}
+.detail-panel.empty{
+  opacity:.45;
+}
+.detail-header{
+  padding:10px 14px;
+  background:var(--subtle);
+  border-bottom:1px solid var(--border);
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+}
+.detail-body{padding:14px;}
+.detail-placeholder{
+  font-size:12px;
+  color:var(--muted);
+  text-align:center;
+  padding:20px 0;
+  line-height:1.6;
+}
+.detail-name{
+  font-size:16px;
+  font-weight:700;
+  margin-bottom:8px;
+  color:var(--text);
+}
+.detail-row{
+  display:flex;
+  gap:8px;
+  margin-bottom:7px;
+  font-size:12px;
+  align-items:flex-start;
+}
+.detail-row-label{
+  font-weight:600;
+  color:var(--muted);
+  min-width:60px;
+  flex-shrink:0;
+}
+.detail-row-val{
+  color:var(--text);
+  font-family:'JetBrains Mono','Fira Mono',monospace;
+  word-break:break-all;
+  line-height:1.4;
+}
+.detail-row-val.plain{
+  font-family:inherit;
+}
+.detail-notes{
+  margin-top:10px;
+  padding-top:10px;
+  border-top:1px solid var(--border);
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.55;
+}
+
+/* ── Merge Semantics Card ── */
+.merge-row{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:10px;
+}
+.merge-row:last-child{margin-bottom:0;}
+.merge-icon{
+  font-size:18px;
+  flex-shrink:0;
+  margin-top:1px;
+}
+.merge-text{}
+.merge-title{
+  font-size:13px;
+  font-weight:600;
+  color:var(--text);
+  margin-bottom:2px;
+}
+.merge-desc{
+  font-size:12px;
+  color:var(--muted);
+  line-height:1.5;
+}
+.code-pill{
+  display:inline-block;
+  font-family:'JetBrains Mono','Fira Mono',monospace;
+  font-size:11px;
+  background:var(--subtle);
+  color:var(--cyan);
+  padding:1px 6px;
+  border-radius:4px;
+  border:1px solid var(--border);
+}
+
+/* ── Cache Layers Card ── */
+.cache-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:8px 0;
+  border-bottom:1px solid var(--border);
+}
+.cache-item:last-child{border-bottom:none;padding-bottom:0;}
+.cache-dot{
+  width:10px;height:10px;
+  border-radius:50%;
+  flex-shrink:0;
+}
+.cache-label{
+  font-size:13px;
+  font-weight:600;
+  color:var(--text);
+  flex:1;
+}
+.cache-tag{
+  font-size:10px;
+  font-weight:600;
+  color:var(--muted);
+  background:var(--subtle);
+  padding:2px 7px;
+  border-radius:4px;
+}
+
+/* ── Legend ── */
+.legend-section{
+  margin-top:32px;
+  padding-top:24px;
+  border-top:1px solid var(--border);
+}
+.legend-title{
+  font-size:11px;
+  font-weight:700;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:14px;
+}
+.legend-grid{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.legend-item{
+  display:flex;
+  align-items:center;
+  gap:7px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  padding:7px 12px;
+  border-radius:7px;
+  cursor:pointer;
+  transition:all .15s ease;
+}
+.legend-item:hover{
+  border-color:rgba(255,255,255,.2);
+  background:var(--subtle);
+}
+.legend-swatch{
+  width:12px;height:12px;
+  border-radius:3px;
+  flex-shrink:0;
+}
+.legend-text-zh,.legend-text-en{
+  font-size:12px;
+  font-weight:600;
+  color:var(--text);
+}
+.legend-priority{
+  font-size:11px;
+  color:var(--muted);
+}
+</style>
+</head>
+<body>
+
+<div class="page-wrap">
+
+  <!-- ── Header ── -->
+  <div class="page-header">
+    <div class="header-left">
+      <div class="chart-id">VIS-3-013</div>
+      <h1 class="chart-title">
+        <span class="lz">设置合并优先级全景图</span>
+        <span class="le" style="display:none">Settings Merge Priority Stack</span>
+      </h1>
+      <p class="chart-subtitle">
+        <span class="lz">6 层配置叠加机制 — 从插件（最低）到策略（最高），高层覆盖低层</span>
+        <span class="le" style="display:none">6-layer config merge stack — Plugin (lowest) to Policy (highest), higher layers override lower</span>
+      </p>
+    </div>
+    <div class="header-controls">
+      <button class="ctrl-btn" onclick="toggleLang()">
+        <span class="lz">EN</span><span class="le" style="display:none">中文</span>
+      </button>
+      <button class="ctrl-btn" onclick="cycleTheme()">
+        <span class="lz">切换主题</span><span class="le" style="display:none">Theme</span>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── Main Grid ── -->
+  <div class="main-grid">
+
+    <!-- ── Left: Priority Stack ── -->
+    <div class="stack-col">
+      <div class="stack-label">
+        <span class="lz">优先级从低→高（向上覆盖）</span>
+        <span class="le" style="display:none">Priority: Low → High (upward override)</span>
+      </div>
+
+      <div class="priority-stack" id="priorityStack">
+
+        <!-- Layer 1 — Plugin (LOWEST) -->
+        <div class="layer-card layer-1" data-layer="1" onclick="selectLayer(1)">
+          <div class="layer-body">
+            <div class="layer-icon">🔌</div>
+            <div class="layer-info">
+              <div class="layer-top-row">
+                <span class="layer-num">L1 · LOWEST</span>
+                <span class="layer-badge"><span class="lz">受限配置</span><span class="le" style="display:none">Restricted</span></span>
+              </div>
+              <div class="layer-name-zh lz">Plugin / 插件配置</div>
+              <div class="layer-name-en le" style="display:none">Plugin Config</div>
+              <div class="layer-path">plugin-defined</div>
+              <div class="layer-desc">
+                <span class="lz">插件自定义受限配置，优先级最低，可被所有其他层覆盖</span>
+                <span class="le" style="display:none">Plugin-defined restricted config — overridable by all other layers</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow 1→2 -->
+        <div class="layer-arrow">
+          <div class="arrow-label lz">User 覆盖</div>
+          <div class="arrow-label le" style="display:none">User overrides</div>
+          <div class="layer-arrow-inner">
+            <div class="arrow-head"></div>
+            <div class="arrow-line"></div>
+          </div>
+        </div>
+
+        <!-- Layer 2 — User -->
+        <div class="layer-card layer-2" data-layer="2" onclick="selectLayer(2)">
+          <div class="layer-body">
+            <div class="layer-icon">👤</div>
+            <div class="layer-info">
+              <div class="layer-top-row">
+                <span class="layer-num">L2</span>
+                <span class="layer-badge"><span class="lz">可协作</span><span class="le" style="display:none">Collaborative</span></span>
+              </div>
+              <div class="layer-name-zh lz">User / 用户设置</div>
+              <div class="layer-name-en le" style="display:none">User Settings</div>
+              <div class="layer-path">~/.claude/settings.json</div>
+              <div class="layer-desc">
+                <span class="lz">用户级全局设置，适用于所有项目，支持团队协作共享</span>
+                <span class="le" style="display:none">User-global settings applied to all projects, shareable for collaboration</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow 2→3 -->
+        <div class="layer-arrow">
+          <div class="arrow-label lz">Project 覆盖</div>
+          <div class="arrow-label le" style="display:none">Project overrides</div>
+          <div class="layer-arrow-inner">
+            <div class="arrow-head"></div>
+            <div class="arrow-line"></div>
+          </div>
+        </div>
+
+        <!-- Layer 3 — Project -->
+        <div class="layer-card layer-3" data-layer="3" onclick="selectLayer(3)">
+          <div class="layer-body">
+            <div class="layer-icon">📁</div>
+            <div class="layer-info">
+              <div class="layer-top-row">
+                <span class="layer-num">L3</span>
+                <span class="layer-badge"><span class="lz">可覆盖</span><span class="le" style="display:none">Overridable</span></span>
+              </div>
+              <div class="layer-name-zh lz">Project / 项目设置</div>
+              <div class="layer-name-en le" style="display:none">Project Settings</div>
+              <div class="layer-path">&lt;git-root&gt;/.claude/settings.json</div>
+              <div class="layer-desc">
+                <span class="lz">仓库级项目设置，随代码提交，适用于整个团队</span>
+                <span class="le" style="display:none">Repo-level settings committed with code, shared across the team</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow 3→4 -->
+        <div class="layer-arrow">
+          <div class="arrow-label lz">Local 覆盖</div>
+          <div class="arrow-label le" style="display:none">Local overrides</div>
+          <div class="layer-arrow-inner">
+            <div class="arrow-head"></div>
+            <div class="arrow-line"></div>
+          </div>
+        </div>
+
+        <!-- Layer 4 — Local -->
+        <div class="layer-card layer-4" data-layer="4" onclick="selectLayer(4)">
+          <div class="layer-body">
+            <div class="layer-icon">💻</div>
+            <div class="layer-info">
+              <div class="layer-top-row">
+                <span class="layer-num">L4</span>
+                <span class="layer-badge"><span class="lz">仅本地</span><span class="le" style="display:none">Local only</span></span>
+              </div>
+              <div class="layer-name-zh lz">Local / 本地设置</div>
+              <div class="layer-name-en le" style="display:none">Local Settings</div>
+              <div class="layer-path">.claude/settings.local.json</div>
+              <div class="layer-desc">
+                <span class="lz">本机专属配置，应加入 .gitignore，不随代码提交</span>
+                <span class="le" style="display:none">Machine-local config, should be in .gitignore, not committed</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow 4→5 -->
+        <div class="layer-arrow">
+          <div class="arrow-label lz">CLI 覆盖</div>
+          <div class="arrow-label le" style="display:none">CLI overrides</div>
+          <div class="layer-arrow-inner">
+            <div class="arrow-head"></div>
+            <div class="arrow-line"></div>
+          </div>
+        </div>
+
+        <!-- Layer 5 — CLI Flags -->
+        <div class="layer-card layer-5" data-layer="5" onclick="selectLayer(5)">
+          <div class="layer-body">
+            <div class="layer-icon">⌨️</div>
+            <div class="layer-info">
+              <div class="layer-top-row">
+                <span class="layer-num">L5</span>
+                <span class="layer-badge"><span class="lz">运行时</span><span class="le" style="display:none">Runtime</span></span>
+              </div>
+              <div class="layer-name-zh lz">CLI Flags / 命令行参数</div>
+              <div class="layer-name-en le" style="display:none">CLI Flags</div>
+              <div class="layer-path">--flag=value</div>
+              <div class="layer-desc">
+                <span class="lz">运行时命令行参数，临时覆盖，仅作用于当次会话</span>
+                <span class="le" style="display:none">Runtime CLI flags, temporary override for the current session only</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Arrow 5→6 -->
+        <div class="layer-arrow">
+          <div class="arrow-label lz">Policy 强制</div>
+          <div class="arrow-label le" style="display:none">Policy enforces</div>
+          <div class="layer-arrow-inner">
+            <div class="arrow-head"></div>
+            <div class="arrow-line"></div>
+          </div>
+        </div>
+
+        <!-- Layer 6 — Policy (HIGHEST) -->
+        <div class="layer-card layer-6" data-layer="6" onclick="selectLayer(6)">
+          <div class="layer-body" style="flex-direction:column;align-items:stretch;gap:0;">
+            <div style="display:flex;align-items:center;gap:14px;">
+              <div class="layer-icon">🔒</div>
+              <div class="layer-info">
+                <div class="layer-top-row">
+                  <span class="layer-num">L6 · HIGHEST</span>
+                  <span class="layer-badge"><span class="lz">强制锁定</span><span class="le" style="display:none">Force-locked</span></span>
+                </div>
+                <div class="layer-name-zh lz">Policy / 策略</div>
+                <div class="layer-name-en le" style="display:none">Policy (System)</div>
+                <div class="layer-path">system policy files</div>
+                <div class="layer-desc">
+                  <span class="lz">系统级强制策略，无法被用户或项目覆盖，由 IT/MDM 管理</span>
+                  <span class="le" style="display:none">System-enforced policies, cannot be overridden by users or projects — managed by IT/MDM</span>
+                </div>
+              </div>
+            </div>
+            <div class="policy-subtypes">
+              <span class="policy-tag">Remote Policy</span>
+              <span class="policy-tag">MDM Policy</span>
+              <span class="policy-tag">File Policy</span>
+              <span class="policy-tag">HKCU Registry</span>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /priority-stack -->
+    </div><!-- /stack-col -->
+
+    <!-- ── Right: Info Panels ── -->
+    <div class="side-col">
+
+      <!-- Detail Panel (interactive) -->
+      <div class="detail-panel empty" id="detailPanel">
+        <div class="detail-header">
+          <span class="lz">层级详情</span>
+          <span class="le" style="display:none">Layer Detail</span>
+        </div>
+        <div class="detail-body" id="detailBody">
+          <div class="detail-placeholder">
+            <span class="lz">点击左侧任意层级<br>查看详细信息</span>
+            <span class="le" style="display:none">Click any layer on the left<br>to view details</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Merge Semantics Card -->
+      <div class="info-card">
+        <div class="info-card-header">
+          <span>⚙️</span>
+          <span class="lz">合并语义</span>
+          <span class="le" style="display:none">Merge Semantics</span>
+        </div>
+        <div class="info-card-body">
+          <div class="merge-row">
+            <div class="merge-icon">🔀</div>
+            <div class="merge-text">
+              <div class="merge-title">
+                <span class="lz">跨类型合并</span>
+                <span class="le" style="display:none">Cross-type Merge</span>
+              </div>
+              <div class="merge-desc">
+                <span class="lz"><span class="code-pill">deepmerge</span> — 对象递归合并，不同类型设置均保留</span>
+                <span class="le" style="display:none"><span class="code-pill">deepmerge</span> — objects recursively merged, all types preserved</span>
+              </div>
+            </div>
+          </div>
+          <div class="merge-row">
+            <div class="merge-icon">⬆️</div>
+            <div class="merge-text">
+              <div class="merge-title">
+                <span class="lz">同类型合并</span>
+                <span class="le" style="display:none">Same-type Merge</span>
+              </div>
+              <div class="merge-desc">
+                <span class="lz">高优先级层覆盖同名低优先级层配置</span>
+                <span class="le" style="display:none">Higher-priority layer overrides same-key lower-priority config</span>
+              </div>
+            </div>
+          </div>
+          <div class="merge-row">
+            <div class="merge-icon">🔒</div>
+            <div class="merge-text">
+              <div class="merge-title">
+                <span class="lz">策略强制</span>
+                <span class="le" style="display:none">Policy Enforcement</span>
+              </div>
+              <div class="merge-desc">
+                <span class="lz">Policy 层不参与合并，直接锁定最终值，优先级绝对最高</span>
+                <span class="le" style="display:none">Policy layer bypasses merge, locks final value — absolute highest priority</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cache Layers Card -->
+      <div class="info-card">
+        <div class="info-card-header">
+          <span>⚡</span>
+          <span class="lz">缓存层级</span>
+          <span class="le" style="display:none">Cache Layers</span>
+        </div>
+        <div class="info-card-body">
+          <div class="cache-item">
+            <div class="cache-dot" style="background:var(--cyan)"></div>
+            <div class="cache-label">
+              <span class="lz">解析缓存</span>
+              <span class="le" style="display:none">Parse Cache</span>
+            </div>
+            <div class="cache-tag">parse</div>
+          </div>
+          <div class="cache-item">
+            <div class="cache-dot" style="background:var(--emerald)"></div>
+            <div class="cache-label">
+              <span class="lz">来源缓存</span>
+              <span class="le" style="display:none">Source Cache</span>
+            </div>
+            <div class="cache-tag">source</div>
+          </div>
+          <div class="cache-item">
+            <div class="cache-dot" style="background:var(--amber)"></div>
+            <div class="cache-label">
+              <span class="lz">会话缓存</span>
+              <span class="le" style="display:none">Session Cache</span>
+            </div>
+            <div class="cache-tag">session</div>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /side-col -->
+  </div><!-- /main-grid -->
+
+  <!-- ── Legend ── -->
+  <div class="legend-section">
+    <div class="legend-title">
+      <span class="lz">优先级图例（点击定位层级）</span>
+      <span class="le" style="display:none">Priority Legend (click to highlight layer)</span>
+    </div>
+    <div class="legend-grid">
+      <div class="legend-item" onclick="selectLayer(1)">
+        <div class="legend-swatch" style="background:var(--slate)"></div>
+        <div class="legend-text-zh lz">插件</div>
+        <div class="legend-text-en le" style="display:none">Plugin</div>
+        <div class="legend-priority">L1</div>
+      </div>
+      <div class="legend-item" onclick="selectLayer(2)">
+        <div class="legend-swatch" style="background:var(--cyan)"></div>
+        <div class="legend-text-zh lz">用户</div>
+        <div class="legend-text-en le" style="display:none">User</div>
+        <div class="legend-priority">L2</div>
+      </div>
+      <div class="legend-item" onclick="selectLayer(3)">
+        <div class="legend-swatch" style="background:var(--emerald)"></div>
+        <div class="legend-text-zh lz">项目</div>
+        <div class="legend-text-en le" style="display:none">Project</div>
+        <div class="legend-priority">L3</div>
+      </div>
+      <div class="legend-item" onclick="selectLayer(4)">
+        <div class="legend-swatch" style="background:var(--amber)"></div>
+        <div class="legend-text-zh lz">本地</div>
+        <div class="legend-text-en le" style="display:none">Local</div>
+        <div class="legend-priority">L4</div>
+      </div>
+      <div class="legend-item" onclick="selectLayer(5)">
+        <div class="legend-swatch" style="background:var(--orange)"></div>
+        <div class="legend-text-zh lz">命令行</div>
+        <div class="legend-text-en le" style="display:none">CLI</div>
+        <div class="legend-priority">L5</div>
+      </div>
+      <div class="legend-item" onclick="selectLayer(6)">
+        <div class="legend-swatch" style="background:var(--rose)"></div>
+        <div class="legend-text-zh lz">策略</div>
+        <div class="legend-text-en le" style="display:none">Policy</div>
+        <div class="legend-priority">L6</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page-wrap -->
+
+<script>
+// ── Layer Data ──
+var LAYERS = {
+  1: {
+    color: '#64748b',
+    icon: '🔌',
+    nameZh: 'Plugin / 插件配置',
+    nameEn: 'Plugin Config',
+    badge: '受限配置 / Restricted',
+    path: 'plugin-defined',
+    descZh: '插件自定义的受限配置。优先级最低，所有其他层均可覆盖此层。插件只能在已批准的配置边界内操作。',
+    descEn: 'Plugin-defined restricted configuration. Lowest priority — all other layers override this. Plugins operate within approved config boundaries only.',
+    notesZh: '适合插件默认值，不应依赖此层存储关键设置。',
+    notesEn: 'Best for plugin defaults. Do not rely on this layer for critical settings.'
+  },
+  2: {
+    color: '#22d3ee',
+    icon: '👤',
+    nameZh: 'User / 用户设置',
+    nameEn: 'User Settings',
+    badge: '可协作 / Collaborative',
+    path: '~/.claude/settings.json',
+    descZh: '用户级别的全局设置，适用于该用户的所有项目。支持团队协作共享配置模板。',
+    descEn: 'User-global settings applied to all projects for this user. Supports team collaboration with shared config templates.',
+    notesZh: '个人偏好、全局工具授权等建议放置于此层。',
+    notesEn: 'Recommended for personal preferences, global tool authorizations.'
+  },
+  3: {
+    color: '#10b981',
+    icon: '📁',
+    nameZh: 'Project / 项目设置',
+    nameEn: 'Project Settings',
+    badge: '可覆盖 / Override',
+    path: '<git-root>/.claude/settings.json',
+    descZh: '仓库级项目设置，随代码一起提交，适用于整个团队。项目级规则、工具授权建议放置于此。',
+    descEn: 'Repo-level settings committed with code, shared across the entire team. Project rules and tool authorizations recommended here.',
+    notesZh: '此文件应提交到版本控制，供团队共享使用。',
+    notesEn: 'Commit this file to version control for team-wide sharing.'
+  },
+  4: {
+    color: '#f59e0b',
+    icon: '💻',
+    nameZh: 'Local / 本地设置',
+    nameEn: 'Local Settings',
+    badge: '仅本地 / Local only',
+    path: '.claude/settings.local.json',
+    descZh: '本机专属的个人配置，不应随代码提交。适合存储本地 API 密钥、机器特定路径等私密信息。',
+    descEn: 'Machine-local personal config, not committed with code. Ideal for local API keys, machine-specific paths, private overrides.',
+    notesZh: '务必将此文件加入 .gitignore，避免泄露敏感信息。',
+    notesEn: 'Must add to .gitignore to prevent leaking sensitive information.'
+  },
+  5: {
+    color: '#f97316',
+    icon: '⌨️',
+    nameZh: 'CLI Flags / 命令行参数',
+    nameEn: 'CLI Flags',
+    badge: '运行时 / Runtime',
+    path: '--flag=value',
+    descZh: '运行时通过命令行传入的参数，临时覆盖配置，仅作用于当前会话，不持久化存储。',
+    descEn: 'Runtime flags passed via CLI, temporary override for the current session only. Not persisted.',
+    notesZh: '适合调试、一次性任务的临时参数覆盖。',
+    notesEn: 'Best for debugging and one-off task overrides.'
+  },
+  6: {
+    color: '#f43f5e',
+    icon: '🔒',
+    nameZh: 'Policy / 策略',
+    nameEn: 'Policy (System)',
+    badge: '强制锁定 / Force locked',
+    path: 'system policy files',
+    descZh: '系统级强制策略，由 IT 管理员或 MDM 系统配置，无法被用户、项目或命令行参数覆盖。绝对优先级。',
+    descEn: 'System-enforced policies configured by IT admins or MDM systems. Cannot be overridden by users, projects, or CLI flags. Absolute priority.',
+    notesZh: '子类型：Remote Policy（远程策略）、MDM Policy（移动设备管理）、File Policy（文件策略）、HKCU Registry（Windows注册表）。',
+    notesEn: 'Sub-types: Remote Policy, MDM Policy, File Policy, HKCU Registry (Windows).'
+  }
+};
+
+var activeLayer = null;
+
+function selectLayer(n) {
+  // Toggle off if clicking same layer
+  if (activeLayer === n) {
+    activeLayer = null;
+    document.querySelectorAll('.layer-card').forEach(function(c){ c.classList.remove('active'); });
+    renderDetailEmpty();
+    return;
+  }
+  activeLayer = n;
+  document.querySelectorAll('.layer-card').forEach(function(c){
+    c.classList.toggle('active', parseInt(c.dataset.layer) === n);
+  });
+  renderDetail(n);
+}
+
+function renderDetailEmpty() {
+  var panel = document.getElementById('detailPanel');
+  var body = document.getElementById('detailBody');
+  panel.classList.add('empty');
+  var isEn = document.documentElement.getAttribute('data-lang') === 'en';
+  body.innerHTML =
+    '<div class="detail-placeholder">' +
+    '<span class="lz">点击左侧任意层级<br>查看详细信息</span>' +
+    '<span class="le" style="display:none">Click any layer on the left<br>to view details</span>' +
+    '</div>';
+  // Re-apply lang to new DOM
+  applyLangLocal();
+}
+
+function renderDetail(n) {
+  var d = LAYERS[n];
+  var panel = document.getElementById('detailPanel');
+  var body = document.getElementById('detailBody');
+  panel.classList.remove('empty');
+  panel.style.borderColor = d.color + '55';
+
+  body.innerHTML =
+    '<div class="detail-name" style="color:' + d.color + '">' + d.icon + ' ' +
+      '<span class="lz">' + d.nameZh + '</span>' +
+      '<span class="le" style="display:none">' + d.nameEn + '</span>' +
+    '</div>' +
+    '<div class="detail-row">' +
+      '<div class="detail-row-label lz">优先级</div>' +
+      '<div class="detail-row-label le" style="display:none">Priority</div>' +
+      '<div class="detail-row-val plain">L' + n + (n===1?' (LOWEST)':n===6?' (HIGHEST)':'') + '</div>' +
+    '</div>' +
+    '<div class="detail-row">' +
+      '<div class="detail-row-label lz">标签</div>' +
+      '<div class="detail-row-label le" style="display:none">Badge</div>' +
+      '<div class="detail-row-val plain">' + d.badge + '</div>' +
+    '</div>' +
+    '<div class="detail-row">' +
+      '<div class="detail-row-label lz">路径</div>' +
+      '<div class="detail-row-label le" style="display:none">Path</div>' +
+      '<div class="detail-row-val">' + escHtml(d.path) + '</div>' +
+    '</div>' +
+    '<div class="detail-notes">' +
+      '<span class="lz">' + d.descZh + '</span>' +
+      '<span class="le" style="display:none">' + d.descEn + '</span>' +
+    '</div>' +
+    '<div class="detail-notes" style="margin-top:8px;border-top:none;padding-top:0;">' +
+      '<span style="color:var(--amber);font-weight:600;" class="lz">💡 </span>' +
+      '<span style="color:var(--amber);font-weight:600;" class="le" style="display:none">💡 </span>' +
+      '<span class="lz">' + d.notesZh + '</span>' +
+      '<span class="le" style="display:none">' + d.notesEn + '</span>' +
+    '</div>';
+
+  applyLangLocal();
+}
+
+function escHtml(s) {
+  return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}
+
+// Re-apply lang after innerHTML updates
+function applyLangLocal() {
+  var l = localStorage.getItem('vlang') || 'zh';
+  document.querySelectorAll('.lz').forEach(function(e){
+    e.style.display = l==='en' ? 'none' : '';
+  });
+  document.querySelectorAll('.le').forEach(function(e){
+    e.style.display = l==='en' ? '' : 'none';
+  });
+}
+
+// Patch IIFE's applyLang to also call applyLangLocal
+var _origToggleLang = window.toggleLang;
+window.toggleLang = function() {
+  _origToggleLang();
+  applyLangLocal();
+  // If detail panel is open, re-render it
+  if (activeLayer) renderDetail(activeLayer);
+};
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

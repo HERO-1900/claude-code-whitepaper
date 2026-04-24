@@ -1,0 +1,987 @@
+<!DOCTYPE html>
+<!--
+  VIS-2A-021 · 九步权限检查流程图 · Nine-Step Permission Check Flowchart
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  9个决策节点：bypass-immune / hooks / cache / auto-rules / sub-bypass / sandbox / mode / UI / cache-result
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIS-2A-021 九步权限检查流程图 · CC 白皮书</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    :root,[data-theme="dark"]{
+      --bg:#020617;--bg-card:rgba(15,23,42,0.6);--border:#1e293b;
+      --text:#f8fafc;--muted:#94a3b8;--subtle:#64748b;--footer-c:#475569;--pulse:#22d3ee;
+      --svg-bg:#020617;--svg-grid:#1e293b;--svg-mask:#0f172a;
+      --svg-text:#f8fafc;--svg-sub:#94a3b8;--svg-ann:#64748b;
+      --btn-bg:rgba(15,23,42,0.85);--btn-border:rgba(148,163,184,0.2);--btn-active:#22d3ee;
+      --card-title:#f8fafc;--card-bg:rgba(15,23,42,0.6);
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3;--bg-card:rgba(255,255,255,0.85);--border:#e8e0d4;
+      --text:#1a1412;--muted:#6b5a4e;--subtle:#9c8878;--footer-c:#b5a99a;--pulse:#0891b2;
+      --svg-bg:#faf7f2;--svg-grid:#ddd4c4;--svg-mask:#f5f0ea;
+      --svg-text:#1a1412;--svg-sub:#6b5a4e;--svg-ann:#9c8878;
+      --btn-bg:rgba(255,255,255,0.9);--btn-border:rgba(100,80,60,0.2);--btn-active:#0891b2;
+      --card-title:#1a1412;--card-bg:rgba(255,255,255,0.85);
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--bg-card:rgba(248,250,252,0.95);--border:#e2e8f0;
+      --text:#0f172a;--muted:#475569;--subtle:#94a3b8;--footer-c:#94a3b8;--pulse:#0ea5e9;
+      --svg-bg:#f8fafc;--svg-grid:#e2e8f0;--svg-mask:#f8fafc;
+      --svg-text:#0f172a;--svg-sub:#475569;--svg-ann:#94a3b8;
+      --btn-bg:rgba(248,250,252,0.95);--btn-border:rgba(100,116,139,0.2);--btn-active:#0ea5e9;
+      --card-title:#0f172a;--card-bg:rgba(248,250,252,0.95);
+    }
+
+*{margin:0;padding:0;box-sizing:border-box}
+    body{
+      font-family:'JetBrains Mono',monospace;
+      background:var(--bg);color:var(--text);
+      min-height:100vh;transition:background .3s,color .3s;
+    }
+    .page{max-width:1040px;margin:0 auto;padding:32px 20px 40px}
+
+    /* Header */
+    .hdr{display:flex;align-items:flex-start;gap:12px;margin-bottom:24px}
+    .pulse{
+      width:10px;height:10px;border-radius:50%;
+      background:var(--pulse);animation:pls 2s infinite;
+      flex-shrink:0;margin-top:5px
+    }
+    @keyframes pls{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.85)}}
+    h1{font-size:19px;font-weight:700;color:var(--text)}
+    .subtitle{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.6}
+
+    /* Diagram card */
+    .diagram-card{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:14px;padding:20px 16px;margin-bottom:16px;overflow-x:auto;
+      transition:background .2s,border-color .2s
+    }
+    svg{width:100%;min-width:600px;display:block}
+
+    /* SVG CSS vars */
+    .svg-bg{fill:var(--svg-bg)}
+    .grid-line{stroke:var(--svg-grid)}
+    .node-bg{fill:var(--svg-mask)}
+    .node-title{fill:var(--svg-text)}
+    .node-meta{fill:var(--svg-sub)}
+
+    /* Info cards */
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+    @media(max-width:720px){.cards{grid-template-columns:1fr}}
+    .card{
+      background:var(--card-bg);border:1px solid var(--border);
+      border-radius:10px;padding:14px;transition:background .2s,border-color .2s
+    }
+    .card-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+    .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .dot.rose   {background:#fb7185}
+    .dot.cyan   {background:#22d3ee}
+    .dot.violet {background:#a78bfa}
+    .dot.amber  {background:#fbbf24}
+    .dot.emerald{background:#34d399}
+    .card h3{font-size:11px;font-weight:600;color:var(--card-title)}
+    .card ul{list-style:none;font-size:10px;color:var(--muted);line-height:1.85}
+
+    /* Controls */
+    .controls{position:fixed;top:14px;right:14px;display:flex;flex-direction:column;gap:6px;z-index:100}
+    .ctrl{
+      background:var(--btn-bg);border:1px solid var(--btn-border);
+      border-radius:6px;padding:5px 10px;
+      font-family:'JetBrains Mono',monospace;font-size:10px;
+      color:var(--text);cursor:pointer;transition:all .2s
+    }
+    .ctrl:hover{border-color:var(--btn-active);color:var(--btn-active)}
+
+    /* Footer */
+    footer{text-align:center;font-size:10px;color:var(--footer-c);margin-top:8px}
+  </style>
+</head>
+<body>
+
+<!-- ── Fixed Controls ─────────────────────────────────────────── -->
+<div class="controls">
+  <button class="ctrl" onclick="window.cycleTheme()">Theme</button>
+  <button class="ctrl" onclick="window.toggleLang()">EN/中</button>
+</div>
+
+<div class="page">
+
+  <!-- ── Header ──────────────────────────────────────────────── -->
+  <div class="hdr">
+    <div class="pulse"></div>
+    <div>
+      <h1>
+        <span class="lz">九步权限检查流程图</span>
+        <span class="le">Nine-Step Permission Check Flowchart</span>
+      </h1>
+      <p class="subtitle">
+        <span class="lz">Claude Code 工具调用前必经的9道权限门卫 · 两条终态路径：DENY（拒绝）或 ALLOW（执行）</span>
+        <span class="le">9 sequential permission gates every tool call must pass · Two terminal paths: DENY or ALLOW</span>
+      </p>
+    </div>
+  </div>
+
+  <!-- ── Main SVG Diagram ─────────────────────────────────────── -->
+  <div class="diagram-card">
+    <!--
+      SVG viewBox: 960 × 1400
+      Single column center x=480
+      9 decision diamond nodes + start + end
+      Two side rails: LEFT DENY x=160, RIGHT ALLOW x=800
+      Diamond half-width=80, half-height=42
+      Drawing order: bg → grid → arrows → node-bg masks → node shapes → text
+    -->
+    <svg viewBox="0 0 960 1400" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Arrow markers -->
+        <marker id="arr-amber" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+          <polygon points="0 0,9 3.5,0 7" fill="#fbbf24"/>
+        </marker>
+        <marker id="arr-rose" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+          <polygon points="0 0,9 3.5,0 7" fill="#fb7185"/>
+        </marker>
+        <marker id="arr-emerald" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+          <polygon points="0 0,9 3.5,0 7" fill="#34d399"/>
+        </marker>
+        <marker id="arr-cyan" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+          <polygon points="0 0,9 3.5,0 7" fill="#22d3ee"/>
+        </marker>
+        <marker id="arr-violet" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+          <polygon points="0 0,9 3.5,0 7" fill="#a78bfa"/>
+        </marker>
+        <marker id="arr-slate" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+          <polygon points="0 0,9 3.5,0 7" fill="#94a3b8"/>
+        </marker>
+
+        <!-- Grid pattern -->
+        <pattern id="grid021" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" class="grid-line" stroke-width="0.5"/>
+        </pattern>
+
+        <!-- Glow filters -->
+        <filter id="glow-rose" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow stdDeviation="4" flood-color="#fb7185" flood-opacity="0.5"/>
+        </filter>
+        <filter id="glow-emerald" x="-30%" y="-30%" width="160%" height="160%">
+          <feDropShadow stdDeviation="3" flood-color="#34d399" flood-opacity="0.4"/>
+        </filter>
+      </defs>
+
+      <!-- ① Background: solid + grid -->
+      <rect width="960" height="1400" class="svg-bg"/>
+      <rect width="960" height="1400" fill="url(#grid021)" opacity="0.4"/>
+
+      <!-- ================================================================
+           ② ARROWS — drawn first so nodes mask them
+           ================================================================ -->
+
+      <!-- START → Step1: from y=75 (bottom of start) to y=108 (top of diamond) -->
+      <line x1="480" y1="75" x2="480" y2="107" stroke="#94a3b8" stroke-width="1.8" marker-end="url(#arr-slate)"/>
+
+      <!-- Step1 → Step2 (amber continue arrow) y=192→248 -->
+      <line x1="480" y1="192" x2="480" y2="247" stroke="#fbbf24" stroke-width="2" marker-end="url(#arr-amber)"/>
+
+      <!-- Step2 → Step3 y=332→388 -->
+      <line x1="480" y1="332" x2="480" y2="387" stroke="#fbbf24" stroke-width="2" marker-end="url(#arr-amber)"/>
+
+      <!-- Step3 → Step4 y=472→528 -->
+      <line x1="480" y1="472" x2="480" y2="527" stroke="#fbbf24" stroke-width="2" marker-end="url(#arr-amber)"/>
+
+      <!-- Step4 → Step5 y=612→668 -->
+      <line x1="480" y1="612" x2="480" y2="667" stroke="#fbbf24" stroke-width="2" marker-end="url(#arr-amber)"/>
+
+      <!-- Step5 → Step6 y=752→808 -->
+      <line x1="480" y1="752" x2="480" y2="807" stroke="#fbbf24" stroke-width="2" marker-end="url(#arr-amber)"/>
+
+      <!-- Step6 → Step7 y=892→948 -->
+      <line x1="480" y1="892" x2="480" y2="947" stroke="#fbbf24" stroke-width="2" marker-end="url(#arr-amber)"/>
+
+      <!-- Step7 → Step8 y=1032→1088 -->
+      <line x1="480" y1="1032" x2="480" y2="1087" stroke="#fbbf24" stroke-width="2" marker-end="url(#arr-amber)"/>
+
+      <!-- Step8 → Step9 (result cache) y=1172→1228 -->
+      <line x1="480" y1="1172" x2="480" y2="1227" stroke="#34d399" stroke-width="2" marker-end="url(#arr-emerald)"/>
+
+      <!-- Step9 → END y=1277→1330 -->
+      <line x1="480" y1="1277" x2="480" y2="1329" stroke="#34d399" stroke-width="2" marker-end="url(#arr-emerald)"/>
+
+      <!-- ── LEFT DENY RAIL (x=160, dashed red) ── -->
+      <!-- Step1 DENY exit: right-point of diamond (x=560,y=150) → right → down via waypoint -->
+      <!-- Step1 deny: from left tip (x=400,y=150) → to x=160,y=150 → down rail -->
+      <line x1="400" y1="150" x2="165" y2="150" stroke="#fb7185" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#arr-rose)"/>
+      <!-- Step2 deny: left tip (x=400,y=290) → x=165,y=290 → rail -->
+      <line x1="400" y1="290" x2="165" y2="290" stroke="#fb7185" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#arr-rose)"/>
+      <!-- Step5 deny: left tip (x=400,y=710) → x=165,y=710 -->
+      <line x1="400" y1="710" x2="165" y2="710" stroke="#fb7185" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#arr-rose)"/>
+      <!-- Step7 plan-mode deny: left tip (x=400,y=990) → x=165,y=990 -->
+      <line x1="400" y1="990" x2="165" y2="990" stroke="#fb7185" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#arr-rose)"/>
+      <!-- Step8 deny: left tip (x=400,y=1130) → x=165,y=1130 -->
+      <line x1="400" y1="1130" x2="165" y2="1130" stroke="#fb7185" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#arr-rose)"/>
+
+      <!-- LEFT DENY vertical rail segments: connecting multiple deny points -->
+      <!-- Segment 1: y=150 → y=290 -->
+      <line x1="160" y1="155" x2="160" y2="285" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <!-- Segment 2: y=290 → y=710 -->
+      <line x1="160" y1="295" x2="160" y2="705" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <!-- Segment 3: y=710 → y=990 -->
+      <line x1="160" y1="715" x2="160" y2="985" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <!-- Segment 4: y=990 → y=1130 -->
+      <line x1="160" y1="995" x2="160" y2="1125" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <!-- Segment 5: y=1130 → DENY box y=1200 -->
+      <line x1="160" y1="1135" x2="160" y2="1195" stroke="#fb7185" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#arr-rose)"/>
+
+      <!-- ── RIGHT ALLOW RAIL (x=800, dashed green) ── -->
+      <!-- Step2 allow: right tip (x=560,y=290) → x=795,y=290 -->
+      <line x1="560" y1="290" x2="795" y2="290" stroke="#34d399" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#arr-emerald)"/>
+      <!-- Step3 hit: right tip (x=560,y=430) → x=795,y=430 -->
+      <line x1="560" y1="430" x2="795" y2="430" stroke="#34d399" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#arr-emerald)"/>
+      <!-- Step4 match: right tip (x=560,y=570) → x=795,y=570 -->
+      <line x1="560" y1="570" x2="795" y2="570" stroke="#34d399" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#arr-emerald)"/>
+      <!-- Step6 sandbox: right tip (x=560,y=850) → x=795,y=850 -->
+      <line x1="560" y1="850" x2="795" y2="850" stroke="#34d399" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#arr-emerald)"/>
+      <!-- Step7 auto-mode: right tip (x=560,y=990) → x=795,y=990 -->
+      <line x1="560" y1="990" x2="795" y2="990" stroke="#34d399" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#arr-emerald)"/>
+      <!-- Step8 allow: right tip (x=560,y=1130) → x=795,y=1130 -->
+      <line x1="560" y1="1130" x2="795" y2="1130" stroke="#34d399" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#arr-emerald)"/>
+
+      <!-- RIGHT ALLOW vertical rail segments -->
+      <!-- Segment: y=290 → y=430 -->
+      <line x1="800" y1="295" x2="800" y2="425" stroke="#34d399" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <!-- Segment: y=430 → y=570 -->
+      <line x1="800" y1="435" x2="800" y2="565" stroke="#34d399" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <!-- Segment: y=570 → y=850 -->
+      <line x1="800" y1="575" x2="800" y2="845" stroke="#34d399" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <!-- Segment: y=850 → y=990 -->
+      <line x1="800" y1="855" x2="800" y2="985" stroke="#34d399" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <!-- Segment: y=990 → y=1130 -->
+      <line x1="800" y1="995" x2="800" y2="1125" stroke="#34d399" stroke-width="1.5" stroke-dasharray="6,4"/>
+      <!-- Segment: y=1130 → ALLOW box y=1200 -->
+      <line x1="800" y1="1135" x2="800" y2="1195" stroke="#34d399" stroke-width="1.8" stroke-dasharray="6,4" marker-end="url(#arr-emerald)"/>
+
+      <!-- ================================================================
+           ③ NODE-BG MASKS — opaque rects to block arrow bleed-through
+           ================================================================ -->
+
+      <!-- START node mask: centered at x=480, y=50, w=240, h=44 -->
+      <rect x="360" y="28" width="240" height="44" rx="10" class="node-bg"/>
+
+      <!-- Step 1 diamond mask: cx=480,cy=150, hw=88,hh=50 -->
+      <polygon points="480,95 572,150 480,205 388,150" class="node-bg"/>
+
+      <!-- Step 2 diamond mask -->
+      <polygon points="480,235 572,290 480,345 388,290" class="node-bg"/>
+
+      <!-- Step 3 diamond mask -->
+      <polygon points="480,375 572,430 480,485 388,430" class="node-bg"/>
+
+      <!-- Step 4 diamond mask -->
+      <polygon points="480,515 572,570 480,625 388,570" class="node-bg"/>
+
+      <!-- Step 5 diamond mask -->
+      <polygon points="480,655 572,710 480,765 388,710" class="node-bg"/>
+
+      <!-- Step 6 diamond mask -->
+      <polygon points="480,795 572,850 480,905 388,850" class="node-bg"/>
+
+      <!-- Step 7 diamond mask -->
+      <polygon points="480,935 572,990 480,1045 388,990" class="node-bg"/>
+
+      <!-- Step 8 diamond mask -->
+      <polygon points="480,1075 572,1130 480,1185 388,1130" class="node-bg"/>
+
+      <!-- Step 9 rounded rect mask: centered x=480, y=1252, w=240, h=50 -->
+      <rect x="360" y="1227" width="240" height="50" rx="10" class="node-bg"/>
+
+      <!-- END node mask -->
+      <rect x="450" y="1330" width="60" height="60" rx="30" class="node-bg"/>
+
+      <!-- DENY box mask -->
+      <rect x="108" y="1197" width="104" height="54" rx="6" class="node-bg"/>
+
+      <!-- ALLOW box mask -->
+      <rect x="748" y="1197" width="104" height="54" rx="6" class="node-bg"/>
+
+      <!-- Branch label bg masks (drawn later as text-bg rects) -->
+
+      <!-- ================================================================
+           ④ NODE SHAPES — semi-transparent fill + colored stroke
+           ================================================================ -->
+
+      <!-- ── START node (slate) ── -->
+      <rect x="360" y="28" width="240" height="44" rx="10"
+            fill="rgba(30,41,59,0.75)" stroke="#94a3b8" stroke-width="1.8"/>
+
+      <!-- ── Step 1: bypass-immune 规则 (RED / rose) ── -->
+      <!-- Diamond: center (480,150), hw=80, hh=42 → points=480,108 560,150 480,192 400,150 -->
+      <polygon points="480,108 560,150 480,192 400,150"
+               fill="rgba(136,19,55,0.35)" stroke="#fb7185" stroke-width="3"
+               filter="url(#glow-rose)"/>
+
+      <!-- ── Step 2: PreToolUse Hooks (VIOLET) ── -->
+      <polygon points="480,248 560,290 480,332 400,290"
+               fill="rgba(76,29,149,0.35)" stroke="#a78bfa" stroke-width="2"/>
+
+      <!-- ── Step 3: 已缓存决策 (CYAN) ── -->
+      <polygon points="480,388 560,430 480,472 400,430"
+               fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="2"/>
+
+      <!-- ── Step 4: 自动批准规则 (CYAN) ── -->
+      <polygon points="480,528 560,570 480,612 400,570"
+               fill="rgba(8,51,68,0.4)" stroke="#22d3ee" stroke-width="2"/>
+
+      <!-- ── Step 5: 细分不可绕过规则 (RED / rose) ── -->
+      <polygon points="480,668 560,710 480,752 400,710"
+               fill="rgba(136,19,55,0.35)" stroke="#fb7185" stroke-width="3"
+               filter="url(#glow-rose)"/>
+
+      <!-- ── Step 6: 沙箱判断 (AMBER) ── -->
+      <polygon points="480,808 560,850 480,892 400,850"
+               fill="rgba(120,53,15,0.35)" stroke="#fbbf24" stroke-width="2"/>
+
+      <!-- ── Step 7: 权限模式判断 (VIOLET) ── -->
+      <polygon points="480,948 560,990 480,1032 400,990"
+               fill="rgba(76,29,149,0.35)" stroke="#a78bfa" stroke-width="2"/>
+
+      <!-- ── Step 8: 用户确认 UI (EMERALD) ── -->
+      <polygon points="480,1088 560,1130 480,1172 400,1130"
+               fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="2"/>
+
+      <!-- ── Step 9: 结果缓存 rounded rect (EMERALD) ── -->
+      <rect x="360" y="1227" width="240" height="50" rx="10"
+            fill="rgba(6,78,59,0.4)" stroke="#34d399" stroke-width="2"
+            filter="url(#glow-emerald)"/>
+
+      <!-- ── END circle ── -->
+      <circle cx="480" cy="1360" r="28"
+              fill="rgba(6,78,59,0.5)" stroke="#34d399" stroke-width="2"/>
+
+      <!-- ── DENY result box (x=160) ── -->
+      <rect x="110" y="1199" width="100" height="50" rx="6"
+            fill="rgba(136,19,55,0.7)" stroke="#fb7185" stroke-width="2"/>
+
+      <!-- ── ALLOW result box (x=800) ── -->
+      <rect x="750" y="1199" width="100" height="50" rx="6"
+            fill="rgba(6,78,59,0.7)" stroke="#34d399" stroke-width="2"/>
+
+      <!-- ── DENY rail label background ── -->
+      <rect x="132" y="1163" width="56" height="16" rx="3" fill="rgba(136,19,55,0.85)"/>
+      <!-- ── ALLOW rail label background ── -->
+      <rect x="772" y="1163" width="56" height="16" rx="3" fill="rgba(6,78,59,0.85)"/>
+
+      <!-- ── Iron Gate annotation box (Step 7 auto exit) ── -->
+      <rect x="614" y="972" width="178" height="36" rx="6"
+            fill="rgba(120,53,15,0.5)" stroke="#fbbf24" stroke-width="1"/>
+
+      <!-- ── Legend box (bottom) ── -->
+      <rect x="20" y="1330" width="310" height="60" rx="8"
+            fill="rgba(15,23,42,0.8)" stroke="#1e293b" stroke-width="1"/>
+
+      <!-- ================================================================
+           ⑤ BRANCH LABEL BACKGROUNDS (small pill rects behind text)
+           ================================================================ -->
+
+      <!-- Continue arrows "Pass / 通过" labels -->
+      <!-- S1→S2 at (520, 212) -->
+      <rect x="490" y="202" width="60" height="16" rx="3" fill="rgba(15,23,42,0.85)"/>
+      <!-- S2→S3 at (520,352) -->
+      <rect x="490" y="342" width="60" height="16" rx="3" fill="rgba(15,23,42,0.85)"/>
+      <!-- S3→S4 at (520,492) -->
+      <rect x="490" y="482" width="60" height="16" rx="3" fill="rgba(15,23,42,0.85)"/>
+      <!-- S4→S5 at (520,632) -->
+      <rect x="490" y="622" width="60" height="16" rx="3" fill="rgba(15,23,42,0.85)"/>
+      <!-- S5→S6 at (520,772) -->
+      <rect x="490" y="762" width="60" height="16" rx="3" fill="rgba(15,23,42,0.85)"/>
+      <!-- S6→S7 at (520,912) -->
+      <rect x="490" y="902" width="60" height="16" rx="3" fill="rgba(15,23,42,0.85)"/>
+      <!-- S7→S8 (normal) at (520,1052) -->
+      <rect x="490" y="1042" width="60" height="16" rx="3" fill="rgba(15,23,42,0.85)"/>
+      <!-- S8→S9 at (520,1192) -->
+      <rect x="490" y="1182" width="62" height="16" rx="3" fill="rgba(15,23,42,0.85)"/>
+
+      <!-- Deny left branch labels -->
+      <!-- S1 deny at (330, 143) -->
+      <rect x="302" y="133" width="72" height="16" rx="3" fill="rgba(15,23,42,0.85)"/>
+      <!-- S2 deny at (330, 283) -->
+      <rect x="302" y="273" width="72" height="16" rx="3" fill="rgba(15,23,42,0.85)"/>
+      <!-- S5 deny at (330, 703) -->
+      <rect x="302" y="693" width="72" height="16" rx="3" fill="rgba(15,23,42,0.85)"/>
+      <!-- S7 plan deny at (330, 983) -->
+      <rect x="302" y="973" width="72" height="16" rx="3" fill="rgba(15,23,42,0.85)"/>
+      <!-- S8 deny at (330, 1123) -->
+      <rect x="302" y="1113" width="72" height="16" rx="3" fill="rgba(15,23,42,0.85)"/>
+
+      <!-- Allow right branch labels -->
+      <!-- S2 allow at (620, 283) -->
+      <rect x="574" y="273" width="70" height="16" rx="3" fill="rgba(15,23,42,0.85)"/>
+      <!-- S3 hit at (620, 423) -->
+      <rect x="574" y="413" width="70" height="16" rx="3" fill="rgba(15,23,42,0.85)"/>
+      <!-- S4 match at (620, 563) -->
+      <rect x="574" y="553" width="70" height="16" rx="3" fill="rgba(15,23,42,0.85)"/>
+      <!-- S6 sandbox at (620, 843) -->
+      <rect x="574" y="833" width="70" height="16" rx="3" fill="rgba(15,23,42,0.85)"/>
+      <!-- S7 auto at (620, 983) -->
+      <rect x="574" y="973" width="70" height="16" rx="3" fill="rgba(15,23,42,0.85)"/>
+      <!-- S8 allow at (620, 1123) -->
+      <rect x="574" y="1113" width="70" height="16" rx="3" fill="rgba(15,23,42,0.85)"/>
+
+      <!-- ================================================================
+           ⑥ TEXT LABELS — drawn last, always on top
+           ================================================================ -->
+
+      <!-- ── START node text ── -->
+      <text x="480" y="48" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="12" font-weight="600"
+            class="node-title">
+        <tspan class="lz">工具调用请求</tspan><tspan class="le">Tool Request</tspan>
+      </text>
+      <text x="480" y="63" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10"
+            class="node-meta">
+        <tspan class="lz">Tool Call Trigger</tspan>
+      </text>
+
+      <!-- ── Step 1 labels (bypass-immune) ── -->
+      <text x="480" y="145" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="#fb7185">
+        <tspan class="lz">bypass-immune 规则</tspan><tspan class="le">Step 1: Constitutional Rules</tspan>
+      </text>
+      <text x="480" y="160" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#f87171">
+        <tspan class="lz">不可绕过 / UNBYPASSABLE</tspan><tspan class="le">UNBYPASSABLE — always checked first</tspan>
+      </text>
+
+      <!-- ── Step 2 labels (Hooks) ── -->
+      <text x="480" y="284" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" fill="#a78bfa">
+        <tspan class="lz">PreToolUse Hooks</tspan><tspan class="le">Step 2: User Hooks</tspan>
+      </text>
+      <text x="480" y="299" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#c4b5fd">
+        <tspan class="lz">用户自定义 Hook 脚本</tspan><tspan class="le">User-configured hook scripts</tspan>
+      </text>
+
+      <!-- ── Step 3 labels (Cached) ── -->
+      <text x="480" y="424" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" fill="#22d3ee">
+        <tspan class="lz">已缓存的决策</tspan><tspan class="le">Step 3: Cached Decision</tspan>
+      </text>
+      <text x="480" y="439" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#7dd3fc">
+        <tspan class="lz">本次会话内命中缓存</tspan><tspan class="le">Hit session-level permission cache</tspan>
+      </text>
+
+      <!-- ── Step 4 labels (Auto Rules) ── -->
+      <text x="480" y="564" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" fill="#22d3ee">
+        <tspan class="lz">自动批准规则</tspan><tspan class="le">Step 4: Auto-Approve Rules</tspan>
+      </text>
+      <text x="480" y="579" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#7dd3fc">
+        <tspan class="lz">allowedTools / autoApprove 匹配</tspan><tspan class="le">allowedTools / autoApprove match</tspan>
+      </text>
+
+      <!-- ── Step 5 labels (Sub bypass-immune) ── -->
+      <text x="480" y="704" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="#fb7185">
+        <tspan class="lz">细分不可绕过规则</tspan><tspan class="le">Step 5: Detailed Bypass-Immune</tspan>
+      </text>
+      <text x="480" y="719" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#f87171">
+        <tspan class="lz">不可绕过 / UNBYPASSABLE</tspan><tspan class="le">UNBYPASSABLE — tool-specific checks</tspan>
+      </text>
+
+      <!-- ── Step 6 labels (Sandbox) ── -->
+      <text x="480" y="844" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" fill="#fbbf24">
+        <tspan class="lz">沙箱判断</tspan><tspan class="le">Step 6: Sandbox Check</tspan>
+      </text>
+      <text x="480" y="859" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#fde68a">
+        <tspan class="lz">当前环境是否沙箱模式？</tspan><tspan class="le">Is current environment sandboxed?</tspan>
+      </text>
+
+      <!-- ── Step 7 labels (Permission Mode) ── -->
+      <text x="480" y="984" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" fill="#a78bfa">
+        <tspan class="lz">权限模式判断</tspan><tspan class="le">Step 7: Permission Mode</tspan>
+      </text>
+      <text x="480" y="999" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#c4b5fd">
+        <tspan class="lz">plan / auto / normal?</tspan><tspan class="le">plan / auto / normal mode?</tspan>
+      </text>
+
+      <!-- ── Step 8 labels (UI Dialog) ── -->
+      <text x="480" y="1124" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" fill="#34d399">
+        <tspan class="lz">用户确认 UI</tspan><tspan class="le">Step 8: UI Confirmation Dialog</tspan>
+      </text>
+      <text x="480" y="1139" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#6ee7b7">
+        <tspan class="lz">弹出交互式确认对话框</tspan><tspan class="le">Interactive permission dialog shown</tspan>
+      </text>
+
+      <!-- ── Step 9 text (Result Cache) ── -->
+      <text x="480" y="1249" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="#34d399">
+        <tspan class="lz">结果缓存</tspan><tspan class="le">Step 9: Cache Result</tspan>
+      </text>
+      <text x="480" y="1264" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#6ee7b7">
+        <tspan class="lz">写入会话权限缓存</tspan><tspan class="le">Write decision to session permission cache</tspan>
+      </text>
+
+      <!-- ── END node text ── -->
+      <text x="480" y="1356" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#34d399">
+        <tspan class="lz">完成</tspan><tspan class="le">Done</tspan>
+      </text>
+      <text x="480" y="1369" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#6ee7b7">END</text>
+
+      <!-- ── DENY box text ── -->
+      <text x="160" y="1220" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="13" font-weight="700" fill="#fca5a5">DENY</text>
+      <text x="160" y="1236" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#fb7185">
+        <tspan class="lz">拒绝执行</tspan><tspan class="le">Denied</tspan>
+      </text>
+
+      <!-- ── ALLOW box text ── -->
+      <text x="800" y="1215" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="12" font-weight="700" fill="#6ee7b7">ALLOW</text>
+      <text x="800" y="1229" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#34d399">
+        <tspan class="lz">执行工具</tspan><tspan class="le">Execute Tool</tspan>
+      </text>
+      <text x="800" y="1242" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#6ee7b7">Execute Tool</text>
+
+      <!-- ── DENY / ALLOW rail vertical labels ── -->
+      <text x="160" y="1174" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#fb7185">DENY</text>
+      <text x="800" y="1174" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#34d399">EXECUTE</text>
+
+      <!-- ── Continue arrow labels (amber) ── -->
+      <!-- S1→S2 -->
+      <text x="520" y="213" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#fbbf24">
+        <tspan class="lz">通过</tspan><tspan class="le">Pass</tspan>
+      </text>
+      <!-- S2→S3 -->
+      <text x="520" y="353" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#fbbf24">
+        <tspan class="lz">通过</tspan><tspan class="le">Pass</tspan>
+      </text>
+      <!-- S3→S4 -->
+      <text x="520" y="493" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#fbbf24">
+        <tspan class="lz">未命中</tspan><tspan class="le">Miss</tspan>
+      </text>
+      <!-- S4→S5 -->
+      <text x="520" y="633" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#fbbf24">
+        <tspan class="lz">不匹配</tspan><tspan class="le">No match</tspan>
+      </text>
+      <!-- S5→S6 -->
+      <text x="520" y="773" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#fbbf24">
+        <tspan class="lz">通过</tspan><tspan class="le">Pass</tspan>
+      </text>
+      <!-- S6→S7 -->
+      <text x="520" y="913" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#fbbf24">
+        <tspan class="lz">非沙箱</tspan><tspan class="le">Not sandbox</tspan>
+      </text>
+      <!-- S7→S8 normal -->
+      <text x="520" y="1053" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#fbbf24">
+        <tspan class="lz">normal↓</tspan><tspan class="le">normal↓</tspan>
+      </text>
+      <!-- S8→S9 allow -->
+      <text x="520" y="1193" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#34d399">
+        <tspan class="lz">确认</tspan><tspan class="le">Confirm</tspan>
+      </text>
+
+      <!-- ── LEFT DENY branch labels ── -->
+      <!-- S1 deny -->
+      <text x="338" y="144" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#fb7185">
+        <tspan class="lz">拒绝←</tspan><tspan class="le">Deny←</tspan>
+      </text>
+      <!-- S2 deny -->
+      <text x="338" y="284" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#fb7185">
+        <tspan class="lz">拒绝←</tspan><tspan class="le">Deny←</tspan>
+      </text>
+      <!-- S5 deny -->
+      <text x="338" y="704" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#fb7185">
+        <tspan class="lz">拒绝←</tspan><tspan class="le">Deny←</tspan>
+      </text>
+      <!-- S7 plan deny -->
+      <text x="338" y="984" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#fb7185">
+        <tspan class="lz">plan←</tspan><tspan class="le">plan←</tspan>
+      </text>
+      <!-- S8 deny -->
+      <text x="338" y="1124" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#fb7185">
+        <tspan class="lz">拒绝←</tspan><tspan class="le">Deny←</tspan>
+      </text>
+
+      <!-- ── RIGHT ALLOW branch labels ── -->
+      <!-- S2 allow -->
+      <text x="609" y="284" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#34d399">
+        <tspan class="lz">→执行</tspan><tspan class="le">→Allow</tspan>
+      </text>
+      <!-- S3 hit -->
+      <text x="609" y="424" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#34d399">
+        <tspan class="lz">→命中</tspan><tspan class="le">→Hit</tspan>
+      </text>
+      <!-- S4 match -->
+      <text x="609" y="564" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#34d399">
+        <tspan class="lz">→匹配</tspan><tspan class="le">→Match</tspan>
+      </text>
+      <!-- S6 sandbox -->
+      <text x="609" y="844" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#34d399">
+        <tspan class="lz">→沙箱</tspan><tspan class="le">→Sandbox</tspan>
+      </text>
+      <!-- S7 auto -->
+      <text x="609" y="984" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#34d399">
+        <tspan class="lz">→auto</tspan><tspan class="le">→auto</tspan>
+      </text>
+      <!-- S8 allow -->
+      <text x="609" y="1124" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#34d399">
+        <tspan class="lz">→允许</tspan><tspan class="le">→Allow</tspan>
+      </text>
+
+      <!-- ── Iron Gate annotation (Step 7 auto branch) ── -->
+      <text x="620" y="985" text-anchor="start"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#fbbf24">⚡ Iron Gate:</text>
+      <text x="620" y="998" text-anchor="start"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#fde68a">
+        <tspan class="lz">连续拒绝→强制人工</tspan><tspan class="le">Repeated denies→force human</tspan>
+      </text>
+
+      <!-- ── Step number badges ── -->
+      <!-- Step 1 badge: small circle top-left of each diamond center -->
+      <circle cx="414" cy="117" r="9" fill="#fb7185" opacity="0.9"/>
+      <text x="414" y="121" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#020617">1</text>
+
+      <circle cx="414" cy="257" r="9" fill="#a78bfa" opacity="0.9"/>
+      <text x="414" y="261" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#020617">2</text>
+
+      <circle cx="414" cy="397" r="9" fill="#22d3ee" opacity="0.9"/>
+      <text x="414" y="401" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#020617">3</text>
+
+      <circle cx="414" cy="537" r="9" fill="#22d3ee" opacity="0.9"/>
+      <text x="414" y="541" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#020617">4</text>
+
+      <circle cx="414" cy="677" r="9" fill="#fb7185" opacity="0.9"/>
+      <text x="414" y="681" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#020617">5</text>
+
+      <circle cx="414" cy="817" r="9" fill="#fbbf24" opacity="0.9"/>
+      <text x="414" y="821" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#020617">6</text>
+
+      <circle cx="414" cy="957" r="9" fill="#a78bfa" opacity="0.9"/>
+      <text x="414" y="961" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#020617">7</text>
+
+      <circle cx="414" cy="1097" r="9" fill="#34d399" opacity="0.9"/>
+      <text x="414" y="1101" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#020617">8</text>
+
+      <circle cx="414" cy="1237" r="9" fill="#34d399" opacity="0.9"/>
+      <text x="414" y="1241" text-anchor="middle"
+            font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#020617">9</text>
+
+      <!-- ── LEGEND box ── -->
+      <text x="35" y="1350" text-anchor="start"
+            font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#94a3b8">
+        <tspan class="lz">图例</tspan><tspan class="le">Legend</tspan>
+      </text>
+
+      <!-- Legend: diamond icon -->
+      <polygon points="60,1363 68,1357 76,1363 68,1369" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
+      <text x="82" y="1367" text-anchor="start"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#94a3b8">
+        <tspan class="lz">判断节点</tspan><tspan class="le">Decision Node</tspan>
+      </text>
+
+      <!-- Legend: red thick stroke -->
+      <line x1="60" y1="1378" x2="76" y2="1378" stroke="#fb7185" stroke-width="3"/>
+      <text x="82" y="1382" text-anchor="start"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#fb7185">
+        <tspan class="lz">不可绕过规则</tspan><tspan class="le">Bypass-Immune Rule</tspan>
+      </text>
+
+      <!-- Legend: green dash -->
+      <line x1="182" y1="1363" x2="198" y2="1363" stroke="#34d399" stroke-width="2" stroke-dasharray="4,3"/>
+      <text x="204" y="1367" text-anchor="start"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#34d399">
+        <tspan class="lz">Allow 路径</tspan><tspan class="le">Allow Path</tspan>
+      </text>
+
+      <!-- Legend: red dash -->
+      <line x1="182" y1="1378" x2="198" y2="1378" stroke="#fb7185" stroke-width="2" stroke-dasharray="4,3"/>
+      <text x="204" y="1382" text-anchor="start"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#fb7185">
+        <tspan class="lz">Deny 路径</tspan><tspan class="le">Deny Path</tspan>
+      </text>
+
+      <!-- Legend: amber solid -->
+      <line x1="280" y1="1363" x2="296" y2="1363" stroke="#fbbf24" stroke-width="2.5"
+            marker-end="url(#arr-amber)"/>
+      <text x="302" y="1367" text-anchor="start"
+            font-family="JetBrains Mono,monospace" font-size="10" fill="#fbbf24">
+        <tspan class="lz">继续检查</tspan><tspan class="le">Continue</tspan>
+      </text>
+
+    </svg>
+  </div>
+
+  <!-- ── Info Cards ────────────────────────────────────────────── -->
+  <div class="cards">
+
+    <!-- Card 1: 两条终态路径 -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="dot rose"></div>
+        <h3>
+          <span class="lz">双终态设计</span>
+          <span class="le">Dual Terminal Design</span>
+        </h3>
+      </div>
+      <ul>
+        <li class="lz">• 所有路径收敛到 DENY 或 ALLOW 两个终态</li>
+        <li class="lz">• DENY：操作被拦截，不执行任何副作用</li>
+        <li class="lz">• ALLOW：工具正常执行，结果写入缓存</li>
+        <li class="lz">• Step 9 缓存确保相同工具调用无需重复弹窗</li>
+        <li class="lz">• 缓存粒度：tool name + args hash，会话级生效</li>
+        <li class="le">• All paths converge to DENY or ALLOW terminals</li>
+        <li class="le">• DENY: operation blocked, no side effects executed</li>
+        <li class="le">• ALLOW: tool executes normally, result cached</li>
+        <li class="le">• Step 9 cache avoids re-prompting for same call</li>
+        <li class="le">• Cache granularity: tool name + args hash, session-scoped</li>
+      </ul>
+    </div>
+
+    <!-- Card 2: 不可绕过规则 -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="dot rose"></div>
+        <h3>
+          <span class="lz">两道铁闸（不可绕过）</span>
+          <span class="le">Two Iron Gates (Bypass-Immune)</span>
+        </h3>
+      </div>
+      <ul>
+        <li class="lz">• Step 1 和 Step 5 均为不可绕过规则（红色粗边框）</li>
+        <li class="lz">• 即使 autoApprove=true 也无法跳过这两步</li>
+        <li class="lz">• Step 1：宪法级规则，防止写入系统路径等行为</li>
+        <li class="lz">• Step 5：工具级细粒度检查，比 Step 1 更具体</li>
+        <li class="lz">• 源码位置：<code>src/permissions.ts</code> checkBypassImmune()</li>
+        <li class="le">• Steps 1 &amp; 5 are bypass-immune (red thick border)</li>
+        <li class="le">• Cannot be skipped even with autoApprove=true</li>
+        <li class="le">• Step 1: constitutional rules, blocks system writes</li>
+        <li class="le">• Step 5: tool-level fine-grained checks</li>
+        <li class="le">• Source: <code>src/permissions.ts</code> checkBypassImmune()</li>
+      </ul>
+    </div>
+
+    <!-- Card 3: Step 7 三叉路由 -->
+    <div class="card">
+      <div class="card-hdr">
+        <div class="dot violet"></div>
+        <h3>
+          <span class="lz">Step 7 三叉权限路由</span>
+          <span class="le">Step 7: Three-Way Permission Route</span>
+        </h3>
+      </div>
+      <ul>
+        <li class="lz">• plan-mode → 直接 DENY（计划模式只读）</li>
+        <li class="lz">• auto-mode → 直接 ALLOW（自动执行模式）</li>
+        <li class="lz">• normal-mode → 进入 Step 8 用户确认对话</li>
+        <li class="lz">• auto-mode 附带 Iron Gate：连续拒绝触发强制人工</li>
+        <li class="lz">• 权限模式由 <code>--permission-mode</code> 参数或环境变量控制</li>
+        <li class="le">• plan-mode → immediate DENY (read-only)</li>
+        <li class="le">• auto-mode → immediate ALLOW (autonomous)</li>
+        <li class="le">• normal-mode → Step 8 user confirmation dialog</li>
+        <li class="le">• auto-mode has Iron Gate: repeated denies force human</li>
+        <li class="le">• Mode set via <code>--permission-mode</code> flag or env var</li>
+      </ul>
+    </div>
+
+  </div>
+
+  <!-- ── Footer ────────────────────────────────────────────────── -->
+  <footer>
+    <span class="lz">Claude Code 2.1.88 白皮书 · 第2A章 核心机制 · VIS-2A-021 · 权限系统流程图</span>
+    <span class="le">Claude Code 2.1.88 Whitepaper · Chapter 2A Core Mechanics · VIS-2A-021 · Permission Flowchart</span>
+  </footer>
+
+</div>
+
+<!-- ── i18n + Theme Script ────────────────────────────────────── -->
+<script>
+(function(){
+  'use strict';
+
+  function applyTheme(t){
+    var valid=['dark','warm','light'];
+    if(valid.indexOf(t)===-1) t='dark';
+    document.documentElement.setAttribute('data-theme',t);
+  }
+
+  function applyLocale(locale){
+    var isZh=(locale!=='en');
+    document.querySelectorAll('.lz').forEach(function(el){
+      el.style.display=isZh?'':'none';
+    });
+    document.querySelectorAll('.le').forEach(function(el){
+      el.style.display=isZh?'none':'';
+    });
+    document.documentElement.lang=isZh?'zh':'en';
+  }
+
+  /* Init: URL param > localStorage > default */
+  var p=new URLSearchParams(window.location.search);
+  var initLang  = p.get('lang')  || localStorage.getItem('cc-locale') || 'zh';
+  var initTheme = p.get('theme') || localStorage.getItem('cc-theme')  || 'dark';
+  applyLocale(initLang);
+  applyTheme(initTheme);
+
+  /* Cross-tab sync */
+  window.addEventListener('storage',function(e){
+    if(e.key==='cc-locale') applyLocale(e.newValue||'zh');
+    if(e.key==='cc-theme')  applyTheme(e.newValue||'dark');
+  });
+
+  /* iframe postMessage sync */
+  window.addEventListener('message',function(e){
+    if(!e.data||typeof e.data!=='object') return;
+    if(e.data.type==='cc-locale-change') applyLocale(e.data.locale||'zh');
+    if(e.data.type==='cc-theme-change')  applyTheme(e.data.theme||'dark');
+    if(e.data.ccLocale) applyLocale(e.data.ccLocale);
+    if(e.data.ccTheme)  applyTheme(e.data.ccTheme);
+  });
+
+  /* Global controls used by buttons */
+  window.cycleTheme=function(){
+    var themes=['dark','warm','light'];
+    var cur=document.documentElement.getAttribute('data-theme')||'dark';
+    var next=themes[(themes.indexOf(cur)+1)%3];
+    applyTheme(next);
+    localStorage.setItem('cc-theme',next);
+  };
+
+  window.toggleLang=function(){
+    var cur=document.documentElement.lang||'zh';
+    var next=(cur==='zh')?'en':'zh';
+    applyLocale(next);
+    localStorage.setItem('cc-locale',next);
+  };
+
+  /* Restore lang if previously set to en */
+  if(localStorage.getItem('cc-locale')==='en') applyLocale('en');
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

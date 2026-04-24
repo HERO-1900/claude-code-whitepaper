@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIS-2A-011 StreamingToolExecutor 并行时序对比</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#020617;--panel:#0f172a;--card:#0f172a;--border:#1e293b;--text:#e2e8f0;--muted:#94a3b8;--subtle:#334155;
+      --seq:#fb7185;--seq-bg:rgba(251,113,133,0.18);--seq-stroke:#fb7185;
+      --par:#22c55e;--par-bg:rgba(34,197,94,0.22);--par-stroke:#22c55e;
+      --ai:#00d4ff;--ai-text:#0f172a;
+      --tool-serial:#c084fc;--tool-serial-text:#1e1b4b;
+      --tool-par:#22c55e;--tool-par-text:#052e16;
+      --parse:#64748b;--parse-text:#f1f5f9;
+      --axis:#64748b;--axis-dim:#475569;
+      --label:#cbd5e1;--label-strong:#e2e8f0;
+      --insight-bg:rgba(15,23,42,0.95);--insight-border:#334155;
+      --savings-bg:rgba(34,197,94,0.18);
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3;--panel:#ffffff;--card:#faf9f7;--border:#d6ccc2;--text:#1c1917;--muted:#57534e;--subtle:#a8a29e;
+      --seq:#be123c;--seq-bg:rgba(190,18,60,0.18);--seq-stroke:#be123c;
+      --par:#15803d;--par-bg:rgba(21,128,61,0.22);--par-stroke:#15803d;
+      --ai:#0891b2;--ai-text:#ffffff;
+      --tool-serial:#7c3aed;--tool-serial-text:#ffffff;
+      --tool-par:#15803d;--tool-par-text:#ffffff;
+      --parse:#78716c;--parse-text:#ffffff;
+      --axis:#57534e;--axis-dim:#a8a29e;
+      --label:#1c1917;--label-strong:#0c0a09;
+      --insight-bg:#ffffff;--insight-border:#d6ccc2;
+      --savings-bg:rgba(21,128,61,0.15);
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--panel:#f8fafc;--card:#f8fafc;--border:#cbd5e1;--text:#0f172a;--muted:#475569;--subtle:#94a3b8;
+      --seq:#e11d48;--seq-bg:rgba(225,29,72,0.18);--seq-stroke:#e11d48;
+      --par:#15803d;--par-bg:rgba(21,128,61,0.22);--par-stroke:#15803d;
+      --ai:#0284c7;--ai-text:#ffffff;
+      --tool-serial:#7c3aed;--tool-serial-text:#ffffff;
+      --tool-par:#15803d;--tool-par-text:#ffffff;
+      --parse:#64748b;--parse-text:#ffffff;
+      --axis:#475569;--axis-dim:#94a3b8;
+      --label:#0f172a;--label-strong:#020617;
+      --insight-bg:#ffffff;--insight-border:#cbd5e1;
+      --savings-bg:rgba(21,128,61,0.15);
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;padding:20px 24px 32px}
+    .svg-bg{fill:var(--bg)}
+    .node-bg{fill:var(--panel)}
+    .grid-line{stroke:var(--border)}
+    .axis-line{stroke:var(--axis)}
+    .axis-dim{stroke:var(--axis-dim)}
+    .axis-text{fill:var(--muted)}
+    .label-text{fill:var(--label)}
+    .label-strong{fill:var(--label-strong)}
+    .seq-color{fill:var(--seq)}
+    .par-color{fill:var(--par)}
+    .insight-bg{fill:var(--insight-bg)}
+    .insight-border{stroke:var(--insight-border)}
+    .savings-bg{fill:var(--savings-bg)}
+    .ai-bar{fill:var(--ai)}
+    .ai-text{fill:var(--ai-text)}
+    .tool-serial{fill:var(--tool-serial)}
+    .tool-serial-text{fill:var(--tool-serial-text)}
+    .tool-par{fill:var(--tool-par)}
+    .tool-par-text{fill:var(--tool-par-text)}
+    .parse-bar{fill:var(--parse)}
+    .parse-text{fill:var(--parse-text)}
+    .vis-header{display:flex;align-items:center;gap:12px;margin-bottom:16px;flex-wrap:wrap}
+    .vis-dot{width:10px;height:10px;border-radius:50%;background:#22d3ee;animation:pulse 2s infinite;flex-shrink:0}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+    .vis-title{font-size:17px;font-weight:700;color:var(--text)}
+    .vis-sub{font-size:12px;color:var(--muted)}
+    .svg-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;overflow-x:auto}
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+    @media (max-width:900px){.cards{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px}
+    .card-hd{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+    .card-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+    .card-hd h3{font-size:12px;font-weight:700;color:var(--text)}
+    .card ul{list-style:none;font-size:11px;color:var(--muted);line-height:1.7}
+    .vis-footer{font-size:11px;color:var(--muted);text-align:center;border-top:1px solid var(--border);padding-top:10px}
+    .ctrl{position:fixed;top:16px;right:16px;display:flex;gap:6px;z-index:999}
+    .ctrl button{background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;border-radius:6px;cursor:pointer;font-weight:600}
+    .ctrl button:hover{border-color:var(--ai)}
+  </style>
+</head>
+<body>
+<div class="ctrl">
+  <button onclick="window.cycleTheme()">Theme</button>
+  <button onclick="window.toggleLang()">EN/中</button>
+</div>
+
+<div class="vis-header">
+  <div class="vis-dot"></div>
+  <div class="vis-title">
+    <span class="lz">StreamingToolExecutor 并行时序对比</span>
+    <span class="le" style="display:none">StreamingToolExecutor Parallel vs Sequential Timeline</span>
+  </div>
+  <div class="vis-sub">VIS-2A-011 · <span class="lz">边流式输出边执行工具 · 40% 时间节省</span><span class="le" style="display:none">Execute tools while streaming · 40% time savings</span></div>
+</div>
+
+<div class="svg-wrap">
+<svg viewBox="0 0 1280 720" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+<defs>
+  <pattern id="g11" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" class="grid-line" stroke-width="0.5"/>
+  </pattern>
+  <marker id="arrow-par" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+    <path d="M 0 0 L 10 5 L 0 10 z" class="par-color"/>
+  </marker>
+</defs>
+
+<rect width="1280" height="720" class="svg-bg"/>
+<rect width="1280" height="720" fill="url(#g11)" opacity="0.25"/>
+
+<!-- time scale: x_start=140, x_end=920, span=780 covers 180ms. 4.333 px/ms -->
+<!-- x(t) = 140 + t*4.333 :  0=140, 30=270, 50=357, 55=378, 70=443, 80=487, 90=530, 110=617, 130=703, 150=790 -->
+
+<!-- ============ SECTION 1: SEQUENTIAL ============ -->
+<rect x="16" y="14" width="1008" height="220" rx="8" class="seq-color" opacity="0.18"/>
+<rect x="16" y="14" width="1008" height="220" rx="8" fill="none" class="seq-color" stroke="currentColor" stroke-width="1.2" stroke-dasharray="6,4" style="stroke:var(--seq)"/>
+
+<text x="30" y="38" class="seq-color" font-size="18" font-weight="700" letter-spacing="0.04em">
+  <tspan class="lz">① 串行执行 SEQUENTIAL · 工具逐个等待</tspan>
+  <tspan class="le" display="none">① Sequential · Tools wait in queue</tspan>
+</text>
+<text x="30" y="56" class="axis-text" font-size="14">
+  <tspan class="lz">AI 说完 → 解析 → A → B → C 依次执行</tspan>
+  <tspan class="le" display="none">AI finishes → parse → A → B → C one by one</tspan>
+</text>
+
+<!-- Row label -->
+<text x="130" y="125" class="label-strong" font-size="15" font-weight="600" text-anchor="end">Timeline</text>
+
+<!-- Total bracket above bars -->
+<path d="M 140,82 L 140,72 L 790,72 L 790,82" fill="none" class="seq-color" stroke="currentColor" stroke-width="2" style="stroke:var(--seq)"/>
+<rect x="420" y="55" width="90" height="20" rx="4" class="node-bg"/>
+<rect x="420" y="55" width="90" height="20" rx="4" fill="none" class="seq-color" stroke="currentColor" stroke-width="1" style="stroke:var(--seq)"/>
+<text x="465" y="69" class="seq-color" font-size="15" font-weight="700" text-anchor="middle">~150ms Total</text>
+
+<!-- AI Speaking 0-80ms: x=140, w=347 -->
+<rect x="140" y="95" width="347" height="54" rx="5" class="ai-bar" stroke="var(--ai)" stroke-width="1.2"/>
+<text x="313" y="120" class="ai-text" font-size="16" font-weight="700" text-anchor="middle">AI Speaking</text>
+<text x="313" y="138" class="ai-text" font-size="14" font-weight="600" text-anchor="middle" opacity="0.85">0 – 80 ms</text>
+
+<!-- Parse 80-90ms: x=487, w=43 -->
+<rect x="487" y="95" width="43" height="54" rx="5" class="parse-bar" stroke-opacity="0.7"/>
+<text x="508" y="125" class="parse-text" font-size="15" font-weight="700" text-anchor="middle">Parse</text>
+<text x="508" y="140" class="parse-text" font-size="13" text-anchor="middle" opacity="0.85">10ms</text>
+
+<!-- Tool A 90-110ms: x=530, w=87 -->
+<rect x="530" y="95" width="87" height="54" rx="5" class="tool-serial" stroke-opacity="0.8"/>
+<text x="573" y="120" class="tool-serial-text" font-size="16" font-weight="700" text-anchor="middle">Tool A</text>
+<text x="573" y="138" class="tool-serial-text" font-size="13" font-weight="600" text-anchor="middle" opacity="0.9">20ms</text>
+
+<!-- Tool B 110-130ms: x=617, w=87 -->
+<rect x="617" y="95" width="87" height="54" rx="5" class="tool-serial" stroke-opacity="0.8" opacity="0.85"/>
+<text x="660" y="120" class="tool-serial-text" font-size="16" font-weight="700" text-anchor="middle">Tool B</text>
+<text x="660" y="138" class="tool-serial-text" font-size="13" font-weight="600" text-anchor="middle" opacity="0.9">20ms</text>
+
+<!-- Tool C 130-150ms: x=704, w=86 -->
+<rect x="704" y="95" width="87" height="54" rx="5" class="tool-serial" stroke-opacity="0.8" opacity="0.7"/>
+<text x="747" y="120" class="tool-serial-text" font-size="16" font-weight="700" text-anchor="middle">Tool C</text>
+<text x="747" y="138" class="tool-serial-text" font-size="13" font-weight="600" text-anchor="middle" opacity="0.9">20ms</text>
+
+<!-- Axis -->
+<line x1="140" y1="170" x2="920" y2="170" class="axis-line" stroke="currentColor" stroke-width="1.2" style="stroke:var(--axis)"/>
+<!-- ticks -->
+<g font-family="JetBrains Mono,monospace">
+  <line x1="140" y1="166" x2="140" y2="174" class="axis-line" stroke="currentColor" stroke-width="1.2" style="stroke:var(--axis)"/>
+  <text x="140" y="190" class="axis-text" font-size="15" text-anchor="middle" font-weight="600">0</text>
+
+  <line x1="357" y1="166" x2="357" y2="174" class="axis-line" stroke="currentColor" stroke-width="1.2" style="stroke:var(--axis)"/>
+  <text x="357" y="190" class="axis-text" font-size="15" text-anchor="middle" font-weight="600">50ms</text>
+
+  <line x1="487" y1="166" x2="487" y2="174" class="axis-dim" stroke="currentColor" stroke-width="1" stroke-dasharray="2,2" style="stroke:var(--axis-dim)"/>
+  <text x="487" y="190" class="axis-text" font-size="14" text-anchor="middle">80ms</text>
+
+  <line x1="573" y1="166" x2="573" y2="174" class="axis-dim" stroke="currentColor" stroke-width="1" stroke-dasharray="2,2" style="stroke:var(--axis-dim)"/>
+  <text x="573" y="190" class="axis-text" font-size="14" text-anchor="middle">100ms</text>
+
+  <line x1="790" y1="164" x2="790" y2="176" class="seq-color" stroke="currentColor" stroke-width="2" style="stroke:var(--seq)"/>
+  <text x="790" y="190" class="seq-color" font-size="15" text-anchor="middle" font-weight="700">150ms ✗</text>
+</g>
+
+<!-- waiting annotation -->
+<text x="660" y="215" class="axis-text" font-size="14" text-anchor="middle" font-style="italic">
+  <tspan class="lz">每个工具必须等上一个完成 → 闲置浪费</tspan>
+  <tspan class="le" display="none">Each tool waits for previous → idle waste</tspan>
+</text>
+
+<!-- ============ SECTION 2: PARALLEL ============ -->
+<rect x="16" y="250" width="1008" height="260" rx="8" class="par-color" opacity="0.22"/>
+<rect x="16" y="250" width="1008" height="260" rx="8" fill="none" class="par-color" stroke="currentColor" stroke-width="1.8" style="stroke:var(--par)"/>
+
+<text x="30" y="274" class="par-color" font-size="18" font-weight="700" letter-spacing="0.04em">
+  <tspan class="lz">② StreamingToolExecutor 并行执行 · 边输出边执行</tspan>
+  <tspan class="le" display="none">② StreamingToolExecutor Parallel · Execute while streaming</tspan>
+</text>
+<text x="30" y="292" class="axis-text" font-size="14">
+  <tspan class="lz">检测到 tool_use block → 立即提交 → 与 AI 输出并发</tspan>
+  <tspan class="le" display="none">Detect tool_use block → submit immediately → run concurrently with AI</tspan>
+</text>
+
+<!-- Total bracket -->
+<path d="M 140,320 L 140,310 L 530,310 L 530,320" fill="none" class="par-color" stroke="currentColor" stroke-width="2" style="stroke:var(--par)"/>
+<rect x="295" y="293" width="80" height="20" rx="4" class="node-bg"/>
+<rect x="295" y="293" width="80" height="20" rx="4" fill="none" class="par-color" stroke="currentColor" stroke-width="1" style="stroke:var(--par)"/>
+<text x="335" y="307" class="par-color" font-size="15" font-weight="700" text-anchor="middle">~90ms Total</text>
+
+<!-- Row labels (left side) -->
+<text x="130" y="352" class="label-strong" font-size="15" font-weight="700" text-anchor="end">AI</text>
+<text x="130" y="388" class="par-color" font-size="15" font-weight="700" text-anchor="end">Tool A</text>
+<text x="130" y="420" class="par-color" font-size="15" font-weight="700" text-anchor="end">Tool B</text>
+<text x="130" y="452" class="par-color" font-size="15" font-weight="700" text-anchor="end">Tool C</text>
+
+<!-- AI Speaking row: y=335-365 -->
+<rect x="140" y="335" width="347" height="32" rx="5" class="ai-bar" stroke="var(--ai)" stroke-width="1.2"/>
+<text x="313" y="356" class="ai-text" font-size="15" font-weight="700" text-anchor="middle">AI Speaking (0 – 80 ms)</text>
+
+<!-- Detection arrows (AI → Tool rows) -->
+<!-- Tool A detected at 30ms (x=270) -->
+<line x1="270" y1="367" x2="270" y2="375" class="par-color" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3,2" style="stroke:var(--par)" marker-end="url(#arrow-par)"/>
+<!-- Tool B detected at 55ms (x=378) -->
+<line x1="378" y1="367" x2="378" y2="407" class="par-color" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3,2" style="stroke:var(--par)" marker-end="url(#arrow-par)"/>
+<!-- Tool C detected at 70ms (x=443) -->
+<line x1="443" y1="367" x2="443" y2="439" class="par-color" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3,2" style="stroke:var(--par)" marker-end="url(#arrow-par)"/>
+
+<!-- Tool A 30-50ms: x=270, w=87 -->
+<rect x="270" y="377" width="87" height="26" rx="5" class="tool-par" stroke-opacity="0.9"/>
+<text x="313" y="394" class="tool-par-text" font-size="15" font-weight="700" text-anchor="middle">Tool A (20ms)</text>
+
+<!-- Tool B 55-75ms: x=378, w=87 -->
+<rect x="378" y="409" width="87" height="26" rx="5" class="tool-par" stroke-opacity="0.9" opacity="0.9"/>
+<text x="421" y="426" class="tool-par-text" font-size="15" font-weight="700" text-anchor="middle">Tool B (20ms)</text>
+
+<!-- Tool C 70-90ms: x=443, w=87 -->
+<rect x="443" y="441" width="87" height="26" rx="5" class="tool-par" stroke-opacity="0.9" opacity="0.85"/>
+<text x="486" y="458" class="tool-par-text" font-size="15" font-weight="700" text-anchor="middle">Tool C (20ms)</text>
+
+<!-- End marker line at 90ms -->
+<line x1="530" y1="335" x2="530" y2="490" class="par-color" stroke="currentColor" stroke-width="2" stroke-dasharray="5,3" style="stroke:var(--par)" opacity="0.7"/>
+
+<!-- ===== INSIGHT PANEL (right side) ===== -->
+<rect x="580" y="335" width="410" height="72" rx="8" class="insight-bg" stroke-width="0"/>
+<rect x="580" y="335" width="410" height="72" rx="8" fill="none" class="insight-border" stroke="currentColor" stroke-width="1.2" style="stroke:var(--insight-border)"/>
+<text x="595" y="355" class="par-color" font-size="15" font-weight="700">
+  <tspan class="lz">★ 核心优化</tspan>
+  <tspan class="le" display="none">★ Core Optimization</tspan>
+</text>
+<text x="595" y="375" class="label-strong" font-size="15" font-weight="600">
+  <tspan class="lz">tool_use block 完整接收后立即并发提交</tspan>
+  <tspan class="le" display="none">Submit concurrently once tool_use block fully received</tspan>
+</text>
+<text x="595" y="395" class="label-text" font-size="14">
+  <tspan class="lz">AI 仍在输出时，工具已在执行 → 消除等待浪费</tspan>
+  <tspan class="le" display="none">Tools run while AI still outputs → eliminates idle wait</tspan>
+</text>
+
+<!-- ===== SAVINGS BADGE ===== -->
+<rect x="580" y="420" width="410" height="56" rx="8" class="savings-bg" stroke-width="0"/>
+<rect x="580" y="420" width="410" height="56" rx="8" fill="none" class="par-color" stroke="currentColor" stroke-width="1.5" style="stroke:var(--par)"/>
+<text x="785" y="448" class="par-color" font-size="20" font-weight="700" text-anchor="middle">
+  <tspan class="lz">↓ 40% 更快</tspan>
+  <tspan class="le" display="none">↓ 40% Faster</tspan>
+</text>
+<text x="785" y="474" class="label-text" font-size="15" text-anchor="middle" font-weight="600">90ms vs 150ms · saved 60ms</text>
+
+<!-- Axis -->
+<line x1="140" y1="490" x2="920" y2="490" class="axis-line" stroke="currentColor" stroke-width="1.2" style="stroke:var(--axis)"/>
+<g font-family="JetBrains Mono,monospace">
+  <line x1="140" y1="486" x2="140" y2="494" class="axis-line" stroke="currentColor" stroke-width="1.2" style="stroke:var(--axis)"/>
+  <text x="140" y="508" class="axis-text" font-size="15" text-anchor="middle" font-weight="600">0</text>
+
+  <line x1="270" y1="486" x2="270" y2="494" class="axis-dim" stroke="currentColor" stroke-width="1" stroke-dasharray="2,2" style="stroke:var(--axis-dim)"/>
+  <text x="270" y="508" class="axis-text" font-size="14" text-anchor="middle">30ms</text>
+
+  <line x1="357" y1="486" x2="357" y2="494" class="axis-line" stroke="currentColor" stroke-width="1.2" style="stroke:var(--axis)"/>
+  <text x="357" y="508" class="axis-text" font-size="15" text-anchor="middle" font-weight="600">50ms</text>
+
+  <line x1="443" y1="486" x2="443" y2="494" class="axis-dim" stroke="currentColor" stroke-width="1" stroke-dasharray="2,2" style="stroke:var(--axis-dim)"/>
+  <text x="443" y="508" class="axis-text" font-size="14" text-anchor="middle">70ms</text>
+
+  <line x1="487" y1="486" x2="487" y2="494" class="axis-dim" stroke="currentColor" stroke-width="1" stroke-dasharray="2,2" style="stroke:var(--axis-dim)"/>
+  <text x="487" y="508" class="axis-text" font-size="14" text-anchor="middle">80ms</text>
+
+  <line x1="530" y1="484" x2="530" y2="496" class="par-color" stroke="currentColor" stroke-width="2" style="stroke:var(--par)"/>
+  <text x="530" y="508" class="par-color" font-size="15" text-anchor="middle" font-weight="700">90ms ★</text>
+</g>
+
+<!-- ============ LEGEND ============ -->
+<rect x="16" y="524" width="1008" height="28" rx="6" class="node-bg"/>
+<rect x="16" y="524" width="1008" height="28" rx="6" fill="none" stroke="currentColor" stroke-width="0.8" style="stroke:var(--border)"/>
+
+<rect x="30" y="534" width="22" height="8" rx="2" class="ai-bar"/>
+<text x="58" y="548" class="label-text" font-size="14" font-weight="600">AI Streaming</text>
+
+<rect x="160" y="534" width="22" height="8" rx="2" class="tool-serial"/>
+<text x="188" y="548" class="label-text" font-size="14" font-weight="600">Serial Tool</text>
+
+<rect x="270" y="534" width="22" height="8" rx="2" class="tool-par"/>
+<text x="298" y="548" class="label-text" font-size="14" font-weight="600">Parallel Tool</text>
+
+<rect x="390" y="534" width="22" height="8" rx="2" class="parse-bar"/>
+<text x="418" y="548" class="label-text" font-size="14" font-weight="600">Parse</text>
+
+<line x1="465" y1="538" x2="487" y2="538" class="par-color" stroke="currentColor" stroke-width="1.5" stroke-dasharray="3,2" style="stroke:var(--par)"/>
+<text x="493" y="548" class="label-text" font-size="14" font-weight="600">
+  <tspan class="lz">↓ tool_use 检测 → 立即并发提交</tspan>
+  <tspan class="le" display="none">↓ tool_use detected → submit concurrently</tspan>
+</text>
+
+</svg>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="card-hd"><div class="card-dot" style="background:#fb7185"></div><h3><span class="lz">串行执行 (旧方式)</span><span class="le" style="display:none">Sequential Execution (Old)</span></h3></div>
+    <ul>
+      <li>• <span class="lz">AI 说完 → Parse → Tool A → Tool B → Tool C</span><span class="le" style="display:none">AI finishes → Parse → Tool A → Tool B → Tool C</span></li>
+      <li>• <span class="lz">总时间 ~150ms (工具串行等待)</span><span class="le" style="display:none">Total ~150ms (tools wait in queue)</span></li>
+      <li>• <span class="lz">AI 输出完成前工具完全闲置</span><span class="le" style="display:none">Tools idle until AI finishes streaming</span></li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-hd"><div class="card-dot" style="background:#22c55e"></div><h3><span class="lz">StreamingToolExecutor (新方式)</span><span class="le" style="display:none">StreamingToolExecutor (New)</span></h3></div>
+    <ul>
+      <li>• <span class="lz">检测到 tool_use block → 立即提交 → 并发执行</span><span class="le" style="display:none">Detect tool_use → submit immediately → parallel exec</span></li>
+      <li>• <span class="lz">AI 仍在输出时工具已在运行 → ~90ms 完成</span><span class="le" style="display:none">Tools run while AI speaks → ~90ms total</span></li>
+      <li>• <span class="lz">节省 60ms / 40% 的端到端延迟</span><span class="le" style="display:none">Saves 60ms / 40% end-to-end latency</span></li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-hd"><div class="card-dot" style="background:#fbbf24"></div><h3><span class="lz">约束条件</span><span class="le" style="display:none">Constraints</span></h3></div>
+    <ul>
+      <li>• <span class="lz">只读安全工具才能真正并行 (Read/Glob/Grep)</span><span class="le" style="display:none">Only safe read-only tools truly parallelize</span></li>
+      <li>• <span class="lz">写操作仍需串行以避免竞态</span><span class="le" style="display:none">Write ops still serialize to avoid races</span></li>
+      <li>• <span class="lz">Bash/Edit 按依赖图拓扑串行</span><span class="le" style="display:none">Bash/Edit serialized by dependency topology</span></li>
+    </ul>
+  </div>
+</div>
+
+<div class="vis-footer">
+  VIS-2A-011 · Claude Code 2.1.88 · StreamingToolExecutor · runTools() · tool_use block detection · <span class="lz">v4 生产版</span><span class="le" style="display:none">v4 Production</span>
+</div>
+
+<script>
+(function(){
+  const THEME_KEY='vtheme',LANG_KEY='vlang';
+  const themes=['dark','warm','light'];
+  let ti=themes.indexOf(localStorage.getItem(THEME_KEY)||'dark');
+  if(ti<0)ti=0;
+  let isEn=localStorage.getItem(LANG_KEY)==='en';
+  function applyTheme(){document.documentElement.setAttribute('data-theme',themes[ti]);localStorage.setItem(THEME_KEY,themes[ti])}
+  function applyLang(){
+    const h=document.documentElement;
+    const setVis=(sel,show)=>{document.querySelectorAll(sel).forEach(e=>{if(show){e.style.display='';e.removeAttribute('display');}else{e.style.display='none';e.setAttribute('display','none');}});};
+    if(isEn){h.setAttribute('lang','en');setVis('.lz',false);setVis('.le',true);}
+    else{h.setAttribute('lang','zh-CN');setVis('.lz',true);setVis('.le',false);}
+    localStorage.setItem(LANG_KEY,isEn?'en':'zh')
+  }
+  window.cycleTheme=function(){ti=(ti+1)%themes.length;applyTheme()};
+  window.toggleLang=function(){isEn=!isEn;applyLang()};
+  applyTheme();applyLang();
+})();
+</script>
+<script>
+/* v2-embed-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.ctrl,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

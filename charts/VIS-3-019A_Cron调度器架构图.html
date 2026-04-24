@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-3-019A | Cron调度器架构图</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--panel:#0f172a;--card:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--subtle:#475569;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="warm"]{--bg:#1c1410;--panel:#2a1f16;--card:#3d2d20;--border:#5c4a3a;--text:#f5e6d3;--muted:#c4a882;--subtle:#8b7355;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="light"]{--bg:#f8fafc;--panel:#f1f5f9;--card:#e2e8f0;--border:#cbd5e1;--text:#0f172a;--muted:#475569;--subtle:#94a3b8;--amber:#d97706;--cyan:#0891b2;--violet:#7c3aed;--emerald:#059669;--rose:#e11d48;--slate:#475569;--orange:#ea580c}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 16px 40px}
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:100}
+.ctrl button{font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:background 0.2s}
+.ctrl button:hover{background:var(--border)}
+.header{text-align:center;margin-bottom:24px;max-width:1100px;width:100%}
+.vis-id{font-size:11px;color:var(--subtle);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px}
+.subtitle{font-size:12px;color:var(--muted)}
+.svg-wrap{width:100%;max-width:1100px;background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+svg{width:100%;height:auto;display:block}
+.summary-cards{display:flex;gap:16px;margin-top:20px;max-width:1100px;width:100%;flex-wrap:wrap}
+.card{flex:1;min-width:200px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 20px}
+.card-icon{font-size:20px;margin-bottom:8px}
+.card-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.card-desc{font-size:11px;color:var(--muted);line-height:1.6}[data-lang="en"] .lz{display:none}
+[data-lang="en"] .le{display:inline}
+</style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="cycleTheme()">Theme</button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<div class="header">
+  <div class="vis-id">VIS-3-019A</div>
+  <div class="title">
+    <span class="lz">Cron 调度器架构图</span>
+    <span class="le">Cron Scheduler Architecture</span>
+  </div>
+  <div class="subtitle">
+    <span class="lz">Claude Code 2.1.88 内置定时调度系统 · 5 层架构</span>
+    <span class="le">Claude Code 2.1.88 Built-in Cron Scheduler · 5-Layer Architecture</span>
+  </div>
+</div>
+
+<div class="svg-wrap">
+<svg viewBox="0 0 1060 580" xmlns="http://www.w3.org/2000/svg" font-family="'JetBrains Mono', monospace">
+  <defs>
+    <!-- Grid pattern -->
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#1e293b" stroke-width="0.5" opacity="0.6"/>
+    </pattern>
+    <!-- Arrow markers -->
+    <marker id="arr-cyan" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#22d3ee"/>
+    </marker>
+    <marker id="arr-violet" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#a78bfa"/>
+    </marker>
+    <marker id="arr-amber" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#fbbf24"/>
+    </marker>
+    <marker id="arr-emerald" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#34d399"/>
+    </marker>
+    <marker id="arr-slate" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arr-emerald-rev" markerWidth="8" markerHeight="8" refX="2" refY="3" orient="auto">
+      <path d="M8,0 L8,6 L0,3 z" fill="#34d399"/>
+    </marker>
+    <!-- Glow filters -->
+    <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-amber" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-emerald" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="1060" height="580" fill="#020617"/>
+  <rect width="1060" height="580" fill="url(#grid)"/>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- LAYER 1: USER LAYER (y=30–110, cyan) -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- Layer background -->
+  <rect x="16" y="30" width="700" height="82" rx="8" fill="#0f172a" stroke="#22d3ee" stroke-width="1.5" stroke-opacity="0.5"/>
+  <!-- Layer label badge -->
+  <rect x="16" y="30" width="130" height="26" rx="6" fill="#22d3ee" fill-opacity="0.15" stroke="#22d3ee" stroke-width="1"/>
+  <text x="81" y="47" text-anchor="middle" font-size="11" font-weight="700" fill="#22d3ee" letter-spacing="1">
+    <tspan class="lz">Layer 1 · 用户层</tspan>
+    <tspan class="le">Layer 1 · User</tspan>
+  </text>
+
+  <!-- Command box -->
+  <rect x="160" y="38" width="220" height="36" rx="6" fill="#0f172a" stroke="#22d3ee" stroke-width="1.5" filter="url(#glow-cyan)"/>
+  <text x="172" y="54" font-size="10" fill="#94a3b8">$</text>
+  <text x="184" y="54" font-size="11" font-weight="600" fill="#22d3ee">/loop 5m check tests</text>
+  <text x="172" y="68" font-size="10" fill="#475569">$ /loop 2h run lint</text>
+
+  <!-- API Calls box -->
+  <rect x="400" y="38" width="300" height="66" rx="6" fill="#0a1628" stroke="#22d3ee" stroke-width="1" stroke-opacity="0.6"/>
+  <text x="550" y="56" text-anchor="middle" font-size="10" fill="#94a3b8" letter-spacing="1">API CALLS</text>
+  <!-- Three API badges -->
+  <rect x="412" y="62" width="80" height="18" rx="4" fill="#22d3ee" fill-opacity="0.12" stroke="#22d3ee" stroke-width="0.8"/>
+  <text x="452" y="75" text-anchor="middle" font-size="10" font-weight="600" fill="#22d3ee">CronCreate</text>
+  <rect x="502" y="62" width="70" height="18" rx="4" fill="#22d3ee" fill-opacity="0.12" stroke="#22d3ee" stroke-width="0.8"/>
+  <text x="537" y="75" text-anchor="middle" font-size="10" font-weight="600" fill="#22d3ee">CronList</text>
+  <rect x="582" y="62" width="76" height="18" rx="4" fill="#22d3ee" fill-opacity="0.12" stroke="#22d3ee" stroke-width="0.8"/>
+  <text x="620" y="75" text-anchor="middle" font-size="10" font-weight="600" fill="#22d3ee">CronDelete</text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- ARROW: User → Parser -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <line x1="366" y1="112" x2="366" y2="136" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr-cyan)"/>
+  <rect x="282" y="118" width="94" height="14" rx="3" fill="#020617"/>
+  <text x="329" y="129" text-anchor="middle" font-size="10" fill="#22d3ee">
+    <tspan class="lz">parse interval</tspan>
+    <tspan class="le">parse interval</tspan>
+  </text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- LAYER 2: PARSER LAYER (y=140–215, violet) -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <rect x="16" y="140" width="700" height="78" rx="8" fill="#0f172a" stroke="#a78bfa" stroke-width="1.5" stroke-opacity="0.5"/>
+  <rect x="16" y="140" width="130" height="26" rx="6" fill="#a78bfa" fill-opacity="0.15" stroke="#a78bfa" stroke-width="1"/>
+  <text x="81" y="157" text-anchor="middle" font-size="11" font-weight="700" fill="#a78bfa" letter-spacing="1">
+    <tspan class="lz">Layer 2 · 解析层</tspan>
+    <tspan class="le">Layer 2 · Parser</tspan>
+  </text>
+
+  <!-- Interval Parser box -->
+  <rect x="160" y="148" width="165" height="62" rx="6" fill="#0a0f1f" stroke="#a78bfa" stroke-width="1.2"/>
+  <text x="243" y="164" text-anchor="middle" font-size="10" fill="#94a3b8" letter-spacing="1">INTERVAL PARSER</text>
+  <text x="172" y="182" font-size="11" font-weight="600" fill="#a78bfa">5m  → */5 * * * *</text>
+  <text x="172" y="198" font-size="11" fill="#7c6bce">2h  → 0 */2 * * *</text>
+  <text x="172" y="204" font-size="10" fill="#475569">1d  → 0 0 * * *</text>
+
+  <!-- Validator box -->
+  <rect x="345" y="148" width="140" height="62" rx="6" fill="#0a0f1f" stroke="#a78bfa" stroke-width="1.2"/>
+  <text x="415" y="164" text-anchor="middle" font-size="10" fill="#94a3b8" letter-spacing="1">VALIDATOR</text>
+  <!-- checkmark icon -->
+  <circle cx="380" cy="184" r="8" fill="none" stroke="#a78bfa" stroke-width="1.5"/>
+  <path d="M374,184 L378,188 L386,180" stroke="#a78bfa" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+  <text x="397" y="188" font-size="10" fill="#a78bfa">
+    <tspan class="lz">表达式校验</tspan>
+    <tspan class="le">Expr validate</tspan>
+  </text>
+  <text x="380" y="204" text-anchor="middle" font-size="10" fill="#475569">
+    <tspan class="lz">max 10 fields</tspan>
+    <tspan class="le">max 10 fields</tspan>
+  </text>
+
+  <!-- Next fire calculator box -->
+  <rect x="505" y="148" width="195" height="62" rx="6" fill="#0a0f1f" stroke="#a78bfa" stroke-width="1.2"/>
+  <text x="603" y="164" text-anchor="middle" font-size="10" fill="#94a3b8" letter-spacing="1">NEXT-FIRE CALC</text>
+  <!-- calendar icon -->
+  <rect x="518" y="174" width="16" height="14" rx="2" fill="none" stroke="#a78bfa" stroke-width="1.2"/>
+  <line x1="522" y1="174" x2="522" y2="170" stroke="#a78bfa" stroke-width="1.2"/>
+  <line x1="530" y1="174" x2="530" y2="170" stroke="#a78bfa" stroke-width="1.2"/>
+  <line x1="518" y1="179" x2="534" y2="179" stroke="#a78bfa" stroke-width="0.8"/>
+  <text x="540" y="184" font-size="10" fill="#a78bfa">
+    <tspan class="lz">计算首次触发时间</tspan>
+    <tspan class="le">Compute nextRun</tspan>
+  </text>
+  <text x="540" y="198" font-size="10" fill="#475569">now + interval</text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- ARROW: Parser → Registry -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <line x1="366" y1="220" x2="366" y2="244" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr-violet)"/>
+  <rect x="282" y="226" width="82" height="14" rx="3" fill="#020617"/>
+  <text x="323" y="237" text-anchor="middle" font-size="10" fill="#a78bfa">
+    <tspan class="lz">store job</tspan>
+    <tspan class="le">store job</tspan>
+  </text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- LAYER 3: REGISTRY LAYER (y=248–338, amber) -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <rect x="16" y="248" width="700" height="92" rx="8" fill="#0f172a" stroke="#fbbf24" stroke-width="1.5" stroke-opacity="0.5"/>
+  <rect x="16" y="248" width="130" height="26" rx="6" fill="#fbbf24" fill-opacity="0.15" stroke="#fbbf24" stroke-width="1"/>
+  <text x="81" y="265" text-anchor="middle" font-size="11" font-weight="700" fill="#fbbf24" letter-spacing="1">
+    <tspan class="lz">Layer 3 · 注册层</tspan>
+    <tspan class="le">Layer 3 · Registry</tspan>
+  </text>
+
+  <!-- Max badge -->
+  <rect x="560" y="252" width="148" height="22" rx="5" fill="#fbbf24" fill-opacity="0.18" stroke="#fbbf24" stroke-width="1"/>
+  <text x="634" y="267" text-anchor="middle" font-size="11" font-weight="700" fill="#fbbf24">
+    <tspan class="lz">⚠ Max 10 jobs</tspan>
+    <tspan class="le">⚠ Max 10 jobs</tspan>
+  </text>
+
+  <!-- Job store row 1 -->
+  <rect x="160" y="258" width="380" height="24" rx="4" fill="#1a1200" stroke="#fbbf24" stroke-width="0.8" stroke-opacity="0.5"/>
+  <text x="172" y="274" font-size="10" font-weight="500" fill="#fbbf24">id:"d8f2eb92"</text>
+  <text x="280" y="274" font-size="10" fill="#94a3b8">cron:"*/30 * * * *"</text>
+  <text x="430" y="274" font-size="10" fill="#94a3b8">prompt:"check progress"</text>
+
+  <!-- Job store row 2 -->
+  <rect x="160" y="285" width="380" height="24" rx="4" fill="#100d00" stroke="#fbbf24" stroke-width="0.8" stroke-opacity="0.3"/>
+  <text x="172" y="301" font-size="10" font-weight="500" fill="#b8900e">id:"a1c3d5e7"</text>
+  <text x="280" y="301" font-size="10" fill="#475569">cron:"0 */2 * * *"</text>
+  <text x="430" y="301" font-size="10" fill="#475569">prompt:"run lint"</text>
+
+  <!-- Job store row 3 -->
+  <rect x="160" y="312" width="380" height="22" rx="4" fill="#0c0900" stroke="#fbbf24" stroke-width="0.5" stroke-opacity="0.2"/>
+  <text x="172" y="327" font-size="10" fill="#6b5800">id:"f9b7a231"</text>
+  <text x="280" y="327" font-size="10" fill="#3a3000">cron:"0 9 * * *"</text>
+  <text x="430" y="327" font-size="10" fill="#3a3000">prompt:"daily report"</text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- ARROWS: Executor ↔ Registry (drawn below, positioned to match) -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- Check schedule arrow (Registry → Executor left side) -->
+  <line x1="290" y1="342" x2="290" y2="364" stroke="#34d399" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr-emerald)"/>
+  <!-- Update lastRun arrow (Executor → Registry right side) -->
+  <line x1="440" y1="362" x2="440" y2="340" stroke="#34d399" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arr-emerald)"/>
+  <rect x="293" y="346" width="146" height="14" rx="3" fill="#020617"/>
+  <text x="366" y="357" text-anchor="middle" font-size="10" fill="#34d399">
+    <tspan class="lz">check schedule / update lastRun</tspan>
+    <tspan class="le">check schedule / update lastRun</tspan>
+  </text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- LAYER 4: EXECUTOR LAYER (y=364–444, emerald) -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <rect x="16" y="364" width="700" height="82" rx="8" fill="#0f172a" stroke="#34d399" stroke-width="1.5" stroke-opacity="0.5"/>
+  <rect x="16" y="364" width="130" height="26" rx="6" fill="#34d399" fill-opacity="0.15" stroke="#34d399" stroke-width="1"/>
+  <text x="81" y="381" text-anchor="middle" font-size="11" font-weight="700" fill="#34d399" letter-spacing="1">
+    <tspan class="lz">Layer 4 · 执行层</tspan>
+    <tspan class="le">Layer 4 · Executor</tspan>
+  </text>
+
+  <!-- Clock icon group -->
+  <g transform="translate(160,372)" filter="url(#glow-emerald)">
+    <circle cx="22" cy="22" r="18" fill="none" stroke="#34d399" stroke-width="2"/>
+    <circle cx="22" cy="22" r="2" fill="#34d399"/>
+    <!-- Clock hands -->
+    <line x1="22" y1="22" x2="22" y2="10" stroke="#34d399" stroke-width="2" stroke-linecap="round"/>
+    <line x1="22" y1="22" x2="30" y2="26" stroke="#34d399" stroke-width="1.5" stroke-linecap="round"/>
+    <!-- Tick marks -->
+    <line x1="22" y1="5" x2="22" y2="8" stroke="#34d399" stroke-width="1.5"/>
+    <line x1="22" y1="36" x2="22" y2="39" stroke="#34d399" stroke-width="1.5"/>
+    <line x1="5" y1="22" x2="8" y2="22" stroke="#34d399" stroke-width="1.5"/>
+    <line x1="36" y1="22" x2="39" y2="22" stroke="#34d399" stroke-width="1.5"/>
+  </g>
+
+  <!-- Poll timer box -->
+  <rect x="210" y="372" width="168" height="66" rx="6" fill="#001a0d" stroke="#34d399" stroke-width="1.2"/>
+  <text x="294" y="388" text-anchor="middle" font-size="10" fill="#94a3b8" letter-spacing="1">POLL TIMER</text>
+  <text x="222" y="406" font-size="11" font-weight="600" fill="#34d399">
+    <tspan class="lz">每分钟轮询一次</tspan>
+    <tspan class="le">Poll every minute</tspan>
+  </text>
+  <text x="222" y="422" font-size="10" fill="#475569">setInterval(60000)</text>
+  <text x="222" y="434" font-size="10" fill="#2a7a50">
+    <tspan class="lz">if now ≥ nextRun → fire</tspan>
+    <tspan class="le">if now ≥ nextRun → fire</tspan>
+  </text>
+
+  <!-- Spawn box -->
+  <rect x="396" y="372" width="308" height="66" rx="6" fill="#001a0d" stroke="#34d399" stroke-width="1.2"/>
+  <text x="550" y="388" text-anchor="middle" font-size="10" fill="#94a3b8" letter-spacing="1">CONVERSATION SPAWN</text>
+  <!-- Lightning bolt icon -->
+  <polygon points="514,402 508,416 514,416 508,432 520,418 514,418 520,404" fill="#34d399" fill-opacity="0.8"/>
+  <text x="528" y="407" font-size="11" font-weight="600" fill="#34d399">
+    <tspan class="lz">新建对话 Turn</tspan>
+    <tspan class="le">Spawn new Turn</tspan>
+  </text>
+  <text x="528" y="421" font-size="10" fill="#475569">ctx = new ConversationContext()</text>
+  <text x="528" y="433" font-size="10" fill="#2a7a50">ctx.prompt = job.prompt</text>
+
+  <!-- Arrow: Executor → spawn (internal) -->
+  <line x1="386" y1="404" x2="394" y2="404" stroke="#34d399" stroke-width="1.5" marker-end="url(#arr-emerald)"/>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- ARROW: Executor → Cleanup direction -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- Arrow from Cleanup to Registry (cleanup removes jobs) -->
+  <!-- Drawn after layer 5 -->
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- LAYER 5: CLEANUP LAYER (y=456–528, slate) -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <rect x="16" y="456" width="700" height="72" rx="8" fill="#0f172a" stroke="#94a3b8" stroke-width="1.5" stroke-opacity="0.5"/>
+  <rect x="16" y="456" width="130" height="26" rx="6" fill="#94a3b8" fill-opacity="0.15" stroke="#94a3b8" stroke-width="1"/>
+  <text x="81" y="473" text-anchor="middle" font-size="11" font-weight="700" fill="#94a3b8" letter-spacing="1">
+    <tspan class="lz">Layer 5 · 清理层</tspan>
+    <tspan class="le">Layer 5 · Cleanup</tspan>
+  </text>
+
+  <!-- Auto expire box -->
+  <rect x="160" y="464" width="220" height="56" rx="6" fill="#0a0e12" stroke="#94a3b8" stroke-width="1.2"/>
+  <!-- Trash icon -->
+  <rect x="173" y="476" width="14" height="16" rx="2" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
+  <line x1="171" y1="476" x2="189" y2="476" stroke="#94a3b8" stroke-width="1.2"/>
+  <line x1="175" y1="474" x2="187" y2="474" stroke="#94a3b8" stroke-width="1"/>
+  <line x1="178" y1="480" x2="178" y2="488" stroke="#94a3b8" stroke-width="1"/>
+  <line x1="183" y1="480" x2="183" y2="488" stroke="#94a3b8" stroke-width="1"/>
+  <text x="197" y="486" font-size="11" font-weight="600" fill="#94a3b8">
+    <tspan class="lz">7天后自动过期</tspan>
+    <tspan class="le">Auto-expire 7 days</tspan>
+  </text>
+  <text x="197" y="500" font-size="10" fill="#475569">expires = created + 7d</text>
+  <text x="197" y="514" font-size="10" fill="#3a4555">job.expires &lt; Date.now()</text>
+
+  <!-- User cancel box -->
+  <rect x="396" y="464" width="220" height="56" rx="6" fill="#0a0e12" stroke="#94a3b8" stroke-width="1.2"/>
+  <!-- X icon -->
+  <circle cx="416" cy="492" r="10" fill="none" stroke="#94a3b8" stroke-width="1.2"/>
+  <line x1="410" y1="486" x2="422" y2="498" stroke="#94a3b8" stroke-width="1.2"/>
+  <line x1="422" y1="486" x2="410" y2="498" stroke="#94a3b8" stroke-width="1.2"/>
+  <text x="432" y="488" font-size="11" font-weight="600" fill="#94a3b8">
+    <tspan class="lz">用户取消删除</tspan>
+    <tspan class="le">User CronDelete</tspan>
+  </text>
+  <text x="432" y="502" font-size="10" fill="#475569">
+    <tspan class="lz">CronDelete &lt;id&gt;</tspan>
+    <tspan class="le">CronDelete &lt;id&gt;</tspan>
+  </text>
+  <text x="432" y="516" font-size="10" fill="#3a4555">
+    <tspan class="lz">即时从注册表移除</tspan>
+    <tspan class="le">remove from registry</tspan>
+  </text>
+
+  <!-- Arrow: Cleanup → Registry (remove expired) -->
+  <line x1="290" y1="454" x2="290" y2="342" stroke="#94a3b8" stroke-width="1.2" stroke-dasharray="3,3" marker-end="url(#arr-slate)"/>
+  <rect x="168" y="390" width="118" height="14" rx="3" fill="#020617"/>
+  <text x="227" y="401" text-anchor="middle" font-size="10" fill="#94a3b8">
+    <tspan class="lz">remove expired jobs</tspan>
+    <tspan class="le">remove expired jobs</tspan>
+  </text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- RIGHT SIDEBAR: Cron Job Data Model (x=730–1044) -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <rect x="730" y="30" width="314" height="350" rx="10" fill="#0f172a" stroke="#334155" stroke-width="1.2"/>
+  <!-- Header -->
+  <rect x="730" y="30" width="314" height="36" rx="10" fill="#1e293b"/>
+  <rect x="730" y="46" width="314" height="20" fill="#1e293b"/>
+  <text x="887" y="53" text-anchor="middle" font-size="12" font-weight="700" fill="#f1f5f9" letter-spacing="1">
+    <tspan class="lz">CronJob 数据模型</tspan>
+    <tspan class="le">CronJob Data Model</tspan>
+  </text>
+
+  <!-- Code block area -->
+  <rect x="742" y="72" width="290" height="296" rx="6" fill="#020617" stroke="#334155" stroke-width="1"/>
+
+  <!-- Line numbers -->
+  <text x="752" y="92" font-size="10" fill="#334155">01</text>
+  <text x="752" y="108" font-size="10" fill="#334155">02</text>
+  <text x="752" y="124" font-size="10" fill="#334155">03</text>
+  <text x="752" y="140" font-size="10" fill="#334155">04</text>
+  <text x="752" y="156" font-size="10" fill="#334155">05</text>
+  <text x="752" y="172" font-size="10" fill="#334155">06</text>
+  <text x="752" y="188" font-size="10" fill="#334155">07</text>
+  <text x="752" y="204" font-size="10" fill="#334155">08</text>
+  <text x="752" y="220" font-size="10" fill="#334155">09</text>
+  <text x="752" y="236" font-size="10" fill="#334155">10</text>
+  <text x="752" y="252" font-size="10" fill="#334155">11</text>
+
+  <!-- Code content -->
+  <text x="774" y="92" font-size="11" fill="#475569">{</text>
+  <text x="786" y="108" font-size="11">
+    <tspan fill="#94a3b8">id: </tspan><tspan fill="#34d399">"d8f2eb92"</tspan><tspan fill="#475569">,</tspan>
+  </text>
+  <text x="786" y="124" font-size="11">
+    <tspan fill="#94a3b8">cron: </tspan><tspan fill="#fbbf24">"*/30 * * * *"</tspan><tspan fill="#475569">,</tspan>
+  </text>
+  <text x="786" y="140" font-size="11">
+    <tspan fill="#94a3b8">prompt: </tspan><tspan fill="#22d3ee">"check prog"</tspan><tspan fill="#475569">,</tspan>
+  </text>
+  <text x="786" y="156" font-size="11">
+    <tspan fill="#94a3b8">recurring: </tspan><tspan fill="#fb923c">true</tspan><tspan fill="#475569">,</tspan>
+  </text>
+  <text x="786" y="172" font-size="11">
+    <tspan fill="#94a3b8">created: </tspan><tspan fill="#a78bfa">1744300800</tspan><tspan fill="#475569">,</tspan>
+  </text>
+  <text x="786" y="188" font-size="11">
+    <tspan fill="#94a3b8">expires: </tspan><tspan fill="#fb7185">1744905600</tspan><tspan fill="#475569">,</tspan>
+  </text>
+  <text x="786" y="204" font-size="11">
+    <tspan fill="#94a3b8">lastRun: </tspan><tspan fill="#475569">null</tspan><tspan fill="#475569">,</tspan>
+  </text>
+  <text x="786" y="220" font-size="11">
+    <tspan fill="#94a3b8">runCount: </tspan><tspan fill="#fb923c">0</tspan>
+  </text>
+  <text x="774" y="236" font-size="11" fill="#475569">}</text>
+
+  <!-- Expires annotation -->
+  <line x1="886" y1="188" x2="930" y2="200" stroke="#fb7185" stroke-width="0.8" stroke-opacity="0.6"/>
+  <text x="934" y="204" font-size="10" fill="#fb7185">
+    <tspan class="lz">+7天</tspan>
+    <tspan class="le">+7 days</tspan>
+  </text>
+
+  <!-- Field legend -->
+  <line x1="742" y1="248" x2="1030" y2="248" stroke="#1e293b" stroke-width="1"/>
+  <text x="754" y="265" font-size="10" fill="#94a3b8" letter-spacing="1">
+    <tspan class="lz">字段说明</tspan>
+    <tspan class="le">Field Notes</tspan>
+  </text>
+  <circle cx="758" cy="280" r="3" fill="#34d399"/>
+  <text x="768" y="284" font-size="10" fill="#475569">
+    <tspan class="lz">id — 随机8位十六进制</tspan>
+    <tspan class="le">id — random 8-char hex</tspan>
+  </text>
+  <circle cx="758" cy="298" r="3" fill="#fbbf24"/>
+  <text x="768" y="302" font-size="10" fill="#475569">
+    <tspan class="lz">cron — 标准5字段表达式</tspan>
+    <tspan class="le">cron — standard 5-field expr</tspan>
+  </text>
+  <circle cx="758" cy="316" r="3" fill="#fb7185"/>
+  <text x="768" y="320" font-size="10" fill="#475569">
+    <tspan class="lz">expires — created + 604800s</tspan>
+    <tspan class="le">expires — created + 604800s</tspan>
+  </text>
+  <circle cx="758" cy="334" r="3" fill="#fb923c"/>
+  <text x="768" y="338" font-size="10" fill="#475569">
+    <tspan class="lz">runCount — 累计触发次数</tspan>
+    <tspan class="le">runCount — total fire count</tspan>
+  </text>
+  <circle cx="758" cy="352" r="3" fill="#a78bfa"/>
+  <text x="768" y="356" font-size="10" fill="#475569">
+    <tspan class="lz">recurring — 默认 true 循环执行</tspan>
+    <tspan class="le">recurring — true = repeat loop</tspan>
+  </text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- RIGHT SIDEBAR: Interval Converter Reference -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <rect x="730" y="396" width="314" height="132" rx="10" fill="#0f172a" stroke="#334155" stroke-width="1.2"/>
+  <rect x="730" y="396" width="314" height="32" rx="10" fill="#1e293b"/>
+  <rect x="730" y="412" width="314" height="16" fill="#1e293b"/>
+  <text x="887" y="418" text-anchor="middle" font-size="11" font-weight="700" fill="#f1f5f9" letter-spacing="1">
+    <tspan class="lz">间隔转换参考</tspan>
+    <tspan class="le">Interval → Cron Reference</tspan>
+  </text>
+
+  <!-- Table rows -->
+  <rect x="742" y="432" width="290" height="88" rx="4" fill="#020617" stroke="#1e293b" stroke-width="1"/>
+  <!-- Headers -->
+  <text x="780" y="448" font-size="10" fill="#475569" letter-spacing="1">
+    <tspan class="lz">输入</tspan>
+    <tspan class="le">Input</tspan>
+  </text>
+  <text x="870" y="448" font-size="10" fill="#475569" letter-spacing="1">
+    <tspan class="lz">Cron 表达式</tspan>
+    <tspan class="le">Cron Expression</tspan>
+  </text>
+  <text x="980" y="448" font-size="10" fill="#475569" letter-spacing="1">
+    <tspan class="lz">含义</tspan>
+    <tspan class="le">Meaning</tspan>
+  </text>
+  <line x1="742" y1="452" x2="1030" y2="452" stroke="#1e293b" stroke-width="1"/>
+
+  <!-- Row 1: 5m -->
+  <text x="764" y="467" font-size="11" font-weight="600" fill="#22d3ee">5m</text>
+  <text x="860" y="467" font-size="10" fill="#fbbf24">*/5 * * * *</text>
+  <text x="968" y="467" font-size="10" fill="#475569">
+    <tspan class="lz">每5分钟</tspan>
+    <tspan class="le">every 5 min</tspan>
+  </text>
+
+  <!-- Row 2: 2h -->
+  <text x="764" y="483" font-size="11" font-weight="600" fill="#22d3ee">2h</text>
+  <text x="860" y="483" font-size="10" fill="#fbbf24">0 */2 * * *</text>
+  <text x="968" y="483" font-size="10" fill="#475569">
+    <tspan class="lz">每2小时</tspan>
+    <tspan class="le">every 2 hr</tspan>
+  </text>
+
+  <!-- Row 3: 1d -->
+  <text x="764" y="499" font-size="11" font-weight="600" fill="#22d3ee">1d</text>
+  <text x="860" y="499" font-size="10" fill="#fbbf24">0 0 * * *</text>
+  <text x="968" y="499" font-size="10" fill="#475569">
+    <tspan class="lz">每天午夜</tspan>
+    <tspan class="le">daily midnight</tspan>
+  </text>
+
+  <!-- Row 4: 30m -->
+  <text x="764" y="515" font-size="11" font-weight="600" fill="#22d3ee">30m</text>
+  <text x="860" y="515" font-size="10" fill="#fbbf24">*/30 * * * *</text>
+  <text x="968" y="515" font-size="10" fill="#475569">
+    <tspan class="lz">每30分钟</tspan>
+    <tspan class="le">every 30 min</tspan>
+  </text>
+
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <!-- TITLE AREA at bottom -->
+  <!-- ═══════════════════════════════════════════════════════ -->
+  <text x="16" y="556" font-size="10" fill="#334155">VIS-3-019A · Claude Code 2.1.88 · Cron Scheduler Architecture</text>
+  <text x="1044" y="556" text-anchor="end" font-size="10" fill="#334155">CC-Research-byClaude © 2026</text>
+</svg>
+</div>
+
+<!-- Summary Cards -->
+<div class="summary-cards">
+  <div class="card" style="border-top:3px solid var(--cyan)">
+    <div class="card-icon" style="color:var(--cyan)">⏱</div>
+    <div class="card-title" style="color:var(--cyan)">
+      <span class="lz">灵活调度</span>
+      <span class="le">Flexible Schedule</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">支持分钟 / 小时 / 天 调度间隔，通过简洁的 /loop 命令创建，自动转换为标准 cron 表达式</span>
+      <span class="le">Supports minute/hour/day intervals via simple /loop command, auto-converts to standard cron expressions</span>
+    </div>
+  </div>
+  <div class="card" style="border-top:3px solid var(--amber)">
+    <div class="card-icon" style="color:var(--amber)">🗑</div>
+    <div class="card-title" style="color:var(--amber)">
+      <span class="lz">自动过期</span>
+      <span class="le">Auto-Expiry</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">所有 cron 任务 7 天后自动清理，无需手动维护，避免遗忘任务积累占用资源</span>
+      <span class="le">All cron jobs auto-expire after 7 days — no manual maintenance needed, prevents stale job accumulation</span>
+    </div>
+  </div>
+  <div class="card" style="border-top:3px solid var(--emerald)">
+    <div class="card-icon" style="color:var(--emerald)">📋</div>
+    <div class="card-title" style="color:var(--emerald)">
+      <span class="lz">最多 10 个并发</span>
+      <span class="le">Max 10 Concurrent</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">每次 session 最多 10 个并发 cron 任务，防止调度器过载，保障系统稳定性</span>
+      <span class="le">Up to 10 concurrent cron jobs per session — prevents scheduler overload and ensures system stability</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-theme',t);
+  document.documentElement.setAttribute('data-lang',l);
+  document.getElementById('langBtn').textContent=l==='zh'?'EN':'中';
+  window.cycleTheme=function(){
+    var themes=['dark','warm','light'];
+    var cur=document.documentElement.getAttribute('data-theme')||'dark';
+    var next=themes[(themes.indexOf(cur)+1)%themes.length];
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('vtheme',next);
+  };
+  window.toggleLang=function(){
+    var cur=document.documentElement.getAttribute('data-lang')||'zh';
+    var next=cur==='zh'?'en':'zh';
+    document.documentElement.setAttribute('data-lang',next);
+    localStorage.setItem('vlang',next);
+    document.getElementById('langBtn').textContent=next==='zh'?'EN':'中';
+    document.querySelectorAll('svg .le, svg .lz').forEach(function(e){
+      var show=(next==='en')?e.classList.contains('le'):e.classList.contains('lz');
+      e.style.display=show?'':'none';
+      e.setAttribute('display',show?'inline':'none');
+    });
+  };
+  // Apply saved lang on load
+  if(l==='en'){
+    document.querySelectorAll('svg .le, svg .lz').forEach(function(e){
+      var show=e.classList.contains('le');
+      e.setAttribute('display',show?'inline':'none');
+    });
+  }
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

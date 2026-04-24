@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-2A-031 | REPL组件树结构图</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--panel:#0f172a;--card:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--subtle:#475569;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="warm"]{--bg:#1c1410;--panel:#2a1f16;--card:#3d2d20;--border:#5c4a3a;--text:#f5e6d3;--muted:#c4a882;--subtle:#8b7355;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="light"]{--bg:#f8fafc;--panel:#f1f5f9;--card:#e2e8f0;--border:#cbd5e1;--text:#0f172a;--muted:#475569;--subtle:#94a3b8;--amber:#d97706;--cyan:#0891b2;--violet:#7c3aed;--emerald:#059669;--rose:#e11d48;--slate:#475569;--orange:#ea580c}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px 40px}
+.grid-line{stroke:var(--border)}
+.node-bg{fill:var(--panel)}
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:100}
+.ctrl button{font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:background .15s}
+.ctrl button:hover{background:var(--border)}
+.header{width:100%;max-width:980px;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--border)}
+.header-meta{font-size:11px;color:var(--subtle);margin-bottom:6px;letter-spacing:.04em}
+.header-title{font-size:20px;font-weight:700;color:var(--text);line-height:1.3}
+.header-sub{font-size:12px;color:var(--muted);margin-top:4px}
+.svg-wrap{width:100%;max-width:980px;background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+svg{display:block;width:100%;height:auto}
+.cards{width:100%;max-width:980px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;display:flex;flex-direction:column;gap:4px}
+.card-label{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}
+.card-value{font-size:14px;font-weight:700}
+.card-desc{font-size:11px;color:var(--muted);margin-top:2px}[data-lang="en"] .lz{display:none}
+[data-lang="en"] .le{display:inline}
+@keyframes dash-flow{to{stroke-dashoffset:-20}}
+</style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="cycleTheme()">Theme</button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<div class="header">
+  <div class="header-meta">VIS-2A-031 · Section 2A · Component Architecture</div>
+  <div class="header-title">
+    <span class="lz">REPL 组件树结构图</span>
+    <span class="le">REPL Component Tree Structure</span>
+  </div>
+  <div class="header-sub">
+    <span class="lz">Claude Code 终端界面的 React/Ink 组件层级 · 4层嵌套深度 · 热路径标注</span>
+    <span class="le">React/Ink component hierarchy for Claude Code terminal UI · 4 nesting levels · Hot path annotated</span>
+  </div>
+</div>
+
+<div class="svg-wrap">
+<!--
+  COORDINATE PLAN (viewBox 960 x 640):
+  Node size: w=140, h=52, rx=8
+  Level Y positions (node top):
+    L0: y=34   (cy=60)
+    L1: y=148  (cy=174)
+    L2: y=262  (cy=288)
+    L3: y=376  (cy=402)
+  Node bottom Y:
+    L0 bottom: 86   L1 bottom: 200   L2 bottom: 314   L3 bottom: 428
+
+  Node center X positions:
+    L0: App            cx=480
+    L1: REPL           cx=290  | StatusBar    cx=760
+    L2: InputBox       cx=120  | MessageList  cx=310  | ToolResultPanel cx=755
+    L3: TextInput      cx=55→80| SuggestionOverlay cx=220
+        AssistantMsg   cx=350  | UserMessage  cx=490  | ToolUseBlock cx=625
+        DiffViewer     cx=770  | ErrorDisplay cx=900→890
+
+  Connector vertical midpoints used for straight lines:
+    L0-bottom: y=86 → L1-top: y=148  (midpoint 117)
+    L1-bottom: y=200 → L2-top: y=262  (midpoint 231)
+    L2-bottom: y=314 → L3-top: y=376  (midpoint 345)
+
+  Hot path segments:
+    App(480,86) → REPL(290,148)
+    REPL(290,200) → MessageList(310,262)  [nearly vertical]
+    MessageList(310,314) → AssistantMsg(350,376)
+-->
+<svg viewBox="0 0 960 640" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke-width="0.5" class="grid-line" opacity="0.3"/>
+    </pattern>
+    <filter id="glow-hot" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="3.5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="130%">
+      <feDropShadow dx="0" dy="2" stdDeviation="5" flood-color="rgba(0,0,0,0.55)"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="960" height="640" fill="var(--bg)"/>
+  <rect width="960" height="640" fill="url(#grid)"/>
+
+  <!-- ─────────────────────────────────────────
+       CONNECTORS (drawn first, behind nodes)
+  ───────────────────────────────────────── -->
+
+  <!-- L0→L1: App(480,86) → REPL(290,148) -->
+  <line x1="480" y1="86" x2="290" y2="148" stroke="rgba(148,163,184,0.25)" stroke-width="1.5"/>
+  <!-- L0→L1: App(480,86) → StatusBar(760,148) -->
+  <line x1="480" y1="86" x2="760" y2="148" stroke="rgba(148,163,184,0.25)" stroke-width="1.5"/>
+
+  <!-- L1→L2: REPL(290,200) → InputBox(120,262) -->
+  <line x1="290" y1="200" x2="120" y2="262" stroke="rgba(148,163,184,0.25)" stroke-width="1.5"/>
+  <!-- L1→L2: REPL(290,200) → MessageList(310,262) -->
+  <line x1="290" y1="200" x2="310" y2="262" stroke="rgba(148,163,184,0.25)" stroke-width="1.5"/>
+  <!-- L1→L2: REPL(290,200) → ToolResultPanel(755,262) -->
+  <line x1="290" y1="200" x2="755" y2="262" stroke="rgba(148,163,184,0.25)" stroke-width="1.5"/>
+
+  <!-- L2→L3: InputBox(120,314) → TextInput(80,376) -->
+  <line x1="120" y1="314" x2="80" y2="376" stroke="rgba(148,163,184,0.25)" stroke-width="1.5"/>
+  <!-- L2→L3: InputBox(120,314) → SuggestionOverlay(220,376) -->
+  <line x1="120" y1="314" x2="220" y2="376" stroke="rgba(148,163,184,0.25)" stroke-width="1.5"/>
+
+  <!-- L2→L3: MessageList(310,314) → AssistantMessage(350,376) -->
+  <line x1="310" y1="314" x2="350" y2="376" stroke="rgba(148,163,184,0.25)" stroke-width="1.5"/>
+  <!-- L2→L3: MessageList(310,314) → UserMessage(490,376) -->
+  <line x1="310" y1="314" x2="490" y2="376" stroke="rgba(148,163,184,0.25)" stroke-width="1.5"/>
+  <!-- L2→L3: MessageList(310,314) → ToolUseBlock(625,376) -->
+  <line x1="310" y1="314" x2="625" y2="376" stroke="rgba(148,163,184,0.25)" stroke-width="1.5"/>
+
+  <!-- L2→L3: ToolResultPanel(755,314) → DiffViewer(770,376) -->
+  <line x1="755" y1="314" x2="770" y2="376" stroke="rgba(148,163,184,0.25)" stroke-width="1.5"/>
+  <!-- L2→L3: ToolResultPanel(755,314) → ErrorDisplay(890,376) -->
+  <line x1="755" y1="314" x2="890" y2="376" stroke="rgba(148,163,184,0.25)" stroke-width="1.5"/>
+
+  <!-- ─────────────────────────────────────────
+       HOT PATH (animated dashed rose, behind nodes)
+       App(480,86) → REPL(290,148) → MessageList(310,262) → AssistantMsg(350,376)
+  ───────────────────────────────────────── -->
+  <!-- Hot: App → REPL -->
+  <line x1="480" y1="86" x2="290" y2="148"
+    stroke="#fb7185" stroke-width="2.5" stroke-dasharray="6,4" opacity="0.9"
+    filter="url(#glow-hot)"
+    style="animation:dash-flow 0.8s linear infinite"/>
+  <!-- Hot: REPL → MessageList (nearly vertical, short) -->
+  <line x1="290" y1="200" x2="310" y2="262"
+    stroke="#fb7185" stroke-width="2.5" stroke-dasharray="6,4" opacity="0.9"
+    filter="url(#glow-hot)"
+    style="animation:dash-flow 0.8s linear infinite"/>
+  <!-- Hot: MessageList → AssistantMessage -->
+  <line x1="310" y1="314" x2="350" y2="376"
+    stroke="#fb7185" stroke-width="2.5" stroke-dasharray="6,4" opacity="0.9"
+    filter="url(#glow-hot)"
+    style="animation:dash-flow 0.8s linear infinite"/>
+
+  <!-- ─────────────────────────────────────────
+       L0 — App  (cx=480, y=34..86)
+  ───────────────────────────────────────── -->
+  <g filter="url(#shadow)">
+    <rect x="410" y="34" width="140" height="52" rx="8" class="node-bg"/>
+    <rect x="410" y="34" width="140" height="52" rx="8"
+      fill="rgba(34,211,238,0.15)" stroke="#22d3ee" stroke-width="1.5"/>
+    <text x="480" y="57" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" fill="#22d3ee">App</text>
+    <text x="480" y="75" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+      <tspan class="lz">根组件</tspan>
+      <tspan class="le">Root Component</tspan>
+    </text>
+  </g>
+
+  <!-- ─────────────────────────────────────────
+       L1 — REPL (cx=290, y=148..200)
+  ───────────────────────────────────────── -->
+  <g filter="url(#shadow)">
+    <rect x="220" y="148" width="140" height="52" rx="8" class="node-bg"/>
+    <rect x="220" y="148" width="140" height="52" rx="8"
+      fill="rgba(167,139,250,0.15)" stroke="#a78bfa" stroke-width="1.5"/>
+    <text x="290" y="171" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" fill="#a78bfa">REPL</text>
+    <text x="290" y="189" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+      <tspan class="lz">交互循环核心</tspan>
+      <tspan class="le">Interaction Core</tspan>
+    </text>
+  </g>
+
+  <!-- L1 — StatusBar (cx=760, y=148..200) -->
+  <g filter="url(#shadow)">
+    <rect x="690" y="148" width="140" height="52" rx="8" class="node-bg"/>
+    <rect x="690" y="148" width="140" height="52" rx="8"
+      fill="rgba(148,163,184,0.12)" stroke="#94a3b8" stroke-width="1.5"/>
+    <text x="760" y="171" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" fill="#94a3b8">StatusBar</text>
+    <text x="760" y="189" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+      <tspan class="lz">底部状态栏</tspan>
+      <tspan class="le">Status Bar</tspan>
+    </text>
+  </g>
+
+  <!-- ─────────────────────────────────────────
+       L2 — InputBox (cx=120, y=262..314)
+  ───────────────────────────────────────── -->
+  <g filter="url(#shadow)">
+    <rect x="50" y="262" width="140" height="52" rx="8" class="node-bg"/>
+    <rect x="50" y="262" width="140" height="52" rx="8"
+      fill="rgba(96,165,250,0.15)" stroke="#60a5fa" stroke-width="1.5"/>
+    <text x="120" y="285" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" fill="#60a5fa">InputBox</text>
+    <text x="120" y="303" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+      <tspan class="lz">用户输入处理</tspan>
+      <tspan class="le">User Input Handler</tspan>
+    </text>
+  </g>
+
+  <!-- L2 — MessageList (cx=310, y=262..314) -->
+  <g filter="url(#shadow)">
+    <rect x="240" y="262" width="140" height="52" rx="8" class="node-bg"/>
+    <rect x="240" y="262" width="140" height="52" rx="8"
+      fill="rgba(96,165,250,0.15)" stroke="#60a5fa" stroke-width="1.5"/>
+    <text x="310" y="285" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#60a5fa">MessageList</text>
+    <text x="310" y="303" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+      <tspan class="lz">消息历史滚动</tspan>
+      <tspan class="le">Message History</tspan>
+    </text>
+  </g>
+
+  <!-- L2 — ToolResultPanel (cx=755, y=262..314) -->
+  <g filter="url(#shadow)">
+    <rect x="685" y="262" width="140" height="52" rx="8" class="node-bg"/>
+    <rect x="685" y="262" width="140" height="52" rx="8"
+      fill="rgba(251,146,60,0.15)" stroke="#fb923c" stroke-width="1.5"/>
+    <text x="755" y="282" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#fb923c">ToolResult</text>
+    <text x="755" y="298" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#fb923c">Panel</text>
+    <text x="755" y="312" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+      <tspan class="lz">工具输出展示</tspan>
+      <tspan class="le">Tool Output</tspan>
+    </text>
+  </g>
+
+  <!-- ─────────────────────────────────────────
+       L3 — TextInput (cx=80, y=376..428)
+  ───────────────────────────────────────── -->
+  <g filter="url(#shadow)">
+    <rect x="10" y="376" width="140" height="52" rx="8" class="node-bg"/>
+    <rect x="10" y="376" width="140" height="52" rx="8"
+      fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1.5"/>
+    <text x="80" y="399" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#34d399">TextInput</text>
+    <text x="80" y="417" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+      <tspan class="lz">原始文本字段</tspan>
+      <tspan class="le">Raw Text Field</tspan>
+    </text>
+  </g>
+
+  <!-- L3 — SuggestionOverlay (cx=220, y=376..428) -->
+  <g filter="url(#shadow)">
+    <rect x="150" y="376" width="140" height="52" rx="8" class="node-bg"/>
+    <rect x="150" y="376" width="140" height="52" rx="8"
+      fill="rgba(251,191,36,0.15)" stroke="#fbbf24" stroke-width="1.5"/>
+    <text x="220" y="396" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#fbbf24">Suggestion</text>
+    <text x="220" y="412" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#fbbf24">Overlay</text>
+    <text x="220" y="426" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+      <tspan class="lz">自动补全</tspan>
+      <tspan class="le">Autocomplete</tspan>
+    </text>
+  </g>
+
+  <!-- L3 — AssistantMessage (cx=350, y=376..428) — HOT NODE -->
+  <g filter="url(#shadow)">
+    <rect x="280" y="376" width="140" height="52" rx="8" class="node-bg"/>
+    <!-- Extra hot glow border -->
+    <rect x="278" y="374" width="144" height="56" rx="9"
+      fill="none" stroke="#fb7185" stroke-width="1" opacity="0.35"/>
+    <rect x="280" y="376" width="140" height="52" rx="8"
+      fill="rgba(167,139,250,0.15)" stroke="#a78bfa" stroke-width="1.5"/>
+    <text x="350" y="396" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#a78bfa">Assistant</text>
+    <text x="350" y="412" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#a78bfa">Message</text>
+    <text x="350" y="426" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+      <tspan class="lz">流式 AI 响应</tspan>
+      <tspan class="le">Streaming AI Response</tspan>
+    </text>
+  </g>
+
+  <!-- L3 — UserMessage (cx=490, y=376..428) -->
+  <g filter="url(#shadow)">
+    <rect x="420" y="376" width="140" height="52" rx="8" class="node-bg"/>
+    <rect x="420" y="376" width="140" height="52" rx="8"
+      fill="rgba(148,163,184,0.12)" stroke="#94a3b8" stroke-width="1.5"/>
+    <text x="490" y="396" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#94a3b8">User</text>
+    <text x="490" y="412" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#94a3b8">Message</text>
+    <text x="490" y="426" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+      <tspan class="lz">用户消息气泡</tspan>
+      <tspan class="le">User Bubble</tspan>
+    </text>
+  </g>
+
+  <!-- L3 — ToolUseBlock (cx=625, y=376..428) -->
+  <g filter="url(#shadow)">
+    <rect x="555" y="376" width="140" height="52" rx="8" class="node-bg"/>
+    <rect x="555" y="376" width="140" height="52" rx="8"
+      fill="rgba(251,146,60,0.12)" stroke="#fb923c" stroke-width="1.5"/>
+    <text x="625" y="396" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#fb923c">ToolUse</text>
+    <text x="625" y="412" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#fb923c">Block</text>
+    <text x="625" y="426" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+      <tspan class="lz">工具调用块</tspan>
+      <tspan class="le">Tool Call Block</tspan>
+    </text>
+  </g>
+
+  <!-- L3 — DiffViewer (cx=770, y=376..428) -->
+  <g filter="url(#shadow)">
+    <rect x="700" y="376" width="140" height="52" rx="8" class="node-bg"/>
+    <rect x="700" y="376" width="140" height="52" rx="8"
+      fill="rgba(52,211,153,0.12)" stroke="#34d399" stroke-width="1.5"/>
+    <text x="770" y="399" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#34d399">DiffViewer</text>
+    <text x="770" y="417" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+      <tspan class="lz">代码差异视图</tspan>
+      <tspan class="le">Code Diff View</tspan>
+    </text>
+  </g>
+
+  <!-- L3 — ErrorDisplay (cx=890, y=376..428) -->
+  <g filter="url(#shadow)">
+    <rect x="820" y="376" width="130" height="52" rx="8" class="node-bg"/>
+    <rect x="820" y="376" width="130" height="52" rx="8"
+      fill="rgba(251,113,133,0.12)" stroke="#fb7185" stroke-width="1.5"/>
+    <text x="885" y="399" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#fb7185">ErrorDisplay</text>
+    <text x="885" y="417" text-anchor="middle"
+      font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+      <tspan class="lz">错误信息展示</tspan>
+      <tspan class="le">Error Output</tspan>
+    </text>
+  </g>
+
+  <!-- ─────────────────────────────────────────
+       LEVEL LABELS (left margin)
+  ───────────────────────────────────────── -->
+  <text x="10" y="64" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)" letter-spacing="0.06em">
+    <tspan class="lz">L0</tspan>
+    <tspan class="le">L0</tspan>
+  </text>
+  <text x="10" y="178" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)" letter-spacing="0.06em">
+    <tspan class="lz">L1</tspan>
+    <tspan class="le">L1</tspan>
+  </text>
+  <text x="10" y="292" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)" letter-spacing="0.06em">
+    <tspan class="lz">L2</tspan>
+    <tspan class="le">L2</tspan>
+  </text>
+  <text x="10" y="406" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)" letter-spacing="0.06em">
+    <tspan class="lz">L3</tspan>
+    <tspan class="le">L3</tspan>
+  </text>
+
+  <!-- Horizontal level separator lines (subtle) -->
+  <line x1="30" y1="120" x2="930" y2="120" stroke="var(--border)" stroke-width="0.5" opacity="0.4" stroke-dasharray="4,6"/>
+  <line x1="30" y1="234" x2="930" y2="234" stroke="var(--border)" stroke-width="0.5" opacity="0.4" stroke-dasharray="4,6"/>
+  <line x1="30" y1="348" x2="930" y2="348" stroke="var(--border)" stroke-width="0.5" opacity="0.4" stroke-dasharray="4,6"/>
+
+  <!-- ─────────────────────────────────────────
+       LEGEND PANEL (bottom)
+  ───────────────────────────────────────── -->
+  <rect x="20" y="450" width="920" height="172" rx="10"
+    fill="var(--card)" stroke="var(--border)" stroke-width="1" opacity="0.9"/>
+
+  <!-- Legend section title -->
+  <text x="40" y="474" font-family="'JetBrains Mono',monospace" font-size="10"
+    fill="var(--subtle)" letter-spacing="0.08em" text-decoration="none">
+    <tspan class="lz">图例</tspan>
+    <tspan class="le">LEGEND</tspan>
+  </text>
+
+  <!-- Row 1: color nodes -->
+  <!-- Cyan: Root -->
+  <circle cx="55" cy="498" r="6" fill="#22d3ee"/>
+  <text x="67" y="503" font-family="'JetBrains Mono',monospace" font-size="11" fill="var(--text)">
+    <tspan class="lz">根节点 (App)</tspan>
+    <tspan class="le">Root (App)</tspan>
+  </text>
+
+  <!-- Violet: Core loop -->
+  <circle cx="195" cy="498" r="6" fill="#a78bfa"/>
+  <text x="207" y="503" font-family="'JetBrains Mono',monospace" font-size="11" fill="var(--text)">
+    <tspan class="lz">核心循环 (REPL)</tspan>
+    <tspan class="le">Core Loop (REPL)</tspan>
+  </text>
+
+  <!-- Blue: UI panels -->
+  <circle cx="370" cy="498" r="6" fill="#60a5fa"/>
+  <text x="382" y="503" font-family="'JetBrains Mono',monospace" font-size="11" fill="var(--text)">
+    <tspan class="lz">UI 面板</tspan>
+    <tspan class="le">UI Panels</tspan>
+  </text>
+
+  <!-- Orange: Tool output -->
+  <circle cx="470" cy="498" r="6" fill="#fb923c"/>
+  <text x="482" y="503" font-family="'JetBrains Mono',monospace" font-size="11" fill="var(--text)">
+    <tspan class="lz">工具输出</tspan>
+    <tspan class="le">Tool Output</tspan>
+  </text>
+
+  <!-- Emerald: Primitives -->
+  <circle cx="570" cy="498" r="6" fill="#34d399"/>
+  <text x="582" y="503" font-family="'JetBrains Mono',monospace" font-size="11" fill="var(--text)">
+    <tspan class="lz">输入原语</tspan>
+    <tspan class="le">Input Primitives</tspan>
+  </text>
+
+  <!-- Amber: Autocomplete -->
+  <circle cx="680" cy="498" r="6" fill="#fbbf24"/>
+  <text x="692" y="503" font-family="'JetBrains Mono',monospace" font-size="11" fill="var(--text)">
+    <tspan class="lz">补全提示</tspan>
+    <tspan class="le">Autocomplete</tspan>
+  </text>
+
+  <!-- Slate: Status -->
+  <circle cx="785" cy="498" r="6" fill="#94a3b8"/>
+  <text x="797" y="503" font-family="'JetBrains Mono',monospace" font-size="11" fill="var(--text)">
+    <tspan class="lz">状态/辅助</tspan>
+    <tspan class="le">Status/Aux</tspan>
+  </text>
+
+  <!-- Rose: Error -->
+  <circle cx="880" cy="498" r="6" fill="#fb7185"/>
+  <text x="892" y="503" font-family="'JetBrains Mono',monospace" font-size="11" fill="var(--text)">
+    <tspan class="lz">错误</tspan>
+    <tspan class="le">Error</tspan>
+  </text>
+
+  <!-- Row 2: line types -->
+  <!-- Hot path sample -->
+  <line x1="40" y1="528" x2="100" y2="528" stroke="#fb7185" stroke-width="2.5" stroke-dasharray="6,4"
+    style="animation:dash-flow 0.8s linear infinite"/>
+  <text x="108" y="533" font-family="'JetBrains Mono',monospace" font-size="11" fill="#fb7185">
+    <tspan class="lz">热路径（关键渲染链路）</tspan>
+    <tspan class="le">Hot Path (Critical Render Chain)</tspan>
+  </text>
+
+  <!-- Normal connector sample -->
+  <line x1="430" y1="528" x2="490" y2="528" stroke="rgba(148,163,184,0.4)" stroke-width="1.5"/>
+  <text x="498" y="533" font-family="'JetBrains Mono',monospace" font-size="11" fill="var(--muted)">
+    <tspan class="lz">父子组件关系</tspan>
+    <tspan class="le">Parent-Child Relation</tspan>
+  </text>
+
+  <!-- Separator line -->
+  <line x1="40" y1="548" x2="900" y2="548" stroke="var(--border)" stroke-width="0.5" opacity="0.5"/>
+
+  <!-- Hot path annotation text -->
+  <text x="40" y="568" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--rose)">
+    <tspan class="lz">热路径：</tspan>
+    <tspan class="le">Hot Path: </tspan>
+  </text>
+  <text x="100" y="568" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">App</text>
+  <text x="130" y="568" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)">→</text>
+  <text x="148" y="568" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">REPL</text>
+  <text x="188" y="568" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)">→</text>
+  <text x="206" y="568" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">MessageList</text>
+  <text x="300" y="568" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)">→</text>
+  <text x="318" y="568" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">AssistantMessage</text>
+  <text x="460" y="568" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)">
+    <tspan class="lz">（每 token 触发重渲染）</tspan>
+    <tspan class="le">(re-render triggered per token)</tspan>
+  </text>
+
+  <!-- Tech note -->
+  <text x="40" y="590" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)">
+    <tspan class="lz">渲染框架：React 18 + Facebook Ink v4（专为 CLI 设计的 React 渲染器，将组件树映射为 ANSI 终端输出）</tspan>
+    <tspan class="le">Render: React 18 + Facebook Ink v4 (CLI-optimized React renderer, maps component tree to ANSI terminal output)</tspan>
+  </text>
+
+  <!-- Bottom note: 9 nodes total -->
+  <text x="40" y="607" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)">
+    <tspan class="lz">共 9 个组件节点 · 最大深度 4 层 · StatusBar 为独立叶节点</tspan>
+    <tspan class="le">9 component nodes total · Max depth 4 · StatusBar is a standalone leaf node</tspan>
+  </text>
+
+</svg>
+</div>
+
+<!-- Summary cards -->
+<div class="cards">
+  <div class="card" style="border-color:rgba(34,211,238,0.4)">
+    <div class="card-label">
+      <span class="lz">渲染框架</span>
+      <span class="le">Render Framework</span>
+    </div>
+    <div class="card-value" style="color:var(--cyan)">React / Ink</div>
+    <div class="card-desc">
+      <span class="lz">Facebook Ink v4：专为 CLI 设计的 React 渲染器，将 JSX 组件树输出为 ANSI 终端文本</span>
+      <span class="le">Facebook Ink v4: React renderer built for CLI, maps JSX trees to ANSI terminal output</span>
+    </div>
+  </div>
+  <div class="card" style="border-color:rgba(167,139,250,0.4)">
+    <div class="card-label">
+      <span class="lz">组件树深度</span>
+      <span class="le">Tree Depth</span>
+    </div>
+    <div class="card-value" style="color:var(--violet)">
+      <span class="lz">最深 4 层嵌套</span>
+      <span class="le">4 Nesting Levels Max</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">共 9 个组件 · App → REPL → MessageList → AssistantMessage 为最长路径</span>
+      <span class="le">9 nodes total · App → REPL → MessageList → AssistantMessage is the deepest path</span>
+    </div>
+  </div>
+  <div class="card" style="border-color:rgba(251,146,60,0.4)">
+    <div class="card-label">
+      <span class="lz">流式更新</span>
+      <span class="le">Streaming Updates</span>
+    </div>
+    <div class="card-value" style="color:var(--orange)">
+      <span class="lz">逐 token 渲染</span>
+      <span class="le">Token-by-Token Render</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">AssistantMessage 接收 SSE 流，每收到一个 token 触发 Ink 重渲染，实现打字机效果</span>
+      <span class="le">AssistantMessage consumes SSE stream, re-renders Ink tree per token for typewriter effect</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-theme',t);
+  document.documentElement.setAttribute('data-lang',l);
+  document.getElementById('langBtn').textContent=l==='zh'?'EN':'中';
+  window.cycleTheme=function(){
+    var themes=['dark','warm','light'];
+    var cur=document.documentElement.getAttribute('data-theme')||'dark';
+    var next=themes[(themes.indexOf(cur)+1)%themes.length];
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('vtheme',next);
+  };
+  window.toggleLang=function(){
+    var cur=document.documentElement.getAttribute('data-lang')||'zh';
+    var next=cur==='zh'?'en':'zh';
+    document.documentElement.setAttribute('data-lang',next);
+    localStorage.setItem('vlang',next);
+    document.getElementById('langBtn').textContent=next==='zh'?'EN':'中';
+    document.querySelectorAll('svg .le, svg .lz').forEach(function(e){
+      var show=(next==='en')?e.classList.contains('le'):e.classList.contains('lz');
+      e.style.display=show?'':'none';
+      e.setAttribute('display',show?'inline':'none');
+    });
+  };
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

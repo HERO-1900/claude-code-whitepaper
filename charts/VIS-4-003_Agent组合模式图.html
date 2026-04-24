@@ -1,0 +1,608 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-4-003 | Agent组合模式图</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--panel:#0f172a;--card:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--subtle:#475569;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="warm"]{--bg:#1c1410;--panel:#2a1f16;--card:#3d2d20;--border:#5c4a3a;--text:#f5e6d3;--muted:#c4a882;--subtle:#8b7355;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="light"]{--bg:#f8fafc;--panel:#f1f5f9;--card:#e2e8f0;--border:#cbd5e1;--text:#0f172a;--muted:#475569;--subtle:#94a3b8;--amber:#d97706;--cyan:#0891b2;--violet:#7c3aed;--emerald:#059669;--rose:#e11d48;--slate:#475569;--orange:#ea580c}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 20px 40px}
+h1{font-size:15px;font-weight:600;color:var(--text);margin-bottom:4px;letter-spacing:.02em}
+.subtitle{font-size:11px;color:var(--muted);margin-bottom:16px}
+.viz-wrap{width:100%;max-width:980px}
+svg{width:100%;height:auto;display:block}
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:100}
+.ctrl button{font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:background .15s}
+.ctrl button:hover{background:var(--border)}[data-lang="en"] .lz{display:none}
+[data-lang="en"] .le{display:inline}
+.summary-row{display:flex;gap:12px;margin-top:14px;width:100%;max-width:980px}
+.sum-card{flex:1;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px}
+.sum-card .sc-label{font-size:10px;font-weight:700;letter-spacing:.06em;margin-bottom:5px}
+.sum-card .sc-title{font-size:12px;font-weight:600;color:var(--text);margin-bottom:3px}
+.sum-card .sc-desc{font-size:10px;color:var(--muted);line-height:1.5}
+.sc-cyan .sc-label{color:var(--cyan)}
+.sc-emerald .sc-label{color:var(--emerald)}
+.sc-violet .sc-label{color:var(--violet)}
+.sc-amber .sc-label{color:var(--amber)}
+.sc-cyan{border-left:3px solid var(--cyan)}
+.sc-emerald{border-left:3px solid var(--emerald)}
+.sc-violet{border-left:3px solid var(--violet)}
+.sc-amber{border-left:3px solid var(--amber)}
+</style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="cycleTheme()">Theme</button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<h1>
+  <span class="lz">VIS-4-003 · Agent 组合模式图</span>
+  <span class="le">VIS-4-003 · Agent Combination Patterns</span>
+</h1>
+<p class="subtitle">
+  <span class="lz">四种 Agent 拓扑 — LEGO 组合哲学</span>
+  <span class="le">Four Agent Topologies — LEGO Composition Philosophy</span>
+</p>
+
+<div class="viz-wrap">
+<svg viewBox="0 0 960 580" xmlns="http://www.w3.org/2000/svg" style="overflow:visible">
+<defs>
+  <!-- Grid pattern -->
+  <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+    <path d="M 20 0 L 0 0 0 20" fill="none" stroke-width=".3" class="grid-line"/>
+  </pattern>
+
+  <!-- Arrowhead markers -->
+  <marker id="arr-cyan" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#22d3ee"/>
+  </marker>
+  <marker id="arr-emerald" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#34d399"/>
+  </marker>
+  <marker id="arr-violet" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#a78bfa"/>
+  </marker>
+  <marker id="arr-amber" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+    <polygon points="0 0, 8 3, 0 6" fill="#fbbf24"/>
+  </marker>
+  <marker id="arr-amber-rev" markerWidth="8" markerHeight="6" refX="1" refY="3" orient="auto">
+    <polygon points="8 0, 0 3, 8 6" fill="#fbbf24"/>
+  </marker>
+
+  <!-- Drop shadow -->
+  <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+    <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="rgba(0,0,0,0.5)"/>
+  </filter>
+
+  <!-- Glow filters -->
+  <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur stdDeviation="3" result="blur"/>
+    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+</defs>
+
+<!-- Background grid -->
+<rect width="960" height="580" fill="url(#grid)" opacity=".25"/>
+
+<!-- ============================= -->
+<!-- PANEL 1: Sequential Chain     -->
+<!-- Top-left: x=20-460, y=20-270  -->
+<!-- ============================= -->
+<g id="panel1">
+  <!-- Panel background -->
+  <rect x="20" y="20" width="440" height="256" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1" filter="url(#shadow)"/>
+  <!-- Top accent line cyan -->
+  <rect x="20" y="20" width="440" height="3" rx="2" fill="#22d3ee" opacity=".8"/>
+
+  <!-- Badge -->
+  <rect x="34" y="36" width="10" height="10" rx="2" fill="#22d3ee"/>
+  <text x="50" y="46" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="#22d3ee" letter-spacing=".06em">
+    <tspan class="lz">串行链</tspan><tspan class="le">Sequential Chain</tspan>
+  </text>
+  <text x="390" y="46" font-family="JetBrains Mono,monospace" font-size="10" fill="#475569" text-anchor="end">
+    <tspan class="lz">Pattern 01</tspan><tspan class="le">Pattern 01</tspan>
+  </text>
+
+  <!-- Divider -->
+  <line x1="34" y1="54" x2="446" y2="54" stroke="#334155" stroke-width=".5"/>
+
+  <!-- Agent boxes: A B C D in a horizontal chain -->
+  <!-- Box A -->
+  <rect x="42" y="85" width="76" height="48" rx="8" fill="#1e293b" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="80" y="103" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#22d3ee" text-anchor="middle">A</text>
+  <text x="80" y="118" font-family="JetBrains Mono,monospace" font-size="10" fill="#94a3b8" text-anchor="middle">
+    <tspan class="lz">研究</tspan><tspan class="le">Research</tspan>
+  </text>
+
+  <!-- Arrow A→B -->
+  <line x1="118" y1="109" x2="146" y2="109" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arr-cyan)"/>
+
+  <!-- Box B -->
+  <rect x="148" y="85" width="76" height="48" rx="8" fill="#1e293b" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="186" y="103" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#22d3ee" text-anchor="middle">B</text>
+  <text x="186" y="118" font-family="JetBrains Mono,monospace" font-size="10" fill="#94a3b8" text-anchor="middle">
+    <tspan class="lz">起草</tspan><tspan class="le">Draft</tspan>
+  </text>
+
+  <!-- Arrow B→C -->
+  <line x1="224" y1="109" x2="252" y2="109" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arr-cyan)"/>
+
+  <!-- Box C -->
+  <rect x="254" y="85" width="76" height="48" rx="8" fill="#1e293b" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="292" y="103" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#22d3ee" text-anchor="middle">C</text>
+  <text x="292" y="118" font-family="JetBrains Mono,monospace" font-size="10" fill="#94a3b8" text-anchor="middle">
+    <tspan class="lz">审核</tspan><tspan class="le">Review</tspan>
+  </text>
+
+  <!-- Arrow C→D -->
+  <line x1="330" y1="109" x2="358" y2="109" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arr-cyan)"/>
+
+  <!-- Box D -->
+  <rect x="360" y="85" width="76" height="48" rx="8" fill="#1e293b" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="398" y="103" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#22d3ee" text-anchor="middle">D</text>
+  <text x="398" y="118" font-family="JetBrains Mono,monospace" font-size="10" fill="#94a3b8" text-anchor="middle">
+    <tspan class="lz">发布</tspan><tspan class="le">Publish</tspan>
+  </text>
+
+  <!-- Flow annotation -->
+  <text x="240" y="160" font-family="JetBrains Mono,monospace" font-size="10" fill="#475569" text-anchor="middle">A → B → C → D</text>
+  <text x="240" y="175" font-family="JetBrains Mono,monospace" font-size="10" fill="#64748b" text-anchor="middle">
+    <tspan class="lz">每步接收上一步输出</tspan><tspan class="le">Each step receives previous output</tspan>
+  </text>
+
+  <!-- Characteristics pills -->
+  <rect x="50" y="192" width="120" height="22" rx="11" fill="#0f172a" stroke="#22d3ee" stroke-width="1" opacity=".8"/>
+  <text x="110" y="207" font-family="JetBrains Mono,monospace" font-size="10" fill="#22d3ee" text-anchor="middle">
+    <tspan class="lz">简单可预测</tspan><tspan class="le">Simple &amp; Predictable</tspan>
+  </text>
+  <rect x="180" y="192" width="120" height="22" rx="11" fill="#0f172a" stroke="#22d3ee" stroke-width="1" opacity=".8"/>
+  <text x="240" y="207" font-family="JetBrains Mono,monospace" font-size="10" fill="#22d3ee" text-anchor="middle">
+    <tspan class="lz">顺序依赖</tspan><tspan class="le">Sequential Deps</tspan>
+  </text>
+  <rect x="310" y="192" width="120" height="22" rx="11" fill="#0f172a" stroke="#22d3ee" stroke-width="1" opacity=".8"/>
+  <text x="370" y="207" font-family="JetBrains Mono,monospace" font-size="10" fill="#22d3ee" text-anchor="middle">
+    <tspan class="lz">逐步累积</tspan><tspan class="le">Incremental</tspan>
+  </text>
+
+  <!-- Use case -->
+  <text x="34" y="244" font-family="JetBrains Mono,monospace" font-size="10" fill="#475569">
+    <tspan class="lz">适用：多步流水线（研究 → 起草 → 审核 → 发布）</tspan>
+    <tspan class="le">Use case: Multi-step pipeline (research → draft → review → publish)</tspan>
+  </text>
+</g>
+
+<!-- ============================= -->
+<!-- PANEL 2: Parallel Fan-out     -->
+<!-- Top-right: x=500-940, y=20-270-->
+<!-- ============================= -->
+<g id="panel2">
+  <rect x="500" y="20" width="440" height="256" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1" filter="url(#shadow)"/>
+  <rect x="500" y="20" width="440" height="3" rx="2" fill="#34d399" opacity=".8"/>
+
+  <!-- Badge -->
+  <rect x="514" y="36" width="10" height="10" rx="2" fill="#34d399"/>
+  <text x="530" y="46" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="#34d399" letter-spacing=".06em">
+    <tspan class="lz">并行扇出</tspan><tspan class="le">Parallel Fan-out</tspan>
+  </text>
+  <text x="870" y="46" font-family="JetBrains Mono,monospace" font-size="10" fill="#475569" text-anchor="end">Pattern 02</text>
+
+  <line x1="514" y1="54" x2="926" y2="54" stroke="#334155" stroke-width=".5"/>
+
+  <!-- Orchestrator box at top center -->
+  <rect x="659" y="68" width="102" height="40" rx="8" fill="#1e293b" stroke="#34d399" stroke-width="1.8"/>
+  <text x="710" y="83" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#34d399" text-anchor="middle">
+    <tspan class="lz">协调者</tspan><tspan class="le">Orchestrator</tspan>
+  </text>
+  <text x="710" y="98" font-family="JetBrains Mono,monospace" font-size="10" fill="#94a3b8" text-anchor="middle">Coordinator</text>
+
+  <!-- Fan-out lines from orchestrator to 3 agents -->
+  <!-- Line to Agent A (left) -->
+  <line x1="680" y1="108" x2="572" y2="148" stroke="#34d399" stroke-width="1.3" stroke-dasharray="4,3" marker-end="url(#arr-emerald)"/>
+  <!-- Line to Agent B (center) -->
+  <line x1="710" y1="108" x2="710" y2="148" stroke="#34d399" stroke-width="1.3" stroke-dasharray="4,3" marker-end="url(#arr-emerald)"/>
+  <!-- Line to Agent C (right) -->
+  <line x1="740" y1="108" x2="848" y2="148" stroke="#34d399" stroke-width="1.3" stroke-dasharray="4,3" marker-end="url(#arr-emerald)"/>
+
+  <!-- 3 parallel agent boxes -->
+  <!-- Agent A -->
+  <rect x="520" y="150" width="104" height="40" rx="8" fill="#1e293b" stroke="#34d399" stroke-width="1.5"/>
+  <text x="572" y="165" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#34d399" text-anchor="middle">A</text>
+  <text x="572" y="180" font-family="JetBrains Mono,monospace" font-size="10" fill="#94a3b8" text-anchor="middle">
+    <tspan class="lz">分析</tspan><tspan class="le">Analyze</tspan>
+  </text>
+  <!-- Agent B -->
+  <rect x="659" y="150" width="102" height="40" rx="8" fill="#1e293b" stroke="#34d399" stroke-width="1.5"/>
+  <text x="710" y="165" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#34d399" text-anchor="middle">B</text>
+  <text x="710" y="180" font-family="JetBrains Mono,monospace" font-size="10" fill="#94a3b8" text-anchor="middle">
+    <tspan class="lz">搜索</tspan><tspan class="le">Search</tspan>
+  </text>
+  <!-- Agent C -->
+  <rect x="796" y="150" width="104" height="40" rx="8" fill="#1e293b" stroke="#34d399" stroke-width="1.5"/>
+  <text x="848" y="165" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#34d399" text-anchor="middle">C</text>
+  <text x="848" y="180" font-family="JetBrains Mono,monospace" font-size="10" fill="#94a3b8" text-anchor="middle">
+    <tspan class="lz">处理</tspan><tspan class="le">Process</tspan>
+  </text>
+
+  <!-- Merge lines from agents to result -->
+  <line x1="572" y1="190" x2="686" y2="218" stroke="#34d399" stroke-width="1.3" stroke-dasharray="4,3" marker-end="url(#arr-emerald)"/>
+  <line x1="710" y1="190" x2="710" y2="218" stroke="#34d399" stroke-width="1.3" stroke-dasharray="4,3" marker-end="url(#arr-emerald)"/>
+  <line x1="848" y1="190" x2="734" y2="218" stroke="#34d399" stroke-width="1.3" stroke-dasharray="4,3" marker-end="url(#arr-emerald)"/>
+
+  <!-- Result/Merge box -->
+  <rect x="659" y="220" width="102" height="36" rx="8" fill="#0f2a1e" stroke="#34d399" stroke-width="1.8"/>
+  <text x="710" y="235" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#34d399" text-anchor="middle">
+    <tspan class="lz">合并结果</tspan><tspan class="le">Merge Results</tspan>
+  </text>
+  <text x="710" y="249" font-family="JetBrains Mono,monospace" font-size="10" fill="#94a3b8" text-anchor="middle">Aggregator</text>
+
+  <!-- Use case -->
+  <text x="514" y="272" font-family="JetBrains Mono,monospace" font-size="10" fill="#475569">
+    <tspan class="lz">适用：并行研究、多文件同时分析，N 倍提速</tspan>
+    <tspan class="le">Use case: Parallel research &amp; multi-file analysis, N× speedup</tspan>
+  </text>
+</g>
+
+<!-- ============================= -->
+<!-- PANEL 3: Hierarchical Tree    -->
+<!-- Bottom-left: x=20-460, y=296-556-->
+<!-- ============================= -->
+<g id="panel3">
+  <rect x="20" y="296" width="440" height="256" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1" filter="url(#shadow)"/>
+  <rect x="20" y="296" width="440" height="3" rx="2" fill="#a78bfa" opacity=".8"/>
+
+  <!-- Badge -->
+  <rect x="34" y="312" width="10" height="10" rx="2" fill="#a78bfa"/>
+  <text x="50" y="322" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="#a78bfa" letter-spacing=".06em">
+    <tspan class="lz">层级树</tspan><tspan class="le">Hierarchical Tree</tspan>
+  </text>
+  <text x="390" y="322" font-family="JetBrains Mono,monospace" font-size="10" fill="#475569" text-anchor="end">Pattern 03</text>
+
+  <line x1="34" y1="330" x2="446" y2="330" stroke="#334155" stroke-width=".5"/>
+
+  <!-- Root node -->
+  <rect x="189" y="344" width="102" height="36" rx="8" fill="#1e293b" stroke="#a78bfa" stroke-width="2"/>
+  <text x="240" y="359" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#a78bfa" text-anchor="middle">Root</text>
+  <text x="240" y="373" font-family="JetBrains Mono,monospace" font-size="10" fill="#94a3b8" text-anchor="middle">
+    <tspan class="lz">项目根 Agent</tspan><tspan class="le">Project Root</tspan>
+  </text>
+
+  <!-- Root → Branch1 -->
+  <path d="M210 380 L210 400 L142 400 L142 412" stroke="#a78bfa" stroke-width="1.4" fill="none" marker-end="url(#arr-violet)"/>
+  <!-- Root → Branch2 -->
+  <path d="M270 380 L270 400 L338 400 L338 412" stroke="#a78bfa" stroke-width="1.4" fill="none" marker-end="url(#arr-violet)"/>
+
+  <!-- Branch 1 -->
+  <rect x="100" y="414" width="84" height="32" rx="7" fill="#1e293b" stroke="#a78bfa" stroke-width="1.4"/>
+  <text x="142" y="428" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#a78bfa" text-anchor="middle">
+    <tspan class="lz">分支 A</tspan><tspan class="le">Branch A</tspan>
+  </text>
+  <text x="142" y="440" font-family="JetBrains Mono,monospace" font-size="10" fill="#94a3b8" text-anchor="middle">
+    <tspan class="lz">功能模块</tspan><tspan class="le">Feature Module</tspan>
+  </text>
+
+  <!-- Branch 2 -->
+  <rect x="296" y="414" width="84" height="32" rx="7" fill="#1e293b" stroke="#a78bfa" stroke-width="1.4"/>
+  <text x="338" y="428" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#a78bfa" text-anchor="middle">
+    <tspan class="lz">分支 B</tspan><tspan class="le">Branch B</tspan>
+  </text>
+  <text x="338" y="440" font-family="JetBrains Mono,monospace" font-size="10" fill="#94a3b8" text-anchor="middle">
+    <tspan class="lz">功能模块</tspan><tspan class="le">Feature Module</tspan>
+  </text>
+
+  <!-- Branch1 → Leaf1, Leaf2 -->
+  <path d="M122 446 L122 466 L92 466 L92 476" stroke="#a78bfa" stroke-width="1.2" fill="none" stroke-dasharray="3,2.5" marker-end="url(#arr-violet)"/>
+  <path d="M162 446 L162 466 L192 466 L192 476" stroke="#a78bfa" stroke-width="1.2" fill="none" stroke-dasharray="3,2.5" marker-end="url(#arr-violet)"/>
+
+  <!-- Branch2 → Leaf3 (single child) -->
+  <path d="M338 446 L338 476" stroke="#a78bfa" stroke-width="1.2" fill="none" stroke-dasharray="3,2.5" marker-end="url(#arr-violet)"/>
+
+  <!-- Leaf 1 -->
+  <rect x="58" y="478" width="68" height="26" rx="6" fill="#1a1040" stroke="#a78bfa" stroke-width="1" opacity=".9"/>
+  <text x="92" y="495" font-family="JetBrains Mono,monospace" font-size="10" fill="#c4b5fd" text-anchor="middle">
+    <tspan class="lz">叶子 1</tspan><tspan class="le">Leaf 1</tspan>
+  </text>
+  <!-- Leaf 2 -->
+  <rect x="158" y="478" width="68" height="26" rx="6" fill="#1a1040" stroke="#a78bfa" stroke-width="1" opacity=".9"/>
+  <text x="192" y="495" font-family="JetBrains Mono,monospace" font-size="10" fill="#c4b5fd" text-anchor="middle">
+    <tspan class="lz">叶子 2</tspan><tspan class="le">Leaf 2</tspan>
+  </text>
+  <!-- Leaf 3 -->
+  <rect x="304" y="478" width="68" height="26" rx="6" fill="#1a1040" stroke="#a78bfa" stroke-width="1" opacity=".9"/>
+  <text x="338" y="495" font-family="JetBrains Mono,monospace" font-size="10" fill="#c4b5fd" text-anchor="middle">
+    <tspan class="lz">叶子 3</tspan><tspan class="le">Leaf 3</tspan>
+  </text>
+
+  <!-- Max depth badge -->
+  <rect x="34" y="516" width="130" height="18" rx="4" fill="#1a1040" stroke="#a78bfa" stroke-width=".8"/>
+  <text x="99" y="528" font-family="JetBrains Mono,monospace" font-size="10" fill="#a78bfa" text-anchor="middle">
+    <tspan class="lz">最多 5 层递归嵌套</tspan><tspan class="le">Max 5 levels of nesting</tspan>
+  </text>
+
+  <!-- Use case -->
+  <text x="34" y="544" font-family="JetBrains Mono,monospace" font-size="10" fill="#475569">
+    <tspan class="lz">适用：复杂项目递归拆分子任务</tspan>
+    <tspan class="le">Use case: Complex projects with recursive sub-task decomposition</tspan>
+  </text>
+</g>
+
+<!-- ============================= -->
+<!-- PANEL 4: Supervisor Loop      -->
+<!-- Bottom-right: x=500-940,y=296-556-->
+<!-- ============================= -->
+<g id="panel4">
+  <rect x="500" y="296" width="440" height="256" rx="12" fill="#0f172a" stroke="#334155" stroke-width="1" filter="url(#shadow)"/>
+  <rect x="500" y="296" width="440" height="3" rx="2" fill="#fbbf24" opacity=".8"/>
+
+  <!-- Badge -->
+  <rect x="514" y="312" width="10" height="10" rx="2" fill="#fbbf24"/>
+  <text x="530" y="322" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="#fbbf24" letter-spacing=".06em">
+    <tspan class="lz">监督循环</tspan><tspan class="le">Supervisor Loop</tspan>
+  </text>
+  <text x="870" y="322" font-family="JetBrains Mono,monospace" font-size="10" fill="#475569" text-anchor="end">Pattern 04</text>
+
+  <line x1="514" y1="330" x2="926" y2="330" stroke="#334155" stroke-width=".5"/>
+
+  <!-- Supervisor box -->
+  <rect x="574" y="358" width="120" height="52" rx="10" fill="#2a1f06" stroke="#fbbf24" stroke-width="2"/>
+  <text x="634" y="378" font-family="JetBrains Mono,monospace" font-size="10.5" font-weight="700" fill="#fbbf24" text-anchor="middle">
+    <tspan class="lz">监督者</tspan><tspan class="le">Supervisor</tspan>
+  </text>
+  <text x="634" y="396" font-family="JetBrains Mono,monospace" font-size="10" fill="#92400e" text-anchor="middle">
+    <tspan class="lz">质量评估</tspan><tspan class="le">Quality Evaluator</tspan>
+  </text>
+
+  <!-- Worker box -->
+  <rect x="726" y="358" width="120" height="52" rx="10" fill="#1e293b" stroke="#fbbf24" stroke-width="1.6"/>
+  <text x="786" y="378" font-family="JetBrains Mono,monospace" font-size="10.5" font-weight="700" fill="#fbbf24" text-anchor="middle">
+    <tspan class="lz">执行者</tspan><tspan class="le">Worker</tspan>
+  </text>
+  <text x="786" y="396" font-family="JetBrains Mono,monospace" font-size="10" fill="#94a3b8" text-anchor="middle">
+    <tspan class="lz">任务执行</tspan><tspan class="le">Task Executor</tspan>
+  </text>
+
+  <!-- Arrow: Supervisor → Worker (top, "revise" direction) -->
+  <path d="M694 368 Q710 344 726 368" stroke="#fbbf24" stroke-width="1.6" fill="none" marker-end="url(#arr-amber)"/>
+  <rect x="690" y="335" width="60" height="18" rx="4" fill="#0f172a"/>
+  <text x="720" y="347" font-family="JetBrains Mono,monospace" font-size="10" fill="#fbbf24" text-anchor="middle">
+    <tspan class="lz">↺ 修订</tspan><tspan class="le">↺ Revise</tspan>
+  </text>
+
+  <!-- Arrow: Worker → Supervisor (bottom, "submit" direction) -->
+  <path d="M726 400 Q710 422 694 400" stroke="#fbbf24" stroke-width="1.6" fill="none" marker-end="url(#arr-amber)"/>
+  <rect x="690" y="412" width="60" height="18" rx="4" fill="#0f172a"/>
+  <text x="720" y="424" font-family="JetBrains Mono,monospace" font-size="10" fill="#fbbf24" text-anchor="middle">
+    <tspan class="lz">→ 提交</tspan><tspan class="le">→ Submit</tspan>
+  </text>
+
+  <!-- Quality threshold indicator -->
+  <rect x="574" y="430" width="272" height="28" rx="6" fill="#0f172a" stroke="#fbbf24" stroke-width=".8" opacity=".7"/>
+  <!-- Quality bar background -->
+  <rect x="580" y="437" width="214" height="14" rx="3" fill="#1e293b"/>
+  <!-- Quality bar fill (60% = "need revision") -->
+  <rect x="580" y="437" width="128" height="14" rx="3" fill="#78350f" opacity=".8"/>
+  <!-- Quality threshold line -->
+  <line x1="720" y1="435" x2="720" y2="453" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="2,2"/>
+  <text x="724" y="447" font-family="JetBrains Mono,monospace" font-size="10" fill="#fbbf24">
+    <tspan class="lz">阈值</tspan><tspan class="le">Threshold</tspan>
+  </text>
+  <text x="798" y="447" font-family="JetBrains Mono,monospace" font-size="10" fill="#34d399">
+    <tspan class="lz">✓ 通过</tspan><tspan class="le">✓ Pass</tspan>
+  </text>
+
+  <!-- Iteration count -->
+  <rect x="514" y="472" width="220" height="20" rx="4" fill="none"/>
+  <text x="514" y="487" font-family="JetBrains Mono,monospace" font-size="10" fill="#64748b">
+    <tspan class="lz">迭代直到质量达标 → 自动终止循环</tspan>
+    <tspan class="le">Loop until quality threshold met → auto-exit</tspan>
+  </text>
+
+  <!-- ✓ approve label on right side -->
+  <rect x="796" y="472" width="120" height="22" rx="5" fill="#0a2010" stroke="#34d399" stroke-width="1"/>
+  <text x="856" y="487" font-family="JetBrains Mono,monospace" font-size="10" fill="#34d399" text-anchor="middle">
+    <tspan class="lz">✓ 批准通过</tspan><tspan class="le">✓ Approved</tspan>
+  </text>
+
+  <!-- Use case -->
+  <text x="514" y="524" font-family="JetBrains Mono,monospace" font-size="10" fill="#475569">
+    <tspan class="lz">适用：质量门控任务（代码审查、内容审编）</tspan>
+    <tspan class="le">Use case: Quality-gated tasks (code review, content editing)</tspan>
+  </text>
+</g>
+
+<!-- ============================= -->
+<!-- Center dividers (visual guides)-->
+<!-- ============================= -->
+<line x1="480" y1="20" x2="480" y2="556" stroke="#334155" stroke-width=".5" stroke-dasharray="4,4" opacity=".3"/>
+<line x1="20" y1="278" x2="940" y2="278" stroke="#334155" stroke-width=".5" stroke-dasharray="4,4" opacity=".3"/>
+
+</svg>
+</div>
+
+<!-- Summary cards -->
+<div class="summary-row">
+  <div class="sum-card sc-cyan">
+    <div class="sc-label">
+      <span class="lz">串行链 · Pattern 01</span>
+      <span class="le">Sequential Chain · Pattern 01</span>
+    </div>
+    <div class="sc-title">
+      <span class="lz">串行最简单</span>
+      <span class="le">Simplest to Reason About</span>
+    </div>
+    <div class="sc-desc">
+      <span class="lz">适合顺序依赖的多步流程。每步接收上步输出，逻辑清晰，易于调试。</span>
+      <span class="le">Ideal for sequentially dependent multi-step pipelines. Each agent builds on the previous output — easy to debug.</span>
+    </div>
+  </div>
+
+  <div class="sum-card sc-emerald">
+    <div class="sc-label">
+      <span class="lz">并行扇出 · Pattern 02</span>
+      <span class="le">Parallel Fan-out · Pattern 02</span>
+    </div>
+    <div class="sc-title">
+      <span class="lz">并行最快</span>
+      <span class="le">Maximum Speed</span>
+    </div>
+    <div class="sc-desc">
+      <span class="lz">独立子任务同时执行，N 倍提速。协调者合并所有结果，适合并行研究和多文件分析。</span>
+      <span class="le">Independent sub-tasks run simultaneously for N× speedup. Coordinator aggregates results — great for parallel research.</span>
+    </div>
+  </div>
+
+  <div class="sum-card sc-violet">
+    <div class="sc-label">
+      <span class="lz">层级树 · Pattern 03</span>
+      <span class="le">Hierarchical Tree · Pattern 03</span>
+    </div>
+    <div class="sc-title">
+      <span class="lz">树形最强大</span>
+      <span class="le">Most Powerful Structure</span>
+    </div>
+    <div class="sc-desc">
+      <span class="lz">最多 5 层递归嵌套，适合复杂项目拆分。子树可独立运行，支持大规模任务分解。</span>
+      <span class="le">Up to 5 levels of recursive nesting for complex projects. Sub-trees run independently — handles large-scale decomposition.</span>
+    </div>
+  </div>
+
+  <div class="sum-card sc-amber">
+    <div class="sc-label">
+      <span class="lz">监督循环 · Pattern 04</span>
+      <span class="le">Supervisor Loop · Pattern 04</span>
+    </div>
+    <div class="sc-title">
+      <span class="lz">循环最质量</span>
+      <span class="le">Quality-Gated Iteration</span>
+    </div>
+    <div class="sc-desc">
+      <span class="lz">迭代执行直到质量达标自动终止。适合代码审查、内容审编等要求高质量输出的场景。</span>
+      <span class="le">Iterates until quality threshold is met, then exits. Ideal for code review and content editing with strict quality bars.</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-theme',t);
+  document.documentElement.setAttribute('data-lang',l);
+  document.getElementById('langBtn').textContent=l==='zh'?'EN':'中';
+  window.cycleTheme=function(){
+    var themes=['dark','warm','light'];
+    var cur=document.documentElement.getAttribute('data-theme')||'dark';
+    var next=themes[(themes.indexOf(cur)+1)%themes.length];
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('vtheme',next);
+  };
+  window.toggleLang=function(){
+    var cur=document.documentElement.getAttribute('data-lang')||'zh';
+    var next=cur==='zh'?'en':'zh';
+    document.documentElement.setAttribute('data-lang',next);
+    localStorage.setItem('vlang',next);
+    document.getElementById('langBtn').textContent=next==='zh'?'EN':'中';
+    document.querySelectorAll('svg .le, svg .lz').forEach(function(e){
+      var show=(next==='en')?e.classList.contains('le'):e.classList.contains('lz');
+      e.style.display=show?'':'none';
+      e.setAttribute('display',show?'inline':'none');
+    });
+  };
+  // Apply initial lang state to SVG elements
+  if(l==='en'){
+    document.querySelectorAll('svg .lz').forEach(function(e){
+      e.style.display='none';
+      e.setAttribute('display','none');
+    });
+    document.querySelectorAll('svg .le').forEach(function(e){
+      e.style.display='inline';
+      e.setAttribute('display','inline');
+    });
+  }
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

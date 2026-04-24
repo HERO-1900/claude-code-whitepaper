@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIS-2Q-016 · MagicDocs 时序图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+    :root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+    :root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+    :root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;padding:20px 24px 32px;transition:background .25s,color .25s}
+
+    .svg-bg{fill:var(--bg)}
+    .panel-bg{fill:var(--panel)}
+    .lifeline{stroke:var(--muted);stroke-opacity:.45;stroke-width:1;stroke-dasharray:4,4}
+    .axis-text{fill:var(--muted)}
+    .title-text{fill:var(--text)}
+    .muted-text{fill:var(--muted)}
+    .text-on-dark{fill:#0f172a}
+    .text-on-light{fill:#f8fafc}
+    .msg-text{fill:var(--text)}
+    .step-badge-bg{fill:var(--panel);stroke:var(--border);stroke-width:1}
+    .activation-stroke{stroke:var(--text);stroke-opacity:.2;stroke-width:.6}
+    .alt-frame{fill:none;stroke:var(--amber);stroke-width:1;stroke-dasharray:5,4;stroke-opacity:.55}
+    .alt-tag-bg{fill:var(--amber);fill-opacity:.85}
+
+    .vis-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+    .vis-dot{width:10px;height:10px;border-radius:50%;background:var(--violet);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+    .vis-title{font-size:17px;font-weight:700;color:var(--text)}
+    .vis-sub{font-size:11px;color:var(--muted);margin-left:4px}
+
+    .svg-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:16px;overflow-x:auto}
+
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+    .stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:14px}
+    .stat-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0}
+    .stat-body{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .stat-val{font-size:20px;font-weight:700;line-height:1.1}
+    .stat-lab{font-size:10px;color:var(--muted);line-height:1.3}
+
+    .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}
+    .card-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+    .card-dot{width:10px;height:10px;border-radius:50%}
+    .card-hd h3{font-size:12px;font-weight:700;color:var(--text)}
+    .card-sub{font-size:10px;color:var(--muted);margin-left:auto}
+    .card ul{list-style:none;font-size:11px;color:var(--muted);line-height:1.75}
+    .card li strong{color:var(--text);font-weight:600}
+
+    .vis-footer{font-size:10px;color:var(--muted);text-align:center;border-top:1px solid var(--border);padding-top:10px}
+
+    .ctrl{position:fixed;top:16px;right:16px;display:flex;gap:6px;z-index:999}
+    .ctrl button{background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:6px 11px;border-radius:6px;cursor:pointer;transition:all .15s}
+    .ctrl button:hover{border-color:var(--subtle);transform:translateY(-1px)}
+  </style>
+</head>
+<body>
+<div class="ctrl">
+  <button onclick="window.cycleTheme()">Theme</button>
+  <button onclick="window.toggleLang()">EN/中</button>
+</div>
+
+<div class="vis-header">
+  <div class="vis-dot"></div>
+  <div class="vis-title">
+    <span class="lz">MagicDocs 保存即文档时序图</span>
+    <span class="le" style="display:none">MagicDocs Save-Triggered Doc Pipeline</span>
+  </div>
+  <div class="vis-sub">VIS-2Q-016 · <span class="lz">文件保存 → 缓存查询 → Claude 生成 → 落盘</span><span class="le" style="display:none">Save → Cache → Claude → Disk</span></div>
+</div>
+
+<div class="svg-wrap">
+<svg viewBox="0 0 920 560" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+  <defs>
+    <linearGradient id="gCyan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity=".95"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity=".70"/>
+    </linearGradient>
+    <linearGradient id="gViolet" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity=".95"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity=".70"/>
+    </linearGradient>
+    <linearGradient id="gSlate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#64748b" stop-opacity=".95"/>
+      <stop offset="100%" stop-color="#64748b" stop-opacity=".70"/>
+    </linearGradient>
+    <linearGradient id="gAmber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity=".95"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity=".70"/>
+    </linearGradient>
+    <linearGradient id="gEmerald" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#10b981" stop-opacity=".95"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity=".70"/>
+    </linearGradient>
+
+    <marker id="arrCyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#22d3ee"/>
+    </marker>
+    <marker id="arrViolet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8b5cf6"/>
+    </marker>
+    <marker id="arrSlate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/>
+    </marker>
+    <marker id="arrAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/>
+    </marker>
+    <marker id="arrEmerald" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#10b981"/>
+    </marker>
+    <marker id="arrViolet2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8b5cf6"/>
+    </marker>
+  </defs>
+
+  <!-- bg -->
+  <rect width="920" height="560" class="svg-bg"/>
+
+  <!-- ============ ACTOR BOXES (top) ============
+       Lifeline x-positions:
+         File Watcher    : 110
+         MagicDocs       : 290
+         Cache           : 460
+         Claude API      : 630
+         Filesystem      : 810
+  -->
+
+  <!-- File Watcher -->
+  <rect x="40" y="30" width="140" height="44" rx="8" fill="url(#gCyan)" stroke="#22d3ee" stroke-width="1.4"/>
+  <text x="110" y="50" class="text-on-dark" font-size="11" font-weight="700" text-anchor="middle">
+    <tspan class="lz">文件监听器</tspan><tspan class="le" display="none">File Watcher</tspan>
+  </text>
+  <text x="110" y="65" class="text-on-dark" font-size="10" font-weight="600" text-anchor="middle" opacity=".85">
+    <tspan class="lz">fs.watch(src/**)</tspan><tspan class="le" display="none">fs.watch(src/**)</tspan>
+  </text>
+
+  <!-- MagicDocs Daemon -->
+  <rect x="220" y="30" width="140" height="44" rx="8" fill="url(#gViolet)" stroke="#8b5cf6" stroke-width="1.4"/>
+  <text x="290" y="50" class="text-on-light" font-size="11" font-weight="700" text-anchor="middle">
+    <tspan class="lz">MagicDocs 守护进程</tspan><tspan class="le" display="none">MagicDocs Daemon</tspan>
+  </text>
+  <text x="290" y="65" class="text-on-light" font-size="10" font-weight="600" text-anchor="middle" opacity=".85">
+    <tspan class="lz">核心协调器</tspan><tspan class="le" display="none">Core Orchestrator</tspan>
+  </text>
+
+  <!-- Cache -->
+  <rect x="390" y="30" width="140" height="44" rx="8" fill="url(#gSlate)" stroke="#64748b" stroke-width="1.4"/>
+  <text x="460" y="50" class="text-on-light" font-size="11" font-weight="700" text-anchor="middle">
+    <tspan class="lz">缓存层 · Cache</tspan><tspan class="le" display="none">Cache Layer</tspan>
+  </text>
+  <text x="460" y="65" class="text-on-light" font-size="10" font-weight="600" text-anchor="middle" opacity=".85">
+    <tspan class="lz">file_hash → docs</tspan><tspan class="le" display="none">file_hash → docs</tspan>
+  </text>
+
+  <!-- Claude API -->
+  <rect x="560" y="30" width="140" height="44" rx="8" fill="url(#gAmber)" stroke="#f59e0b" stroke-width="1.4"/>
+  <text x="630" y="50" class="text-on-dark" font-size="11" font-weight="700" text-anchor="middle">
+    <tspan class="lz">Claude API</tspan><tspan class="le" display="none">Claude API</tspan>
+  </text>
+  <text x="630" y="65" class="text-on-dark" font-size="10" font-weight="600" text-anchor="middle" opacity=".85">
+    <tspan class="lz">claude-sonnet-4.5</tspan><tspan class="le" display="none">claude-sonnet-4.5</tspan>
+  </text>
+
+  <!-- Filesystem -->
+  <rect x="740" y="30" width="140" height="44" rx="8" fill="url(#gEmerald)" stroke="#10b981" stroke-width="1.4"/>
+  <text x="810" y="50" class="text-on-dark" font-size="11" font-weight="700" text-anchor="middle">
+    <tspan class="lz">文件系统</tspan><tspan class="le" display="none">Filesystem</tspan>
+  </text>
+  <text x="810" y="65" class="text-on-dark" font-size="10" font-weight="600" text-anchor="middle" opacity=".85">
+    <tspan class="lz">docs/*.md</tspan><tspan class="le" display="none">docs/*.md</tspan>
+  </text>
+
+  <!-- ============ LIFELINES ============ -->
+  <line x1="110" y1="74" x2="110" y2="510" class="lifeline"/>
+  <line x1="290" y1="74" x2="290" y2="510" class="lifeline"/>
+  <line x1="460" y1="74" x2="460" y2="510" class="lifeline"/>
+  <line x1="630" y1="74" x2="630" y2="510" class="lifeline"/>
+  <line x1="810" y1="74" x2="810" y2="510" class="lifeline"/>
+
+  <!-- ============ ACTIVATION BARS ============
+       Width=10, centered on lifeline. Color tinted per actor. -->
+
+  <!-- MagicDocs activation: from msg1 arrival (y=110) to msg8 send (y=470). -->
+  <rect x="285" y="110" width="10" height="360" rx="2" fill="#8b5cf6" fill-opacity=".22" class="activation-stroke"/>
+
+  <!-- Cache activation #1: during cache lookup (msg2 → msg3): y=150..190 -->
+  <rect x="455" y="150" width="10" height="40" rx="2" fill="#64748b" fill-opacity=".28" class="activation-stroke"/>
+
+  <!-- MagicDocs self-call bump (parse AST): y=220..260 -->
+  <rect x="295" y="220" width="10" height="40" rx="2" fill="#8b5cf6" fill-opacity=".35" class="activation-stroke"/>
+
+  <!-- Claude API activation: y=290..370 -->
+  <rect x="625" y="290" width="10" height="80" rx="2" fill="#f59e0b" fill-opacity=".26" class="activation-stroke"/>
+
+  <!-- Cache activation #2 (write): y=400..430 -->
+  <rect x="455" y="400" width="10" height="30" rx="2" fill="#64748b" fill-opacity=".28" class="activation-stroke"/>
+
+  <!-- Filesystem activation: y=470..500 -->
+  <rect x="805" y="470" width="10" height="30" rx="2" fill="#10b981" fill-opacity=".26" class="activation-stroke"/>
+
+  <!-- ============ ALT FRAME (cache miss branch) ============ -->
+  <rect x="240" y="136" width="490" height="250" rx="6" class="alt-frame"/>
+  <rect x="240" y="128" width="74" height="18" rx="3" class="alt-tag-bg"/>
+  <text x="248" y="141" class="text-on-dark" font-size="10" font-weight="700">alt</text>
+  <text x="274" y="141" class="text-on-dark" font-size="10" font-weight="700">
+    <tspan class="lz">缓存未命中</tspan><tspan class="le" display="none">cache miss</tspan>
+  </text>
+  <text x="480" y="141" class="muted-text" font-size="10" font-style="italic" text-anchor="middle">
+    <tspan class="lz">[若命中则跳到 Step 7，直接复用旧文档]</tspan><tspan class="le" display="none">[on hit: jump to Step 7, reuse cached docs]</tspan>
+  </text>
+
+  <!-- ============ MESSAGE 1: File Watcher → MagicDocs ============ y=112 -->
+  <circle cx="68" cy="112" r="9" class="step-badge-bg"/>
+  <text x="68" y="115.5" class="axis-text" font-size="10" font-weight="700" text-anchor="middle">1</text>
+  <line x1="110" y1="112" x2="285" y2="112" stroke="#22d3ee" stroke-width="1.6" marker-end="url(#arrCyan)"/>
+  <text x="197" y="105" class="msg-text" font-size="11" font-weight="600" text-anchor="middle">
+    <tspan class="lz">save(filePath) 事件</tspan><tspan class="le" display="none">save(filePath) event</tspan>
+  </text>
+  <text x="197" y="123" class="muted-text" font-size="10" text-anchor="middle">
+    <tspan class="lz">fs.watch → debounce 300ms</tspan><tspan class="le" display="none">fs.watch → debounce 300ms</tspan>
+  </text>
+
+  <!-- ============ MESSAGE 2: MagicDocs → Cache ============ y=152 -->
+  <circle cx="68" cy="152" r="9" class="step-badge-bg"/>
+  <text x="68" y="155.5" class="axis-text" font-size="10" font-weight="700" text-anchor="middle">2</text>
+  <line x1="295" y1="152" x2="455" y2="152" stroke="#8b5cf6" stroke-width="1.6" marker-end="url(#arrViolet)"/>
+  <text x="375" y="145" class="msg-text" font-size="11" font-weight="600" text-anchor="middle">
+    <tspan class="lz">checkCache(file_hash)</tspan><tspan class="le" display="none">checkCache(file_hash)</tspan>
+  </text>
+  <text x="375" y="163" class="muted-text" font-size="10" text-anchor="middle">
+    <tspan class="lz">sha256 去重键查询</tspan><tspan class="le" display="none">sha256 dedupe key</tspan>
+  </text>
+
+  <!-- ============ MESSAGE 3: Cache → MagicDocs (miss, dashed response) ============ y=192 -->
+  <circle cx="68" cy="192" r="9" class="step-badge-bg"/>
+  <text x="68" y="195.5" class="axis-text" font-size="10" font-weight="700" text-anchor="middle">3</text>
+  <line x1="455" y1="192" x2="295" y2="192" stroke="#64748b" stroke-width="1.4" stroke-dasharray="6,4" marker-end="url(#arrSlate)"/>
+  <text x="375" y="185" class="msg-text" font-size="11" font-weight="600" text-anchor="middle">
+    <tspan class="lz">miss · null</tspan><tspan class="le" display="none">miss · null</tspan>
+  </text>
+  <text x="375" y="203" class="muted-text" font-size="10" text-anchor="middle">
+    <tspan class="lz">虚线表示响应，未命中走下分支</tspan><tspan class="le" display="none">dashed = response, branch down on miss</tspan>
+  </text>
+
+  <!-- ============ MESSAGE 4: MagicDocs → MagicDocs (self call) ============ y=230-250 -->
+  <circle cx="68" cy="240" r="9" class="step-badge-bg"/>
+  <text x="68" y="243.5" class="axis-text" font-size="10" font-weight="700" text-anchor="middle">4</text>
+  <!-- self-loop arc: right of lifeline -->
+  <path d="M 295 225 L 360 225 L 360 255 L 305 255" fill="none" stroke="#8b5cf6" stroke-width="1.6" marker-end="url(#arrViolet2)"/>
+  <text x="368" y="232" class="msg-text" font-size="11" font-weight="600">
+    <tspan class="lz">parseAST() · 抽取签名</tspan><tspan class="le" display="none">parseAST() · extract sigs</tspan>
+  </text>
+  <text x="368" y="249" class="muted-text" font-size="10">
+    <tspan class="lz">tree-sitter → 函数/类/导出列表</tspan><tspan class="le" display="none">tree-sitter → fn/class/exports</tspan>
+  </text>
+
+  <!-- ============ MESSAGE 5: MagicDocs → Claude API ============ y=292 -->
+  <circle cx="68" cy="292" r="9" class="step-badge-bg"/>
+  <text x="68" y="295.5" class="axis-text" font-size="10" font-weight="700" text-anchor="middle">5</text>
+  <line x1="295" y1="292" x2="625" y2="292" stroke="#8b5cf6" stroke-width="1.6" marker-end="url(#arrViolet)"/>
+  <text x="460" y="285" class="msg-text" font-size="11" font-weight="600" text-anchor="middle">
+    <tspan class="lz">generateDocs(prompt + code)</tspan><tspan class="le" display="none">generateDocs(prompt + code)</tspan>
+  </text>
+  <text x="460" y="303" class="muted-text" font-size="10" text-anchor="middle">
+    <tspan class="lz">stream:true · system prompt + AST JSON</tspan><tspan class="le" display="none">stream:true · system prompt + AST JSON</tspan>
+  </text>
+
+  <!-- ============ MESSAGE 6: Claude API → MagicDocs (streaming, dashed) ============ y=368 -->
+  <circle cx="68" cy="368" r="9" class="step-badge-bg"/>
+  <text x="68" y="371.5" class="axis-text" font-size="10" font-weight="700" text-anchor="middle">6</text>
+  <line x1="625" y1="368" x2="295" y2="368" stroke="#f59e0b" stroke-width="1.4" stroke-dasharray="6,4" marker-end="url(#arrAmber)"/>
+  <text x="460" y="361" class="msg-text" font-size="11" font-weight="600" text-anchor="middle">
+    <tspan class="lz">doc content · SSE 流式返回</tspan><tspan class="le" display="none">doc content · SSE streaming</tspan>
+  </text>
+  <text x="460" y="379" class="muted-text" font-size="10" text-anchor="middle">
+    <tspan class="lz">token-by-token · 首包 ≈ 180ms</tspan><tspan class="le" display="none">token-by-token · first chunk ≈ 180ms</tspan>
+  </text>
+
+  <!-- Close alt frame indicator line at y=386 (just under msg6) -->
+  <!-- (alt rect already spans 136..386) -->
+
+  <!-- ============ MESSAGE 7: MagicDocs → Cache (update) ============ y=412 -->
+  <circle cx="68" cy="412" r="9" class="step-badge-bg"/>
+  <text x="68" y="415.5" class="axis-text" font-size="10" font-weight="700" text-anchor="middle">7</text>
+  <line x1="295" y1="412" x2="455" y2="412" stroke="#8b5cf6" stroke-width="1.6" marker-end="url(#arrViolet)"/>
+  <text x="375" y="405" class="msg-text" font-size="11" font-weight="600" text-anchor="middle">
+    <tspan class="lz">updateCache(hash, docs)</tspan><tspan class="le" display="none">updateCache(hash, docs)</tspan>
+  </text>
+  <text x="375" y="423" class="muted-text" font-size="10" text-anchor="middle">
+    <tspan class="lz">LRU · 容量 512 条 · TTL 7d</tspan><tspan class="le" display="none">LRU · 512 entries · TTL 7d</tspan>
+  </text>
+
+  <!-- ============ MESSAGE 8: MagicDocs → Filesystem (write) ============ y=478 -->
+  <circle cx="68" cy="478" r="9" class="step-badge-bg"/>
+  <text x="68" y="481.5" class="axis-text" font-size="10" font-weight="700" text-anchor="middle">8</text>
+  <line x1="295" y1="478" x2="805" y2="478" stroke="#8b5cf6" stroke-width="1.6" marker-end="url(#arrViolet)"/>
+  <text x="550" y="471" class="msg-text" font-size="11" font-weight="600" text-anchor="middle">
+    <tspan class="lz">write(&quot;docs/&lt;file&gt;.md&quot;, content)</tspan><tspan class="le" display="none">write(&quot;docs/&lt;file&gt;.md&quot;, content)</tspan>
+  </text>
+  <text x="550" y="489" class="muted-text" font-size="10" text-anchor="middle">
+    <tspan class="lz">原子写入 · tmp 文件 + rename</tspan><tspan class="le" display="none">atomic write · tmp + rename</tspan>
+  </text>
+
+  <!-- ============ FOOTER AXIS HINT ============ -->
+  <text x="460" y="534" class="muted-text" font-size="10" text-anchor="middle" font-weight="600">
+    <tspan class="lz">时间轴自上而下 · 实线=请求 / 虚线=响应 · 紫色激活条=MagicDocs 全程在线</tspan>
+    <tspan class="le" display="none">Time flows top→bottom · solid=call / dashed=return · violet bar=MagicDocs active throughout</tspan>
+  </text>
+</svg>
+</div>
+
+<!-- ===== Stats Row ===== -->
+<div class="stats">
+  <div class="stat" style="border-color:rgba(139,92,246,.35)">
+    <div class="stat-ico" style="background:rgba(139,92,246,.18);color:#8b5cf6">◉</div>
+    <div class="stat-body">
+      <div class="stat-val" style="color:#8b5cf6">5</div>
+      <div class="stat-lab">
+        <span class="lz">参与者 · File Watcher / Daemon / Cache / API / FS</span>
+        <span class="le" style="display:none">Actors · File Watcher / Daemon / Cache / API / FS</span>
+      </div>
+    </div>
+  </div>
+  <div class="stat" style="border-color:rgba(34,211,238,.35)">
+    <div class="stat-ico" style="background:rgba(34,211,238,.18);color:#22d3ee">✉</div>
+    <div class="stat-body">
+      <div class="stat-val" style="color:#22d3ee">8</div>
+      <div class="stat-lab">
+        <span class="lz">消息 · 6 跨进程 + 1 自调用 + 1 落盘</span>
+        <span class="le" style="display:none">Messages · 6 IPC + 1 self-call + 1 disk</span>
+      </div>
+    </div>
+  </div>
+  <div class="stat" style="border-color:rgba(16,185,129,.35)">
+    <div class="stat-ico" style="background:rgba(16,185,129,.18);color:#10b981">⚡</div>
+    <div class="stat-body">
+      <div class="stat-val" style="color:#10b981">
+        <span class="lz">缓存优化</span>
+        <span class="le" style="display:none">Cache-optimized</span>
+      </div>
+      <div class="stat-lab">
+        <span class="lz">sha256 命中则跳过 Claude · 省 2~8s 延迟</span>
+        <span class="le" style="display:none">sha256 hit skips Claude · saves 2~8s latency</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Explanation Cards ===== -->
+<div class="cards">
+  <div class="card" style="border-left:3px solid #8b5cf6">
+    <div class="card-hd">
+      <div class="card-dot" style="background:#8b5cf6"></div>
+      <h3><span class="lz">关键路径 · Daemon 全程在线</span><span class="le" style="display:none">Critical Path · Daemon Stays Hot</span></h3>
+      <span class="card-sub">~3.5s P50</span>
+    </div>
+    <ul>
+      <li>• <strong><span class="lz">入口</span><span class="le" style="display:none">Entry</span></strong>：<span class="lz">File Watcher 去抖 300ms 避免保存风暴</span><span class="le" style="display:none">File Watcher debounces 300ms to avoid save storms</span></li>
+      <li>• <strong><span class="lz">加速</span><span class="le" style="display:none">Speedup</span></strong>：<span class="lz">先查 sha256 缓存 → 命中则跳过 API（Step 5/6）</span><span class="le" style="display:none">sha256 lookup first → hit skips the API (Step 5/6)</span></li>
+      <li>• <strong><span class="lz">收口</span><span class="le" style="display:none">Sink</span></strong>：<span class="lz">atomic rename 保证读者永远看到完整文件</span><span class="le" style="display:none">atomic rename guarantees readers never see a half-written file</span></li>
+      <li>• 💡 <span class="lz">通俗理解：像餐厅保温柜 — 先看预做好的有没有，没有再现炒</span><span class="le" style="display:none">Like a restaurant's warmer — check pre-cooked first, cook only when empty</span></li>
+    </ul>
+  </div>
+  <div class="card" style="border-left:3px solid #f59e0b">
+    <div class="card-hd">
+      <div class="card-dot" style="background:#f59e0b"></div>
+      <h3><span class="lz">Claude 流式返回 · 边收边写</span><span class="le" style="display:none">Claude Streaming · Write-As-Receive</span></h3>
+      <span class="card-sub">TTFT 180ms</span>
+    </div>
+    <ul>
+      <li>• <strong>SSE</strong> <span class="lz">首 token 约 180ms，后续 token ~20ms/个</span><span class="le" style="display:none">First token ~180ms, subsequent ~20ms/token</span></li>
+      <li>• <span class="lz">Daemon 收到流片段即追加到内存 buffer，不阻塞 AST</span><span class="le" style="display:none">Daemon appends stream chunks to in-memory buffer without blocking AST</span></li>
+      <li>• <span class="lz">Step 7 写缓存 + Step 8 落盘可并发发起（Promise.all）</span><span class="le" style="display:none">Step 7 cache write + Step 8 disk write fire concurrently (Promise.all)</span></li>
+      <li>• 💡 <span class="lz">通俗理解：像流水线传菜 — 大厨出一勺，服务员立刻端走，不等整盘</span><span class="le" style="display:none">Like a conveyor kitchen — chef plates a spoonful, server takes it immediately, no waiting for the whole dish</span></li>
+    </ul>
+  </div>
+</div>
+
+<div class="vis-footer">
+  VIS-2Q-016 · Claude Code 2.1.88 · MagicDocs · <span class="lz">5 参与者 · 8 消息 · sha256 缓存命中跳过 Claude API · v2 生产版</span><span class="le" style="display:none">5 actors · 8 messages · sha256 cache hit bypasses Claude API · v2 Production</span>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

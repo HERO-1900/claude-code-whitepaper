@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Teleport Git Bundle 流程图 / Teleport Git Bundle Flow</title>
+<style>
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;min-height:100vh;transition:background .2s,color .2s}
+.wrap{max-width:1200px;margin:0 auto;padding:32px 24px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.title{font-size:22px;font-weight:700;letter-spacing:.3px}
+.subtitle{font-size:13px;color:var(--muted);margin-top:4px}
+.btns{display:flex;gap:8px}
+.btn{background:var(--panel);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:13px;transition:.15s;font-weight:500}
+.btn:hover{border-color:var(--cyan);color:var(--cyan)}
+.board{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.svgwrap{width:100%;overflow-x:auto}
+svg{display:block;width:100%;height:auto;max-width:100%}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:18px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+.stat-value{font-size:20px;font-weight:700;margin-top:4px}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:16px;font-size:12px;color:var(--muted)}
+.legend-item{display:flex;align-items:center;gap:6px}
+.legend-dot{width:10px;height:10px;border-radius:50%}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div>
+      <div class="title">
+        <span class="lz">Teleport Git Bundle 流程图</span>
+        <span class="le" style="display:none">Teleport Git Bundle Flow</span>
+      </div>
+      <div class="subtitle">
+        <span class="lz">Claude Code 如何打包 Git 仓库状态并在机器间传输</span>
+        <span class="le" style="display:none">How Claude Code bundles a Git repository state for cross-machine transfer</span>
+      </div>
+    </div>
+    <div class="btns">
+      <button class="btn" onclick="cycleTheme()"><span class="lz">切换主题</span><span class="le" style="display:none">Theme</span></button>
+      <button class="btn" onclick="toggleLang()"><span class="lz">EN</span><span class="le" style="display:none">中文</span></button>
+    </div>
+  </div>
+
+  <div class="board">
+    <div class="svgwrap">
+    <svg viewBox="0 0 920 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Teleport Git Bundle Flow">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="currentColor"/>
+        </marker>
+        <linearGradient id="gTrigger" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#22d3ee" stop-opacity=".28"/>
+          <stop offset="1" stop-color="#22d3ee" stop-opacity=".08"/>
+        </linearGradient>
+        <linearGradient id="gSnap" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#8b5cf6" stop-opacity=".28"/>
+          <stop offset="1" stop-color="#8b5cf6" stop-opacity=".08"/>
+        </linearGradient>
+        <linearGradient id="gSign" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#f59e0b" stop-opacity=".28"/>
+          <stop offset="1" stop-color="#f59e0b" stop-opacity=".08"/>
+        </linearGradient>
+        <linearGradient id="gEnc" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#f97316" stop-opacity=".28"/>
+          <stop offset="1" stop-color="#f97316" stop-opacity=".08"/>
+        </linearGradient>
+        <linearGradient id="gUp" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#10b981" stop-opacity=".28"/>
+          <stop offset="1" stop-color="#10b981" stop-opacity=".08"/>
+        </linearGradient>
+        <linearGradient id="gRest" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stop-color="#64748b" stop-opacity=".32"/>
+          <stop offset="1" stop-color="#64748b" stop-opacity=".1"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Header band -->
+      <rect x="20" y="18" width="880" height="44" rx="10" fill="var(--card)" stroke="var(--border)"/>
+      <text x="36" y="40" font-size="13" font-weight="700" fill="var(--text)" class="lz">端到端流水线 · 6 阶段</text>
+      <text x="36" y="40" font-size="13" font-weight="700" fill="var(--text)" class="le" display="none">End-to-End Pipeline · 6 Stages</text>
+      <text x="36" y="55" font-size="11" fill="var(--muted)" class="lz">源机器 Source → 传输通道 Wire → 目标机器 Target</text>
+      <text x="36" y="55" font-size="11" fill="var(--muted)" class="le" display="none">Source machine → Wire channel → Target machine</text>
+      <text x="884" y="40" font-size="11" text-anchor="end" fill="var(--cyan)" font-weight="600">AES-256-GCM</text>
+      <text x="884" y="55" font-size="10" text-anchor="end" fill="var(--muted)" class="lz">端到端加密</text>
+      <text x="884" y="55" font-size="10" text-anchor="end" fill="var(--muted)" class="le" display="none">End-to-end encrypted</text>
+
+      <!-- Source zone label -->
+      <rect x="20" y="78" width="520" height="14" rx="3" fill="none"/>
+      <line x1="20" y1="85" x2="95" y2="85" stroke="var(--border)"/>
+      <text x="100" y="89" font-size="10" fill="var(--muted)" class="lz">源机器 SOURCE</text>
+      <text x="100" y="89" font-size="10" fill="var(--muted)" class="le" display="none">SOURCE MACHINE</text>
+      <line x1="170" y1="85" x2="540" y2="85" stroke="var(--border)"/>
+
+      <line x1="560" y1="85" x2="640" y2="85" stroke="var(--border)"/>
+      <text x="645" y="89" font-size="10" fill="var(--muted)" class="lz">传输 WIRE</text>
+      <text x="645" y="89" font-size="10" fill="var(--muted)" class="le" display="none">WIRE</text>
+      <line x1="690" y1="85" x2="760" y2="85" stroke="var(--border)"/>
+
+      <text x="780" y="89" font-size="10" fill="var(--muted)" class="lz">目标 TARGET</text>
+      <text x="780" y="89" font-size="10" fill="var(--muted)" class="le" display="none">TARGET</text>
+      <line x1="830" y1="85" x2="900" y2="85" stroke="var(--border)"/>
+
+      <!-- === STAGE 1: Trigger === -->
+      <g transform="translate(30,108)">
+        <rect width="130" height="150" rx="12" fill="url(#gTrigger)" stroke="#22d3ee" stroke-width="1.5"/>
+        <circle cx="24" cy="22" r="12" fill="#22d3ee" fill-opacity=".25" stroke="#22d3ee"/>
+        <text x="24" y="26" font-size="12" text-anchor="middle" fill="#22d3ee" font-weight="700">1</text>
+        <text x="44" y="20" font-size="11" fill="var(--muted)" class="lz">STEP 01</text>
+        <text x="44" y="20" font-size="11" fill="var(--muted)" class="le" display="none">STEP 01</text>
+        <text x="44" y="32" font-size="13" fill="#22d3ee" font-weight="700" class="lz">触发</text>
+        <text x="44" y="32" font-size="13" fill="#22d3ee" font-weight="700" class="le" display="none">Trigger</text>
+        <line x1="12" y1="44" x2="118" y2="44" stroke="#22d3ee" stroke-opacity=".3"/>
+        <text x="12" y="60" font-size="10" fill="var(--text)" font-weight="600" class="lz">用户命令</text>
+        <text x="12" y="60" font-size="10" fill="var(--text)" font-weight="600" class="le" display="none">User command</text>
+        <rect x="10" y="66" width="110" height="20" rx="4" fill="var(--subtle)"/>
+        <text x="16" y="80" font-size="10" fill="var(--text)" font-family="ui-monospace,Menlo,monospace">claude teleport</text>
+        <text x="12" y="102" font-size="10" fill="var(--text)" font-weight="600" class="lz">或自动触发</text>
+        <text x="12" y="102" font-size="10" fill="var(--text)" font-weight="600" class="le" display="none">Or auto-trigger</text>
+        <text x="12" y="116" font-size="10" fill="var(--muted)" class="lz">空闲同步时</text>
+        <text x="12" y="116" font-size="10" fill="var(--muted)" class="le" display="none">on idle sync</text>
+        <rect x="10" y="124" width="58" height="16" rx="8" fill="#22d3ee" fill-opacity=".15" stroke="#22d3ee" stroke-opacity=".4"/>
+        <text x="39" y="135" font-size="10" text-anchor="middle" fill="#22d3ee" class="lz">入口</text>
+        <text x="39" y="135" font-size="10" text-anchor="middle" fill="#22d3ee" class="le" display="none">Entry</text>
+      </g>
+
+      <!-- arrow 1 -->
+      <g color="#22d3ee">
+        <line x1="162" y1="183" x2="178" y2="183" stroke="currentColor" stroke-width="2" marker-end="url(#arrow)"/>
+      </g>
+
+      <!-- === STAGE 2: Snapshot === -->
+      <g transform="translate(180,108)">
+        <rect width="130" height="150" rx="12" fill="url(#gSnap)" stroke="#8b5cf6" stroke-width="1.5"/>
+        <circle cx="24" cy="22" r="12" fill="#8b5cf6" fill-opacity=".25" stroke="#8b5cf6"/>
+        <text x="24" y="26" font-size="12" text-anchor="middle" fill="#8b5cf6" font-weight="700">2</text>
+        <text x="44" y="20" font-size="11" fill="var(--muted)">STEP 02</text>
+        <text x="44" y="32" font-size="13" fill="#8b5cf6" font-weight="700" class="lz">快照生成</text>
+        <text x="44" y="32" font-size="13" fill="#8b5cf6" font-weight="700" class="le" display="none">Snapshot</text>
+        <line x1="12" y1="44" x2="118" y2="44" stroke="#8b5cf6" stroke-opacity=".3"/>
+        <rect x="10" y="52" width="110" height="20" rx="4" fill="var(--subtle)"/>
+        <text x="16" y="66" font-size="10" fill="var(--text)" font-family="ui-monospace,Menlo,monospace">git bundle create</text>
+        <text x="12" y="84" font-size="10" fill="var(--text)" font-weight="600" class="lz">包含内容</text>
+        <text x="12" y="84" font-size="10" fill="var(--text)" font-weight="600" class="le" display="none">Includes</text>
+        <text x="12" y="98" font-size="10" fill="var(--muted)" class="lz">• 所有分支</text>
+        <text x="12" y="98" font-size="10" fill="var(--muted)" class="le" display="none">• branches</text>
+        <text x="12" y="112" font-size="10" fill="var(--muted)" class="lz">• 标签 tags</text>
+        <text x="12" y="112" font-size="10" fill="var(--muted)" class="le" display="none">• tags</text>
+        <text x="12" y="126" font-size="10" fill="var(--muted)" class="lz">• 工作树</text>
+        <text x="12" y="126" font-size="10" fill="var(--muted)" class="le" display="none">• working tree</text>
+        <rect x="10" y="132" width="58" height="14" rx="7" fill="#8b5cf6" fill-opacity=".15"/>
+        <text x="39" y="142" font-size="10" text-anchor="middle" fill="#8b5cf6" class="lz">完整仓库</text>
+        <text x="39" y="142" font-size="10" text-anchor="middle" fill="#8b5cf6" class="le" display="none">Full repo</text>
+      </g>
+
+      <!-- arrow 2 -->
+      <g color="#8b5cf6">
+        <line x1="312" y1="183" x2="328" y2="183" stroke="currentColor" stroke-width="2" marker-end="url(#arrow)"/>
+      </g>
+
+      <!-- === STAGE 3: Sign === -->
+      <g transform="translate(330,108)">
+        <rect width="130" height="150" rx="12" fill="url(#gSign)" stroke="#f59e0b" stroke-width="1.5"/>
+        <circle cx="24" cy="22" r="12" fill="#f59e0b" fill-opacity=".25" stroke="#f59e0b"/>
+        <text x="24" y="26" font-size="12" text-anchor="middle" fill="#f59e0b" font-weight="700">3</text>
+        <text x="44" y="20" font-size="11" fill="var(--muted)">STEP 03</text>
+        <text x="44" y="32" font-size="13" fill="#f59e0b" font-weight="700" class="lz">签名校验</text>
+        <text x="44" y="32" font-size="13" fill="#f59e0b" font-weight="700" class="le" display="none">Sign</text>
+        <line x1="12" y1="44" x2="118" y2="44" stroke="#f59e0b" stroke-opacity=".3"/>
+        <text x="12" y="60" font-size="10" fill="var(--text)" font-weight="600" class="lz">生成指纹</text>
+        <text x="12" y="60" font-size="10" fill="var(--text)" font-weight="600" class="le" display="none">Generate hash</text>
+        <rect x="10" y="66" width="110" height="18" rx="4" fill="var(--subtle)"/>
+        <text x="16" y="78" font-size="10" fill="var(--text)" font-family="ui-monospace,Menlo,monospace">SHA256(bundle)</text>
+        <text x="12" y="98" font-size="10" fill="var(--text)" font-weight="600" class="lz">用户密钥签名</text>
+        <text x="12" y="98" font-size="10" fill="var(--text)" font-weight="600" class="le" display="none">Sign with user key</text>
+        <text x="12" y="112" font-size="10" fill="var(--muted)" class="lz">Ed25519 私钥</text>
+        <text x="12" y="112" font-size="10" fill="var(--muted)" class="le" display="none">Ed25519 private key</text>
+        <!-- security badge -->
+        <rect x="10" y="124" width="72" height="16" rx="8" fill="#f59e0b" fill-opacity=".18" stroke="#f59e0b" stroke-opacity=".5"/>
+        <circle cx="20" cy="132" r="3" fill="#f59e0b"/>
+        <text x="28" y="135" font-size="10" fill="#f59e0b" class="lz">完整性保护</text>
+        <text x="28" y="135" font-size="10" fill="#f59e0b" class="le" display="none">Integrity</text>
+      </g>
+
+      <!-- arrow 3 -->
+      <g color="#f59e0b">
+        <line x1="462" y1="183" x2="478" y2="183" stroke="currentColor" stroke-width="2" marker-end="url(#arrow)"/>
+      </g>
+
+      <!-- === STAGE 4: Encrypt === -->
+      <g transform="translate(480,108)">
+        <rect width="130" height="150" rx="12" fill="url(#gEnc)" stroke="#f97316" stroke-width="1.5"/>
+        <circle cx="24" cy="22" r="12" fill="#f97316" fill-opacity=".25" stroke="#f97316"/>
+        <text x="24" y="26" font-size="12" text-anchor="middle" fill="#f97316" font-weight="700">4</text>
+        <text x="44" y="20" font-size="11" fill="var(--muted)">STEP 04</text>
+        <text x="44" y="32" font-size="13" fill="#f97316" font-weight="700" class="lz">加密</text>
+        <text x="44" y="32" font-size="13" fill="#f97316" font-weight="700" class="le" display="none">Encrypt</text>
+        <line x1="12" y1="44" x2="118" y2="44" stroke="#f97316" stroke-opacity=".3"/>
+        <rect x="10" y="52" width="110" height="20" rx="4" fill="var(--subtle)"/>
+        <text x="16" y="66" font-size="10" fill="var(--text)" font-family="ui-monospace,Menlo,monospace">AES-256-GCM</text>
+        <text x="12" y="84" font-size="10" fill="var(--text)" font-weight="600" class="lz">会话密钥</text>
+        <text x="12" y="84" font-size="10" fill="var(--text)" font-weight="600" class="le" display="none">Session key</text>
+        <text x="12" y="98" font-size="10" fill="var(--muted)" class="lz">一次一密 · 12B nonce</text>
+        <text x="12" y="98" font-size="10" fill="var(--muted)" class="le" display="none">One-time · 12B nonce</text>
+        <text x="12" y="114" font-size="10" fill="var(--text)" font-weight="600" class="lz">传输防护</text>
+        <text x="12" y="114" font-size="10" fill="var(--text)" font-weight="600" class="le" display="none">In-transit protection</text>
+        <!-- security badge -->
+        <rect x="10" y="124" width="72" height="16" rx="8" fill="#f97316" fill-opacity=".18" stroke="#f97316" stroke-opacity=".5"/>
+        <circle cx="20" cy="132" r="3" fill="#f97316"/>
+        <text x="28" y="135" font-size="10" fill="#f97316" class="lz">机密性保护</text>
+        <text x="28" y="135" font-size="10" fill="#f97316" class="le" display="none">Confidential</text>
+      </g>
+
+      <!-- arrow 4 -->
+      <g color="#f97316">
+        <line x1="612" y1="183" x2="628" y2="183" stroke="currentColor" stroke-width="2" marker-end="url(#arrow)"/>
+      </g>
+
+      <!-- === STAGE 5: Upload === -->
+      <g transform="translate(630,108)">
+        <rect width="130" height="150" rx="12" fill="url(#gUp)" stroke="#10b981" stroke-width="1.5"/>
+        <circle cx="24" cy="22" r="12" fill="#10b981" fill-opacity=".25" stroke="#10b981"/>
+        <text x="24" y="26" font-size="12" text-anchor="middle" fill="#10b981" font-weight="700">5</text>
+        <text x="44" y="20" font-size="11" fill="var(--muted)">STEP 05</text>
+        <text x="44" y="32" font-size="13" fill="#10b981" font-weight="700" class="lz">上传</text>
+        <text x="44" y="32" font-size="13" fill="#10b981" font-weight="700" class="le" display="none">Upload</text>
+        <line x1="12" y1="44" x2="118" y2="44" stroke="#10b981" stroke-opacity=".3"/>
+        <text x="12" y="60" font-size="10" fill="var(--text)" font-weight="600" class="lz">分块 POST</text>
+        <text x="12" y="60" font-size="10" fill="var(--text)" font-weight="600" class="le" display="none">Chunked POST</text>
+        <rect x="10" y="66" width="110" height="18" rx="4" fill="var(--subtle)"/>
+        <text x="16" y="78" font-size="10" fill="var(--text)" font-family="ui-monospace,Menlo,monospace">/teleport/upload</text>
+        <text x="12" y="98" font-size="10" fill="var(--text)" font-weight="600" class="lz">进度上报</text>
+        <text x="12" y="98" font-size="10" fill="var(--text)" font-weight="600" class="le" display="none">Progress reported</text>
+        <!-- progress bar -->
+        <rect x="10" y="106" width="110" height="6" rx="3" fill="var(--subtle)"/>
+        <rect x="10" y="106" width="78" height="6" rx="3" fill="#10b981"/>
+        <text x="12" y="126" font-size="10" fill="var(--muted)" class="lz">断点续传 · 校验 ETag</text>
+        <text x="12" y="126" font-size="10" fill="var(--muted)" class="le" display="none">Resumable · ETag check</text>
+        <rect x="10" y="132" width="58" height="14" rx="7" fill="#10b981" fill-opacity=".18"/>
+        <text x="39" y="142" font-size="10" text-anchor="middle" fill="#10b981" class="lz">出境</text>
+        <text x="39" y="142" font-size="10" text-anchor="middle" fill="#10b981" class="le" display="none">Egress</text>
+      </g>
+
+      <!-- wire animated arrow -->
+      <g color="#64748b">
+        <line x1="762" y1="183" x2="778" y2="183" stroke="currentColor" stroke-width="2" marker-end="url(#arrow)" stroke-dasharray="4 3"/>
+      </g>
+
+      <!-- === STAGE 6: Restore === -->
+      <g transform="translate(780,108)">
+        <rect width="130" height="150" rx="12" fill="url(#gRest)" stroke="#64748b" stroke-width="1.5"/>
+        <circle cx="24" cy="22" r="12" fill="#64748b" fill-opacity=".3" stroke="#94a3b8"/>
+        <text x="24" y="26" font-size="12" text-anchor="middle" fill="#94a3b8" font-weight="700">6</text>
+        <text x="44" y="20" font-size="11" fill="var(--muted)">STEP 06</text>
+        <text x="44" y="32" font-size="13" fill="#94a3b8" font-weight="700" class="lz">远端还原</text>
+        <text x="44" y="32" font-size="13" fill="#94a3b8" font-weight="700" class="le" display="none">Restore</text>
+        <line x1="12" y1="44" x2="118" y2="44" stroke="#94a3b8" stroke-opacity=".3"/>
+        <rect x="10" y="52" width="110" height="20" rx="4" fill="var(--subtle)"/>
+        <text x="16" y="66" font-size="10" fill="var(--text)" font-family="ui-monospace,Menlo,monospace">teleport restore</text>
+        <text x="12" y="84" font-size="10" fill="var(--text)" font-weight="600" class="lz">三步还原</text>
+        <text x="12" y="84" font-size="10" fill="var(--text)" font-weight="600" class="le" display="none">Three steps</text>
+        <text x="12" y="98" font-size="10" fill="var(--muted)" class="lz">1) 验签名</text>
+        <text x="12" y="98" font-size="10" fill="var(--muted)" class="le" display="none">1) Verify signature</text>
+        <text x="12" y="112" font-size="10" fill="var(--muted)" class="lz">2) 解密</text>
+        <text x="12" y="112" font-size="10" fill="var(--muted)" class="le" display="none">2) Decrypt</text>
+        <text x="12" y="126" font-size="10" fill="var(--muted)" class="lz">3) bundle apply</text>
+        <text x="12" y="126" font-size="10" fill="var(--muted)" class="le" display="none">3) bundle apply</text>
+        <rect x="10" y="132" width="58" height="14" rx="7" fill="#64748b" fill-opacity=".25"/>
+        <text x="39" y="142" font-size="10" text-anchor="middle" fill="#94a3b8" class="lz">落地</text>
+        <text x="39" y="142" font-size="10" text-anchor="middle" fill="#94a3b8" class="le" display="none">Landed</text>
+      </g>
+
+      <!-- === Bundle format side panel === -->
+      <g transform="translate(30,282)">
+        <rect width="430" height="220" rx="12" fill="var(--card)" stroke="var(--border)"/>
+        <text x="16" y="24" font-size="13" font-weight="700" fill="var(--text)" class="lz">Bundle 格式详情</text>
+        <text x="16" y="24" font-size="13" font-weight="700" fill="var(--text)" class="le" display="none">Bundle Format Details</text>
+        <text x="16" y="40" font-size="11" fill="var(--muted)" class="lz">单一自包含文件 · 可离线 apply</text>
+        <text x="16" y="40" font-size="11" fill="var(--muted)" class="le" display="none">Self-contained file · offline applicable</text>
+
+        <!-- Layered box -->
+        <g transform="translate(16,56)">
+          <!-- outer envelope -->
+          <rect width="398" height="148" rx="8" fill="var(--subtle)" stroke="var(--border)"/>
+          <text x="12" y="18" font-size="11" font-weight="600" fill="#f97316" class="lz">外层 · AES-GCM 密文</text>
+          <text x="12" y="18" font-size="11" font-weight="600" fill="#f97316" class="le" display="none">Outer · AES-GCM Ciphertext</text>
+          <text x="386" y="18" font-size="10" text-anchor="end" fill="var(--muted)" font-family="ui-monospace,Menlo,monospace">.tlp</text>
+
+          <!-- header block -->
+          <rect x="10" y="26" width="120" height="24" rx="4" fill="#f97316" fill-opacity=".15" stroke="#f97316" stroke-opacity=".5"/>
+          <text x="70" y="42" font-size="10" text-anchor="middle" fill="#f97316" class="lz">Nonce · 12B</text>
+          <text x="70" y="42" font-size="10" text-anchor="middle" fill="#f97316" class="le" display="none">Nonce · 12B</text>
+
+          <rect x="136" y="26" width="120" height="24" rx="4" fill="#f59e0b" fill-opacity=".15" stroke="#f59e0b" stroke-opacity=".5"/>
+          <text x="196" y="42" font-size="10" text-anchor="middle" fill="#f59e0b" class="lz">签名 Ed25519 · 64B</text>
+          <text x="196" y="42" font-size="10" text-anchor="middle" fill="#f59e0b" class="le" display="none">Sig Ed25519 · 64B</text>
+
+          <rect x="262" y="26" width="124" height="24" rx="4" fill="#8b5cf6" fill-opacity=".15" stroke="#8b5cf6" stroke-opacity=".5"/>
+          <text x="324" y="42" font-size="10" text-anchor="middle" fill="#8b5cf6" class="lz">元数据 JSON</text>
+          <text x="324" y="42" font-size="10" text-anchor="middle" fill="#8b5cf6" class="le" display="none">Metadata JSON</text>
+
+          <!-- inner bundle -->
+          <rect x="10" y="58" width="376" height="80" rx="6" fill="#8b5cf6" fill-opacity=".08" stroke="#8b5cf6" stroke-opacity=".4" stroke-dasharray="4 3"/>
+          <text x="18" y="76" font-size="11" font-weight="600" fill="#8b5cf6" class="lz">内层 · Git Bundle 负载</text>
+          <text x="18" y="76" font-size="11" font-weight="600" fill="#8b5cf6" class="le" display="none">Inner · Git Bundle Payload</text>
+
+          <rect x="18" y="86" width="100" height="20" rx="4" fill="var(--bg)" stroke="var(--border)"/>
+          <text x="68" y="100" font-size="10" text-anchor="middle" fill="var(--text)" class="lz">Refs 列表</text>
+          <text x="68" y="100" font-size="10" text-anchor="middle" fill="var(--text)" class="le" display="none">Refs list</text>
+
+          <rect x="126" y="86" width="100" height="20" rx="4" fill="var(--bg)" stroke="var(--border)"/>
+          <text x="176" y="100" font-size="10" text-anchor="middle" fill="var(--text)" class="lz">Prerequisites</text>
+          <text x="176" y="100" font-size="10" text-anchor="middle" fill="var(--text)" class="le" display="none">Prerequisites</text>
+
+          <rect x="234" y="86" width="144" height="20" rx="4" fill="var(--bg)" stroke="var(--border)"/>
+          <text x="306" y="100" font-size="10" text-anchor="middle" fill="var(--text)" class="lz">Packfile (压缩对象)</text>
+          <text x="306" y="100" font-size="10" text-anchor="middle" fill="var(--text)" class="le" display="none">Packfile (compressed objs)</text>
+
+          <text x="18" y="124" font-size="10" fill="var(--muted)" class="lz">⇢ 可直接 git bundle verify / clone / fetch</text>
+          <text x="18" y="124" font-size="10" fill="var(--muted)" class="le" display="none">⇢ git bundle verify / clone / fetch ready</text>
+        </g>
+      </g>
+
+      <!-- === Security / invariants panel === -->
+      <g transform="translate(480,282)">
+        <rect width="430" height="220" rx="12" fill="var(--card)" stroke="var(--border)"/>
+        <text x="16" y="24" font-size="13" font-weight="700" fill="var(--text)" class="lz">安全模型与不变量</text>
+        <text x="16" y="24" font-size="13" font-weight="700" fill="var(--text)" class="le" display="none">Security Model &amp; Invariants</text>
+        <text x="16" y="40" font-size="11" fill="var(--muted)" class="lz">三重保障：完整性 · 机密性 · 真实性</text>
+        <text x="16" y="40" font-size="11" fill="var(--muted)" class="le" display="none">Triple guarantee: Integrity · Confidentiality · Authenticity</text>
+
+        <!-- Invariant 1 -->
+        <g transform="translate(16,56)">
+          <circle cx="10" cy="10" r="8" fill="#f59e0b" fill-opacity=".2" stroke="#f59e0b"/>
+          <text x="10" y="14" font-size="10" text-anchor="middle" fill="#f59e0b" font-weight="700">I</text>
+          <text x="28" y="10" font-size="12" font-weight="600" fill="var(--text)" class="lz">完整性 Integrity</text>
+          <text x="28" y="10" font-size="12" font-weight="600" fill="var(--text)" class="le" display="none">Integrity</text>
+          <text x="28" y="24" font-size="10" fill="var(--muted)" class="lz">SHA256 指纹 + Ed25519 签名，任何一字节篡改即可检出</text>
+          <text x="28" y="24" font-size="10" fill="var(--muted)" class="le" display="none">SHA256 digest + Ed25519 sig, any byte tamper detected</text>
+        </g>
+
+        <!-- Invariant 2 -->
+        <g transform="translate(16,100)">
+          <circle cx="10" cy="10" r="8" fill="#f97316" fill-opacity=".2" stroke="#f97316"/>
+          <text x="10" y="14" font-size="10" text-anchor="middle" fill="#f97316" font-weight="700">C</text>
+          <text x="28" y="10" font-size="12" font-weight="600" fill="var(--text)" class="lz">机密性 Confidentiality</text>
+          <text x="28" y="10" font-size="12" font-weight="600" fill="var(--text)" class="le" display="none">Confidentiality</text>
+          <text x="28" y="24" font-size="10" fill="var(--muted)" class="lz">AES-256-GCM 端到端加密，服务端仅见密文</text>
+          <text x="28" y="24" font-size="10" fill="var(--muted)" class="le" display="none">AES-256-GCM E2E, server sees only ciphertext</text>
+        </g>
+
+        <!-- Invariant 3 -->
+        <g transform="translate(16,144)">
+          <circle cx="10" cy="10" r="8" fill="#22d3ee" fill-opacity=".2" stroke="#22d3ee"/>
+          <text x="10" y="14" font-size="10" text-anchor="middle" fill="#22d3ee" font-weight="700">A</text>
+          <text x="28" y="10" font-size="12" font-weight="600" fill="var(--text)" class="lz">真实性 Authenticity</text>
+          <text x="28" y="10" font-size="12" font-weight="600" fill="var(--text)" class="le" display="none">Authenticity</text>
+          <text x="28" y="24" font-size="10" fill="var(--muted)" class="lz">用户私钥签名，目标机器验证发送者身份</text>
+          <text x="28" y="24" font-size="10" fill="var(--muted)" class="le" display="none">User key-signed, target verifies sender identity</text>
+        </g>
+
+        <!-- failure modes -->
+        <g transform="translate(16,188)">
+          <rect width="398" height="20" rx="6" fill="var(--subtle)"/>
+          <text x="8" y="14" font-size="10" fill="var(--rose)" font-weight="600" class="lz">⚠ 失败路径：</text>
+          <text x="8" y="14" font-size="10" fill="var(--rose)" font-weight="600" class="le" display="none">⚠ Failure paths:</text>
+          <text x="78" y="14" font-size="10" fill="var(--muted)" class="lz">验签失败 / 解密失败 / ETag 不符 → 拒绝 apply</text>
+          <text x="78" y="14" font-size="10" fill="var(--muted)" class="le" display="none">bad sig / decrypt fail / ETag mismatch → reject apply</text>
+        </g>
+      </g>
+
+    </svg>
+    </div>
+
+    <!-- Stats row -->
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-label"><span class="lz">流水线阶段</span><span class="le" style="display:none">Pipeline Stages</span></div>
+        <div class="stat-value" style="color:var(--cyan)">6 <span style="font-size:13px;font-weight:500;color:var(--muted)"><span class="lz">步</span><span class="le" style="display:none">steps</span></span></div>
+      </div>
+      <div class="stat">
+        <div class="stat-label"><span class="lz">加密算法</span><span class="le" style="display:none">Encryption</span></div>
+        <div class="stat-value" style="color:var(--orange);font-size:16px">AES-256-GCM</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label"><span class="lz">完整性校验</span><span class="le" style="display:none">Integrity Check</span></div>
+        <div class="stat-value" style="color:var(--amber);font-size:16px">SHA256 + Ed25519</div>
+      </div>
+      <div class="stat">
+        <div class="stat-label"><span class="lz">传输载荷</span><span class="le" style="display:none">Wire Payload</span></div>
+        <div class="stat-value" style="color:var(--violet);font-size:16px">git bundle</div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item"><span class="legend-dot" style="background:#22d3ee"></span><span class="lz">触发</span><span class="le" style="display:none">Trigger</span></div>
+      <div class="legend-item"><span class="legend-dot" style="background:#8b5cf6"></span><span class="lz">快照</span><span class="le" style="display:none">Snapshot</span></div>
+      <div class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span><span class="lz">签名</span><span class="le" style="display:none">Sign</span></div>
+      <div class="legend-item"><span class="legend-dot" style="background:#f97316"></span><span class="lz">加密</span><span class="le" style="display:none">Encrypt</span></div>
+      <div class="legend-item"><span class="legend-dot" style="background:#10b981"></span><span class="lz">上传</span><span class="le" style="display:none">Upload</span></div>
+      <div class="legend-item"><span class="legend-dot" style="background:#64748b"></span><span class="lz">还原</span><span class="le" style="display:none">Restore</span></div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

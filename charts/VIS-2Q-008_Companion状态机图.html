@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Companion 状态机图 · Companion State Machine</title>
+<style>
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Hiragino Sans GB',sans-serif;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;padding:28px 20px;
+  transition:background .25s ease,color .25s ease;
+}
+.wrap{max-width:1100px;margin:0 auto;}
+.toolbar{
+  display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:12px;flex-wrap:wrap;
+}
+.title{font-size:22px;font-weight:700;letter-spacing:.3px;}
+.sub{font-size:13px;color:var(--muted);margin-top:4px;}
+.btns{display:flex;gap:8px;}
+.btn{
+  background:var(--panel);color:var(--text);border:1px solid var(--border);
+  padding:8px 14px;font-size:12px;border-radius:8px;cursor:pointer;transition:all .2s;
+}
+.btn:hover{border-color:var(--cyan);color:var(--cyan);}
+
+.card{
+  background:var(--panel);border:1px solid var(--border);border-radius:14px;
+  padding:20px;margin-bottom:16px;
+}
+
+.stats{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;
+}
+.stat{
+  background:var(--card);border:1px solid var(--border);border-radius:10px;
+  padding:14px 16px;text-align:center;
+}
+.stat-val{font-size:22px;font-weight:700;}
+.stat-lbl{font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:.5px;}
+
+svg{display:block;width:100%;height:auto;}
+
+.legend{
+  display:flex;flex-wrap:wrap;gap:10px 18px;justify-content:center;
+  margin-top:14px;padding-top:14px;border-top:1px dashed var(--border);
+}
+.lg-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);}
+.lg-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+
+.notes{
+  display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px;
+}
+.note{
+  background:var(--card);border:1px solid var(--border);border-left:3px solid var(--cyan);
+  border-radius:8px;padding:12px 14px;font-size:12px;color:var(--muted);line-height:1.65;
+}
+.note b{color:var(--text);font-size:12.5px;}
+
+@media(max-width:640px){
+  .stats{grid-template-columns:1fr;}
+  .notes{grid-template-columns:1fr;}
+}
+
+@keyframes pulseHalo {
+  0%,100% { opacity:.35; r:68; }
+  50% { opacity:.85; r:82; }
+}
+.pulse-halo { animation: pulseHalo 1.8s ease-in-out infinite; transform-origin:center; }
+
+@keyframes dashMove {
+  to { stroke-dashoffset: -24; }
+}
+.dashed-arrow { stroke-dasharray: 5 4; animation: dashMove 1.2s linear infinite; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="toolbar">
+    <div>
+      <div class="title">
+        <span class="lz">Companion 状态机图</span>
+        <span class="le" style="display:none;">Companion State Machine</span>
+      </div>
+      <div class="sub">
+        <span class="lz">移动端/Sidecar 伴侣应用的 5 状态交互模型</span>
+        <span class="le" style="display:none;">Five-state interaction model for the mobile / sidecar companion</span>
+      </div>
+    </div>
+    <div class="btns">
+      <button class="btn" onclick="cycleTheme()">
+        <span class="lz">主题</span>
+        <span class="le" style="display:none;">Theme</span>
+      </button>
+      <button class="btn" onclick="toggleLang()">
+        <span class="lz">EN</span>
+        <span class="le" style="display:none;">中</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-val" style="color:var(--cyan);">5</div>
+      <div class="stat-lbl">
+        <span class="lz">状态 STATES</span>
+        <span class="le" style="display:none;">STATES</span>
+      </div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" style="color:var(--violet);">8</div>
+      <div class="stat-lbl">
+        <span class="lz">转换路径 TRANSITIONS</span>
+        <span class="le" style="display:none;">TRANSITIONS</span>
+      </div>
+    </div>
+    <div class="stat">
+      <div class="stat-val" style="color:var(--amber);">30s</div>
+      <div class="stat-lbl">
+        <span class="lz">超时 TIMEOUT</span>
+        <span class="le" style="display:none;">TIMEOUT</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <svg viewBox="0 0 920 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Companion state machine">
+      <defs>
+        <!-- arrowheads per color -->
+        <marker id="ah-slate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/>
+        </marker>
+        <marker id="ah-cyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#22d3ee"/>
+        </marker>
+        <marker id="ah-violet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#8b5cf6"/>
+        </marker>
+        <marker id="ah-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/>
+        </marker>
+        <marker id="ah-emerald" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#10b981"/>
+        </marker>
+        <marker id="ah-rose" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#f43f5e"/>
+        </marker>
+        <marker id="ah-muted" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8" opacity="0.7"/>
+        </marker>
+
+        <radialGradient id="grad-amber" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.6"/>
+          <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+        </radialGradient>
+      </defs>
+
+      <!-- Companion legend (phone silhouette) top-left -->
+      <g transform="translate(30,22)">
+        <rect x="0" y="0" width="44" height="68" rx="7" ry="7" fill="none" stroke="#94a3b8" stroke-width="1.6"/>
+        <rect x="4" y="8" width="36" height="48" rx="2" fill="#22d3ee" opacity="0.15" stroke="#22d3ee" stroke-width="0.8"/>
+        <circle cx="22" cy="62" r="2" fill="#94a3b8"/>
+        <rect x="16" y="3" width="12" height="2" rx="1" fill="#94a3b8"/>
+        <!-- Signal waves -->
+        <path d="M50,18 Q58,18 58,26" stroke="#22d3ee" stroke-width="1.4" fill="none" opacity="0.7"/>
+        <path d="M50,14 Q64,14 64,28" stroke="#22d3ee" stroke-width="1.4" fill="none" opacity="0.5"/>
+        <path d="M50,10 Q70,10 70,30" stroke="#22d3ee" stroke-width="1.4" fill="none" opacity="0.3"/>
+        <text x="78" y="22" fill="#f1f5f9" font-size="13" font-weight="600" class="lz">Companion</text>
+        <text x="78" y="22" fill="#f1f5f9" font-size="13" font-weight="600" class="le" display="none">Companion</text>
+        <text x="78" y="38" fill="#94a3b8" font-size="10.5" class="lz">手机端伴侣应用</text>
+        <text x="78" y="38" fill="#94a3b8" font-size="10.5" class="le" display="none">Mobile sidecar app</text>
+        <text x="78" y="52" fill="#94a3b8" font-size="10" class="lz">接收推送 / 授权 / 查看进度</text>
+        <text x="78" y="52" fill="#94a3b8" font-size="10" class="le" display="none">Push / authorize / progress</text>
+      </g>
+
+      <!-- Title on right -->
+      <g transform="translate(680,30)">
+        <rect x="0" y="0" width="210" height="60" rx="8" fill="#334155" fill-opacity="0.35" stroke="#22d3ee" stroke-opacity="0.3" stroke-width="1"/>
+        <text x="14" y="22" fill="#f1f5f9" font-size="12" font-weight="600" class="lz">状态机 FSM</text>
+        <text x="14" y="22" fill="#f1f5f9" font-size="12" font-weight="600" class="le" display="none">Finite State Machine</text>
+        <text x="14" y="40" fill="#94a3b8" font-size="10.5" class="lz">5 节点 · 8 转换 · 任意态超时回归 IDLE</text>
+        <text x="14" y="40" fill="#94a3b8" font-size="10.5" class="le" display="none">5 nodes · 8 transitions · timeout → IDLE</text>
+        <text x="14" y="54" fill="#94a3b8" font-size="10" class="lz">粗线=主路径 · 虚线=超时/取消</text>
+        <text x="14" y="54" fill="#94a3b8" font-size="10" class="le" display="none">Solid=main · Dashed=timeout/cancel</text>
+      </g>
+
+      <!-- Pentagon layout positions (center 460,290 radius 170) -->
+      <!-- Node coordinates:
+           IDLE:          top           (460, 120)
+           LISTENING:     upper-right   (622, 238)
+           PROCESSING:    lower-right   (560, 430)
+           AWAITING_AUTH: lower-left    (360, 430)
+           ACTIVE:        upper-left    (298, 238)
+      -->
+
+      <!-- ===== TRANSITION ARROWS (draw first, behind nodes) ===== -->
+
+      <!-- 1. IDLE → LISTENING (solid cyan, top-right curve) -->
+      <path d="M 502,148 Q 580,160 600,210" stroke="#22d3ee" stroke-width="2.2" fill="none" marker-end="url(#ah-cyan)"/>
+      <text x="586" y="175" fill="#22d3ee" font-size="10.5" font-weight="600" class="lz">用户说话/输入</text>
+      <text x="586" y="175" fill="#22d3ee" font-size="10.5" font-weight="600" class="le" display="none">user input</text>
+
+      <!-- 2. LISTENING → PROCESSING (solid violet, right side down) -->
+      <path d="M 630,286 Q 640,360 588,400" stroke="#8b5cf6" stroke-width="2.2" fill="none" marker-end="url(#ah-violet)"/>
+      <text x="640" y="350" fill="#8b5cf6" font-size="10.5" font-weight="600" class="lz">输入完成</text>
+      <text x="640" y="350" fill="#8b5cf6" font-size="10.5" font-weight="600" class="le" display="none">input done</text>
+
+      <!-- 3. PROCESSING → AWAITING_AUTH (solid amber, bottom horizontal) -->
+      <path d="M 505,430 L 415,430" stroke="#f59e0b" stroke-width="2.4" fill="none" marker-end="url(#ah-amber)"/>
+      <text x="424" y="422" fill="#f59e0b" font-size="10.5" font-weight="600" class="lz">需要授权</text>
+      <text x="424" y="422" fill="#f59e0b" font-size="10.5" font-weight="600" class="le" display="none">needs auth</text>
+
+      <!-- 4. PROCESSING → ACTIVE (solid emerald, diagonal across center) -->
+      <path d="M 511,392 Q 430,320 342,272" stroke="#10b981" stroke-width="2.2" fill="none" marker-end="url(#ah-emerald)"/>
+      <text x="380" y="320" fill="#10b981" font-size="10.5" font-weight="600" class="lz">自动批准</text>
+      <text x="380" y="320" fill="#10b981" font-size="10.5" font-weight="600" class="le" display="none">auto-approved</text>
+
+      <!-- 5. AWAITING_AUTH → ACTIVE (solid emerald, left vertical up) -->
+      <path d="M 340,394 Q 300,340 296,296" stroke="#10b981" stroke-width="2.2" fill="none" marker-end="url(#ah-emerald)"/>
+      <text x="228" y="356" fill="#10b981" font-size="10.5" font-weight="600" class="lz">用户批准</text>
+      <text x="228" y="356" fill="#10b981" font-size="10.5" font-weight="600" class="le" display="none">approved</text>
+
+      <!-- 6. AWAITING_AUTH → IDLE (solid rose, diagonal up-right) -->
+      <path d="M 388,380 Q 420,260 440,160" stroke="#f43f5e" stroke-width="2" fill="none" marker-end="url(#ah-rose)"/>
+      <text x="395" y="270" fill="#f43f5e" font-size="10.5" font-weight="600" class="lz">用户拒绝</text>
+      <text x="395" y="270" fill="#f43f5e" font-size="10.5" font-weight="600" class="le" display="none">denied</text>
+
+      <!-- 7. ACTIVE → IDLE (solid slate, top-left curve) -->
+      <path d="M 328,190 Q 380,140 420,128" stroke="#64748b" stroke-width="2.2" fill="none" marker-end="url(#ah-slate)"/>
+      <text x="320" y="156" fill="#64748b" font-size="10.5" font-weight="600" class="lz">任务完成</text>
+      <text x="320" y="156" fill="#64748b" font-size="10.5" font-weight="600" class="le" display="none">task complete</text>
+
+      <!-- 8. Any state → IDLE (dashed muted, representing timeout/cancel)
+           Draw as a large ring hint around everything, plus small "T" icon -->
+      <!-- LISTENING → IDLE (timeout) dashed -->
+      <path d="M 590,195 Q 560,150 512,128" stroke="#94a3b8" stroke-width="1.5" fill="none" class="dashed-arrow" marker-end="url(#ah-muted)" opacity="0.7"/>
+      <!-- PROCESSING → IDLE (timeout) dashed -->
+      <path d="M 592,414 Q 680,300 515,140" stroke="#94a3b8" stroke-width="1.3" fill="none" class="dashed-arrow" marker-end="url(#ah-muted)" opacity="0.5"/>
+
+      <text x="672" y="135" fill="#94a3b8" font-size="10" font-style="italic" class="lz">超时 30s / 取消</text>
+      <text x="672" y="135" fill="#94a3b8" font-size="10" font-style="italic" class="le" display="none">timeout 30s / cancel</text>
+
+      <!-- ===== STATE NODES ===== -->
+
+      <!-- IDLE (top, slate) -->
+      <g transform="translate(460,120)">
+        <circle r="55" fill="#64748b" fill-opacity="0.18" stroke="#64748b" stroke-width="2.5"/>
+        <text y="-6" fill="#f1f5f9" font-size="14" font-weight="700" text-anchor="middle">IDLE</text>
+        <text y="12" fill="#94a3b8" font-size="10.5" text-anchor="middle" class="lz">空闲待机</text>
+        <text y="12" fill="#94a3b8" font-size="10.5" text-anchor="middle" class="le" display="none">idle wait</text>
+        <text y="26" fill="#94a3b8" font-size="10" text-anchor="middle" class="lz">无活动</text>
+        <text y="26" fill="#94a3b8" font-size="10" text-anchor="middle" class="le" display="none">no activity</text>
+      </g>
+
+      <!-- LISTENING (upper-right, cyan) -->
+      <g transform="translate(622,238)">
+        <circle r="55" fill="#22d3ee" fill-opacity="0.15" stroke="#22d3ee" stroke-width="2.5"/>
+        <text y="-6" fill="#f1f5f9" font-size="13" font-weight="700" text-anchor="middle">LISTENING</text>
+        <text y="12" fill="#22d3ee" font-size="10.5" text-anchor="middle" class="lz">聆听输入</text>
+        <text y="12" fill="#22d3ee" font-size="10.5" text-anchor="middle" class="le" display="none">listening</text>
+        <text y="26" fill="#94a3b8" font-size="10" text-anchor="middle" class="lz">语音/文字</text>
+        <text y="26" fill="#94a3b8" font-size="10" text-anchor="middle" class="le" display="none">voice/text</text>
+      </g>
+
+      <!-- PROCESSING (lower-right, violet) -->
+      <g transform="translate(560,430)">
+        <circle r="55" fill="#8b5cf6" fill-opacity="0.15" stroke="#8b5cf6" stroke-width="2.5"/>
+        <text y="-6" fill="#f1f5f9" font-size="13" font-weight="700" text-anchor="middle">PROCESSING</text>
+        <text y="12" fill="#8b5cf6" font-size="10.5" text-anchor="middle" class="lz">推理中</text>
+        <text y="12" fill="#8b5cf6" font-size="10.5" text-anchor="middle" class="le" display="none">thinking</text>
+        <text y="26" fill="#94a3b8" font-size="10" text-anchor="middle" class="lz">API 调用</text>
+        <text y="26" fill="#94a3b8" font-size="10" text-anchor="middle" class="le" display="none">API call</text>
+      </g>
+
+      <!-- AWAITING_AUTH (lower-left, amber with pulsing halo) -->
+      <g transform="translate(360,430)">
+        <circle r="68" fill="url(#grad-amber)" class="pulse-halo"/>
+        <circle r="55" fill="#f59e0b" fill-opacity="0.18" stroke="#f59e0b" stroke-width="2.5"/>
+        <text y="-10" fill="#f1f5f9" font-size="12" font-weight="700" text-anchor="middle">AWAITING</text>
+        <text y="4" fill="#f1f5f9" font-size="12" font-weight="700" text-anchor="middle">_AUTH</text>
+        <text y="20" fill="#f59e0b" font-size="10.5" text-anchor="middle" class="lz">等待授权</text>
+        <text y="20" fill="#f59e0b" font-size="10.5" text-anchor="middle" class="le" display="none">awaiting</text>
+        <text y="33" fill="#94a3b8" font-size="10" text-anchor="middle" class="lz">推送至手机</text>
+        <text y="33" fill="#94a3b8" font-size="10" text-anchor="middle" class="le" display="none">push to phone</text>
+      </g>
+
+      <!-- ACTIVE (upper-left, emerald with DOUBLE border) -->
+      <g transform="translate(298,238)">
+        <circle r="55" fill="#10b981" fill-opacity="0.15" stroke="#10b981" stroke-width="2.5"/>
+        <circle r="47" fill="none" stroke="#10b981" stroke-width="1.4" stroke-opacity="0.7"/>
+        <text y="-6" fill="#f1f5f9" font-size="14" font-weight="700" text-anchor="middle">ACTIVE</text>
+        <text y="12" fill="#10b981" font-size="10.5" text-anchor="middle" class="lz">执行中</text>
+        <text y="12" fill="#10b981" font-size="10.5" text-anchor="middle" class="le" display="none">executing</text>
+        <text y="26" fill="#94a3b8" font-size="10" text-anchor="middle" class="lz">工具运行</text>
+        <text y="26" fill="#94a3b8" font-size="10" text-anchor="middle" class="le" display="none">tool run</text>
+      </g>
+
+    </svg>
+
+    <div class="legend">
+      <div class="lg-item"><span class="lg-dot" style="background:#64748b;"></span>
+        <span class="lz">IDLE 空闲</span><span class="le" style="display:none;">IDLE</span>
+      </div>
+      <div class="lg-item"><span class="lg-dot" style="background:#22d3ee;"></span>
+        <span class="lz">LISTENING 聆听</span><span class="le" style="display:none;">LISTENING</span>
+      </div>
+      <div class="lg-item"><span class="lg-dot" style="background:#8b5cf6;"></span>
+        <span class="lz">PROCESSING 推理</span><span class="le" style="display:none;">PROCESSING</span>
+      </div>
+      <div class="lg-item"><span class="lg-dot" style="background:#f59e0b;"></span>
+        <span class="lz">AWAITING_AUTH 等待授权</span><span class="le" style="display:none;">AWAITING_AUTH</span>
+      </div>
+      <div class="lg-item"><span class="lg-dot" style="background:#10b981;"></span>
+        <span class="lz">ACTIVE 执行 (双边框)</span><span class="le" style="display:none;">ACTIVE (double ring)</span>
+      </div>
+      <div class="lg-item"><span class="lg-dot" style="background:#f43f5e;"></span>
+        <span class="lz">拒绝路径</span><span class="le" style="display:none;">Denied path</span>
+      </div>
+      <div class="lg-item"><span style="width:24px;height:2px;background:#94a3b8;border-top:1px dashed #94a3b8;display:inline-block;opacity:.7;"></span>
+        <span class="lz">虚线 = 超时/取消</span><span class="le" style="display:none;">Dashed = timeout/cancel</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="notes">
+    <div class="note">
+      <b class="lz">为什么需要 AWAITING_AUTH？</b>
+      <b class="le" style="display:none;">Why AWAITING_AUTH?</b>
+      <br>
+      <span class="lz">当 Companion 端主进程请求敏感工具（如 Bash、文件写入）时，默认行为不是直接执行，而是把一个带上下文的授权请求推送到手机 App。用户在手机上看到"允许/拒绝"二选一；这是 Companion 模式相对 CLI 的核心隔离点。</span>
+      <span class="le" style="display:none;">When the main process requests a sensitive tool (Bash, file write), the default is not direct execution but a contextual push to the mobile app. The user sees an Allow/Deny prompt on the phone. This is the core isolation boundary of Companion mode vs raw CLI.</span>
+    </div>
+    <div class="note">
+      <b class="lz">30s 超时策略</b>
+      <b class="le" style="display:none;">30s timeout</b>
+      <br>
+      <span class="lz">任意非 IDLE 态在 30 秒内没有进一步事件，都会强制回落 IDLE，避免手机离线或用户分心造成僵死会话。LISTENING/PROCESSING/AWAITING_AUTH 共享同一超时时钟，由守护线程 tick。</span>
+      <span class="le" style="display:none;">Any non-IDLE state with no further events within 30s is forced back to IDLE, preventing stuck sessions when the phone is offline or the user is distracted. LISTENING/PROCESSING/AWAITING_AUTH share one watchdog timer.</span>
+    </div>
+    <div class="note">
+      <b class="lz">ACTIVE 为何双边框？</b>
+      <b class="le" style="display:none;">Why double border on ACTIVE?</b>
+      <br>
+      <span class="lz">双边框在 UI 语义上代表"已越过授权门槛正在运行",是全局唯一能修改用户环境的态。设计上给予视觉最高权重,提醒读者：只有进到内圈才会产生副作用。</span>
+      <span class="le" style="display:none;">The double ring semantically marks "past the authorization gate and executing" — the only state that mutates the user's environment. It gets the heaviest visual weight to remind readers: side effects live only inside the inner ring.</span>
+    </div>
+    <div class="note">
+      <b class="lz">Pentagon 布局的取舍</b>
+      <b class="le" style="display:none;">Pentagon layout tradeoff</b>
+      <br>
+      <span class="lz">5 个状态用五边形排列而非线性流，是为了让"任意态 → IDLE"这条超时回边在视觉上被 IDLE 居中辐射承接。代价是 PROCESSING → ACTIVE 这条对角线要横穿中心，用绿色且避开节点。</span>
+      <span class="le" style="display:none;">Five states are arranged in a pentagon (not a line) so timeout edges from any state can visually converge on IDLE at the top. The cost: the PROCESSING → ACTIVE diagonal has to cross the center — rendered green and routed around nodes.</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,411 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>VIS-2Q-010 · 语音识别时序图 / Voice Recognition Sequence</title>
+<style>
+  :root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+  :root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+  :root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+  :root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased}
+  .wrap{max-width:1080px;margin:0 auto;padding:28px 24px 48px}
+  header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+  .title{font-size:22px;font-weight:700;letter-spacing:.2px;margin:0 0 6px 0;color:var(--text)}
+  .sub{font-size:13px;color:var(--muted);margin:0}
+  .ctrls{display:flex;gap:8px;flex-shrink:0}
+  .btn{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 12px;font-size:12px;cursor:pointer;font-family:inherit;transition:border-color .15s}
+  .btn:hover{border-color:var(--muted)}
+  .panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px}
+  .panel-title{font-size:13px;color:var(--muted);margin:0 0 10px 0;text-transform:uppercase;letter-spacing:.8px;font-weight:600}
+  svg{display:block;width:100%;height:auto;max-width:100%}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
+  .stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+  .stat-k{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;margin-bottom:6px}
+  .stat-v{font-size:18px;font-weight:700;color:var(--text)}
+  .legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;padding-top:14px;border-top:1px dashed var(--border)}
+  .lg{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+  .lg .sw{width:14px;height:14px;border-radius:3px}
+  footer{margin-top:16px;font-size:11px;color:var(--muted);text-align:center;line-height:1.6}
+  .kbd{font-family:"SF Mono",Menlo,Consolas,monospace;font-size:11px;padding:2px 6px;background:var(--subtle);border-radius:4px;color:var(--text)}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1 class="title">
+          <span class="lz">VIS-2Q-010 · 语音识别时序图</span>
+          <span class="le" style="display:none">VIS-2Q-010 · Voice Recognition Sequence</span>
+        </h1>
+        <p class="sub">
+          <span class="lz">Claude Code Companion · 语音输入全链路 · User → Mic → ASR → Claude Code</span>
+          <span class="le" style="display:none">Claude Code Companion · Voice input end-to-end · User → Mic → ASR → Claude Code</span>
+        </p>
+      </div>
+      <div class="ctrls">
+        <button class="btn" onclick="cycleTheme()">
+          <span class="lz">主题</span><span class="le" style="display:none">Theme</span>
+        </button>
+        <button class="btn" onclick="toggleLang()">
+          <span class="lz">EN</span><span class="le" style="display:none">中文</span>
+        </button>
+      </div>
+    </header>
+
+    <section class="panel">
+      <p class="panel-title">
+        <span class="lz">时序图 · Sequence Diagram</span>
+        <span class="le" style="display:none">Sequence Diagram</span>
+      </p>
+
+      <svg viewBox="0 0 920 560" role="img" aria-labelledby="seqTitle">
+        <title id="seqTitle">Voice Recognition Sequence Diagram</title>
+
+        <defs>
+          <!-- arrow marker: solid -->
+          <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+          </marker>
+          <!-- arrow marker: dashed/partial (hollow) -->
+          <marker id="arrowOpen" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10" fill="none" stroke="currentColor" stroke-width="1.5"/>
+          </marker>
+          <!-- self-loop arrow -->
+          <marker id="arrowSelf" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+            <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+          </marker>
+        </defs>
+
+        <!-- background grid hint -->
+        <rect x="0" y="0" width="920" height="560" fill="transparent"/>
+
+        <!-- ============ Actor headers ============ -->
+        <!-- Actor 1: User (cyan) -->
+        <g>
+          <rect x="40" y="20" width="130" height="42" rx="10" fill="var(--cyan)" opacity="0.14" stroke="var(--cyan)" stroke-width="1.5"/>
+          <circle cx="65" cy="41" r="10" fill="none" stroke="var(--cyan)" stroke-width="1.8"/>
+          <circle cx="65" cy="37" r="3.5" fill="var(--cyan)"/>
+          <path d="M58 47 Q65 42 72 47" fill="none" stroke="var(--cyan)" stroke-width="1.8" stroke-linecap="round"/>
+          <text class="lz" x="82" y="38" fill="var(--text)" font-size="12" font-weight="700">用户</text>
+          <text class="lz" x="82" y="52" fill="var(--muted)" font-size="10">User</text>
+          <text class="le" display="none" x="82" y="38" fill="var(--text)" font-size="12" font-weight="700">User</text>
+          <text class="le" display="none" x="82" y="52" fill="var(--muted)" font-size="10">Human</text>
+        </g>
+
+        <!-- Actor 2: Mic / Client (violet) -->
+        <g>
+          <rect x="230" y="20" width="170" height="42" rx="10" fill="var(--violet)" opacity="0.14" stroke="var(--violet)" stroke-width="1.5"/>
+          <!-- mic icon -->
+          <rect x="248" y="30" width="10" height="16" rx="5" fill="none" stroke="var(--violet)" stroke-width="1.8"/>
+          <path d="M244 44 Q253 52 262 44" fill="none" stroke="var(--violet)" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="253" y1="50" x2="253" y2="54" stroke="var(--violet)" stroke-width="1.8"/>
+          <text class="lz" x="270" y="38" fill="var(--text)" font-size="12" font-weight="700">麦克风 / 客户端</text>
+          <text class="lz" x="270" y="52" fill="var(--muted)" font-size="10">Mic / Client</text>
+          <text class="le" display="none" x="270" y="38" fill="var(--text)" font-size="12" font-weight="700">Mic / Client</text>
+          <text class="le" display="none" x="270" y="52" fill="var(--muted)" font-size="10">Browser capture</text>
+        </g>
+
+        <!-- Actor 3: ASR Engine (amber) -->
+        <g>
+          <rect x="470" y="20" width="170" height="42" rx="10" fill="var(--amber)" opacity="0.14" stroke="var(--amber)" stroke-width="1.5"/>
+          <!-- audio wave icon -->
+          <g stroke="var(--amber)" stroke-width="1.8" stroke-linecap="round" fill="none">
+            <line x1="485" y1="41" x2="485" y2="41"/>
+            <line x1="489" y1="37" x2="489" y2="45"/>
+            <line x1="493" y1="32" x2="493" y2="50"/>
+            <line x1="497" y1="35" x2="497" y2="47"/>
+            <line x1="501" y1="30" x2="501" y2="52"/>
+            <line x1="505" y1="36" x2="505" y2="46"/>
+            <line x1="509" y1="39" x2="509" y2="43"/>
+          </g>
+          <text class="lz" x="520" y="38" fill="var(--text)" font-size="12" font-weight="700">ASR 引擎</text>
+          <text class="lz" x="520" y="52" fill="var(--muted)" font-size="10">ASR Engine</text>
+          <text class="le" display="none" x="520" y="38" fill="var(--text)" font-size="12" font-weight="700">ASR Engine</text>
+          <text class="le" display="none" x="520" y="52" fill="var(--muted)" font-size="10">Speech-to-text</text>
+        </g>
+
+        <!-- Actor 4: Claude Code (emerald) -->
+        <g>
+          <rect x="710" y="20" width="170" height="42" rx="10" fill="var(--emerald)" opacity="0.14" stroke="var(--emerald)" stroke-width="1.5"/>
+          <!-- CC hex icon -->
+          <path d="M733 30 L745 30 L751 41 L745 52 L733 52 L727 41 Z" fill="none" stroke="var(--emerald)" stroke-width="1.8"/>
+          <text x="739" y="45" fill="var(--emerald)" font-size="10" font-weight="700" text-anchor="middle">CC</text>
+          <text class="lz" x="758" y="38" fill="var(--text)" font-size="12" font-weight="700">Claude Code</text>
+          <text class="lz" x="758" y="52" fill="var(--muted)" font-size="10">Agent 主进程</text>
+          <text class="le" display="none" x="758" y="38" fill="var(--text)" font-size="12" font-weight="700">Claude Code</text>
+          <text class="le" display="none" x="758" y="52" fill="var(--muted)" font-size="10">Agent process</text>
+        </g>
+
+        <!-- ============ Lifelines (dashed) ============ -->
+        <!-- X centers: User=105, Mic=315, ASR=555, CC=795 -->
+        <line x1="105" y1="62" x2="105" y2="520" stroke="var(--cyan)" stroke-width="1.2" stroke-dasharray="4 4" opacity="0.55"/>
+        <line x1="315" y1="62" x2="315" y2="520" stroke="var(--violet)" stroke-width="1.2" stroke-dasharray="4 4" opacity="0.55"/>
+        <line x1="555" y1="62" x2="555" y2="520" stroke="var(--amber)" stroke-width="1.2" stroke-dasharray="4 4" opacity="0.55"/>
+        <line x1="795" y1="62" x2="795" y2="520" stroke="var(--emerald)" stroke-width="1.2" stroke-dasharray="4 4" opacity="0.55"/>
+
+        <!-- ============ Activation bars ============ -->
+        <!-- Mic activation: covers sampling -> stream -> partial -> release -> final -> send (y 110 to 470) -->
+        <rect x="309" y="110" width="12" height="360" fill="var(--violet)" opacity="0.28" stroke="var(--violet)" stroke-width="1" rx="2"/>
+        <!-- ASR activation: covers recognize while receiving audio (y 195 to 420) -->
+        <rect x="549" y="195" width="12" height="225" fill="var(--amber)" opacity="0.28" stroke="var(--amber)" stroke-width="1" rx="2"/>
+        <!-- CC activation: very short, at the end when message arrives (y 470 to 505) -->
+        <rect x="789" y="470" width="12" height="35" fill="var(--emerald)" opacity="0.28" stroke="var(--emerald)" stroke-width="1" rx="2"/>
+
+        <!-- ============ Messages ============ -->
+        <!-- Message 1: User -> Mic @ y=100: 按下录音按钮 / Press record -->
+        <g color="var(--cyan)">
+          <line x1="105" y1="100" x2="309" y2="100" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrow)"/>
+          <text class="lz" x="207" y="92" fill="var(--text)" font-size="11" font-weight="600" text-anchor="middle">① 按下录音按钮</text>
+          <text class="le" display="none" x="207" y="92" fill="var(--text)" font-size="11" font-weight="600" text-anchor="middle">① Press record</text>
+        </g>
+
+        <!-- Message 2: Mic -> Mic (self) @ y=135: 开始采样 / Start sampling -->
+        <g color="var(--violet)">
+          <path d="M 321 128 C 370 128, 370 158, 321 158" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrowSelf)"/>
+          <text class="lz" x="378" y="138" fill="var(--text)" font-size="11" font-weight="600">② 开始采样</text>
+          <text class="lz" x="378" y="152" fill="var(--muted)" font-size="10">16 kHz PCM</text>
+          <text class="le" display="none" x="378" y="138" fill="var(--text)" font-size="11" font-weight="600">② Start sampling</text>
+          <text class="le" display="none" x="378" y="152" fill="var(--muted)" font-size="10">16 kHz PCM</text>
+        </g>
+
+        <!-- Message 3: User -> Mic @ y=180: 说话 / Speak audio -->
+        <g color="var(--cyan)">
+          <line x1="105" y1="180" x2="309" y2="180" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrow)"/>
+          <text class="lz" x="207" y="172" fill="var(--text)" font-size="11" font-weight="600" text-anchor="middle">③ 说话（音频波形）</text>
+          <text class="le" display="none" x="207" y="172" fill="var(--text)" font-size="11" font-weight="600" text-anchor="middle">③ Speak (audio waveform)</text>
+          <!-- small waveform decoration beneath label -->
+          <g stroke="var(--cyan)" stroke-width="1.3" stroke-linecap="round" opacity="0.7">
+            <line x1="150" y1="188" x2="150" y2="188"/>
+            <line x1="156" y1="184" x2="156" y2="192"/>
+            <line x1="162" y1="180" x2="162" y2="196"/>
+            <line x1="168" y1="182" x2="168" y2="194"/>
+            <line x1="174" y1="178" x2="174" y2="198"/>
+            <line x1="180" y1="184" x2="180" y2="192"/>
+            <line x1="186" y1="181" x2="186" y2="195"/>
+            <line x1="192" y1="183" x2="192" y2="193"/>
+            <line x1="198" y1="179" x2="198" y2="197"/>
+            <line x1="204" y1="182" x2="204" y2="194"/>
+            <line x1="210" y1="185" x2="210" y2="191"/>
+            <line x1="216" y1="181" x2="216" y2="195"/>
+            <line x1="222" y1="184" x2="222" y2="192"/>
+            <line x1="228" y1="180" x2="228" y2="196"/>
+            <line x1="234" y1="183" x2="234" y2="193"/>
+            <line x1="240" y1="186" x2="240" y2="190"/>
+            <line x1="246" y1="182" x2="246" y2="194"/>
+            <line x1="252" y1="184" x2="252" y2="192"/>
+            <line x1="258" y1="181" x2="258" y2="195"/>
+          </g>
+        </g>
+
+        <!-- Message 4: Mic -> ASR @ y=220: stream PCM audio chunks -->
+        <g color="var(--violet)">
+          <line x1="321" y1="220" x2="549" y2="220" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrow)"/>
+          <text class="lz" x="435" y="212" fill="var(--text)" font-size="11" font-weight="600" text-anchor="middle">④ stream PCM 音频块</text>
+          <text class="lz" x="435" y="234" fill="var(--muted)" font-size="10" text-anchor="middle">chunk ≈ 20ms · WebSocket</text>
+          <text class="le" display="none" x="435" y="212" fill="var(--text)" font-size="11" font-weight="600" text-anchor="middle">④ stream PCM audio chunks</text>
+          <text class="le" display="none" x="435" y="234" fill="var(--muted)" font-size="10" text-anchor="middle">chunk ≈ 20ms · WebSocket</text>
+        </g>
+
+        <!-- Message 5: ASR -> ASR (self) @ y=265: Recognize in real-time -->
+        <g color="var(--amber)">
+          <path d="M 561 258 C 610 258, 610 288, 561 288" fill="none" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrowSelf)"/>
+          <text class="lz" x="620" y="268" fill="var(--text)" font-size="11" font-weight="600">⑤ 实时识别</text>
+          <text class="lz" x="620" y="282" fill="var(--muted)" font-size="10">流式解码 · greedy + beam</text>
+          <text class="le" display="none" x="620" y="268" fill="var(--text)" font-size="11" font-weight="600">⑤ Recognize in real-time</text>
+          <text class="le" display="none" x="620" y="282" fill="var(--muted)" font-size="10">streaming decode · beam</text>
+        </g>
+
+        <!-- Message 6: ASR -> Mic @ y=320: Partial transcript (dashed) -->
+        <g color="var(--amber)">
+          <line x1="549" y1="320" x2="321" y2="320" stroke="currentColor" stroke-width="1.4" stroke-dasharray="5 4" marker-end="url(#arrowOpen)"/>
+          <text class="lz" x="435" y="312" fill="var(--text)" font-size="11" font-weight="600" text-anchor="middle">⑥ 临时转写 (partial)</text>
+          <text class="lz" x="435" y="334" fill="var(--muted)" font-size="10" text-anchor="middle">"帮我看……" · 虚线＝试探性结果</text>
+          <text class="le" display="none" x="435" y="312" fill="var(--text)" font-size="11" font-weight="600" text-anchor="middle">⑥ Partial transcript</text>
+          <text class="le" display="none" x="435" y="334" fill="var(--muted)" font-size="10" text-anchor="middle">"help me…" · dashed = tentative</text>
+        </g>
+
+        <!-- Message 7: User -> Mic @ y=370: 松开按钮 / Release button -->
+        <g color="var(--cyan)">
+          <line x1="105" y1="370" x2="309" y2="370" stroke="currentColor" stroke-width="1.6" marker-end="url(#arrow)"/>
+          <text class="lz" x="207" y="362" fill="var(--text)" font-size="11" font-weight="600" text-anchor="middle">⑦ 松开按钮</text>
+          <text class="le" display="none" x="207" y="362" fill="var(--text)" font-size="11" font-weight="600" text-anchor="middle">⑦ Release button</text>
+        </g>
+
+        <!-- Message 8: ASR -> Mic @ y=410: Final transcript -->
+        <g color="var(--amber)">
+          <line x1="549" y1="410" x2="321" y2="410" stroke="currentColor" stroke-width="1.8" marker-end="url(#arrow)"/>
+          <text class="lz" x="435" y="402" fill="var(--text)" font-size="11" font-weight="600" text-anchor="middle">⑧ 最终转写 (final)</text>
+          <text class="lz" x="435" y="424" fill="var(--muted)" font-size="10" text-anchor="middle">"帮我看下这段代码有没有bug"</text>
+          <text class="le" display="none" x="435" y="402" fill="var(--text)" font-size="11" font-weight="600" text-anchor="middle">⑧ Final transcript</text>
+          <text class="le" display="none" x="435" y="424" fill="var(--muted)" font-size="10" text-anchor="middle">"check this code for bugs"</text>
+        </g>
+
+        <!-- Message 9: Mic -> CC @ y=470: Send as user message -->
+        <g color="var(--emerald)">
+          <line x1="321" y1="470" x2="789" y2="470" stroke="currentColor" stroke-width="1.8" marker-end="url(#arrow)"/>
+          <text class="lz" x="555" y="462" fill="var(--text)" font-size="11" font-weight="600" text-anchor="middle">⑨ 作为 user message 发送给 Claude Code</text>
+          <text class="lz" x="555" y="484" fill="var(--muted)" font-size="10" text-anchor="middle">注入消息队列 · 触发一次 Agent Loop</text>
+          <text class="le" display="none" x="555" y="462" fill="var(--text)" font-size="11" font-weight="600" text-anchor="middle">⑨ Send as user message to Claude Code</text>
+          <text class="le" display="none" x="555" y="484" fill="var(--muted)" font-size="10" text-anchor="middle">pushed to message queue · one Agent Loop tick</text>
+        </g>
+
+        <!-- End marker: X on lifelines -->
+        <g stroke="var(--muted)" stroke-width="1.4" opacity="0.55">
+          <line x1="100" y1="515" x2="110" y2="525"/><line x1="110" y1="515" x2="100" y2="525"/>
+          <line x1="310" y1="515" x2="320" y2="525"/><line x1="320" y1="515" x2="310" y2="525"/>
+          <line x1="550" y1="515" x2="560" y2="525"/><line x1="560" y1="515" x2="550" y2="525"/>
+          <line x1="790" y1="515" x2="800" y2="525"/><line x1="800" y1="515" x2="790" y2="525"/>
+        </g>
+
+        <!-- Bottom phase labels -->
+        <g>
+          <text class="lz" x="207" y="548" text-anchor="middle" fill="var(--muted)" font-size="10">阶段：采集</text>
+          <text class="lz" x="435" y="548" text-anchor="middle" fill="var(--muted)" font-size="10">阶段：识别</text>
+          <text class="lz" x="675" y="548" text-anchor="middle" fill="var(--muted)" font-size="10">阶段：投递</text>
+          <text class="le" display="none" x="207" y="548" text-anchor="middle" fill="var(--muted)" font-size="10">Phase: Capture</text>
+          <text class="le" display="none" x="435" y="548" text-anchor="middle" fill="var(--muted)" font-size="10">Phase: Recognize</text>
+          <text class="le" display="none" x="675" y="548" text-anchor="middle" fill="var(--muted)" font-size="10">Phase: Dispatch</text>
+        </g>
+      </svg>
+
+      <div class="legend">
+        <div class="lg"><span class="sw" style="background:var(--cyan)"></span>
+          <span class="lz">用户 User</span><span class="le" style="display:none">User</span>
+        </div>
+        <div class="lg"><span class="sw" style="background:var(--violet)"></span>
+          <span class="lz">麦克风客户端 Mic/Client</span><span class="le" style="display:none">Mic / Client</span>
+        </div>
+        <div class="lg"><span class="sw" style="background:var(--amber)"></span>
+          <span class="lz">ASR 引擎 Engine</span><span class="le" style="display:none">ASR Engine</span>
+        </div>
+        <div class="lg"><span class="sw" style="background:var(--emerald)"></span>
+          <span class="lz">Claude Code 主进程</span><span class="le" style="display:none">Claude Code</span>
+        </div>
+        <div class="lg">
+          <svg width="28" height="10"><line x1="2" y1="5" x2="26" y2="5" stroke="var(--muted)" stroke-width="1.4" stroke-dasharray="5 4"/></svg>
+          <span class="lz">虚线＝临时/试探性结果</span><span class="le" style="display:none">Dashed = tentative / partial</span>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <p class="panel-title">
+        <span class="lz">关键指标 · Key Stats</span>
+        <span class="le" style="display:none">Key Stats</span>
+      </p>
+      <div class="stats">
+        <div class="stat">
+          <div class="stat-k"><span class="lz">参与者</span><span class="le" style="display:none">Actors</span></div>
+          <div class="stat-v">4 <span class="lz" style="font-size:12px;color:var(--muted);font-weight:500">参与者</span><span class="le" style="display:none;font-size:12px;color:var(--muted);font-weight:500">actors</span></div>
+        </div>
+        <div class="stat">
+          <div class="stat-k"><span class="lz">转写方式</span><span class="le" style="display:none">Mode</span></div>
+          <div class="stat-v"><span class="lz">实时转写</span><span class="le" style="display:none">Real-time ASR</span></div>
+        </div>
+        <div class="stat">
+          <div class="stat-k"><span class="lz">传输协议</span><span class="le" style="display:none">Transport</span></div>
+          <div class="stat-v"><span class="lz">PCM 流式</span><span class="le" style="display:none">PCM streaming</span></div>
+        </div>
+      </div>
+    </section>
+
+    <footer>
+      <span class="lz">VIS-2Q-010 · 基于 Claude Code Companion 语音输入链路 · 顺时针阅读：从上到下为时间轴 · 主题 <span class="kbd">Theme</span> · 语言 <span class="kbd">EN</span></span>
+      <span class="le" style="display:none">VIS-2Q-010 · Based on Claude Code Companion voice-input path · Read top-to-bottom as time axis · <span class="kbd">Theme</span> · <span class="kbd">中文</span></span>
+    </footer>
+  </div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

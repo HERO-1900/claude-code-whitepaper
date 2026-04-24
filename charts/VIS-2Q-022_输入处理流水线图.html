@@ -1,0 +1,491 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-2Q-022 · 输入处理流水线图 / Input Processing Pipeline</title>
+<style>
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Segoe UI",system-ui,sans-serif;-webkit-font-smoothing:antialiased;}
+body{min-height:100vh;padding:24px 20px 40px;}
+.wrap{max-width:1100px;margin:0 auto;}
+.topbar{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;flex-wrap:wrap;gap:12px;}
+.meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.code{font-family:"JetBrains Mono","SF Mono",Menlo,Consolas,monospace;font-size:11px;color:var(--muted);padding:4px 8px;border:1px solid var(--border);border-radius:6px;background:var(--card);}
+.controls{display:flex;gap:8px;}
+.btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;transition:all .15s;font-family:inherit;}
+.btn:hover{border-color:var(--muted);}
+.title{font-size:22px;font-weight:700;letter-spacing:-.01em;margin-bottom:4px;}
+.subtitle{font-size:13px;color:var(--muted);margin-bottom:20px;}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:20px;margin-bottom:16px;}
+.chart-svg{width:100%;height:auto;display:block;}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+.stat-value{font-size:20px;font-weight:700;color:var(--text);}
+.stat-sub{font-size:11px;color:var(--muted);margin-top:3px;}
+
+.legend{display:flex;flex-wrap:wrap;gap:12px;margin-top:14px;padding-top:14px;border-top:1px solid var(--border);}
+.lg-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);}
+.lg-dot{width:10px;height:10px;border-radius:2px;}
+
+.footnote{font-size:11px;color:var(--muted);margin-top:12px;line-height:1.6;}
+.footnote code{font-family:"JetBrains Mono",monospace;background:var(--card);padding:1px 5px;border-radius:3px;font-size:10.5px;color:var(--text);}
+
+@media (max-width:720px){
+  .stats{grid-template-columns:1fr;}
+  .title{font-size:18px;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="meta">
+      <span class="code">VIS-2Q-022</span>
+      <span class="code">Claude Code v2.1.88</span>
+      <span class="code lz">输入层 / Input Layer</span>
+      <span class="code le" style="display:none">Input Layer</span>
+    </div>
+    <div class="controls">
+      <button class="btn" onclick="cycleTheme()">Theme</button>
+      <button class="btn" onclick="toggleLang()">中/EN</button>
+    </div>
+  </div>
+
+  <h1 class="title">
+    <span class="lz">输入处理流水线图</span>
+    <span class="le" style="display:none">Input Processing Pipeline</span>
+  </h1>
+  <p class="subtitle">
+    <span class="lz">从键盘敲击到 LLM 提示的完整 7 阶段处理链路</span>
+    <span class="le" style="display:none">Full 7-stage pipeline from user keystroke to LLM prompt</span>
+  </p>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label">
+        <span class="lz">流水线阶段</span>
+        <span class="le" style="display:none">Pipeline Stages</span>
+      </div>
+      <div class="stat-value">7</div>
+      <div class="stat-sub">
+        <span class="lz">输入到 API 发送</span>
+        <span class="le" style="display:none">Input to API send</span>
+      </div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">
+        <span class="lz">内容类型</span>
+        <span class="le" style="display:none">Content Support</span>
+      </div>
+      <div class="stat-value">
+        <span class="lz">多模态</span>
+        <span class="le" style="display:none">Multimodal</span>
+      </div>
+      <div class="stat-sub">
+        <span class="lz">文本 / 文件 / 图像 / URL</span>
+        <span class="le" style="display:none">text / file / image / URL</span>
+      </div>
+    </div>
+    <div class="stat">
+      <div class="stat-label">
+        <span class="lz">传输方式</span>
+        <span class="le" style="display:none">Transport</span>
+      </div>
+      <div class="stat-value">
+        <span class="lz">流式发送</span>
+        <span class="le" style="display:none">Streaming</span>
+      </div>
+      <div class="stat-sub">
+        <span class="lz">SSE 长连接</span>
+        <span class="le" style="display:none">SSE long-lived</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <svg class="chart-svg" viewBox="0 0 920 500" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Input Processing Pipeline">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)" opacity="0.85"/>
+        </marker>
+        <linearGradient id="flow-grad" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stop-color="#22d3ee" stop-opacity="0.25"/>
+          <stop offset="0.5" stop-color="#8b5cf6" stop-opacity="0.18"/>
+          <stop offset="1" stop-color="#64748b" stop-opacity="0.25"/>
+        </linearGradient>
+        <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="2" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- Background flow band -->
+      <rect x="30" y="180" width="860" height="80" rx="40" fill="url(#flow-grad)" opacity="0.35"/>
+
+      <!-- Title inside SVG -->
+      <text x="460" y="32" text-anchor="middle" font-size="13" fill="var(--muted)" class="lz">用户按键 → API 请求 · 7 阶段流水线</text>
+      <text x="460" y="32" text-anchor="middle" font-size="13" fill="var(--muted)" class="le" display="none">User Keystroke → API Request · 7-stage pipeline</text>
+
+      <!-- Example payload header -->
+      <text x="30" y="62" font-size="11" fill="var(--muted)" font-family="JetBrains Mono, monospace" class="lz">示例输入：</text>
+      <text x="30" y="62" font-size="11" fill="var(--muted)" font-family="JetBrains Mono, monospace" class="le" display="none">Example input:</text>
+      <rect x="30" y="70" width="860" height="28" rx="6" fill="var(--card)" stroke="var(--border)"/>
+      <text x="44" y="88" font-size="11" fill="var(--text)" font-family="JetBrains Mono, monospace">/review @src/App.tsx &amp;&amp; echo done  https://docs.anthropic.com/</text>
+
+      <!-- STAGE 1: Keyboard Input -->
+      <g transform="translate(30,115)">
+        <rect x="0" y="0" width="110" height="180" rx="10" fill="var(--card)" stroke="#22d3ee" stroke-width="1.5"/>
+        <circle cx="22" cy="22" r="13" fill="#22d3ee"/>
+        <text x="22" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="#0f172a">1</text>
+        <text x="55" y="50" text-anchor="middle" font-size="22" fill="#22d3ee" font-family="JetBrains Mono, monospace">⌨</text>
+        <text x="55" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)" class="lz">键盘输入</text>
+        <text x="55" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)" class="le" display="none">Keyboard Input</text>
+        <text x="55" y="94" text-anchor="middle" font-size="10" fill="var(--muted)" class="lz">Keyboard</text>
+        <text x="55" y="94" text-anchor="middle" font-size="10" fill="var(--muted)" class="le" display="none">Raw keystroke</text>
+        <line x1="10" y1="104" x2="100" y2="104" stroke="var(--border)"/>
+        <text x="10" y="120" font-size="10" fill="var(--muted)" class="lz">· 原始按键</text>
+        <text x="10" y="120" font-size="10" fill="var(--muted)" class="le" display="none">· Raw keys</text>
+        <text x="10" y="136" font-size="10" fill="var(--muted)" class="lz">· ANSI 转义码</text>
+        <text x="10" y="136" font-size="10" fill="var(--muted)" class="le" display="none">· ANSI escapes</text>
+        <text x="10" y="152" font-size="10" fill="var(--muted)" class="lz">· Enter 前缓冲</text>
+        <text x="10" y="152" font-size="10" fill="var(--muted)" class="le" display="none">· Buffered</text>
+        <text x="10" y="168" font-size="10" fill="var(--muted)" class="lz">· Readline</text>
+        <text x="10" y="168" font-size="10" fill="var(--muted)" class="le" display="none">· Readline</text>
+      </g>
+
+      <!-- STAGE 2: Preprocess -->
+      <g transform="translate(155,115)">
+        <rect x="0" y="0" width="110" height="180" rx="10" fill="var(--card)" stroke="#8b5cf6" stroke-width="1.5"/>
+        <circle cx="22" cy="22" r="13" fill="#8b5cf6"/>
+        <text x="22" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="#0f172a">2</text>
+        <text x="55" y="50" text-anchor="middle" font-size="22" fill="#8b5cf6" font-family="JetBrains Mono, monospace">✂</text>
+        <text x="55" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)" class="lz">预处理</text>
+        <text x="55" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)" class="le" display="none">Preprocess</text>
+        <text x="55" y="94" text-anchor="middle" font-size="10" fill="var(--muted)" class="lz">Preprocess</text>
+        <text x="55" y="94" text-anchor="middle" font-size="10" fill="var(--muted)" class="le" display="none">Normalize</text>
+        <line x1="10" y1="104" x2="100" y2="104" stroke="var(--border)"/>
+        <text x="10" y="120" font-size="10" fill="var(--muted)" class="lz">· 去控制字符</text>
+        <text x="10" y="120" font-size="10" fill="var(--muted)" class="le" display="none">· Strip ctrl chars</text>
+        <text x="10" y="136" font-size="10" fill="var(--muted)" class="lz">· 规范化空白</text>
+        <text x="10" y="136" font-size="10" fill="var(--muted)" class="le" display="none">· Normalize WS</text>
+        <text x="10" y="152" font-size="10" fill="var(--muted)" class="lz">· 多行粘贴</text>
+        <text x="10" y="152" font-size="10" fill="var(--muted)" class="le" display="none">· Multi-line paste</text>
+        <text x="10" y="168" font-size="10" fill="var(--muted)" class="lz">· UTF-8 校验</text>
+        <text x="10" y="168" font-size="10" fill="var(--muted)" class="le" display="none">· UTF-8 check</text>
+      </g>
+
+      <!-- STAGE 3: Route Detection -->
+      <g transform="translate(280,115)">
+        <rect x="0" y="0" width="110" height="180" rx="10" fill="var(--card)" stroke="#f59e0b" stroke-width="1.5"/>
+        <circle cx="22" cy="22" r="13" fill="#f59e0b"/>
+        <text x="22" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="#0f172a">3</text>
+        <text x="55" y="50" text-anchor="middle" font-size="22" fill="#f59e0b" font-family="JetBrains Mono, monospace">⇆</text>
+        <text x="55" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)" class="lz">路由识别</text>
+        <text x="55" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)" class="le" display="none">Route Detection</text>
+        <text x="55" y="94" text-anchor="middle" font-size="10" fill="var(--muted)" class="lz">Route Detect</text>
+        <text x="55" y="94" text-anchor="middle" font-size="10" fill="var(--muted)" class="le" display="none">Classifier</text>
+        <line x1="10" y1="104" x2="100" y2="104" stroke="var(--border)"/>
+        <text x="10" y="120" font-size="10" fill="var(--muted)" font-family="JetBrains Mono, monospace">· / slash</text>
+        <text x="10" y="136" font-size="10" fill="var(--muted)" font-family="JetBrains Mono, monospace">· ! shell</text>
+        <text x="10" y="152" font-size="10" fill="var(--muted)" font-family="JetBrains Mono, monospace">· @ file ref</text>
+        <text x="10" y="168" font-size="10" fill="var(--muted)" font-family="JetBrains Mono, monospace">· http(s) URL</text>
+      </g>
+
+      <!-- STAGE 4: Special Handling -->
+      <g transform="translate(405,115)">
+        <rect x="0" y="0" width="110" height="180" rx="10" fill="var(--card)" stroke="#f97316" stroke-width="1.5"/>
+        <circle cx="22" cy="22" r="13" fill="#f97316"/>
+        <text x="22" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="#0f172a">4</text>
+        <text x="55" y="50" text-anchor="middle" font-size="22" fill="#f97316" font-family="JetBrains Mono, monospace">⚙</text>
+        <text x="55" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)" class="lz">特殊处理</text>
+        <text x="55" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)" class="le" display="none">Special Handling</text>
+        <text x="55" y="94" text-anchor="middle" font-size="10" fill="var(--muted)" class="lz">Dispatch</text>
+        <text x="55" y="94" text-anchor="middle" font-size="10" fill="var(--muted)" class="le" display="none">Dispatch</text>
+        <line x1="10" y1="104" x2="100" y2="104" stroke="var(--border)"/>
+        <text x="10" y="120" font-size="10" fill="var(--muted)" class="lz">· Slash: 注册表</text>
+        <text x="10" y="120" font-size="10" fill="var(--muted)" class="le" display="none">· Slash: registry</text>
+        <text x="10" y="136" font-size="10" fill="var(--muted)" class="lz">· File: 读并附件</text>
+        <text x="10" y="136" font-size="10" fill="var(--muted)" class="le" display="none">· File: read+attach</text>
+        <text x="10" y="152" font-size="10" fill="var(--muted)" class="lz">· Shell: 执行</text>
+        <text x="10" y="152" font-size="10" fill="var(--muted)" class="le" display="none">· Shell: exec</text>
+        <text x="10" y="168" font-size="10" fill="var(--muted)" class="lz">· URL: 抓取</text>
+        <text x="10" y="168" font-size="10" fill="var(--muted)" class="le" display="none">· URL: fetch</text>
+      </g>
+
+      <!-- STAGE 5: Attachment Merge -->
+      <g transform="translate(530,115)">
+        <rect x="0" y="0" width="110" height="180" rx="10" fill="var(--card)" stroke="#f43f5e" stroke-width="1.5"/>
+        <circle cx="22" cy="22" r="13" fill="#f43f5e"/>
+        <text x="22" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="#0f172a">5</text>
+        <text x="55" y="50" text-anchor="middle" font-size="22" fill="#f43f5e" font-family="JetBrains Mono, monospace">⊕</text>
+        <text x="55" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)" class="lz">附件合并</text>
+        <text x="55" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)" class="le" display="none">Attachment Merge</text>
+        <text x="55" y="94" text-anchor="middle" font-size="10" fill="var(--muted)" class="lz">Merge Blocks</text>
+        <text x="55" y="94" text-anchor="middle" font-size="10" fill="var(--muted)" class="le" display="none">Merge Blocks</text>
+        <line x1="10" y1="104" x2="100" y2="104" stroke="var(--border)"/>
+        <text x="10" y="120" font-size="10" fill="var(--muted)" class="lz">· 文本 + 附件</text>
+        <text x="10" y="120" font-size="10" fill="var(--muted)" class="le" display="none">· Text + attach</text>
+        <text x="10" y="136" font-size="10" fill="var(--muted)" class="lz">· 多模态 blocks</text>
+        <text x="10" y="136" font-size="10" fill="var(--muted)" class="le" display="none">· Multimodal blocks</text>
+        <text x="10" y="152" font-size="10" fill="var(--muted)" class="lz">· 图像 base64</text>
+        <text x="10" y="152" font-size="10" fill="var(--muted)" class="le" display="none">· Image base64</text>
+        <text x="10" y="168" font-size="10" fill="var(--muted)" class="lz">· 顺序保持</text>
+        <text x="10" y="168" font-size="10" fill="var(--muted)" class="le" display="none">· Preserve order</text>
+      </g>
+
+      <!-- STAGE 6: System Prompt Inject -->
+      <g transform="translate(655,115)">
+        <rect x="0" y="0" width="110" height="180" rx="10" fill="var(--card)" stroke="#10b981" stroke-width="1.5"/>
+        <circle cx="22" cy="22" r="13" fill="#10b981"/>
+        <text x="22" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="#0f172a">6</text>
+        <text x="55" y="50" text-anchor="middle" font-size="22" fill="#10b981" font-family="JetBrains Mono, monospace">◈</text>
+        <text x="55" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)" class="lz">注入 System</text>
+        <text x="55" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)" class="le" display="none">Inject System</text>
+        <text x="55" y="94" text-anchor="middle" font-size="10" fill="var(--muted)" class="lz">Prompt Assembly</text>
+        <text x="55" y="94" text-anchor="middle" font-size="10" fill="var(--muted)" class="le" display="none">Prompt Assembly</text>
+        <line x1="10" y1="104" x2="100" y2="104" stroke="var(--border)"/>
+        <text x="10" y="120" font-size="10" fill="var(--muted)" class="lz">· CLAUDE.md</text>
+        <text x="10" y="120" font-size="10" fill="var(--muted)" class="le" display="none">· CLAUDE.md</text>
+        <text x="10" y="136" font-size="10" fill="var(--muted)" class="lz">· 工具定义</text>
+        <text x="10" y="136" font-size="10" fill="var(--muted)" class="le" display="none">· Tool defs</text>
+        <text x="10" y="152" font-size="10" fill="var(--muted)" class="lz">· 历史消息</text>
+        <text x="10" y="152" font-size="10" fill="var(--muted)" class="le" display="none">· History</text>
+        <text x="10" y="168" font-size="10" fill="var(--muted)" class="lz">· 环境上下文</text>
+        <text x="10" y="168" font-size="10" fill="var(--muted)" class="le" display="none">· Env context</text>
+      </g>
+
+      <!-- STAGE 7: Send API -->
+      <g transform="translate(780,115)">
+        <rect x="0" y="0" width="110" height="180" rx="10" fill="var(--card)" stroke="#64748b" stroke-width="1.5"/>
+        <circle cx="22" cy="22" r="13" fill="#64748b"/>
+        <text x="22" y="26" text-anchor="middle" font-size="13" font-weight="700" fill="#f1f5f9">7</text>
+        <text x="55" y="50" text-anchor="middle" font-size="22" fill="#94a3b8" font-family="JetBrains Mono, monospace">↗</text>
+        <text x="55" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)" class="lz">发送 API</text>
+        <text x="55" y="78" text-anchor="middle" font-size="12" font-weight="700" fill="var(--text)" class="le" display="none">Send API</text>
+        <text x="55" y="94" text-anchor="middle" font-size="10" fill="var(--muted)" class="lz">Anthropic API</text>
+        <text x="55" y="94" text-anchor="middle" font-size="10" fill="var(--muted)" class="le" display="none">Anthropic API</text>
+        <line x1="10" y1="104" x2="100" y2="104" stroke="var(--border)"/>
+        <text x="10" y="120" font-size="10" fill="var(--muted)" font-family="JetBrains Mono, monospace">· POST /v1</text>
+        <text x="10" y="136" font-size="10" fill="var(--muted)" class="lz">· SSE 流式</text>
+        <text x="10" y="136" font-size="10" fill="var(--muted)" class="le" display="none">· SSE stream</text>
+        <text x="10" y="152" font-size="10" fill="var(--muted)" class="lz">· 重试退避</text>
+        <text x="10" y="152" font-size="10" fill="var(--muted)" class="le" display="none">· Retry/backoff</text>
+        <text x="10" y="168" font-size="10" fill="var(--muted)" class="lz">· 增量渲染</text>
+        <text x="10" y="168" font-size="10" fill="var(--muted)" class="le" display="none">· Incremental</text>
+      </g>
+
+      <!-- Arrows between stages -->
+      <g stroke="var(--muted)" stroke-width="1.6" fill="none" marker-end="url(#arrow)" opacity="0.8">
+        <line x1="141" y1="205" x2="153" y2="205"/>
+        <line x1="266" y1="205" x2="278" y2="205"/>
+        <line x1="391" y1="205" x2="403" y2="205"/>
+        <line x1="516" y1="205" x2="528" y2="205"/>
+        <line x1="641" y1="205" x2="653" y2="205"/>
+        <line x1="766" y1="205" x2="778" y2="205"/>
+      </g>
+
+      <!-- Example payload flow labels -->
+      <g font-size="10" font-family="JetBrains Mono, monospace" fill="var(--muted)">
+        <text x="85" y="318" text-anchor="middle">"/review@src..."</text>
+        <text x="210" y="318" text-anchor="middle" class="lz">纯文本</text>
+        <text x="210" y="318" text-anchor="middle" class="le" display="none">plain text</text>
+        <text x="335" y="318" text-anchor="middle" class="lz">命中 /slash</text>
+        <text x="335" y="318" text-anchor="middle" class="le" display="none">match /slash</text>
+        <text x="460" y="318" text-anchor="middle" class="lz">读文件+URL</text>
+        <text x="460" y="318" text-anchor="middle" class="le" display="none">read file+URL</text>
+        <text x="585" y="318" text-anchor="middle">text+image+...</text>
+        <text x="710" y="318" text-anchor="middle" class="lz">+ sys prompt</text>
+        <text x="710" y="318" text-anchor="middle" class="le" display="none">+ sys prompt</text>
+        <text x="835" y="318" text-anchor="middle" class="lz">HTTPS POST</text>
+        <text x="835" y="318" text-anchor="middle" class="le" display="none">HTTPS POST</text>
+      </g>
+
+      <!-- Side annotations: edge cases -->
+      <g>
+        <text x="30" y="360" font-size="12" font-weight="700" fill="var(--text)" class="lz">边界情况 &amp; 注解</text>
+        <text x="30" y="360" font-size="12" font-weight="700" fill="var(--text)" class="le" display="none">Edge Cases &amp; Notes</text>
+      </g>
+
+      <!-- Edge case boxes -->
+      <g transform="translate(30,375)">
+        <rect x="0" y="0" width="200" height="100" rx="8" fill="var(--card)" stroke="var(--border)"/>
+        <circle cx="14" cy="16" r="5" fill="#22d3ee"/>
+        <text x="26" y="20" font-size="11" font-weight="700" fill="var(--text)" class="lz">多行粘贴</text>
+        <text x="26" y="20" font-size="11" font-weight="700" fill="var(--text)" class="le" display="none">Multi-line paste</text>
+        <text x="10" y="42" font-size="10" fill="var(--muted)" class="lz">检测 Bracketed Paste (ESC[200~)</text>
+        <text x="10" y="42" font-size="10" fill="var(--muted)" class="le" display="none">Detect bracketed paste seq</text>
+        <text x="10" y="58" font-size="10" fill="var(--muted)" class="lz">保留换行，不逐行触发</text>
+        <text x="10" y="58" font-size="10" fill="var(--muted)" class="le" display="none">Preserve newlines as one msg</text>
+        <text x="10" y="74" font-size="10" fill="var(--muted)" class="lz">超阈值折叠为附件</text>
+        <text x="10" y="74" font-size="10" fill="var(--muted)" class="le" display="none">Fold large paste to attach</text>
+        <text x="10" y="90" font-size="10" fill="var(--muted)" font-family="JetBrains Mono, monospace">→ stage 2</text>
+      </g>
+
+      <g transform="translate(245,375)">
+        <rect x="0" y="0" width="200" height="100" rx="8" fill="var(--card)" stroke="var(--border)"/>
+        <circle cx="14" cy="16" r="5" fill="#f59e0b"/>
+        <text x="26" y="20" font-size="11" font-weight="700" fill="var(--text)" class="lz">组合输入</text>
+        <text x="26" y="20" font-size="11" font-weight="700" fill="var(--text)" class="le" display="none">Combined input</text>
+        <text x="10" y="42" font-size="10" fill="var(--muted)" class="lz">slash + @file + URL 可并存</text>
+        <text x="10" y="42" font-size="10" fill="var(--muted)" class="le" display="none">slash + @file + URL coexist</text>
+        <text x="10" y="58" font-size="10" fill="var(--muted)" class="lz">路由器产生多分类标签</text>
+        <text x="10" y="58" font-size="10" fill="var(--muted)" class="le" display="none">Router emits multi-tags</text>
+        <text x="10" y="74" font-size="10" fill="var(--muted)" class="lz">stage 4 并行派发</text>
+        <text x="10" y="74" font-size="10" fill="var(--muted)" class="le" display="none">Stage 4 fans out</text>
+        <text x="10" y="90" font-size="10" fill="var(--muted)" font-family="JetBrains Mono, monospace">→ stage 3/4</text>
+      </g>
+
+      <g transform="translate(460,375)">
+        <rect x="0" y="0" width="200" height="100" rx="8" fill="var(--card)" stroke="var(--border)"/>
+        <circle cx="14" cy="16" r="5" fill="#f43f5e"/>
+        <text x="26" y="20" font-size="11" font-weight="700" fill="var(--text)" class="lz">大附件策略</text>
+        <text x="26" y="20" font-size="11" font-weight="700" fill="var(--text)" class="le" display="none">Large attachment</text>
+        <text x="10" y="42" font-size="10" fill="var(--muted)" class="lz">文本 &gt; 阈值 → 截断+hash</text>
+        <text x="10" y="42" font-size="10" fill="var(--muted)" class="le" display="none">Text over limit → trunc+hash</text>
+        <text x="10" y="58" font-size="10" fill="var(--muted)" class="lz">图像 → base64 multimodal</text>
+        <text x="10" y="58" font-size="10" fill="var(--muted)" class="le" display="none">Image → base64 multimodal</text>
+        <text x="10" y="74" font-size="10" fill="var(--muted)" class="lz">二进制拒绝（除图像）</text>
+        <text x="10" y="74" font-size="10" fill="var(--muted)" class="le" display="none">Reject non-image binaries</text>
+        <text x="10" y="90" font-size="10" fill="var(--muted)" font-family="JetBrains Mono, monospace">→ stage 5</text>
+      </g>
+
+      <g transform="translate(675,375)">
+        <rect x="0" y="0" width="215" height="100" rx="8" fill="var(--card)" stroke="var(--border)"/>
+        <circle cx="14" cy="16" r="5" fill="#10b981"/>
+        <text x="26" y="20" font-size="11" font-weight="700" fill="var(--text)" class="lz">失败与重试</text>
+        <text x="26" y="20" font-size="11" font-weight="700" fill="var(--text)" class="le" display="none">Failure &amp; retry</text>
+        <text x="10" y="42" font-size="10" fill="var(--muted)" class="lz">429 / 529 → 指数退避</text>
+        <text x="10" y="42" font-size="10" fill="var(--muted)" class="le" display="none">429 / 529 → exp. backoff</text>
+        <text x="10" y="58" font-size="10" fill="var(--muted)" class="lz">网络中断 → 流重连</text>
+        <text x="10" y="58" font-size="10" fill="var(--muted)" class="le" display="none">Net drop → stream retry</text>
+        <text x="10" y="74" font-size="10" fill="var(--muted)" class="lz">工具调用回合独立重放</text>
+        <text x="10" y="74" font-size="10" fill="var(--muted)" class="le" display="none">Tool turn replays isolated</text>
+        <text x="10" y="90" font-size="10" fill="var(--muted)" font-family="JetBrains Mono, monospace">→ stage 6/7</text>
+      </g>
+    </svg>
+
+    <div class="legend">
+      <div class="lg-item"><span class="lg-dot" style="background:#22d3ee"></span><span class="lz">键盘输入</span><span class="le" style="display:none">Keyboard</span></div>
+      <div class="lg-item"><span class="lg-dot" style="background:#8b5cf6"></span><span class="lz">预处理</span><span class="le" style="display:none">Preprocess</span></div>
+      <div class="lg-item"><span class="lg-dot" style="background:#f59e0b"></span><span class="lz">路由</span><span class="le" style="display:none">Route</span></div>
+      <div class="lg-item"><span class="lg-dot" style="background:#f97316"></span><span class="lz">特殊处理</span><span class="le" style="display:none">Special</span></div>
+      <div class="lg-item"><span class="lg-dot" style="background:#f43f5e"></span><span class="lz">附件合并</span><span class="le" style="display:none">Merge</span></div>
+      <div class="lg-item"><span class="lg-dot" style="background:#10b981"></span><span class="lz">System 注入</span><span class="le" style="display:none">Inject</span></div>
+      <div class="lg-item"><span class="lg-dot" style="background:#64748b"></span><span class="lz">发送 API</span><span class="le" style="display:none">Send</span></div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="footnote">
+      <span class="lz">
+        <strong>读图提示：</strong>整条流水线由 <code>processUserInput()</code> 统一编排。stage 1–2 属终端层（<code>readline</code> / TTY），stage 3–5 属会话层（分类 + 资源解析），stage 6–7 属 API 层（装配 + 发送）。同一条输入可能触发多类特殊处理——路由不是互斥的 <code>switch</code>，而是<strong>多标签并行派发</strong>，再在 stage 5 被按原顺序合并成 <code>content blocks[]</code>。
+        <br><br>
+        <strong>边界情况</strong>：多行粘贴使用 Bracketed Paste 识别避免逐行触发；超大文本附件会被截断并附带 hash；图像以 base64 直接嵌入；流式失败 (429/529/断网) 由 stage 7 做指数退避重试，工具调用回合独立重放以保证幂等。
+      </span>
+      <span class="le" style="display:none">
+        <strong>How to read:</strong> The pipeline is orchestrated by <code>processUserInput()</code>. Stages 1–2 are terminal-layer (<code>readline</code> / TTY); stages 3–5 are session-layer (classification + resource resolution); stages 6–7 are API-layer (assembly + send). One input can trigger multiple special handlers — routing is <strong>multi-tag parallel dispatch</strong>, not a mutually-exclusive <code>switch</code>; stage 5 merges results into ordered <code>content blocks[]</code>.
+        <br><br>
+        <strong>Edge cases:</strong> Bracketed Paste detection prevents per-line submission; oversized text attachments are truncated with hash suffix; images embed as base64; stream failures (429/529/disconnect) use exponential backoff in stage 7, and each tool-call turn is replayed independently for idempotency.
+      </span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

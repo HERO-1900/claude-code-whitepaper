@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <title>VIS-2A-027 配置系统九层套娃图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    :root{--bg:#020617;--panel:#0f172a;--card:#0f172a;--border:#1e293b;--text:#e2e8f0;--muted:#64748b;--subtle:#334155;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#f97316}
+    [data-theme="warm"]{--bg:#f8f6f3;--panel:#ffffff;--card:#faf9f7;--border:#e2d9cc;--text:#1c1917;--muted:#78716c;--subtle:#d6ccc2}
+    [data-theme="light"]{--bg:#ffffff;--panel:#f8fafc;--card:#f8fafc;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--subtle:#cbd5e1}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;padding:20px 24px 32px}
+    .svg-bg{fill:var(--bg)} .node-bg{fill:var(--panel)} .grid-line{stroke:var(--border)} .node-title{fill:var(--text)} .node-meta{fill:var(--muted)}
+    .vis-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+    .vis-dot{width:10px;height:10px;border-radius:50%;background:var(--amber);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+    .vis-title{font-size:17px;font-weight:700;color:var(--text)}
+    .vis-sub{font-size:11px;color:var(--muted);margin-left:4px}
+    .svg-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:16px;overflow-x:auto}
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px}
+    .card-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+    .card-dot{width:8px;height:8px;border-radius:50%}
+    .card-hd h3{font-size:12px;font-weight:600;color:var(--text)}
+    .card ul{list-style:none;font-size:11px;color:var(--muted);line-height:1.7}
+    .vis-footer{font-size:10px;color:var(--muted);text-align:center;border-top:1px solid var(--border);padding-top:10px}
+    .ctrl{position:fixed;top:16px;right:16px;display:flex;gap:6px;z-index:999}
+    .ctrl button{background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 10px;border-radius:6px;cursor:pointer}
+    .ctrl button:hover{border-color:var(--amber)}/* SVG theme-reactive text colors */
+    svg .text-main { fill: var(--text); }
+    svg .text-muted { fill: var(--muted); }
+    svg .text-subtle { fill: var(--subtle); }
+    svg .bg-panel { fill: var(--panel); }
+    svg .bg-base { fill: var(--bg); }
+    svg .stroke-border { stroke: var(--border); }
+
+    /* Layer hover effect */
+    .layer-group { cursor: default; }
+    .layer-group:hover .layer-rect-inner { opacity: 0.85; }
+
+    /* Priority arrow */
+    .priority-arrow { transition: opacity 0.2s; }
+
+    /* Tooltip style */
+    .tooltip-box { pointer-events: none; }
+  </style>
+</head>
+<body>
+<div class="ctrl">
+  <button onclick="window.cycleTheme()">Theme</button>
+  <button onclick="window.toggleLang()">EN/中</button>
+</div>
+
+<!-- Header -->
+<div class="vis-header">
+  <div class="vis-dot"></div>
+  <span class="vis-title">
+    <span class="lz">配置系统九层套娃图</span>
+    <span class="le" style="display:none">Config System: 9-Layer Matryoshka</span>
+  </span>
+  <span class="vis-sub">
+    <span class="lz">VIS-2A-027 · Claude Code 配置优先级层级</span>
+    <span class="le" style="display:none">VIS-2A-027 · Claude Code Configuration Priority Layers</span>
+  </span>
+</div>
+
+<!-- Main SVG -->
+<div class="svg-wrap">
+<svg id="mainSvg" viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" style="width:100%;min-width:800px;display:block;">
+  <defs>
+    <!-- Background rect for clipping -->
+    <filter id="glow-orange" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+
+    <!-- Arrow marker for priority -->
+    <marker id="arrowDown" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <path d="M1,1 L4,7 L7,1" fill="none" stroke="#64748b" stroke-width="1.5"/>
+    </marker>
+    <marker id="arrowUp" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <path d="M1,7 L4,1 L7,7" fill="none" stroke="#f97316" stroke-width="1.5"/>
+    </marker>
+
+    <!-- Gradient for priority arrow -->
+    <linearGradient id="priorityGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f97316"/>
+      <stop offset="30%" stop-color="#fb7185"/>
+      <stop offset="55%" stop-color="#a78bfa"/>
+      <stop offset="75%" stop-color="#22d3ee"/>
+      <stop offset="88%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#64748b"/>
+    </linearGradient>
+
+    <!-- Layer fill gradients (very subtle) -->
+    <radialGradient id="fillDefault" cx="50%" cy="50%" r="60%">
+      <stop offset="0%" stop-color="#334155" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#334155" stop-opacity="0.05"/>
+    </radialGradient>
+  </defs>
+
+  <!-- ===================== BACKGROUND ===================== -->
+  <rect width="960" height="560" class="bg-base svg-bg" rx="0"/>
+
+  <!-- Subtle grid lines -->
+  <g opacity="0.06">
+    <line x1="0" y1="140" x2="960" y2="140" stroke="#94a3b8" stroke-width="0.5" stroke-dasharray="4,6"/>
+    <line x1="0" y1="280" x2="960" y2="280" stroke="#94a3b8" stroke-width="0.5" stroke-dasharray="4,6"/>
+    <line x1="0" y1="420" x2="960" y2="420" stroke="#94a3b8" stroke-width="0.5" stroke-dasharray="4,6"/>
+    <line x1="240" y1="0" x2="240" y2="560" stroke="#94a3b8" stroke-width="0.5" stroke-dasharray="4,6"/>
+    <line x1="480" y1="0" x2="480" y2="560" stroke="#94a3b8" stroke-width="0.5" stroke-dasharray="4,6"/>
+    <line x1="720" y1="0" x2="720" y2="560" stroke="#94a3b8" stroke-width="0.5" stroke-dasharray="4,6"/>
+  </g>
+
+  <!-- ===================== PRIORITY ARROW (left sidebar) ===================== -->
+  <g transform="translate(12, 40)">
+    <!-- Arrow shaft with gradient -->
+    <rect x="8" y="10" width="8" height="440" rx="4" fill="url(#priorityGrad)" opacity="0.9"/>
+    <!-- Top arrowhead (highest priority) -->
+    <polygon points="12,4 6,14 18,14" fill="#f97316"/>
+    <!-- Bottom arrowhead (lowest priority) -->
+    <polygon points="12,456 6,446 18,446" fill="#64748b"/>
+
+    <!-- Labels -->
+    <g transform="translate(22, 0)">
+      <text x="0" y="16" font-family="'JetBrains Mono',monospace" font-size="10" fill="#f97316" font-weight="600">P1</text>
+      <text x="0" y="26" font-family="'JetBrains Mono',monospace" font-size="10" fill="#f97316" opacity="0.8"><tspan class="lz">最高</tspan><tspan class="le">High</tspan></text>
+      <text x="0" y="450" font-family="'JetBrains Mono',monospace" font-size="10" fill="#64748b" font-weight="600">P9</text>
+      <text x="0" y="460" font-family="'JetBrains Mono',monospace" font-size="10" fill="#64748b" opacity="0.8"><tspan class="lz">最低</tspan><tspan class="le">Low</tspan></text>
+    </g>
+
+    <!-- Priority label vertical text -->
+    <text transform="rotate(-90) translate(-260, 6)" font-family="'JetBrains Mono',monospace" font-size="10" fill="#64748b" text-anchor="middle">
+      <tspan class="lz">优先级 / Priority</tspan>
+      <tspan class="le">Priority</tspan>
+    </text>
+  </g>
+
+  <!-- ===================== LAYER 1: FLAG (outermost) ===================== -->
+  <!-- Orange #f97316 — w=880,h=480, x=40,y=40 -->
+  <g class="layer-group" id="layer-flag">
+    <!-- Background blocker rect (theme-reactive) -->
+    <rect x="40" y="40" width="880" height="480" rx="8" class="bg-panel node-bg"/>
+    <!-- Colored layer rect -->
+    <rect class="layer-rect-inner" x="40" y="40" width="880" height="480" rx="8"
+          fill="#f97316" fill-opacity="0.06"
+          stroke="#f97316" stroke-width="2" stroke-opacity="0.85"/>
+
+    <!-- Label group: top-left corner -->
+    <g transform="translate(52, 56)">
+      <!-- Priority badge -->
+      <rect x="0" y="0" width="26" height="15" rx="3" fill="#f97316" fill-opacity="0.2" stroke="#f97316" stroke-width="1" stroke-opacity="0.6"/>
+      <text x="13" y="11" font-family="'JetBrains Mono',monospace" font-size="10" fill="#f97316" font-weight="700" text-anchor="middle">P1</text>
+
+      <!-- Layer name -->
+      <text x="32" y="11" font-family="'JetBrains Mono',monospace" font-size="13" fill="#f97316" font-weight="700">
+        <tspan class="lz">Flag · 命令行参数</tspan>
+        <tspan class="le">Flag · CLI Flags</tspan>
+      </text>
+
+      <!-- English sub -->
+      <text x="32" y="24" font-family="'JetBrains Mono',monospace" font-size="10" fill="#f97316" opacity="0.7">
+        <tspan class="lz">CLI Flags</tspan>
+        <tspan class="le">Command-line flags</tspan>
+      </text>
+
+      <!-- Path -->
+      <text x="0" y="42" font-family="'JetBrains Mono',monospace" font-size="10" fill="#f97316" opacity="0.55">--flag-name</text>
+    </g>
+  </g>
+
+  <!-- ===================== LAYER 2: POLICY ===================== -->
+  <!-- Rose #fb7185 — w=800,h=420, x=80,y=70 -->
+  <g class="layer-group" id="layer-policy">
+    <rect x="80" y="70" width="800" height="420" rx="8" class="bg-panel node-bg"/>
+    <rect class="layer-rect-inner" x="80" y="70" width="800" height="420" rx="8"
+          fill="#fb7185" fill-opacity="0.06"
+          stroke="#fb7185" stroke-width="2" stroke-opacity="0.8"/>
+    <g transform="translate(92, 86)">
+      <rect x="0" y="0" width="26" height="15" rx="3" fill="#fb7185" fill-opacity="0.2" stroke="#fb7185" stroke-width="1" stroke-opacity="0.6"/>
+      <text x="13" y="11" font-family="'JetBrains Mono',monospace" font-size="10" fill="#fb7185" font-weight="700" text-anchor="middle">P2</text>
+      <text x="32" y="11" font-family="'JetBrains Mono',monospace" font-size="12" fill="#fb7185" font-weight="700">
+        <tspan class="lz">Policy · 企业策略</tspan>
+        <tspan class="le">Policy · Enterprise Policy</tspan>
+      </text>
+      <text x="32" y="24" font-family="'JetBrains Mono',monospace" font-size="10" fill="#fb7185" opacity="0.7">
+        <tspan class="lz">MDM 企业策略</tspan>
+        <tspan class="le">Enterprise Policy via MDM</tspan>
+      </text>
+      <text x="0" y="42" font-family="'JetBrains Mono',monospace" font-size="10" fill="#fb7185" opacity="0.55">policySettings</text>
+    </g>
+  </g>
+
+  <!-- ===================== LAYER 3: MANAGED ===================== -->
+  <!-- Violet #a78bfa — w=720,h=360, x=120,y=100 -->
+  <g class="layer-group" id="layer-managed">
+    <rect x="120" y="100" width="720" height="360" rx="8" class="bg-panel node-bg"/>
+    <rect class="layer-rect-inner" x="120" y="100" width="720" height="360" rx="8"
+          fill="#a78bfa" fill-opacity="0.06"
+          stroke="#a78bfa" stroke-width="2" stroke-opacity="0.75"/>
+    <g transform="translate(132, 116)">
+      <rect x="0" y="0" width="26" height="15" rx="3" fill="#a78bfa" fill-opacity="0.2" stroke="#a78bfa" stroke-width="1" stroke-opacity="0.6"/>
+      <text x="13" y="11" font-family="'JetBrains Mono',monospace" font-size="10" fill="#a78bfa" font-weight="700" text-anchor="middle">P3</text>
+      <text x="32" y="11" font-family="'JetBrains Mono',monospace" font-size="12" fill="#a78bfa" font-weight="700">
+        <tspan class="lz">Managed · 托管设置</tspan>
+        <tspan class="le">Managed · Managed Settings</tspan>
+      </text>
+      <text x="32" y="24" font-family="'JetBrains Mono',monospace" font-size="10" fill="#a78bfa" opacity="0.7">
+        <tspan class="lz">IT 管理员托管</tspan>
+        <tspan class="le">IT Admin Managed</tspan>
+      </text>
+      <text x="0" y="42" font-family="'JetBrains Mono',monospace" font-size="10" fill="#a78bfa" opacity="0.55">managedSettings</text>
+    </g>
+  </g>
+
+  <!-- ===================== LAYER 4: ENTERPRISE ===================== -->
+  <!-- Amber #fbbf24 — w=640,h=300, x=160,y=130 -->
+  <g class="layer-group" id="layer-enterprise">
+    <rect x="160" y="130" width="640" height="300" rx="8" class="bg-panel node-bg"/>
+    <rect class="layer-rect-inner" x="160" y="130" width="640" height="300" rx="8"
+          fill="#fbbf24" fill-opacity="0.06"
+          stroke="#fbbf24" stroke-width="2" stroke-opacity="0.75"/>
+    <g transform="translate(172, 146)">
+      <rect x="0" y="0" width="26" height="15" rx="3" fill="#fbbf24" fill-opacity="0.2" stroke="#fbbf24" stroke-width="1" stroke-opacity="0.6"/>
+      <text x="13" y="11" font-family="'JetBrains Mono',monospace" font-size="10" fill="#fbbf24" font-weight="700" text-anchor="middle">P4</text>
+      <text x="32" y="11" font-family="'JetBrains Mono',monospace" font-size="12" fill="#fbbf24" font-weight="700">
+        <tspan class="lz">Enterprise · 企业配置</tspan>
+        <tspan class="le">Enterprise · Enterprise Config</tspan>
+      </text>
+      <text x="32" y="24" font-family="'JetBrains Mono',monospace" font-size="10" fill="#fbbf24" opacity="0.7">
+        <tspan class="lz">企业 CLAUDE.md</tspan>
+        <tspan class="le">Enterprise CLAUDE.md</tspan>
+      </text>
+      <text x="0" y="42" font-family="'JetBrains Mono',monospace" font-size="10" fill="#fbbf24" opacity="0.55">~/Library/Claude/CLAUDE.md</text>
+    </g>
+  </g>
+
+  <!-- ===================== LAYER 5: PROJECT ===================== -->
+  <!-- Cyan #22d3ee — w=560,h=240, x=200,y=160 -->
+  <g class="layer-group" id="layer-project">
+    <rect x="200" y="160" width="560" height="240" rx="8" class="bg-panel node-bg"/>
+    <rect class="layer-rect-inner" x="200" y="160" width="560" height="240" rx="8"
+          fill="#22d3ee" fill-opacity="0.06"
+          stroke="#22d3ee" stroke-width="2" stroke-opacity="0.75"/>
+    <g transform="translate(212, 176)">
+      <rect x="0" y="0" width="26" height="15" rx="3" fill="#22d3ee" fill-opacity="0.2" stroke="#22d3ee" stroke-width="1" stroke-opacity="0.6"/>
+      <text x="13" y="11" font-family="'JetBrains Mono',monospace" font-size="10" fill="#22d3ee" font-weight="700" text-anchor="middle">P5</text>
+      <text x="32" y="11" font-family="'JetBrains Mono',monospace" font-size="11" fill="#22d3ee" font-weight="700">
+        <tspan class="lz">Project · 项目配置</tspan>
+        <tspan class="le">Project · Project Config</tspan>
+      </text>
+      <text x="32" y="24" font-family="'JetBrains Mono',monospace" font-size="10" fill="#22d3ee" opacity="0.7">
+        <tspan class="lz">项目 CLAUDE.md</tspan>
+        <tspan class="le">Project CLAUDE.md</tspan>
+      </text>
+      <text x="0" y="42" font-family="'JetBrains Mono',monospace" font-size="10" fill="#22d3ee" opacity="0.55">./CLAUDE.md</text>
+    </g>
+  </g>
+
+  <!-- ===================== LAYER 6: LOCAL ===================== -->
+  <!-- Emerald #34d399 — w=480,h=180, x=240,y=190 -->
+  <g class="layer-group" id="layer-local">
+    <rect x="240" y="190" width="480" height="180" rx="8" class="bg-panel node-bg"/>
+    <rect class="layer-rect-inner" x="240" y="190" width="480" height="180" rx="8"
+          fill="#34d399" fill-opacity="0.06"
+          stroke="#34d399" stroke-width="2" stroke-opacity="0.75"/>
+    <g transform="translate(252, 206)">
+      <rect x="0" y="0" width="26" height="15" rx="3" fill="#34d399" fill-opacity="0.2" stroke="#34d399" stroke-width="1" stroke-opacity="0.6"/>
+      <text x="13" y="11" font-family="'JetBrains Mono',monospace" font-size="10" fill="#34d399" font-weight="700" text-anchor="middle">P6</text>
+      <text x="32" y="11" font-family="'JetBrains Mono',monospace" font-size="11" fill="#34d399" font-weight="700">
+        <tspan class="lz">Local · 本地配置</tspan>
+        <tspan class="le">Local · Local Config</tspan>
+      </text>
+      <text x="32" y="24" font-family="'JetBrains Mono',monospace" font-size="10" fill="#34d399" opacity="0.7">
+        <tspan class="lz">本地项目覆盖</tspan>
+        <tspan class="le">Local Project Overrides</tspan>
+      </text>
+      <text x="0" y="42" font-family="'JetBrains Mono',monospace" font-size="10" fill="#34d399" opacity="0.55">.claude/settings.local.json</text>
+    </g>
+  </g>
+
+  <!-- ===================== LAYER 7: USER ===================== -->
+  <!-- Slate #94a3b8 — w=400,h=120, x=280,y=220 -->
+  <g class="layer-group" id="layer-user">
+    <rect x="280" y="220" width="400" height="120" rx="8" class="bg-panel node-bg"/>
+    <rect class="layer-rect-inner" x="280" y="220" width="400" height="120" rx="8"
+          fill="#94a3b8" fill-opacity="0.07"
+          stroke="#94a3b8" stroke-width="2" stroke-opacity="0.7"/>
+    <g transform="translate(292, 236)">
+      <rect x="0" y="0" width="26" height="15" rx="3" fill="#94a3b8" fill-opacity="0.2" stroke="#94a3b8" stroke-width="1" stroke-opacity="0.6"/>
+      <text x="13" y="11" font-family="'JetBrains Mono',monospace" font-size="10" fill="#94a3b8" font-weight="700" text-anchor="middle">P7</text>
+      <text x="32" y="11" font-family="'JetBrains Mono',monospace" font-size="11" fill="#94a3b8" font-weight="700">
+        <tspan class="lz">User · 用户设置</tspan>
+        <tspan class="le">User · User Settings</tspan>
+      </text>
+      <text x="32" y="24" font-family="'JetBrains Mono',monospace" font-size="10" fill="#94a3b8" opacity="0.7">
+        <tspan class="lz">全局用户配置</tspan>
+        <tspan class="le">Global User Config</tspan>
+      </text>
+      <text x="0" y="42" font-family="'JetBrains Mono',monospace" font-size="10" fill="#94a3b8" opacity="0.55">~/.claude/settings.json</text>
+    </g>
+  </g>
+
+  <!-- ===================== LAYER 8: WORKSPACE ===================== -->
+  <!-- Muted — w=320,h=60, x=320,y=250 -->
+  <g class="layer-group" id="layer-workspace">
+    <rect x="320" y="250" width="320" height="60" rx="8" class="bg-panel node-bg"/>
+    <rect class="layer-rect-inner" x="320" y="250" width="320" height="60" rx="8"
+          fill="#64748b" fill-opacity="0.1"
+          stroke="#64748b" stroke-width="2" stroke-opacity="0.6"/>
+    <g transform="translate(332, 260)">
+      <rect x="0" y="0" width="26" height="15" rx="3" fill="#64748b" fill-opacity="0.2" stroke="#64748b" stroke-width="1" stroke-opacity="0.5"/>
+      <text x="13" y="11" font-family="'JetBrains Mono',monospace" font-size="10" fill="#64748b" font-weight="700" text-anchor="middle">P8</text>
+      <text x="32" y="11" font-family="'JetBrains Mono',monospace" font-size="10" fill="#64748b" font-weight="700">
+        <tspan class="lz">Workspace · 工作区设置</tspan>
+        <tspan class="le">Workspace · Workspace Config</tspan>
+      </text>
+      <text x="0" y="28" font-family="'JetBrains Mono',monospace" font-size="10" fill="#64748b" opacity="0.5">.claude/settings.json</text>
+    </g>
+  </g>
+
+  <!-- ===================== LAYER 9: DEFAULT (center, no box) ===================== -->
+  <g id="layer-default">
+    <!-- Subtle center pill -->
+    <rect x="390" y="268" width="180" height="28" rx="14"
+          fill="#334155" fill-opacity="0.25"
+          stroke="#334155" stroke-width="1.5" stroke-opacity="0.5"/>
+    <text x="480" y="278" font-family="'JetBrains Mono',monospace" font-size="10" fill="#475569" font-weight="700" text-anchor="middle">
+      P9
+    </text>
+    <text x="480" y="289" font-family="'JetBrains Mono',monospace" font-size="10" fill="#475569" text-anchor="middle">
+      <tspan class="lz">Default · 内置默认值</tspan>
+      <tspan class="le">Default · Built-in Defaults</tspan>
+    </text>
+  </g>
+
+  <!-- ===================== MERGE RULE ANNOTATION ===================== -->
+  <!-- Floating annotation box, right side -->
+  <g transform="translate(800, 458)">
+    <rect x="0" y="0" width="148" height="60" rx="6"
+          fill="#0f172a" stroke="#1e293b" stroke-width="1.5" opacity="0.95"/>
+    <!-- Dashed connection line to diagram -->
+    <line x1="-20" y1="30" x2="0" y2="30" stroke="#334155" stroke-width="1" stroke-dasharray="3,3"/>
+
+    <text x="10" y="16" font-family="'JetBrains Mono',monospace" font-size="10" fill="#fbbf24" font-weight="700">
+      <tspan class="lz">合并策略</tspan>
+      <tspan class="le">Merge Strategy</tspan>
+    </text>
+    <text x="10" y="28" font-family="'JetBrains Mono',monospace" font-size="10" fill="#94a3b8">first-source-wins</text>
+    <text x="10" y="40" font-family="'JetBrains Mono',monospace" font-size="10" fill="#64748b">
+      <tspan class="lz">最外层 key 生效</tspan>
+      <tspan class="le">Outermost key wins</tspan>
+    </text>
+    <text x="10" y="52" font-family="'JetBrains Mono',monospace" font-size="10" fill="#64748b">
+      <tspan class="lz">内层不覆盖外层</tspan>
+      <tspan class="le">Inner cannot override outer</tspan>
+    </text>
+  </g>
+
+  <!-- ===================== LEGEND: PRIORITY SCALE ===================== -->
+  <!-- Top-right legend -->
+  <g transform="translate(760, 44)">
+    <rect x="0" y="0" width="188" height="110" rx="6"
+          fill="#0f172a" stroke="#1e293b" stroke-width="1" opacity="0.9"/>
+    <text x="10" y="16" font-family="'JetBrains Mono',monospace" font-size="10" fill="#64748b" font-weight="600">
+      <tspan class="lz">图例 / Legend</tspan>
+      <tspan class="le">Legend</tspan>
+    </text>
+
+    <!-- Color dots + labels -->
+    <!-- P1 Flag -->
+    <circle cx="18" cy="30" r="4" fill="#f97316"/>
+    <text x="28" y="34" font-family="'JetBrains Mono',monospace" font-size="10" fill="#f97316">
+      <tspan class="lz">P1 命令行参数 (Flag)</tspan>
+      <tspan class="le">P1 CLI Flags</tspan>
+    </text>
+    <!-- P2-P3 -->
+    <circle cx="18" cy="44" r="3.5" fill="#fb7185"/>
+    <text x="28" y="48" font-family="'JetBrains Mono',monospace" font-size="10" fill="#fb7185">
+      <tspan class="lz">P2 企业策略 / P3 托管</tspan>
+      <tspan class="le">P2 Policy / P3 Managed</tspan>
+    </text>
+    <!-- P4-P5 -->
+    <circle cx="18" cy="58" r="3.5" fill="#fbbf24"/>
+    <text x="28" y="62" font-family="'JetBrains Mono',monospace" font-size="10" fill="#fbbf24">
+      <tspan class="lz">P4 Enterprise / P5 项目</tspan>
+      <tspan class="le">P4 Enterprise / P5 Project</tspan>
+    </text>
+    <!-- P6-P7 -->
+    <circle cx="18" cy="72" r="3.5" fill="#34d399"/>
+    <text x="28" y="76" font-family="'JetBrains Mono',monospace" font-size="10" fill="#34d399">
+      <tspan class="lz">P6 本地 / P7 用户</tspan>
+      <tspan class="le">P6 Local / P7 User</tspan>
+    </text>
+    <!-- P8-P9 -->
+    <circle cx="18" cy="86" r="3.5" fill="#64748b"/>
+    <text x="28" y="90" font-family="'JetBrains Mono',monospace" font-size="10" fill="#64748b">
+      <tspan class="lz">P8 工作区 / P9 默认值</tspan>
+      <tspan class="le">P8 Workspace / P9 Default</tspan>
+    </text>
+
+    <!-- Outer = higher note -->
+    <rect x="6" y="98" width="176" height="8" rx="2" fill="#334155" fill-opacity="0.3"/>
+    <text x="94" y="105" font-family="'JetBrains Mono',monospace" font-size="10" fill="#64748b" text-anchor="middle">
+      <tspan class="lz">越外层 = 优先级越高</tspan>
+      <tspan class="le">Outermost = Highest Priority</tspan>
+    </text>
+  </g>
+
+  <!-- ===================== MATRYOSHKA LABEL (decorative) ===================== -->
+  <g transform="translate(50, 30)">
+    <text font-family="'JetBrains Mono',monospace" font-size="10" fill="#334155" font-weight="600">
+      <tspan class="lz">套娃结构 · 外层覆盖内层 · 最外层优先</tspan>
+      <tspan class="le">Matryoshka · Outer overrides Inner · Outermost wins</tspan>
+    </text>
+  </g>
+
+  <!-- ===================== CORNER MARKERS ===================== -->
+  <!-- Top-left bracket -->
+  <path d="M40,48 L40,40 L48,40" fill="none" stroke="#f97316" stroke-width="1.5" opacity="0.6"/>
+  <!-- Bottom-right bracket -->
+  <path d="M912,512 L920,512 L920,520" fill="none" stroke="#f97316" stroke-width="1.5" opacity="0.6"/>
+  <!-- Bottom-left bracket -->
+  <path d="M40,512 L40,520 L48,520" fill="none" stroke="#f97316" stroke-width="1.5" opacity="0.6"/>
+  <!-- Top-right bracket (after legend) -->
+  <path d="M912,48 L920,48 L920,40" fill="none" stroke="#f97316" stroke-width="1.5" opacity="0.6"/>
+
+  <!-- ===================== LAYER WIDTH CALLOUT LINES ===================== -->
+  <!-- Right-side callout: arrows indicating nesting -->
+  <g opacity="0.4">
+    <!-- L1 right edge tick -->
+    <line x1="920" y1="280" x2="930" y2="280" stroke="#f97316" stroke-width="1" stroke-dasharray="2,2"/>
+    <!-- L5 right edge tick -->
+    <line x1="760" y1="280" x2="930" y2="280" stroke="#22d3ee" stroke-width="0.5" stroke-dasharray="2,4" opacity="0.25"/>
+  </g>
+
+  <!-- ===================== WATERMARK ===================== -->
+  <text x="920" y="548" font-family="'JetBrains Mono',monospace" font-size="10" fill="#1e293b" text-anchor="end">VIS-2A-027 · Claude Code Config Layers</text>
+</svg>
+</div>
+
+<!-- ===================== SUMMARY CARDS ===================== -->
+<div class="cards">
+  <!-- Card 1 -->
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-dot" style="background:#f97316"></div>
+      <h3>
+        <span class="lz">9层优先级</span>
+        <span class="le" style="display:none">9 Priority Layers</span>
+      </h3>
+    </div>
+    <ul>
+      <li>
+        <span class="lz">命令行参数 (P1) 优先级最高</span>
+        <span class="le" style="display:none">CLI flags (P1) have highest priority</span>
+      </li>
+      <li>
+        <span class="lz">内置默认值 (P9) 优先级最低</span>
+        <span class="le" style="display:none">Built-in defaults (P9) have lowest priority</span>
+      </li>
+      <li>
+        <span class="lz">越外层 = 越高优先级</span>
+        <span class="le" style="display:none">Outer layer = higher priority</span>
+      </li>
+      <li>
+        <span class="lz">嵌套结构直观展示覆盖关系</span>
+        <span class="le" style="display:none">Nested structure shows override hierarchy</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Card 2 -->
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-dot" style="background:#22d3ee"></div>
+      <h3>first-source-wins</h3>
+    </div>
+    <ul>
+      <li>
+        <span class="lz">最外层定义的 key 生效</span>
+        <span class="le" style="display:none">The outermost defined key wins</span>
+      </li>
+      <li>
+        <span class="lz">内层无法覆盖外层</span>
+        <span class="le" style="display:none">Inner layers cannot override outer</span>
+      </li>
+      <li>
+        <span class="lz">未定义 key 回退到下一层</span>
+        <span class="le" style="display:none">Undefined keys fall back to next layer</span>
+      </li>
+      <li>
+        <span class="lz">类似 CSS 优先级级联机制</span>
+        <span class="le" style="display:none">Similar to CSS specificity cascade</span>
+      </li>
+    </ul>
+  </div>
+
+  <!-- Card 3 -->
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-dot" style="background:#fb7185"></div>
+      <h3>
+        <span class="lz">MDM企业策略</span>
+        <span class="le" style="display:none">MDM Enterprise Policy</span>
+      </h3>
+    </div>
+    <ul>
+      <li>
+        <span class="lz">P2/P3 通过托管配置实现企业级控制</span>
+        <span class="le" style="display:none">P2/P3 enable enterprise control via MDM</span>
+      </li>
+      <li>
+        <span class="lz">IT管理员可锁定关键配置项</span>
+        <span class="le" style="display:none">IT admins can lock critical settings</span>
+      </li>
+      <li>
+        <span class="lz">员工无法通过用户层覆盖</span>
+        <span class="le" style="display:none">Employees cannot override via user layer</span>
+      </li>
+      <li>
+        <span class="lz">仅 Flag (P1) 可超越策略层</span>
+        <span class="le" style="display:none">Only CLI flags (P1) can supersede policy</span>
+      </li>
+    </ul>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="vis-footer">
+  <span class="lz">VIS-2A-027 · Claude Code 配置系统优先级层级 · 9层套娃结构 · first-source-wins 合并策略 · 2026-04-15</span>
+  <span class="le" style="display:none">VIS-2A-027 · Claude Code Config Priority Layers · 9-Layer Matryoshka · first-source-wins merge strategy · 2026-04-15</span>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';document.documentElement.setAttribute('data-theme',t);
+  window.cycleTheme=function(){var themes=['dark','warm','light'];var i=(themes.indexOf(document.documentElement.getAttribute('data-theme'))+1)%3;t=themes[i];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){var cur=document.documentElement.getAttribute('data-lang')||'zh';var next=cur==='en'?'zh':'en';document.documentElement.setAttribute('data-lang',next);localStorage.setItem('vlang',next);};
+  var _sl=localStorage.getItem('vlang');if(_sl){document.documentElement.setAttribute('data-lang',_sl);}})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

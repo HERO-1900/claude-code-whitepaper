@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-2A-032 | 流式渲染时序图</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--panel:#0f172a;--card:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--subtle:#475569;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="warm"]{--bg:#1c1410;--panel:#2a1f16;--card:#3d2d20;--border:#5c4a3a;--text:#f5e6d3;--muted:#c4a882;--subtle:#8b7355;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="light"]{--bg:#f8fafc;--panel:#f1f5f9;--card:#e2e8f0;--border:#cbd5e1;--text:#0f172a;--muted:#475569;--subtle:#94a3b8;--amber:#d97706;--cyan:#0891b2;--violet:#7c3aed;--emerald:#059669;--rose:#e11d48;--slate:#475569;--orange:#ea580c}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;padding:24px 16px 40px}
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:100}
+.ctrl button{font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:background 0.15s}
+.ctrl button:hover{background:var(--border)}
+.grid-line{stroke:var(--border)}
+.node-bg{fill:var(--panel)}[data-lang="en"] .lz{display:none}
+[data-lang="en"] .le{display:inline}
+.page{max-width:1020px;margin:0 auto}
+.header{padding:0 0 20px}
+.badge{display:inline-block;font-size:10px;padding:3px 8px;border:1px solid var(--border);border-radius:4px;color:var(--muted);margin-bottom:10px;letter-spacing:0.08em}
+h1{font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px}
+.subtitle{font-size:12px;color:var(--muted)}
+.chart-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;margin-bottom:20px}
+.chart-wrap svg{display:block;width:100%;height:auto}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+.card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
+.card-icon{font-size:22px;margin-bottom:8px}
+.card-value{font-size:20px;font-weight:700;margin-bottom:4px}
+.card-desc{font-size:11px;color:var(--muted);line-height:1.5}
+.card-cyan .card-value{color:var(--cyan)}
+.card-cyan{border-color:rgba(34,211,238,0.25)}
+.card-violet .card-value{color:var(--violet)}
+.card-violet{border-color:rgba(167,139,250,0.25)}
+.card-emerald .card-value{color:var(--emerald)}
+.card-emerald{border-color:rgba(52,211,153,0.25)}
+.footer{font-size:10px;color:var(--subtle);text-align:center;padding-top:8px}
+
+/* CSS animation for chunk arrival pulses */
+@keyframes pulse-arrive{0%{r:3;opacity:1}60%{r:6;opacity:0.3}100%{r:3;opacity:0}}
+.chunk-pulse{animation:pulse-arrive 1.8s ease-out infinite}
+.chunk-pulse:nth-child(2){animation-delay:0.3s}
+.chunk-pulse:nth-child(3){animation-delay:0.6s}
+.chunk-pulse:nth-child(4){animation-delay:0.9s}
+.chunk-pulse:nth-child(5){animation-delay:1.2s}
+
+@keyframes render-shimmer{0%{opacity:0.7}50%{opacity:1}100%{opacity:0.7}}
+.render-bar{animation:render-shimmer 2s ease-in-out infinite}
+</style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="cycleTheme()">Theme</button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<div class="page">
+  <div class="header">
+    <div class="badge">VIS-2A-032</div>
+    <h1>
+      <span class="lz">流式渲染时序图</span>
+      <span class="le">Streaming Render Timing Diagram</span>
+    </h1>
+    <p class="subtitle">
+      <span class="lz">Claude Code 在 16ms 帧预算内的三层渲染管线 · 60fps 稳态输出</span>
+      <span class="le">Three-layer render pipeline within 16ms frame budget · 60fps steady-state output</span>
+    </p>
+  </div>
+
+  <div class="chart-wrap">
+    <svg viewBox="0 0 960 430" xmlns="http://www.w3.org/2000/svg" aria-label="Streaming Render Timing Diagram">
+      <defs>
+        <!-- Render pipeline gradient: green → yellow → orange -->
+        <linearGradient id="renderGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="#34d399" stop-opacity="0.9"/>
+          <stop offset="50%"  stop-color="#fbbf24" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#fb923c" stop-opacity="0.9"/>
+        </linearGradient>
+        <!-- Lane fills -->
+        <linearGradient id="cyanFill" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="#4fc1ff" stop-opacity="0.08"/>
+          <stop offset="100%" stop-color="#4fc1ff" stop-opacity="0.04"/>
+        </linearGradient>
+        <linearGradient id="violetFill" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="#c084fc" stop-opacity="0.08"/>
+          <stop offset="100%" stop-color="#c084fc" stop-opacity="0.04"/>
+        </linearGradient>
+        <linearGradient id="whiteFill" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%"   stop-color="#f1f5f9" stop-opacity="0.04"/>
+          <stop offset="100%" stop-color="#f1f5f9" stop-opacity="0.02"/>
+        </linearGradient>
+        <!-- Chunk event circle gradient -->
+        <radialGradient id="chunkGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="#22d3ee" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#22d3ee" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Write event gradient -->
+        <radialGradient id="writeGlow" cx="50%" cy="50%" r="50%">
+          <stop offset="0%"   stop-color="#34d399" stop-opacity="0.8"/>
+          <stop offset="100%" stop-color="#34d399" stop-opacity="0"/>
+        </radialGradient>
+        <!-- Arrow marker -->
+        <marker id="arrowAmber" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#fbbf24" opacity="0.8"/>
+        </marker>
+        <marker id="arrowCyan" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#22d3ee" opacity="0.8"/>
+        </marker>
+        <marker id="arrowViolet" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#a78bfa" opacity="0.8"/>
+        </marker>
+        <!-- Clip path for chart area -->
+        <clipPath id="chartClip">
+          <rect x="130" y="55" width="810" height="300"/>
+        </clipPath>
+      </defs>
+
+      <!-- ═══════════════════════════════════════════════
+           BACKGROUND PANEL
+      ════════════════════════════════════════════════ -->
+      <rect x="0" y="0" width="960" height="430" rx="12" fill="var(--panel)"/>
+
+      <!-- ═══════════════════════════════════════════════
+           TITLE ROW
+      ════════════════════════════════════════════════ -->
+      <text x="24" y="34" font-family="'JetBrains Mono', monospace" font-size="15" font-weight="700" fill="var(--text)">
+        <tspan class="lz">流式渲染三层管线时序图</tspan>
+        <tspan class="le">Streaming Render 3-Layer Pipeline</tspan>
+      </text>
+      <!-- 60fps badge top right -->
+      <rect x="730" y="14" width="204" height="28" rx="6" fill="rgba(251,191,36,0.1)" stroke="#fbbf24" stroke-width="1" stroke-opacity="0.5"/>
+      <text x="832" y="32" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="600" fill="#fbbf24" text-anchor="middle">
+        <tspan class="lz">16ms 帧间隔 = 60fps</tspan>
+        <tspan class="le">16ms frame = 60fps</tspan>
+      </text>
+
+      <!-- ═══════════════════════════════════════════════
+           X-AXIS TIME LABELS (ms markers)
+           Timeline: x=130 to x=940, 4 frames of ~202.5px
+           Frame boundaries at 0ms(x=130), 16ms(x=332), 32ms(x=535), 48ms(x=737), 64ms(x=940)
+      ════════════════════════════════════════════════ -->
+
+      <!-- X-axis baseline -->
+      <line x1="130" y1="55" x2="940" y2="55" stroke="var(--border)" stroke-width="1"/>
+
+      <!-- Time labels -->
+      <text x="130" y="48" font-family="'JetBrains Mono', monospace" font-size="11" fill="var(--muted)" text-anchor="middle">0ms</text>
+      <text x="332" y="48" font-family="'JetBrains Mono', monospace" font-size="11" fill="var(--muted)" text-anchor="middle">16ms</text>
+      <text x="535" y="48" font-family="'JetBrains Mono', monospace" font-size="11" fill="var(--muted)" text-anchor="middle">32ms</text>
+      <text x="737" y="48" font-family="'JetBrains Mono', monospace" font-size="11" fill="var(--muted)" text-anchor="middle">48ms</text>
+      <text x="940" y="48" font-family="'JetBrains Mono', monospace" font-size="11" fill="var(--muted)" text-anchor="middle">64ms</text>
+
+      <!-- ═══════════════════════════════════════════════
+           FRAME DIVIDERS (vertical dashed lines)
+      ════════════════════════════════════════════════ -->
+      <!-- Frame 1 boundary: x=332 (16ms) -->
+      <line x1="332" y1="55" x2="332" y2="360" class="grid-line" stroke-dasharray="4,4" stroke-width="1" opacity="0.5"/>
+      <!-- Frame 2 boundary: x=535 (32ms) -->
+      <line x1="535" y1="55" x2="535" y2="360" class="grid-line" stroke-dasharray="4,4" stroke-width="1" opacity="0.5"/>
+      <!-- Frame 3 boundary: x=737 (48ms) -->
+      <line x1="737" y1="55" x2="737" y2="360" class="grid-line" stroke-dasharray="4,4" stroke-width="1" opacity="0.5"/>
+
+      <!-- Frame labels in header bands -->
+      <text x="231" y="70" font-family="'JetBrains Mono', monospace" font-size="10" fill="var(--subtle)" text-anchor="middle">
+        <tspan class="lz">Frame 1</tspan><tspan class="le">Frame 1</tspan>
+      </text>
+      <text x="433" y="70" font-family="'JetBrains Mono', monospace" font-size="10" fill="var(--subtle)" text-anchor="middle">
+        <tspan class="lz">Frame 2</tspan><tspan class="le">Frame 2</tspan>
+      </text>
+      <text x="636" y="70" font-family="'JetBrains Mono', monospace" font-size="10" fill="var(--subtle)" text-anchor="middle">
+        <tspan class="lz">Frame 3</tspan><tspan class="le">Frame 3</tspan>
+      </text>
+      <text x="838" y="70" font-family="'JetBrains Mono', monospace" font-size="10" fill="var(--subtle)" text-anchor="middle">
+        <tspan class="lz">Frame 4</tspan><tspan class="le">Frame 4</tspan>
+      </text>
+
+      <!-- ═══════════════════════════════════════════════
+           LANE 1: API STREAM (y=80 to y=155)
+      ════════════════════════════════════════════════ -->
+      <!-- Lane background -->
+      <rect x="130" y="80" width="810" height="75" rx="4" fill="url(#cyanFill)" stroke="#4fc1ff" stroke-width="1" stroke-opacity="0.35"/>
+
+      <!-- Lane left label -->
+      <text x="64" y="114" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="600" fill="#22d3ee" text-anchor="middle">
+        <tspan class="lz">API</tspan><tspan class="le">API</tspan>
+      </text>
+      <text x="64" y="130" font-family="'JetBrains Mono', monospace" font-size="10" fill="var(--muted)" text-anchor="middle">
+        <tspan class="lz">Stream</tspan><tspan class="le">Stream</tspan>
+      </text>
+
+      <!-- Horizontal center line -->
+      <line x1="130" y1="117" x2="940" y2="117" stroke="#4fc1ff" stroke-width="0.5" stroke-opacity="0.3" stroke-dasharray="2,4"/>
+
+      <!-- Chunk arrival events
+           Timing in timeline x: 0ms→x=130, 12ms→x=?, 28ms→?, 44ms→?, 60ms→?
+           Scale: (ms/64)*810 + 130
+           0ms  → 130
+           12ms → 130 + (12/64)*810 = 130 + 151.9 = 281.9 ≈ 282
+           28ms → 130 + (28/64)*810 = 130 + 354.4 = 484.4 ≈ 484
+           44ms → 130 + (44/64)*810 = 130 + 556.9 = 686.9 ≈ 687
+           60ms → 130 + (60/64)*810 = 130 + 759.4 = 889.4 ≈ 889
+      -->
+
+      <!-- Chunk at 0ms (x=130) -->
+      <line x1="130" y1="82" x2="130" y2="154" stroke="#22d3ee" stroke-width="2" stroke-opacity="0.8"/>
+      <circle cx="130" cy="117" r="5" fill="#22d3ee" opacity="0.9"/>
+      <circle cx="130" cy="117" r="9" fill="#22d3ee" opacity="0.15" class="chunk-pulse"/>
+      <text x="130" y="76" font-family="'JetBrains Mono', monospace" font-size="10" fill="#22d3ee" text-anchor="middle">0</text>
+
+      <!-- Chunk at 12ms (x=282) -->
+      <line x1="282" y1="82" x2="282" y2="154" stroke="#22d3ee" stroke-width="2" stroke-opacity="0.8"/>
+      <circle cx="282" cy="117" r="5" fill="#22d3ee" opacity="0.9"/>
+      <circle cx="282" cy="117" r="9" fill="#22d3ee" opacity="0.15" class="chunk-pulse"/>
+      <text x="282" y="76" font-family="'JetBrains Mono', monospace" font-size="10" fill="#22d3ee" text-anchor="middle">12</text>
+
+      <!-- Chunk at 28ms (x=484) -->
+      <line x1="484" y1="82" x2="484" y2="154" stroke="#22d3ee" stroke-width="2" stroke-opacity="0.8"/>
+      <circle cx="484" cy="117" r="5" fill="#22d3ee" opacity="0.9"/>
+      <circle cx="484" cy="117" r="9" fill="#22d3ee" opacity="0.15" class="chunk-pulse"/>
+      <text x="484" y="76" font-family="'JetBrains Mono', monospace" font-size="10" fill="#22d3ee" text-anchor="middle">28</text>
+
+      <!-- Chunk at 44ms (x=687) -->
+      <line x1="687" y1="82" x2="687" y2="154" stroke="#22d3ee" stroke-width="2" stroke-opacity="0.8"/>
+      <circle cx="687" cy="117" r="5" fill="#22d3ee" opacity="0.9"/>
+      <circle cx="687" cy="117" r="9" fill="#22d3ee" opacity="0.15" class="chunk-pulse"/>
+      <text x="687" y="76" font-family="'JetBrains Mono', monospace" font-size="10" fill="#22d3ee" text-anchor="middle">44</text>
+
+      <!-- Chunk at 60ms (x=889) -->
+      <line x1="889" y1="82" x2="889" y2="154" stroke="#22d3ee" stroke-width="2" stroke-opacity="0.8"/>
+      <circle cx="889" cy="117" r="5" fill="#22d3ee" opacity="0.9"/>
+      <circle cx="889" cy="117" r="9" fill="#22d3ee" opacity="0.15" class="chunk-pulse"/>
+      <text x="889" y="76" font-family="'JetBrains Mono', monospace" font-size="10" fill="#22d3ee" text-anchor="middle">60</text>
+
+      <!-- "chunk" label inside lane -->
+      <text x="205" y="100" font-family="'JetBrains Mono', monospace" font-size="10" fill="var(--muted)" opacity="0.7">
+        <tspan class="lz">chunk 到达</tspan><tspan class="le">chunk arrival</tspan>
+      </text>
+
+      <!-- ═══════════════════════════════════════════════
+           LANE 2: REACT / INK (y=170 to y=245)
+      ════════════════════════════════════════════════ -->
+      <!-- Lane background -->
+      <rect x="130" y="170" width="810" height="75" rx="4" fill="url(#violetFill)" stroke="#c084fc" stroke-width="1" stroke-opacity="0.35"/>
+
+      <!-- Lane left label -->
+      <text x="64" y="200" font-family="'JetBrains Mono', monospace" font-size="12" font-weight="600" fill="#a78bfa" text-anchor="middle">React</text>
+      <text x="64" y="216" font-family="'JetBrains Mono', monospace" font-size="10" fill="var(--muted)" text-anchor="middle">/ Ink</text>
+
+      <!-- Horizontal center line -->
+      <line x1="130" y1="207" x2="940" y2="207" stroke="#c084fc" stroke-width="0.5" stroke-opacity="0.3" stroke-dasharray="2,4"/>
+
+      <!-- setState call diamond at 12ms (x=282)
+           Diamond: rotated square, centered at (282, 207) -->
+      <polygon points="282,195 294,207 282,219 270,207" fill="#a78bfa" opacity="0.9"/>
+      <text x="282" y="240" font-family="'JetBrains Mono', monospace" font-size="10" fill="#a78bfa" text-anchor="middle">
+        <tspan class="lz">setState</tspan><tspan class="le">setState</tspan>
+      </text>
+
+      <!-- Render pipeline bar: 12ms(x=282) to 28ms(x=484), height=26px, centered at y=207 -->
+      <!-- Bar spans x=282 to x=484, width=202, height=26 -->
+      <rect x="282" y="194" width="202" height="26" rx="4" fill="url(#renderGrad)" class="render-bar" opacity="0.9"/>
+      <!-- Internal labels on bar -->
+      <text x="350" y="211" font-family="'JetBrains Mono', monospace" font-size="10" fill="#020617" font-weight="600" text-anchor="middle">
+        <tspan class="lz">协调</tspan><tspan class="le">Recon</tspan>
+      </text>
+      <text x="413" y="211" font-family="'JetBrains Mono', monospace" font-size="10" fill="#020617" font-weight="600" text-anchor="middle">
+        <tspan class="lz">布局</tspan><tspan class="le">Layout</tspan>
+      </text>
+      <text x="470" y="211" font-family="'JetBrains Mono', monospace" font-size="10" fill="#020617" font-weight="600" text-anchor="middle">
+        <tspan class="lz">渲染</tspan><tspan class="le">Render</tspan>
+      </text>
+
+      <!-- ═══════════════════════════════════════════════
+           MERGE INDICATOR: red circle between API & React at 28ms
+      ════════════════════════════════════════════════ -->
+      <!-- Merge circle at x=484, y=157 (between lane 1 bottom=155 and lane 2 top=170) -->
+      <circle cx="484" cy="162" r="8" fill="rgba(251,113,133,0.2)" stroke="#fb7185" stroke-width="1.5"/>
+      <text x="484" y="167" font-family="'JetBrains Mono', monospace" font-size="10" fill="#fb7185" text-anchor="middle" font-weight="700">M</text>
+      <!-- Merge label -->
+      <text x="530" y="164" font-family="'JetBrains Mono', monospace" font-size="10" fill="#fb7185">
+        <tspan class="lz">合并 Merge</tspan><tspan class="le">Merge</tspan>
+      </text>
+
+      <!-- Arrow annotation: render bar → "Yoga layout + ANSI 渲染"
+           Arrow pointing up-right from bar to annotation -->
+      <line x1="383" y1="196" x2="383" y2="175" stroke="#fbbf24" stroke-width="1" stroke-opacity="0.6" marker-end="url(#arrowAmber)"/>
+      <text x="393" y="188" font-family="'JetBrains Mono', monospace" font-size="10" fill="#fbbf24">
+        <tspan class="lz">Yoga layout + ANSI 渲染</tspan><tspan class="le">Yoga layout + ANSI render</tspan>
+      </text>
+
+      <!-- setState batch annotation -->
+      <text x="148" y="187" font-family="'JetBrains Mono', monospace" font-size="10" fill="var(--muted)" opacity="0.8">
+        <tspan class="lz">批处理多 chunk</tspan><tspan class="le">batch multi-chunk</tspan>
+      </text>
+
+      <!-- ═══════════════════════════════════════════════
+           LANE 3: TERMINAL OUTPUT (y=260 to y=335)
+      ════════════════════════════════════════════════ -->
+      <!-- Lane background -->
+      <rect x="130" y="260" width="810" height="75" rx="4" fill="url(#whiteFill)" stroke="#f1f5f9" stroke-width="1" stroke-opacity="0.2"/>
+
+      <!-- Lane left label -->
+      <text x="64" y="290" font-family="'JetBrains Mono', monospace" font-size="11" font-weight="600" fill="var(--text)" text-anchor="middle">
+        <tspan class="lz">终端</tspan><tspan class="le">Terminal</tspan>
+      </text>
+      <text x="64" y="306" font-family="'JetBrains Mono', monospace" font-size="10" fill="var(--muted)" text-anchor="middle">Output</text>
+
+      <!-- Horizontal center line -->
+      <line x1="130" y1="297" x2="940" y2="297" stroke="#f1f5f9" stroke-width="0.5" stroke-opacity="0.15" stroke-dasharray="2,4"/>
+
+      <!-- stdout.write events at 28ms(x=484), 44ms(x=687), 60ms(x=889)
+           Short vertical bars -->
+      <!-- Write at 28ms -->
+      <rect x="479" y="272" width="10" height="50" rx="2" fill="#34d399" opacity="0.8"/>
+      <circle cx="484" cy="267" r="4" fill="url(#writeGlow)" opacity="0.9"/>
+      <text x="484" y="262" font-family="'JetBrains Mono', monospace" font-size="10" fill="#34d399" text-anchor="middle">28ms</text>
+      <text x="484" y="336" font-family="'JetBrains Mono', monospace" font-size="10" fill="#34d399" text-anchor="middle">~50B</text>
+
+      <!-- Write at 44ms -->
+      <rect x="682" y="272" width="10" height="50" rx="2" fill="#34d399" opacity="0.8"/>
+      <circle cx="687" cy="267" r="4" fill="url(#writeGlow)" opacity="0.9"/>
+      <text x="687" y="262" font-family="'JetBrains Mono', monospace" font-size="10" fill="#34d399" text-anchor="middle">44ms</text>
+      <text x="687" y="336" font-family="'JetBrains Mono', monospace" font-size="10" fill="#34d399" text-anchor="middle">~50B</text>
+
+      <!-- Write at 60ms -->
+      <rect x="884" y="272" width="10" height="50" rx="2" fill="#34d399" opacity="0.8"/>
+      <circle cx="889" cy="267" r="4" fill="url(#writeGlow)" opacity="0.9"/>
+      <text x="889" y="262" font-family="'JetBrains Mono', monospace" font-size="10" fill="#34d399" text-anchor="middle">60ms</text>
+      <text x="889" y="336" font-family="'JetBrains Mono', monospace" font-size="10" fill="#34d399" text-anchor="middle">~50B</text>
+
+      <!-- stdout.write label -->
+      <text x="200" y="285" font-family="'JetBrains Mono', monospace" font-size="10" fill="var(--muted)" opacity="0.8">stdout.write</text>
+
+      <!-- "稳态 ~50 bytes/frame" annotation -->
+      <rect x="570" y="343" width="220" height="22" rx="4" fill="rgba(52,211,153,0.08)" stroke="rgba(52,211,153,0.25)" stroke-width="1"/>
+      <text x="680" y="358" font-family="'JetBrains Mono', monospace" font-size="10" fill="#34d399" text-anchor="middle">
+        <tspan class="lz">稳态 ~50 bytes/帧</tspan><tspan class="le">steady-state ~50 bytes/frame</tspan>
+      </text>
+
+      <!-- ═══════════════════════════════════════════════
+           VERTICAL FLOW ARROWS: API → React → Terminal
+      ════════════════════════════════════════════════ -->
+      <!-- Arrow from chunk at 12ms → setState diamond in React -->
+      <line x1="282" y1="155" x2="282" y2="195" stroke="#a78bfa" stroke-width="1.5" stroke-opacity="0.6" marker-end="url(#arrowViolet)"/>
+
+      <!-- Arrow from render bar end → terminal write at 28ms -->
+      <line x1="484" y1="218" x2="484" y2="262" stroke="#34d399" stroke-width="1.5" stroke-opacity="0.6" marker-end="url(#arrowAmber)"/>
+
+      <!-- ═══════════════════════════════════════════════
+           LEGEND ROW (bottom of chart)
+      ════════════════════════════════════════════════ -->
+      <g transform="translate(148, 378)">
+        <!-- Cyan circle: chunk arrival -->
+        <circle cx="8" cy="8" r="5" fill="#22d3ee"/>
+        <text x="18" y="12" font-family="'JetBrains Mono', monospace" font-size="10" fill="var(--muted)">
+          <tspan class="lz">chunk 到达</tspan><tspan class="le">chunk arrival</tspan>
+        </text>
+        <!-- Diamond: setState -->
+        <polygon points="93,8 102,0 111,8 102,16" fill="#a78bfa" transform="translate(10,0)"/>
+        <text x="130" y="12" font-family="'JetBrains Mono', monospace" font-size="10" fill="var(--muted)">
+          <tspan class="lz">setState 调用</tspan><tspan class="le">setState call</tspan>
+        </text>
+        <!-- Gradient bar -->
+        <rect x="246" y="3" width="40" height="10" rx="2" fill="url(#renderGrad)"/>
+        <text x="292" y="12" font-family="'JetBrains Mono', monospace" font-size="10" fill="var(--muted)">
+          <tspan class="lz">渲染管线</tspan><tspan class="le">render pipeline</tspan>
+        </text>
+        <!-- Green rect: write -->
+        <rect x="400" y="3" width="10" height="10" rx="1" fill="#34d399" opacity="0.8"/>
+        <text x="416" y="12" font-family="'JetBrains Mono', monospace" font-size="10" fill="var(--muted)">stdout.write</text>
+        <!-- Red circle: merge -->
+        <circle cx="525" cy="8" r="6" fill="rgba(251,113,133,0.2)" stroke="#fb7185" stroke-width="1.5"/>
+        <text x="519" y="12" font-family="'JetBrains Mono', monospace" font-size="10" fill="#fb7185" text-anchor="middle">M</text>
+        <text x="536" y="12" font-family="'JetBrains Mono', monospace" font-size="10" fill="var(--muted)">
+          <tspan class="lz">合并</tspan><tspan class="le">merge</tspan>
+        </text>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="cards">
+    <div class="card card-cyan">
+      <div class="card-icon">⚡</div>
+      <div class="card-value">60fps</div>
+      <div class="card-desc">
+        <span class="lz">16ms 帧预算确保流畅体验，Claude Code 渲染不掉帧</span>
+        <span class="le">16ms frame budget ensures smooth UX — Claude Code never drops frames</span>
+      </div>
+    </div>
+    <div class="card card-violet">
+      <div class="card-icon">⚙️</div>
+      <div class="card-value">
+        <span class="lz">setState 批处理</span>
+        <span class="le">setState Batching</span>
+      </div>
+      <div class="card-desc">
+        <span class="lz">React 合并多个 chunk 更新，单次渲染消费所有到达数据</span>
+        <span class="le">React merges multiple chunk updates into a single render pass</span>
+      </div>
+    </div>
+    <div class="card card-emerald">
+      <div class="card-icon">📦</div>
+      <div class="card-value"><span class="lz">~50 bytes/帧</span><span class="le">~50 bytes/frame</span></div>
+      <div class="card-desc">
+        <span class="lz">稳态下每帧极小增量输出，terminal 带宽开销可忽略</span>
+        <span class="le">Steady-state incremental output per frame — negligible terminal bandwidth</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer"><span class="lz">VIS-2A-032 · Claude Code 流式渲染时序分析 · 2026</span><span class="le">VIS-2A-032 · Claude Code Streaming Render Timeline · 2026</span></div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-theme',t);
+  document.documentElement.setAttribute('data-lang',l);
+  document.getElementById('langBtn').textContent=l==='zh'?'EN':'中';
+
+  // Apply initial SVG bilingual state
+  function applyLang(lang) {
+    document.querySelectorAll('svg .le, svg .lz').forEach(function(e){
+      var show=(lang==='en')?e.classList.contains('le'):e.classList.contains('lz');
+      e.style.display=show?'':'none';
+      e.setAttribute('display',show?'inline':'none');
+    });
+  }
+  applyLang(l);
+
+  window.cycleTheme=function(){
+    var themes=['dark','warm','light'];
+    var cur=document.documentElement.getAttribute('data-theme')||'dark';
+    var next=themes[(themes.indexOf(cur)+1)%themes.length];
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('vtheme',next);
+  };
+
+  window.toggleLang=function(){
+    var cur=document.documentElement.getAttribute('data-lang')||'zh';
+    var next=cur==='zh'?'en':'zh';
+    document.documentElement.setAttribute('data-lang',next);
+    localStorage.setItem('vlang',next);
+    document.getElementById('langBtn').textContent=next==='zh'?'EN':'中';
+    applyLang(next);
+  };
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

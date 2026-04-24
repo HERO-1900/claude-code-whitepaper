@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<!--
+  VIS-2A-029 · 配置生效诊断流程 · Config Not Working Diagnostic Flow
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  5 步决策菱形 · 从文件路径到企业策略的系统排查
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIS-2A-029 配置生效诊断流程</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    :root,[data-theme="dark"]{
+      --bg:#020617; --bg-card:#0f172a; --border:#1e293b;
+      --text:#f8fafc; --muted:#94a3b8; --subtle:#475569; --footer-c:#334155;
+      --pulse:#fb7185;
+      --svg-bg:#020617; --svg-grid:#0f172a;
+      --text-main:#f8fafc; --text-sub:#64748b; --text-data:#94a3b8;
+      --mask-fill:#0f172a;
+      --btn-bg:rgba(15,23,42,0.9); --btn-border:rgba(34,211,238,0.3);
+      --btn-active:#22d3ee; --btn-text:#94a3b8;
+      /* flow colors */
+      --col-cyan:#22d3ee; --col-amber:#fbbf24; --col-violet:#a78bfa;
+      --col-emerald:#34d399; --col-orange:#f97316; --col-rose:#fb7185;
+      --col-slate:#94a3b8;
+      /* node fills (semi-transparent) */
+      --fill-cyan:rgba(34,211,238,0.08); --fill-amber:rgba(251,191,36,0.08);
+      --fill-violet:rgba(167,139,250,0.08); --fill-emerald:rgba(52,211,153,0.08);
+      --fill-orange:rgba(249,115,22,0.08); --fill-rose:rgba(251,113,133,0.12);
+      --fill-action:rgba(15,23,42,0.95);
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3; --bg-card:#ffffff; --border:#e8e0d4;
+      --text:#1a1412; --muted:#6b5a4e; --subtle:#9c8878; --footer-c:#b5a99a;
+      --pulse:#dc2626;
+      --svg-bg:#faf7f2; --svg-grid:#ede8e0;
+      --text-main:#1a1412; --text-sub:#9c8878; --text-data:#6b5a4e;
+      --mask-fill:#faf7f2;
+      --btn-bg:rgba(255,255,255,0.95); --btn-border:rgba(8,145,178,0.3);
+      --btn-active:#0891b2; --btn-text:#6b5a4e;
+      --col-cyan:#0891b2; --col-amber:#d97706; --col-violet:#7c3aed;
+      --col-emerald:#059669; --col-orange:#ea580c; --col-rose:#dc2626;
+      --col-slate:#6b5a4e;
+      --fill-cyan:rgba(8,145,178,0.08); --fill-amber:rgba(217,119,6,0.08);
+      --fill-violet:rgba(124,58,237,0.08); --fill-emerald:rgba(5,150,105,0.08);
+      --fill-orange:rgba(234,88,12,0.08); --fill-rose:rgba(220,38,38,0.10);
+      --fill-action:rgba(255,255,255,0.96);
+    }
+    [data-theme="light"]{
+      --bg:#ffffff; --bg-card:#f8fafc; --border:#e2e8f0;
+      --text:#0f172a; --muted:#475569; --subtle:#94a3b8; --footer-c:#94a3b8;
+      --pulse:#e11d48;
+      --svg-bg:#f8fafc; --svg-grid:#eef2f7;
+      --text-main:#0f172a; --text-sub:#94a3b8; --text-data:#64748b;
+      --mask-fill:#f1f5f9;
+      --btn-bg:rgba(248,250,252,0.95); --btn-border:rgba(14,165,233,0.3);
+      --btn-active:#0ea5e9; --btn-text:#475569;
+      --col-cyan:#0ea5e9; --col-amber:#d97706; --col-violet:#8b5cf6;
+      --col-emerald:#10b981; --col-orange:#f97316; --col-rose:#e11d48;
+      --col-slate:#64748b;
+      --fill-cyan:rgba(14,165,233,0.06); --fill-amber:rgba(217,119,6,0.06);
+      --fill-violet:rgba(139,92,246,0.06); --fill-emerald:rgba(16,185,129,0.06);
+      --fill-orange:rgba(249,115,22,0.06); --fill-rose:rgba(225,29,72,0.08);
+      --fill-action:rgba(248,250,252,0.98);
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      font-family:'JetBrains Mono',monospace;
+      background:var(--bg); color:var(--text);
+      min-height:100vh; padding:24px 28px 32px;
+      transition:background .3s,color .3s;
+    }
+
+    /* ── Floating Controls ──────────────────────── */
+    .ctrl{
+      position:fixed;top:16px;right:16px;z-index:999;
+      display:flex;gap:6px;align-items:center;
+      background:var(--btn-bg);border:1px solid var(--btn-border);
+      border-radius:10px;padding:7px 10px;backdrop-filter:blur(12px);
+    }
+    .ctrl button{
+      background:none;border:none;cursor:pointer;
+      font-family:'JetBrains Mono',monospace;
+      font-size:11px;font-weight:600;
+      color:var(--btn-text);padding:4px 8px;border-radius:6px;
+      transition:all .2s;
+    }
+    .ctrl button:hover{color:var(--btn-active);}
+    .ctrl button.active{color:var(--btn-active);}
+    .ctrl-sep{width:1px;height:16px;background:var(--border);margin:0 2px;}
+
+    /* ── Header ────────────────────────────────── */
+    .header{
+      margin-bottom:20px;padding-bottom:18px;
+      border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:14px;
+    }
+    .pulse{
+      width:10px;height:10px;border-radius:50%;
+      background:var(--pulse);box-shadow:0 0 8px var(--pulse);
+      animation:pulse 2s infinite;flex-shrink:0;
+    }
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.85);}}
+    .header h1{font-size:21px;font-weight:700;letter-spacing:-0.5px;}
+    .header .sub{color:var(--muted);font-size:12px;margin-top:5px;}
+
+    /* ── Description ───────────────────────────── */
+    .desc{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:10px;padding:14px 18px;margin-bottom:18px;
+      font-size:12px;line-height:1.8;color:var(--muted);max-width:960px;
+    }
+
+    /* ── Diagram Wrapper ───────────────────────── */
+    .diagram-wrap{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:12px;overflow-x:auto;
+    }
+    .diagram-wrap svg{display:block;}
+
+    /* ── Info Cards ────────────────────────────── */
+    .cards{
+      display:grid;grid-template-columns:repeat(3,1fr);
+      gap:12px;margin-top:16px;
+    }
+    @media(max-width:900px){.cards{grid-template-columns:1fr;}}
+    .card{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:10px;padding:14px 16px;
+    }
+    .card-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+    .card-dot{width:8px;height:8px;border-radius:50%;}
+    .card h3{font-size:12px;font-weight:600;}
+    .card p{font-size:11px;color:var(--muted);line-height:1.8;margin-top:4px;}
+
+    /* ── Footer ────────────────────────────────── */
+    .footer{
+      margin-top:16px;padding-top:14px;
+      border-top:1px solid var(--border);
+      display:flex;justify-content:space-between;
+      font-size:10px;color:var(--footer-c);
+    }
+
+    /* Lang */
+    [lang="en"] .lz{display:none;}
+</style>
+</head>
+<body>
+
+<!-- Floating Controls -->
+<div class="ctrl">
+  <button onclick="setTheme('dark')"  id="btn-dark"  class="active"><span class="lz">深色</span><span class="le">Dark</span></button>
+  <button onclick="setTheme('warm')"  id="btn-warm"><span class="lz">暖色</span><span class="le">Warm</span></button>
+  <button onclick="setTheme('light')" id="btn-light"><span class="lz">浅色</span><span class="le">Light</span></button>
+  <div class="ctrl-sep"></div>
+  <button onclick="toggleLang()" id="btn-lang">中·EN</button>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="pulse"></div>
+  <div>
+    <h1>
+      <span class="lz">配置生效诊断流程</span>
+      <span class="le">Config Not Working — Diagnostic Flow</span>
+    </h1>
+    <div class="sub">
+      <span class="lz">5 步决策排查 · 从文件路径到企业策略的系统诊断 · /doctor 一键确认</span>
+      <span class="le">5-step decision tree · File path → Enterprise policy · Confirm with /doctor</span>
+    </div>
+  </div>
+</div>
+
+<!-- Description -->
+<div class="desc">
+  <span class="lz">当 Claude Code 配置"不生效"时，90% 的问题集中在 5 个检查点：配置文件路径、JSON/YAML 语法、优先级覆盖、CLAUDE.md 目录层级、企业策略锁定。按顺序逐一排查，最后用内置 <code>/doctor</code> 命令一键显示所有已加载的配置层，确认配置确实生效。</span>
+  <span class="le">When Claude Code config "doesn't work," 90% of issues concentrate at 5 checkpoints: config file path, JSON/YAML syntax, priority override, CLAUDE.md directory hierarchy, enterprise policy lock. Check them in order, then use the built-in <code>/doctor</code> command to display all active config layers and confirm the fix.</span>
+</div>
+
+<!-- Diagram -->
+<div class="diagram-wrap">
+<svg viewBox="0 0 960 900" width="960" height="900" xmlns="http://www.w3.org/2000/svg"
+  style="font-family:'JetBrains Mono',monospace;">
+  <defs>
+    <!-- Grid pattern -->
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" style="stroke:var(--svg-grid)" stroke-width="0.5"/>
+    </pattern>
+
+    <!-- Arrow markers -->
+    <marker id="arr-slate" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <polygon points="0 0, 9 3.5, 0 7" style="fill:var(--col-slate)"/>
+    </marker>
+    <marker id="arr-emerald" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <polygon points="0 0, 9 3.5, 0 7" style="fill:var(--col-emerald)"/>
+    </marker>
+    <marker id="arr-amber" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <polygon points="0 0, 9 3.5, 0 7" style="fill:var(--col-amber)"/>
+    </marker>
+    <marker id="arr-rose" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+      <polygon points="0 0, 9 3.5, 0 7" style="fill:var(--col-rose)"/>
+    </marker>
+
+    <!-- Glow filter for problem node -->
+    <filter id="glow-rose" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="6" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+    <filter id="glow-emerald" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+    </filter>
+
+    <!-- Pulse animation for problem circle -->
+    <radialGradient id="pulse-grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" style="stop-color:var(--col-rose);stop-opacity:0.3"/>
+      <stop offset="100%" style="stop-color:var(--col-rose);stop-opacity:0"/>
+    </radialGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="960" height="900" fill="url(#grid)"/>
+  <rect width="960" height="900" style="fill:var(--svg-bg);opacity:0.55"/>
+
+  <!-- ══════════════════════════════════════════════
+       LEFT SIDEBAR — checklist indicator (x=12-52)
+       ═══════════════════════════════════════════ -->
+  <rect x="12" y="150" width="42" height="580" rx="8"
+    style="fill:var(--fill-action);stroke:var(--border)" stroke-width="1"/>
+
+  <!-- Sidebar label -->
+  <text x="33" y="170" text-anchor="middle" font-size="10" font-weight="600"
+    style="fill:var(--muted)" class="lz">排查</text>
+  <text x="33" y="170" text-anchor="middle" font-size="10" font-weight="600"
+    style="fill:var(--muted)" class="le">Check</text>
+  <text x="33" y="182" text-anchor="middle" font-size="10" font-weight="600"
+    style="fill:var(--muted)" class="lz">进度</text>
+  <text x="33" y="182" text-anchor="middle" font-size="10" font-weight="600"
+    style="fill:var(--muted)" class="le">Step</text>
+
+  <!-- Check 1 indicator at y≈190 -->
+  <circle cx="33" cy="210" r="10" style="fill:var(--fill-cyan);stroke:var(--col-cyan)" stroke-width="1.5"/>
+  <text x="33" y="214" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--col-cyan)">1</text>
+
+  <!-- Check 2 indicator at y≈290 -->
+  <circle cx="33" cy="300" r="10" style="fill:var(--fill-amber);stroke:var(--col-amber)" stroke-width="1.5"/>
+  <text x="33" y="304" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--col-amber)">2</text>
+
+  <!-- Check 3 indicator at y≈390 -->
+  <circle cx="33" cy="390" r="10" style="fill:var(--fill-violet);stroke:var(--col-violet)" stroke-width="1.5"/>
+  <text x="33" y="394" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--col-violet)">3</text>
+
+  <!-- Check 4 indicator at y≈480 -->
+  <circle cx="33" cy="490" r="10" style="fill:var(--fill-emerald);stroke:var(--col-emerald)" stroke-width="1.5"/>
+  <text x="33" y="494" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--col-emerald)">4</text>
+
+  <!-- Check 5 indicator at y≈580 -->
+  <circle cx="33" cy="585" r="10" style="fill:var(--fill-orange);stroke:var(--col-orange)" stroke-width="1.5"/>
+  <text x="33" y="589" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--col-orange)">5</text>
+
+  <!-- Doctor indicator -->
+  <rect x="18" y="685" width="30" height="20" rx="4"
+    style="fill:var(--fill-emerald);stroke:var(--col-emerald)" stroke-width="1.2"/>
+  <text x="33" y="699" text-anchor="middle" font-size="10" font-weight="700" style="fill:var(--col-emerald)">Rx</text>
+
+  <!-- ══════════════════════════════════════════════
+       PROBLEM START NODE (top center)
+       cx=480, cy=80, r=50
+       ═══════════════════════════════════════════ -->
+
+  <!-- Pulse halo -->
+  <circle cx="480" cy="80" r="65" fill="url(#pulse-grad)" opacity="0.6">
+    <animate attributeName="r" values="55;75;55" dur="2.4s" repeatCount="indefinite"/>
+    <animate attributeName="opacity" values="0.6;0;0.6" dur="2.4s" repeatCount="indefinite"/>
+  </circle>
+
+  <!-- Problem circle -->
+  <circle cx="480" cy="80" r="50" style="fill:var(--fill-rose);stroke:var(--col-rose)"
+    stroke-width="2" filter="url(#glow-rose)"/>
+
+  <!-- Icon -->
+  <text x="480" y="68" text-anchor="middle" font-size="20">⚙️</text>
+
+  <!-- Label ZH -->
+  <text x="480" y="84" text-anchor="middle" font-size="11" font-weight="700"
+    style="fill:var(--col-rose)" class="lz">配置不生效</text>
+  <text x="480" y="97" text-anchor="middle" font-size="10" font-weight="500"
+    style="fill:var(--muted)" class="lz">排查流程</text>
+
+  <!-- Label EN -->
+  <text x="480" y="84" text-anchor="middle" font-size="10" font-weight="700"
+    style="fill:var(--col-rose)" class="le">Config Not</text>
+  <text x="480" y="97" text-anchor="middle" font-size="10" font-weight="600"
+    style="fill:var(--col-rose)" class="le">Working</text>
+
+  <!-- Arrow: problem → check 1 -->
+  <line x1="480" y1="130" x2="480" y2="162"
+    style="stroke:var(--col-slate)" stroke-width="1.5"
+    marker-end="url(#arr-slate)"/>
+
+  <!-- ══════════════════════════════════════════════
+       CHECK 1 — Diamond (y=170–210)
+       Cyan · 是否检查了正确的配置文件？
+       ═══════════════════════════════════════════ -->
+
+  <!-- Diamond shape: center (480,190), half-w=120, half-h=40 -->
+  <polygon points="480,150 600,190 480,230 360,190"
+    style="fill:var(--fill-cyan);stroke:var(--col-cyan)" stroke-width="1.5"/>
+
+  <!-- Mask rect inside diamond for clean text bg -->
+  <rect x="370" y="163" width="220" height="54" rx="0"
+    style="fill:transparent"/>
+
+  <!-- Check 1 label ZH -->
+  <text text-anchor="middle" font-size="11" font-weight="600" style="fill:var(--col-cyan)" class="lz">
+    <tspan x="480" y="183">是否检查了正确的</tspan>
+    <tspan x="480" dy="14">配置文件路径？</tspan>
+  </text>
+  <!-- Check 1 label EN -->
+  <text text-anchor="middle" font-size="10" font-weight="600" style="fill:var(--col-cyan)" class="le">
+    <tspan x="480" y="185">Checking the right</tspan>
+    <tspan x="480" dy="13">config file path?</tspan>
+  </text>
+
+  <!-- YES label on down arrow -->
+  <text x="492" y="248" font-size="10" font-weight="700" style="fill:var(--col-emerald)" class="lz">是</text>
+  <text x="492" y="248" font-size="10" font-weight="700" style="fill:var(--col-emerald)" class="le">YES</text>
+
+  <!-- Arrow: check1 YES → check2 -->
+  <line x1="480" y1="230" x2="480" y2="262"
+    style="stroke:var(--col-emerald)" stroke-width="1.5"
+    marker-end="url(#arr-emerald)"/>
+
+  <!-- NO label on right arrow -->
+  <text x="608" y="186" font-size="10" font-weight="700" style="fill:var(--col-amber)" class="lz">否</text>
+  <text x="608" y="186" font-size="10" font-weight="700" style="fill:var(--col-amber)" class="le">NO</text>
+
+  <!-- Arrow: check1 NO → right action box 1 -->
+  <line x1="600" y1="190" x2="638" y2="190"
+    style="stroke:var(--col-amber)" stroke-width="1.5"
+    marker-end="url(#arr-amber)"/>
+
+  <!-- ── Action Box 1 (right, y≈165–225) ─────── -->
+  <rect x="642" y="160" width="278" height="72" rx="8"
+    style="fill:var(--fill-action);stroke:var(--col-amber)" stroke-width="1.2"/>
+  <text x="654" y="178" font-size="11" font-weight="700" style="fill:var(--col-amber)" class="lz">确认配置文件路径</text>
+  <text x="654" y="178" font-size="11" font-weight="700" style="fill:var(--col-amber)" class="le">Verify config file path</text>
+  <text x="654" y="193" font-size="10" style="fill:var(--muted)" class="lz">~/.claude/settings.json (全局)</text>
+  <text x="654" y="193" font-size="10" style="fill:var(--muted)" class="le">~/.claude/settings.json (global)</text>
+  <text x="654" y="207" font-size="10" style="fill:var(--muted)" class="lz">.claude/settings.json (项目)</text>
+  <text x="654" y="207" font-size="10" style="fill:var(--muted)" class="le">.claude/settings.json (project)</text>
+  <text x="654" y="221" font-size="10" style="fill:var(--muted)" class="lz">CLAUDE.md (指令文件)</text>
+  <text x="654" y="221" font-size="10" style="fill:var(--muted)" class="le">CLAUDE.md (instruction file)</text>
+
+  <!-- ══════════════════════════════════════════════
+       CHECK 2 — Diamond (y=270–310)
+       Amber · 配置文件格式正确？
+       ═══════════════════════════════════════════ -->
+  <polygon points="480,262 600,290 480,318 360,290"
+    style="fill:var(--fill-amber);stroke:var(--col-amber)" stroke-width="1.5"/>
+
+  <!-- Check 2 label ZH -->
+  <text text-anchor="middle" font-size="11" font-weight="600" style="fill:var(--col-amber)" class="lz">
+    <tspan x="480" y="284">配置文件格式</tspan>
+    <tspan x="480" dy="14">语法正确？</tspan>
+  </text>
+  <!-- Check 2 label EN -->
+  <text text-anchor="middle" font-size="10" font-weight="600" style="fill:var(--col-amber)" class="le">
+    <tspan x="480" y="285">Config file syntax</tspan>
+    <tspan x="480" dy="13">valid (JSON/YAML)?</tspan>
+  </text>
+
+  <!-- YES down -->
+  <text x="492" y="337" font-size="10" font-weight="700" style="fill:var(--col-emerald)" class="lz">是</text>
+  <text x="492" y="337" font-size="10" font-weight="700" style="fill:var(--col-emerald)" class="le">YES</text>
+  <line x1="480" y1="318" x2="480" y2="350"
+    style="stroke:var(--col-emerald)" stroke-width="1.5"
+    marker-end="url(#arr-emerald)"/>
+
+  <!-- NO right -->
+  <text x="608" y="286" font-size="10" font-weight="700" style="fill:var(--col-amber)" class="lz">否</text>
+  <text x="608" y="286" font-size="10" font-weight="700" style="fill:var(--col-amber)" class="le">NO</text>
+  <line x1="600" y1="290" x2="638" y2="290"
+    style="stroke:var(--col-amber)" stroke-width="1.5"
+    marker-end="url(#arr-amber)"/>
+
+  <!-- ── Action Box 2 (right, y≈262–322) ─────── -->
+  <rect x="642" y="260" width="278" height="66" rx="8"
+    style="fill:var(--fill-action);stroke:var(--col-amber)" stroke-width="1.2"/>
+  <text x="654" y="278" font-size="11" font-weight="700" style="fill:var(--col-amber)" class="lz">修复 JSON/YAML 格式错误</text>
+  <text x="654" y="278" font-size="11" font-weight="700" style="fill:var(--col-amber)" class="le">Fix JSON/YAML syntax errors</text>
+  <text x="654" y="293" font-size="10" style="fill:var(--muted)" class="lz">注意：尾随逗号、引号不匹配</text>
+  <text x="654" y="293" font-size="10" style="fill:var(--muted)" class="le">Watch: trailing commas, quotes</text>
+  <text x="654" y="308" font-size="10" style="fill:var(--subtle)" class="lz">$ node -e "JSON.parse(require('fs')</text>
+  <text x="654" y="308" font-size="10" style="fill:var(--subtle)" class="le">$ node -e "JSON.parse(require('fs')</text>
+  <text x="654" y="320" font-size="10" style="fill:var(--subtle)">.readFileSync('settings.json','utf8'))"</text>
+
+  <!-- ══════════════════════════════════════════════
+       CHECK 3 — Diamond (y=358–398)
+       Violet · 是否有更高优先级覆盖？
+       ═══════════════════════════════════════════ -->
+  <polygon points="480,350 600,378 480,406 360,378"
+    style="fill:var(--fill-violet);stroke:var(--col-violet)" stroke-width="1.5"/>
+
+  <!-- Check 3 label ZH -->
+  <text text-anchor="middle" font-size="11" font-weight="600" style="fill:var(--col-violet)" class="lz">
+    <tspan x="480" y="372">是否有更高优先级</tspan>
+    <tspan x="480" dy="14">覆盖？</tspan>
+  </text>
+  <!-- Check 3 label EN -->
+  <text text-anchor="middle" font-size="10" font-weight="600" style="fill:var(--col-violet)" class="le">
+    <tspan x="480" y="373">Higher priority</tspan>
+    <tspan x="480" dy="13">override present?</tspan>
+  </text>
+
+  <!-- NO down -->
+  <text x="492" y="424" font-size="10" font-weight="700" style="fill:var(--col-emerald)" class="lz">否</text>
+  <text x="492" y="424" font-size="10" font-weight="700" style="fill:var(--col-emerald)" class="le">NO</text>
+  <line x1="480" y1="406" x2="480" y2="438"
+    style="stroke:var(--col-emerald)" stroke-width="1.5"
+    marker-end="url(#arr-emerald)"/>
+
+  <!-- YES right -->
+  <text x="608" y="374" font-size="10" font-weight="700" style="fill:var(--col-amber)" class="lz">是</text>
+  <text x="608" y="374" font-size="10" font-weight="700" style="fill:var(--col-amber)" class="le">YES</text>
+  <line x1="600" y1="378" x2="638" y2="378"
+    style="stroke:var(--col-amber)" stroke-width="1.5"
+    marker-end="url(#arr-amber)"/>
+
+  <!-- ── Action Box 3 (right, y≈350–412) ─────── -->
+  <rect x="642" y="350" width="278" height="66" rx="8"
+    style="fill:var(--fill-action);stroke:var(--col-violet)" stroke-width="1.2"/>
+  <text x="654" y="368" font-size="11" font-weight="700" style="fill:var(--col-violet)" class="lz">检查高优先级覆盖源</text>
+  <text x="654" y="368" font-size="11" font-weight="700" style="fill:var(--col-violet)" class="le">Check higher-priority overrides</text>
+  <text x="654" y="383" font-size="10" style="fill:var(--muted)" class="lz">① CLI flags (--no-tools, etc.)</text>
+  <text x="654" y="383" font-size="10" style="fill:var(--muted)" class="le">① CLI flags (--no-tools, etc.)</text>
+  <text x="654" y="397" font-size="10" style="fill:var(--muted)" class="lz">② 环境变量 CLAUDE_* / ANTHROPIC_*</text>
+  <text x="654" y="397" font-size="10" style="fill:var(--muted)" class="le">② Env vars CLAUDE_* / ANTHROPIC_*</text>
+  <text x="654" y="411" font-size="10" style="fill:var(--muted)" class="lz">③ Policy 策略文件（企业 MDM）</text>
+  <text x="654" y="411" font-size="10" style="fill:var(--muted)" class="le">③ Policy files (enterprise MDM)</text>
+
+  <!-- ══════════════════════════════════════════════
+       CHECK 4 — Diamond (y=446–486)
+       Emerald · CLAUDE.md 是否在正确目录？
+       ═══════════════════════════════════════════ -->
+  <polygon points="480,438 600,466 480,494 360,466"
+    style="fill:var(--fill-emerald);stroke:var(--col-emerald)" stroke-width="1.5"/>
+
+  <!-- Check 4 label ZH -->
+  <text text-anchor="middle" font-size="11" font-weight="600" style="fill:var(--col-emerald)" class="lz">
+    <tspan x="480" y="460">CLAUDE.md 是否</tspan>
+    <tspan x="480" dy="14">在正确目录？</tspan>
+  </text>
+  <!-- Check 4 label EN -->
+  <text text-anchor="middle" font-size="10" font-weight="600" style="fill:var(--col-emerald)" class="le">
+    <tspan x="480" y="461">CLAUDE.md in the</tspan>
+    <tspan x="480" dy="13">right directory?</tspan>
+  </text>
+
+  <!-- YES down -->
+  <text x="492" y="512" font-size="10" font-weight="700" style="fill:var(--col-emerald)" class="lz">是</text>
+  <text x="492" y="512" font-size="10" font-weight="700" style="fill:var(--col-emerald)" class="le">YES</text>
+  <line x1="480" y1="494" x2="480" y2="526"
+    style="stroke:var(--col-emerald)" stroke-width="1.5"
+    marker-end="url(#arr-emerald)"/>
+
+  <!-- NO right -->
+  <text x="608" y="462" font-size="10" font-weight="700" style="fill:var(--col-amber)" class="lz">否</text>
+  <text x="608" y="462" font-size="10" font-weight="700" style="fill:var(--col-amber)" class="le">NO</text>
+  <line x1="600" y1="466" x2="638" y2="466"
+    style="stroke:var(--col-amber)" stroke-width="1.5"
+    marker-end="url(#arr-amber)"/>
+
+  <!-- ── Action Box 4 (right, y≈440–506) ─────── -->
+  <rect x="642" y="438" width="278" height="64" rx="8"
+    style="fill:var(--fill-action);stroke:var(--col-emerald)" stroke-width="1.2"/>
+  <text x="654" y="456" font-size="11" font-weight="700" style="fill:var(--col-emerald)" class="lz">检查 CLAUDE.md 目录层级</text>
+  <text x="654" y="456" font-size="11" font-weight="700" style="fill:var(--col-emerald)" class="le">Check CLAUDE.md directory level</text>
+  <text x="654" y="471" font-size="10" style="fill:var(--muted)" class="lz">必须放在项目根目录（与 .git 同级）</text>
+  <text x="654" y="471" font-size="10" style="fill:var(--muted)" class="le">Must be at project root (beside .git)</text>
+  <text x="654" y="486" font-size="10" style="fill:var(--subtle)">project-root/</text>
+  <text x="654" y="498" font-size="10" style="fill:var(--subtle)">  ├── CLAUDE.md  ← here</text>
+
+  <!-- ══════════════════════════════════════════════
+       CHECK 5 — Diamond (y=534–574)
+       Orange · 配置项是否被企业策略锁定？
+       ═══════════════════════════════════════════ -->
+  <polygon points="480,526 600,554 480,582 360,554"
+    style="fill:var(--fill-orange);stroke:var(--col-orange)" stroke-width="1.5"/>
+
+  <!-- Check 5 label ZH -->
+  <text text-anchor="middle" font-size="11" font-weight="600" style="fill:var(--col-orange)" class="lz">
+    <tspan x="480" y="548">配置项是否被</tspan>
+    <tspan x="480" dy="14">企业策略锁定？</tspan>
+  </text>
+  <!-- Check 5 label EN -->
+  <text text-anchor="middle" font-size="10" font-weight="600" style="fill:var(--col-orange)" class="le">
+    <tspan x="480" y="549">Setting locked by</tspan>
+    <tspan x="480" dy="13">enterprise policy?</tspan>
+  </text>
+
+  <!-- NO down -->
+  <text x="492" y="601" font-size="10" font-weight="700" style="fill:var(--col-emerald)" class="lz">否</text>
+  <text x="492" y="601" font-size="10" font-weight="700" style="fill:var(--col-emerald)" class="le">NO</text>
+  <line x1="480" y1="582" x2="480" y2="618"
+    style="stroke:var(--col-emerald)" stroke-width="1.5"
+    marker-end="url(#arr-emerald)"/>
+
+  <!-- YES right -->
+  <text x="608" y="550" font-size="10" font-weight="700" style="fill:var(--col-rose)" class="lz">是</text>
+  <text x="608" y="550" font-size="10" font-weight="700" style="fill:var(--col-rose)" class="le">YES</text>
+  <line x1="600" y1="554" x2="638" y2="554"
+    style="stroke:var(--col-rose)" stroke-width="1.5"
+    marker-end="url(#arr-rose)"/>
+
+  <!-- ── Action Box 5 — ROSE/WARNING (right, y≈526–592) ── -->
+  <rect x="642" y="526" width="278" height="68" rx="8"
+    style="fill:var(--fill-rose);stroke:var(--col-rose)" stroke-width="1.5"/>
+  <text x="654" y="545" font-size="11" font-weight="700" style="fill:var(--col-rose)" class="lz">⚠ 企业策略锁定</text>
+  <text x="654" y="545" font-size="11" font-weight="700" style="fill:var(--col-rose)" class="le">⚠ Enterprise policy locked</text>
+  <text x="654" y="560" font-size="10" style="fill:var(--muted)" class="lz">最高优先级，本地无法覆盖</text>
+  <text x="654" y="560" font-size="10" style="fill:var(--muted)" class="le">Highest priority, cannot override locally</text>
+  <text x="654" y="575" font-size="10" style="fill:var(--muted)" class="lz">联系 IT 管理员申请策略豁免</text>
+  <text x="654" y="575" font-size="10" style="fill:var(--muted)" class="le">Contact IT admin for policy exemption</text>
+  <text x="654" y="587" font-size="10" style="fill:var(--subtle)" class="lz">/doctor → "policy" 标签确认</text>
+  <text x="654" y="587" font-size="10" style="fill:var(--subtle)" class="le">/doctor → confirm "policy" label</text>
+
+  <!-- ══════════════════════════════════════════════
+       SOLUTION BOX (y=622–672)
+       Wide rounded rect, emerald
+       ═══════════════════════════════════════════ -->
+  <rect x="220" y="622" width="520" height="60" rx="10"
+    style="fill:var(--fill-emerald);stroke:var(--col-emerald)" stroke-width="2"
+    filter="url(#glow-emerald)"/>
+
+  <!-- Icon + main label ZH -->
+  <text x="480" y="645" text-anchor="middle" font-size="14" font-weight="700"
+    style="fill:var(--col-emerald)" class="lz">✅ 运行 /doctor 命令诊断</text>
+  <text x="480" y="645" text-anchor="middle" font-size="13" font-weight="700"
+    style="fill:var(--col-emerald)" class="le">✅ Run /doctor command</text>
+
+  <text x="480" y="663" text-anchor="middle" font-size="11" style="fill:var(--muted)" class="lz">显示所有生效的配置层 — 全局 / 项目 / 策略 / 环境变量</text>
+  <text x="480" y="663" text-anchor="middle" font-size="11" style="fill:var(--muted)" class="le">Shows all active config layers — global / project / policy / env vars</text>
+
+  <!-- Arrow: solution → end -->
+  <line x1="480" y1="682" x2="480" y2="714"
+    style="stroke:var(--col-emerald)" stroke-width="2"
+    marker-end="url(#arr-emerald)"/>
+
+  <!-- ══════════════════════════════════════════════
+       END NODE — Success circle
+       cy=740, r=40
+       ═══════════════════════════════════════════ -->
+  <circle cx="480" cy="754" r="44"
+    style="fill:var(--fill-emerald);stroke:var(--col-emerald)"
+    stroke-width="2" filter="url(#glow-emerald)"/>
+
+  <text x="480" y="748" text-anchor="middle" font-size="18">✓</text>
+  <text x="480" y="763" text-anchor="middle" font-size="11" font-weight="700"
+    style="fill:var(--col-emerald)" class="lz">配置已生效</text>
+  <text x="480" y="763" text-anchor="middle" font-size="10" font-weight="700"
+    style="fill:var(--col-emerald)" class="le">Config Applied</text>
+
+  <!-- ══════════════════════════════════════════════
+       LEGEND / KEY (bottom-right corner)
+       ═══════════════════════════════════════════ -->
+  <rect x="700" y="660" width="220" height="104" rx="8"
+    style="fill:var(--fill-action);stroke:var(--border)" stroke-width="1"/>
+  <text x="716" y="678" font-size="10" font-weight="700" style="fill:var(--muted)" class="lz">图例</text>
+  <text x="716" y="678" font-size="10" font-weight="700" style="fill:var(--muted)" class="le">Legend</text>
+
+  <!-- YES arrow -->
+  <line x1="716" y1="693" x2="744" y2="693"
+    style="stroke:var(--col-emerald)" stroke-width="1.5" marker-end="url(#arr-emerald)"/>
+  <text x="750" y="697" font-size="10" style="fill:var(--muted)" class="lz">是 / YES → 继续</text>
+  <text x="750" y="697" font-size="10" style="fill:var(--muted)" class="le">YES → continue</text>
+
+  <!-- NO arrow -->
+  <line x1="716" y1="711" x2="744" y2="711"
+    style="stroke:var(--col-amber)" stroke-width="1.5" marker-end="url(#arr-amber)"/>
+  <text x="750" y="715" font-size="10" style="fill:var(--muted)" class="lz">否 / NO → 修复</text>
+  <text x="750" y="715" font-size="10" style="fill:var(--muted)" class="le">NO → fix action</text>
+
+  <!-- Diamond symbol -->
+  <polygon points="727,727 739,733 727,739 715,733"
+    style="fill:transparent;stroke:var(--col-cyan)" stroke-width="1.2"/>
+  <text x="750" y="737" font-size="10" style="fill:var(--muted)" class="lz">◇ 决策菱形</text>
+  <text x="750" y="737" font-size="10" style="fill:var(--muted)" class="le">◇ Decision diamond</text>
+
+  <!-- Action box symbol -->
+  <rect x="713" y="745" width="26" height="12" rx="3"
+    style="fill:var(--fill-action);stroke:var(--col-amber)" stroke-width="1.2"/>
+  <text x="750" y="755" font-size="10" style="fill:var(--muted)" class="lz">□ 修复操作框</text>
+  <text x="750" y="755" font-size="10" style="fill:var(--muted)" class="le">□ Fix action box</text>
+
+  <!-- Warning icon -->
+  <text x="713" y="768" font-size="11">⚠</text>
+  <text x="728" y="768" font-size="10" style="fill:var(--col-rose)" class="lz"> 企业策略（不可绕过）</text>
+  <text x="728" y="768" font-size="10" style="fill:var(--col-rose)" class="le"> Policy lock (non-bypassable)</text>
+
+</svg>
+</div>
+
+<!-- Summary Cards -->
+<div class="cards">
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-dot" style="background:var(--col-cyan)"></div>
+      <h3 style="color:var(--col-cyan)">
+        <span class="lz">5 步诊断法</span>
+        <span class="le">5-Step Diagnostic</span>
+      </h3>
+    </div>
+    <p>
+      <span class="lz">从文件路径 → 语法格式 → 优先级覆盖 → 目录层级 → 企业策略，覆盖 90% 以上的配置不生效场景。排查顺序经过设计：越靠前越常见，越靠后越"硬"。</span>
+      <span class="le">Path → Syntax → Priority override → Directory hierarchy → Enterprise policy. Covers 90%+ of "config not working" cases. Order is intentional: most common first, hardest last.</span>
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-dot" style="background:var(--col-emerald)"></div>
+      <h3 style="color:var(--col-emerald)">
+        <span class="lz">/doctor 命令</span>
+        <span class="le">/doctor Command</span>
+      </h3>
+    </div>
+    <p>
+      <span class="lz">Claude Code 内置诊断命令，输出所有已加载的配置层（全局 settings → 项目 settings → Policy → 环境变量），并标注每个配置项的来源和当前生效值。排查到最后一步务必运行。</span>
+      <span class="le">Built-in diagnostic command that lists all loaded config layers (global settings → project settings → Policy → env vars) with source attribution and current effective value. Always run at the final step.</span>
+    </p>
+  </div>
+
+  <div class="card">
+    <div class="card-hdr">
+      <div class="card-dot" style="background:var(--col-rose)"></div>
+      <h3 style="color:var(--col-rose)">
+        <span class="lz">企业策略锁定</span>
+        <span class="le">Enterprise Policy Lock</span>
+      </h3>
+    </div>
+    <p>
+      <span class="lz">优先级最高（Policy > CLI flags > 环境变量 > 用户 settings > 项目 settings），任何本地配置均无法覆盖。表现为配置写入但始终不生效。唯一出路：联系 IT 管理员申请策略豁免。</span>
+      <span class="le">Highest priority (Policy > CLI flags > env vars > user settings > project settings). No local config can override it. Symptom: config written but never takes effect. Only path: contact IT admin for policy exemption.</span>
+    </p>
+  </div>
+
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <span><span class="lz">VIS-2A-029 · CC 白皮书 v2 图表体系 · 配置生效诊断流程</span><span class="le">VIS-2A-029 · CC Whitepaper v2 · Config Effective Diagnosis</span></span>
+  <span><span class="lz">Claude Code 源码研究项目 · 2026-04-15</span><span class="le">Claude Code Source Study · 2026-04-15</span></span>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* ── Theme ─────────────────────────────────── */
+  function setTheme(t){
+    document.documentElement.setAttribute('data-theme',t);
+    ['dark','warm','light'].forEach(function(n){
+      var b=document.getElementById('btn-'+n);
+      if(b) b.classList.toggle('active', n===t);
+    });
+    try{ localStorage.setItem('cc-theme',t); }catch(e){}
+  }
+
+  /* ── Language ──────────────────────────────── */
+  var currentLang='zh';
+  function toggleLang(){
+    currentLang=(currentLang==='zh')?'en':'zh';
+    document.documentElement.setAttribute('lang',currentLang);
+    var b=document.getElementById('btn-lang');
+    if(b) b.textContent=(currentLang==='zh')?'中·EN':'EN·中';
+    try{ localStorage.setItem('cc-lang',currentLang); }catch(e){}
+  }
+
+  /* ── Init ──────────────────────────────────── */
+  window.setTheme=setTheme;
+  window.toggleLang=toggleLang;
+
+  (function init(){
+    var t,l;
+    try{ t=localStorage.getItem('cc-theme'); l=localStorage.getItem('cc-lang'); }catch(e){}
+    if(t) setTheme(t);
+    if(l && l!=='zh'){ currentLang='zh'; toggleLang(); }
+    document.documentElement.setAttribute('lang',currentLang);
+  })();
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

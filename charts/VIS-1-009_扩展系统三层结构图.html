@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>扩展系统三层结构图 — Claude Code v2</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root {
+  --bg: #020617; --bg-card: #0f172a; --bg-card2: #1e293b;
+  --txt: #f1f5f9; --txt2: #94a3b8; --txt3: #64748b; --border: #1e293b;
+  --svg-bg: #020617;
+  --svg-card-bg: #0f172a;
+  --svg-grid: #1e293b;
+  --svg-border: #1e293b;
+  --svg-text: #f1f5f9;
+  --svg-text2: #94a3b8;
+  --svg-text3: #64748b;
+  --svg-ctx-label: #475569;
+  --svg-registry-bg: rgba(30,41,59,0.8);
+  --svg-registry-border: #475569;
+  --svg-legend-bg: rgba(30,41,59,0.4);
+}
+[data-theme="warm"] {
+  --bg: #f8f6f3; --bg-card: #ffffff; --bg-card2: #f1f5f9;
+  --txt: #1e293b; --txt2: #475569; --txt3: #94a3b8; --border: #e2e8f0;
+  --svg-bg: #f8f6f3;
+  --svg-card-bg: #ffffff;
+  --svg-grid: #e2e8f0;
+  --svg-border: #e2e8f0;
+  --svg-text: #1e293b;
+  --svg-text2: #475569;
+  --svg-text3: #94a3b8;
+  --svg-ctx-label: #94a3b8;
+  --svg-registry-bg: rgba(241,245,249,0.85);
+  --svg-registry-border: #cbd5e1;
+  --svg-legend-bg: rgba(241,245,249,0.6);
+}
+[data-theme="light"] {
+  --bg: #ffffff; --bg-card: #f8fafc; --bg-card2: #f1f5f9;
+  --txt: #0f172a; --txt2: #334155; --txt3: #94a3b8; --border: #e2e8f0;
+  --svg-bg: #ffffff;
+  --svg-card-bg: #f8fafc;
+  --svg-grid: #e2e8f0;
+  --svg-border: #e2e8f0;
+  --svg-text: #0f172a;
+  --svg-text2: #334155;
+  --svg-text3: #94a3b8;
+  --svg-ctx-label: #94a3b8;
+  --svg-registry-bg: rgba(241,245,249,0.85);
+  --svg-registry-border: #cbd5e1;
+  --svg-legend-bg: rgba(241,245,249,0.6);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg); color: var(--txt);
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; padding: 48px 24px;
+  transition: background 0.3s, color 0.3s;
+}
+.header { text-align: center; margin-bottom: 32px; }
+.vis-id { font-size: 12px; color: var(--txt3); letter-spacing: 2px; margin-bottom: 8px; }
+.title { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
+.subtitle { font-size: 13px; color: var(--txt2); }
+.diagram-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 24px;
+  max-width: 960px; width: 100%;
+}
+.diagram-card svg { display: block; width: 100%; height: auto; }
+.cards-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 12px; max-width: 960px; width: 100%; margin-top: 14px;
+}
+.card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px;
+}
+.card-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; flex-shrink: 0; }
+.card h3 { font-size: 13px; font-weight: 600; color: var(--txt); margin-bottom: 6px; display: flex; align-items: center; }
+.card p { font-size: 12px; color: var(--txt2); line-height: 1.6; }
+.controls {
+  position: fixed; top: 20px; right: 20px;
+  display: flex; gap: 8px; z-index: 100;
+}
+.ctrl-btn {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 12px; font-size: 12px;
+  font-family: inherit; color: var(--txt); cursor: pointer;
+}
+.ctrl-btn:hover { background: var(--bg-card2); }
+[lang="en"] .lz { display: none; }
+[lang="en"] .le { display: inline; }</style>
+</head>
+<body>
+<div class="controls">
+  <button class="ctrl-btn" onclick="window.toggleLang()">EN/中</button>
+  <button class="ctrl-btn" onclick="window.setTheme('dark')"><span class="lz">暗</span><span class="le">Dark</span></button>
+  <button class="ctrl-btn" onclick="window.setTheme('warm')"><span class="lz">暖</span><span class="le">Warm</span></button>
+  <button class="ctrl-btn" onclick="window.setTheme('light')"><span class="lz">亮</span><span class="le">Light</span></button>
+</div>
+
+<div class="header">
+  <div class="vis-id">VIS-1-009 · CLAUDE CODE ARCHITECTURE</div>
+  <div class="title">
+    <span class="lz">扩展系统三层结构图</span>
+    <span class="le">Three-Tier Extension Architecture</span>
+  </div>
+  <div class="subtitle">
+    <span class="lz">MCP · Hooks · Plugins 三类扩展机制的定位与协作关系</span>
+    <span class="le">MCP · Hooks · Plugins — 3 extension tiers, their roles and interactions</span>
+  </div>
+</div>
+
+<div class="diagram-card">
+<svg viewBox="0 0 960 580" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <pattern id="grid9" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--svg-grid)" stroke-width="0.5"/>
+  </pattern>
+  <marker id="arr9g" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+    <polygon points="0 0,8 3,0 6" fill="#34d399"/>
+  </marker>
+  <marker id="arr9a" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+    <polygon points="0 0,8 3,0 6" fill="#fbbf24"/>
+  </marker>
+  <marker id="arr9c" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+    <polygon points="0 0,8 3,0 6" fill="#22d3ee"/>
+  </marker>
+  <filter id="glow9g">
+    <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#34d399" flood-opacity="0.3"/>
+  </filter>
+  <filter id="glow9a">
+    <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#fbbf24" flood-opacity="0.3"/>
+  </filter>
+  <filter id="glow9c">
+    <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#22d3ee" flood-opacity="0.3"/>
+  </filter>
+</defs>
+
+<!-- Background -->
+<rect width="960" height="580" fill="var(--svg-bg)"/>
+<rect width="960" height="580" fill="url(#grid9)" opacity="0.35"/>
+
+<!-- ======= EXTERNAL CONTEXT CLOUD LABELS ======= -->
+<text x="165" y="22" text-anchor="middle" fill="var(--svg-ctx-label)" font-size="11" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">外部服务</tspan><tspan class="le">External Services</tspan>
+</text>
+<text x="480" y="22" text-anchor="middle" fill="var(--svg-ctx-label)" font-size="11" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">生命周期事件</tspan><tspan class="le">Lifecycle Events</tspan>
+</text>
+<text x="795" y="22" text-anchor="middle" fill="var(--svg-ctx-label)" font-size="11" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">第三方扩展包</tspan><tspan class="le">Third-party Packages</tspan>
+</text>
+
+<!-- ======= MCP COLUMN ======= -->
+<!-- Column rect -->
+<rect x="18" y="30" width="294" height="440" rx="12" fill="var(--svg-card-bg)"/>
+<rect x="18" y="30" width="294" height="440" rx="12"
+      fill="rgba(52,211,153,0.06)" stroke="#34d399" stroke-width="1.5" filter="url(#glow9g)"/>
+
+<!-- MCP Header -->
+<text x="165" y="72" text-anchor="middle" fill="#34d399" font-size="22" font-weight="700"
+      font-family="JetBrains Mono,monospace">MCP</text>
+<rect x="108" y="80" width="114" height="22" rx="11"
+      fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1"/>
+<text x="165" y="95" text-anchor="middle" fill="#34d399" font-size="11" font-weight="600">
+  <tspan class="lz">大使馆 Embassy</tspan><tspan class="le">Embassy</tspan>
+</text>
+
+<!-- MCP Node 1: Transport Protocols -->
+<rect x="32" y="112" width="266" height="64" rx="8" fill="var(--svg-card-bg)"/>
+<rect x="32" y="112" width="266" height="64" rx="8"
+      fill="rgba(52,211,153,0.1)" stroke="#34d399" stroke-width="1"/>
+<text x="165" y="132" text-anchor="middle" fill="var(--svg-text)" font-size="13" font-weight="600"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">8 种传输协议</tspan><tspan class="le">8 Transport Protocols</tspan>
+</text>
+<text x="165" y="149" text-anchor="middle" fill="var(--svg-text2)" font-size="11"
+      font-family="JetBrains Mono,monospace">stdio · sse · streamable-http</text>
+<text x="165" y="164" text-anchor="middle" fill="var(--svg-text2)" font-size="11"
+      font-family="JetBrains Mono,monospace">docker · websocket ...</text>
+
+<!-- MCP Node 2: Dynamic Tool Registry -->
+<rect x="32" y="188" width="266" height="60" rx="8" fill="var(--svg-card-bg)"/>
+<rect x="32" y="188" width="266" height="60" rx="8"
+      fill="rgba(52,211,153,0.1)" stroke="#34d399" stroke-width="1"/>
+<text x="165" y="210" text-anchor="middle" fill="var(--svg-text)" font-size="13" font-weight="600"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">动态工具注册</tspan><tspan class="le">Dynamic Tool Registry</tspan>
+</text>
+<text x="165" y="227" text-anchor="middle" fill="var(--svg-text2)" font-size="11"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">加入 40 个内置工具列表</tspan><tspan class="le">Joins 40 built-in tool list</tspan>
+</text>
+<text x="165" y="242" text-anchor="middle" fill="var(--svg-text3)" font-size="11"
+      font-family="JetBrains Mono,monospace">Dynamic Registry · Tool Discovery</text>
+
+<!-- MCP Node 3: Security Tag -->
+<rect x="32" y="260" width="266" height="60" rx="8" fill="var(--svg-card-bg)"/>
+<rect x="32" y="260" width="266" height="60" rx="8"
+      fill="rgba(52,211,153,0.1)" stroke="#34d399" stroke-width="1"/>
+<text x="165" y="280" text-anchor="middle" fill="var(--svg-text)" font-size="13" font-weight="600"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">安全标记</tspan><tspan class="le">Security Tag</tspan>
+</text>
+<text x="165" y="297" text-anchor="middle" fill="var(--svg-text2)" font-size="11"
+      font-family="JetBrains Mono,monospace">DANGEROUS_uncachedSystem</text>
+<text x="165" y="312" text-anchor="middle" fill="var(--svg-text2)" font-size="11"
+      font-family="JetBrains Mono,monospace">PromptSection</text>
+
+<!-- MCP Protocol list -->
+<text x="165" y="350" text-anchor="middle" fill="#34d399" font-size="12" font-weight="600"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">连接能力：Slack · GitHub · DB</tspan>
+  <tspan class="le">Connects: Slack · GitHub · DB</tspan>
+</text>
+<text x="165" y="366" text-anchor="middle" fill="var(--svg-text3)" font-size="11"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">+ 任何支持 MCP 协议的服务</tspan>
+  <tspan class="le">+ any MCP-compatible service</tspan>
+</text>
+
+<!-- MCP bottom stats -->
+<rect x="32" y="384" width="266" height="36" rx="6" fill="rgba(52,211,153,0.08)" stroke="#34d399" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="165" y="400" text-anchor="middle" fill="#34d399" font-size="12" font-weight="600"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">5,718+ MCP 引用 · 8 协议类型</tspan>
+  <tspan class="le">5,718+ MCP refs · 8 protocol types</tspan>
+</text>
+<text x="165" y="414" text-anchor="middle" fill="var(--svg-text3)" font-size="11"
+      font-family="JetBrains Mono,monospace">Cross-process · Isolated · JSON-RPC</text>
+
+<!-- ======= HOOKS COLUMN ======= -->
+<rect x="332" y="30" width="294" height="440" rx="12" fill="var(--svg-card-bg)"/>
+<rect x="332" y="30" width="294" height="440" rx="12"
+      fill="rgba(251,191,36,0.06)" stroke="#fbbf24" stroke-width="1.5" filter="url(#glow9a)"/>
+
+<!-- Hooks Header -->
+<text x="479" y="72" text-anchor="middle" fill="#fbbf24" font-size="22" font-weight="700"
+      font-family="JetBrains Mono,monospace">Hooks</text>
+<rect x="415" y="80" width="128" height="22" rx="11"
+      fill="rgba(251,191,36,0.15)" stroke="#fbbf24" stroke-width="1"/>
+<text x="479" y="95" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="600">
+  <tspan class="lz">收费站 Toll Gate</tspan><tspan class="le">Toll Gate</tspan>
+</text>
+
+<!-- Hooks Node 1: 27 Hook Events -->
+<rect x="346" y="112" width="266" height="64" rx="8" fill="var(--svg-card-bg)"/>
+<rect x="346" y="112" width="266" height="64" rx="8"
+      fill="rgba(251,191,36,0.1)" stroke="#fbbf24" stroke-width="1"/>
+<text x="479" y="132" text-anchor="middle" fill="var(--svg-text)" font-size="13" font-weight="600"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">27 种 Hook 事件</tspan><tspan class="le">27 Hook Event Types</tspan>
+</text>
+<text x="479" y="149" text-anchor="middle" fill="var(--svg-text2)" font-size="11"
+      font-family="JetBrains Mono,monospace">PreToolUse · PostToolUse</text>
+<text x="479" y="164" text-anchor="middle" fill="var(--svg-text2)" font-size="11"
+      font-family="JetBrains Mono,monospace">Notification · Stop · SubagentStop</text>
+
+<!-- Hooks Node 2: Exit Code Decision -->
+<rect x="346" y="188" width="266" height="60" rx="8" fill="var(--svg-card-bg)"/>
+<rect x="346" y="188" width="266" height="60" rx="8"
+      fill="rgba(251,191,36,0.1)" stroke="#fbbf24" stroke-width="1"/>
+<text x="479" y="210" text-anchor="middle" fill="var(--svg-text)" font-size="13" font-weight="600"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">Exit Code 双轨决策</tspan><tspan class="le">Exit Code Decision</tspan>
+</text>
+<text x="479" y="227" text-anchor="middle" fill="var(--svg-text2)" font-size="11"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">0 = 放行  ·  2 = 阻止+反馈</tspan>
+  <tspan class="le">0 = allow  ·  2 = block+feedback</tspan>
+</text>
+<text x="479" y="242" text-anchor="middle" fill="var(--svg-text3)" font-size="11"
+      font-family="JetBrains Mono,monospace">other = error · stdout → AI context</text>
+
+<!-- Hooks Node 3: Isolated Process -->
+<rect x="346" y="260" width="266" height="60" rx="8" fill="var(--svg-card-bg)"/>
+<rect x="346" y="260" width="266" height="60" rx="8"
+      fill="rgba(251,191,36,0.1)" stroke="#fbbf24" stroke-width="1"/>
+<text x="479" y="280" text-anchor="middle" fill="var(--svg-text)" font-size="13" font-weight="600"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">进程外执行</tspan><tspan class="le">Out-of-Process Execution</tspan>
+</text>
+<text x="479" y="297" text-anchor="middle" fill="var(--svg-text2)" font-size="11"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">Shell 脚本独立进程运行</tspan>
+  <tspan class="le">Shell script in isolated process</tspan>
+</text>
+<text x="479" y="312" text-anchor="middle" fill="var(--svg-text3)" font-size="11"
+      font-family="JetBrains Mono,monospace">main process stability guaranteed</text>
+
+<!-- Hooks use cases -->
+<text x="479" y="350" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="600"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">用例：lint · 格式化 · 审计日志</tspan>
+  <tspan class="le">Use cases: lint · format · audit log</tspan>
+</text>
+<text x="479" y="366" text-anchor="middle" fill="var(--svg-text3)" font-size="11"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">自动化质量控制 · 合规检查</tspan>
+  <tspan class="le">Automated QA · compliance checking</tspan>
+</text>
+
+<!-- Hooks bottom stats -->
+<rect x="346" y="384" width="266" height="36" rx="6" fill="rgba(251,191,36,0.08)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="479" y="400" text-anchor="middle" fill="#fbbf24" font-size="12" font-weight="600"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">27 事件类型 · ~settings.json</tspan>
+  <tspan class="le">27 event types · ~settings.json</tspan>
+</text>
+<text x="479" y="414" text-anchor="middle" fill="var(--svg-text3)" font-size="11"
+      font-family="JetBrains Mono,monospace">Lifecycle interception · Zero-latency</text>
+
+<!-- ======= PLUGINS COLUMN ======= -->
+<rect x="646" y="30" width="296" height="440" rx="12" fill="var(--svg-card-bg)"/>
+<rect x="646" y="30" width="296" height="440" rx="12"
+      fill="rgba(34,211,238,0.06)" stroke="#22d3ee" stroke-width="1.5" filter="url(#glow9c)"/>
+
+<!-- Plugins Header -->
+<text x="794" y="72" text-anchor="middle" fill="#22d3ee" font-size="19" font-weight="700"
+      font-family="JetBrains Mono,monospace">Plugins + Skills</text>
+<rect x="706" y="80" width="176" height="22" rx="11"
+      fill="rgba(34,211,238,0.15)" stroke="#22d3ee" stroke-width="1"/>
+<text x="794" y="95" text-anchor="middle" fill="#22d3ee" font-size="11" font-weight="600">
+  <tspan class="lz">特许经营商 Franchise</tspan><tspan class="le">Franchise</tspan>
+</text>
+
+<!-- Plugins Node 1: Triple Security -->
+<rect x="660" y="112" width="268" height="64" rx="8" fill="var(--svg-card-bg)"/>
+<rect x="660" y="112" width="268" height="64" rx="8"
+      fill="rgba(34,211,238,0.1)" stroke="#22d3ee" stroke-width="1"/>
+<text x="794" y="132" text-anchor="middle" fill="var(--svg-text)" font-size="13" font-weight="600"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">Plugins 三重安全</tspan><tspan class="le">Plugins Triple Security</tspan>
+</text>
+<text x="794" y="149" text-anchor="middle" fill="var(--svg-text2)" font-size="11"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">白名单 · 正则匹配 · Homoglyph</tspan>
+  <tspan class="le">Allowlist · Regex · Homoglyph</tspan>
+</text>
+<text x="794" y="164" text-anchor="middle" fill="var(--svg-text3)" font-size="11"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">最严格的扩展准入标准</tspan>
+  <tspan class="le">Strictest extension admission criteria</tspan>
+</text>
+
+<!-- Plugins Node 2: Skills Semantic -->
+<rect x="660" y="188" width="268" height="60" rx="8" fill="var(--svg-card-bg)"/>
+<rect x="660" y="188" width="268" height="60" rx="8"
+      fill="rgba(34,211,238,0.1)" stroke="#22d3ee" stroke-width="1"/>
+<text x="794" y="210" text-anchor="middle" fill="var(--svg-text)" font-size="13" font-weight="600"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">Skills 语义匹配</tspan><tspan class="le">Skills Semantic Matching</tspan>
+</text>
+<text x="794" y="227" text-anchor="middle" fill="var(--svg-text2)" font-size="11"
+      font-family="JetBrains Mono,monospace">whenToUse ·
+  <tspan class="lz"> 延迟加载 · 按需触发</tspan>
+  <tspan class="le"> lazy load · on-demand</tspan>
+</text>
+<text x="794" y="242" text-anchor="middle" fill="var(--svg-text3)" font-size="11"
+      font-family="JetBrains Mono,monospace">Pattern match → inject skill prompt</text>
+
+<!-- Plugins Node 3: Aggregate Config -->
+<rect x="660" y="260" width="268" height="60" rx="8" fill="var(--svg-card-bg)"/>
+<rect x="660" y="260" width="268" height="60" rx="8"
+      fill="rgba(34,211,238,0.1)" stroke="#22d3ee" stroke-width="1"/>
+<text x="794" y="280" text-anchor="middle" fill="var(--svg-text)" font-size="13" font-weight="600"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">聚合配置能力</tspan><tspan class="le">Aggregate Config</tspan>
+</text>
+<text x="794" y="297" text-anchor="middle" fill="var(--svg-text2)" font-size="11"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">内含 MCP 配置 + Hook 配置</tspan>
+  <tspan class="le">Contains MCP config + Hook config</tspan>
+</text>
+<text x="794" y="312" text-anchor="middle" fill="var(--svg-text3)" font-size="11"
+      font-family="JetBrains Mono,monospace">Highest-order extension unit</text>
+
+<!-- Plugins capability -->
+<text x="794" y="350" text-anchor="middle" fill="#22d3ee" font-size="12" font-weight="600"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">分发：npmjs.com / GitHub</tspan>
+  <tspan class="le">Distribution: npmjs.com / GitHub</tspan>
+</text>
+<text x="794" y="366" text-anchor="middle" fill="var(--svg-text3)" font-size="11"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">一包集成 MCP + Hooks + Skills</tspan>
+  <tspan class="le">One package bundles MCP + Hooks + Skills</tspan>
+</text>
+
+<!-- Plugins bottom stats -->
+<rect x="660" y="384" width="268" height="36" rx="6" fill="rgba(34,211,238,0.08)" stroke="#22d3ee" stroke-width="1" stroke-dasharray="4,3"/>
+<text x="794" y="400" text-anchor="middle" fill="#22d3ee" font-size="12" font-weight="600"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">最高级扩展聚合单元</tspan>
+  <tspan class="le">Highest-order extension aggregator</tspan>
+</text>
+<text x="794" y="414" text-anchor="middle" fill="var(--svg-text3)" font-size="11"
+      font-family="JetBrains Mono,monospace">npx skills add user/repo</text>
+
+<!-- ======= INTER-COLUMN CONNECTIONS ======= -->
+<!-- MCP tools intercepted by Hooks -->
+<path d="M 312,300 C 330,300 330,270 346,270" fill="none" stroke="#fbbf24" stroke-width="1.5"
+      stroke-dasharray="4,3" marker-end="url(#arr9a)"/>
+<rect x="278" y="304" width="92" height="16" rx="4" fill="var(--svg-card-bg)" opacity="0.92"/>
+<text x="324" y="316" text-anchor="middle" fill="#fbbf24" font-size="11"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">MCP工具受拦截</tspan><tspan class="le">MCP intercepted</tspan>
+</text>
+
+<!-- Plugins register MCP -->
+<path d="M 660,215 C 640,215 630,215 612,215" fill="none" stroke="#22d3ee" stroke-width="1.5"
+      stroke-dasharray="4,3" marker-end="url(#arr9c)"/>
+<rect x="592" y="219" width="88" height="16" rx="4" fill="var(--svg-card-bg)" opacity="0.92"/>
+<text x="636" y="231" text-anchor="middle" fill="#22d3ee" font-size="11"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">注册MCP服务</tspan><tspan class="le">Registers MCP</tspan>
+</text>
+
+<!-- Hooks configured by Plugins -->
+<path d="M 660,260 C 640,260 630,260 626,245" fill="none" stroke="#22d3ee" stroke-width="1.5"
+      stroke-dasharray="4,3" marker-end="url(#arr9c)"/>
+
+<!-- ======= BOTTOM: TOOL REGISTRY + SECURITY ======= -->
+<!-- Tool Registry bar -->
+<rect x="220" y="488" width="520" height="46" rx="10" fill="var(--svg-card-bg)"/>
+<rect x="220" y="488" width="520" height="46" rx="10"
+      fill="var(--svg-registry-bg)" stroke="var(--svg-registry-border)" stroke-width="1.5"/>
+<text x="480" y="508" text-anchor="middle" fill="var(--svg-text)" font-size="14" font-weight="600"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">工具注册中心 Tool Registry</tspan>
+  <tspan class="le">Tool Registry (Unified)</tspan>
+</text>
+<text x="480" y="525" text-anchor="middle" fill="var(--svg-text2)" font-size="11"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">40 内置工具 + MCP 动态工具 · 统一入口</tspan>
+  <tspan class="le">40 built-in tools + dynamic MCP tools · unified access point</tspan>
+</text>
+
+<!-- Lines from columns to Tool Registry -->
+<line x1="165" y1="470" x2="165" y2="488" stroke="#34d399" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>
+<line x1="479" y1="470" x2="479" y2="488" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>
+<line x1="794" y1="470" x2="794" y2="488" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.6"/>
+
+<!-- Security barrier strip at bottom -->
+<rect x="18" y="476" width="186" height="18" rx="6"
+      fill="rgba(251,113,133,0.15)" stroke="#fb7185" stroke-width="1"/>
+<text x="111" y="489" text-anchor="middle" fill="#fb7185" font-size="11" font-weight="600"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">安全屏障 Security Barrier</tspan>
+  <tspan class="le">Security Barrier</tspan>
+</text>
+<rect x="758" y="476" width="186" height="18" rx="6"
+      fill="rgba(251,113,133,0.15)" stroke="#fb7185" stroke-width="1"/>
+<text x="851" y="489" text-anchor="middle" fill="#fb7185" font-size="11" font-weight="600"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">安全屏障 Security Barrier</tspan>
+  <tspan class="le">Security Barrier</tspan>
+</text>
+
+<!-- Legend -->
+<rect x="18" y="546" width="924" height="26" rx="4" fill="var(--svg-legend-bg)"/>
+<circle cx="36" cy="559" r="5" fill="#34d399"/>
+<text x="46" y="563" fill="var(--svg-text2)" font-size="11" font-family="JetBrains Mono,monospace">MCP · External Services</text>
+<circle cx="230" cy="559" r="5" fill="#fbbf24"/>
+<text x="240" y="563" fill="var(--svg-text2)" font-size="11" font-family="JetBrains Mono,monospace">Hooks · Lifecycle Intercept</text>
+<circle cx="450" cy="559" r="5" fill="#22d3ee"/>
+<text x="460" y="563" fill="var(--svg-text2)" font-size="11" font-family="JetBrains Mono,monospace">Plugins+Skills · Bundled Extensions</text>
+<circle cx="708" cy="559" r="5" fill="#fb7185"/>
+<text x="718" y="563" fill="var(--svg-text2)" font-size="11" font-family="JetBrains Mono,monospace">Security Barrier · All tiers</text>
+
+</svg>
+</div>
+
+<div class="cards-grid">
+  <div class="card">
+    <h3><span class="card-dot" style="background:#34d399"></span>
+      <span class="lz">MCP — 大使馆模式</span><span class="le">MCP — Embassy Model</span></h3>
+    <p><span class="lz">通过 8 种标准协议连接外部世界（Slack · GitHub · DB）。动态注册工具、安全标记敏感内容，独立进程运行。</span>
+       <span class="le">Connects to external world (Slack · GitHub · DB) via 8 protocols. Dynamically registers tools, security-tags sensitive content.</span></p>
+  </div>
+  <div class="card">
+    <h3><span class="card-dot" style="background:#fbbf24"></span>
+      <span class="lz">Hooks — 收费站模式</span><span class="le">Hooks — Toll Gate Model</span></h3>
+    <p><span class="lz">27 种生命周期拦截点（PreToolUse / PostToolUse 等），Shell 脚本进程外运行，exit code 0 放行、2 阻止，实现自动质控。</span>
+       <span class="le">27 lifecycle hook types run shell scripts out-of-process. Exit code 0 = allow, 2 = block with feedback.</span></p>
+  </div>
+  <div class="card">
+    <h3><span class="card-dot" style="background:#22d3ee"></span>
+      <span class="lz">Plugins+Skills — 特许经营商</span><span class="le">Plugins+Skills — Franchise</span></h3>
+    <p><span class="lz">最高级扩展单元，可聚合 MCP + Hooks + Skills。三重安全（白名单/正则/Homoglyph），一个 npm 包完整打包。</span>
+       <span class="le">Highest-order unit bundles MCP + Hooks + Skills. Triple security (allowlist/regex/homoglyph). One npm package.</span></p>
+  </div>
+</div>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('vtheme') || 'dark';
+  var lang = localStorage.getItem('vlang') || 'zh';
+  document.documentElement.setAttribute('data-theme', theme);
+  document.documentElement.setAttribute('lang', lang === 'en' ? 'en' : 'zh-CN');
+  window.setTheme = function(t) {
+    theme = t; localStorage.setItem('vtheme', t);
+    document.documentElement.setAttribute('data-theme', t);
+  };
+  window.toggleLang = function() {
+    lang = lang === 'en' ? 'zh' : 'en';
+    localStorage.setItem('vlang', lang);
+    document.documentElement.setAttribute('lang', lang === 'en' ? 'en' : 'zh-CN');
+  };
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

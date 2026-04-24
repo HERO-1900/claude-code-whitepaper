@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<!--
+  VIS-2Q-004 · 投机执行时间轴对比 · Speculative Execution Timeline Comparison
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  对比"无投机 vs 有投机"的时间轴，展示约 195ms 节省
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · 投机执行时间轴对比</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+    :root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+    :root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+    :root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;--blue:#3b82f6;}
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      font-family:'JetBrains Mono',monospace;
+      background:var(--bg);
+      color:var(--text);
+      min-height:100vh;
+      padding:2rem;
+      transition:background .25s, color .25s;
+    }
+    .container{max-width:1080px;margin:0 auto;}
+
+    /* Controls */
+    .controls{position:fixed;top:1rem;right:1rem;display:flex;gap:5px;z-index:100;
+      background:var(--panel);border:1px solid var(--border);border-radius:10px;
+      padding:5px 7px;backdrop-filter:blur(8px);}
+    .cb{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;padding:4px 10px;
+      border-radius:5px;border:1px solid transparent;background:transparent;color:var(--muted);
+      cursor:pointer;transition:all .15s;}
+    .cb:hover{color:var(--text);border-color:var(--border);}
+    .cb.active{border-color:var(--cyan);color:var(--text);}
+    .cdiv{width:1px;background:var(--border);margin:2px;}
+
+    /* Header */
+    .header{margin-bottom:1.25rem;}
+    .header-row{display:flex;align-items:baseline;gap:.75rem;margin-bottom:.375rem;flex-wrap:wrap;}
+    .tag{font-size:10px;padding:3px 8px;background:rgba(34,211,238,.12);color:var(--cyan);
+      border:1px solid rgba(34,211,238,.3);border-radius:4px;letter-spacing:.5px;}
+    h1{font-size:1.4rem;font-weight:700;letter-spacing:-0.01em;}
+    .sub{font-size:.78rem;color:var(--muted);margin-top:.25rem;}
+
+    /* Card */
+    .chart-card{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:12px;
+      padding:1.25rem 1.25rem 1rem;
+      transition:background .25s,border-color .25s;
+    }
+
+    /* SVG */
+    svg{width:100%;height:auto;display:block;}
+
+    /* Legend / stats */
+    .stats-row{
+      display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;
+      margin-top:1rem;
+    }
+    .stat{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:.75rem .9rem;
+      transition:background .25s,border-color .25s;
+    }
+    .stat-label{font-size:10px;color:var(--muted);letter-spacing:.4px;text-transform:uppercase;}
+    .stat-value{font-size:1.15rem;font-weight:700;margin-top:4px;}
+    .stat.amber .stat-value{color:var(--amber);}
+    .stat.cyan  .stat-value{color:var(--cyan);}
+    .stat.emerald .stat-value{color:var(--emerald);}
+
+    /* Legend row */
+    .legend{
+      display:flex;flex-wrap:wrap;gap:1rem;
+      margin-top:.85rem;font-size:11px;color:var(--muted);
+    }
+    .legend span{display:inline-flex;align-items:center;gap:6px;}
+    .dot{width:10px;height:10px;border-radius:2px;display:inline-block;}
+    .dot.blue{background:var(--blue);}
+    .dot.slate{background:var(--slate);}
+    .dot.cyan{background:var(--cyan);}
+    .dot.amber{background:var(--amber);}
+
+    /* Footer */
+    .foot{margin-top:1rem;font-size:10.5px;color:var(--muted);letter-spacing:.3px;}
+
+    .lz,.le{}
+  </style>
+</head>
+<body>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="cb active" onclick="cycleTheme()">
+    <span class="lz">主题</span><span class="le" style="display:none">Theme</span>
+  </button>
+  <div class="cdiv"></div>
+  <button class="cb" onclick="toggleLang()">
+    <span class="lz">EN</span><span class="le" style="display:none">中</span>
+  </button>
+</div>
+
+<div class="container">
+  <div class="header">
+    <div class="header-row">
+      <span class="tag">VIS-2Q-004</span>
+      <h1>
+        <span class="lz">投机执行时间轴对比</span>
+        <span class="le" style="display:none">Speculative Execution Timeline</span>
+      </h1>
+    </div>
+    <div class="sub">
+      <span class="lz">Claude 在用户阅读期间预计算下一步；命中则 500ms → 305ms，节省 ~195ms</span>
+      <span class="le" style="display:none">Claude pre-computes next step while user reads; on hit, 500ms → 305ms, saving ~195ms</span>
+    </div>
+  </div>
+
+  <div class="chart-card">
+
+    <!-- Main SVG -->
+    <svg viewBox="0 0 920 480" xmlns="http://www.w3.org/2000/svg" role="img"
+         aria-label="Speculative execution timeline comparison">
+
+      <defs>
+        <!-- Diagonal stripe pattern for speculation block -->
+        <pattern id="specStripe" patternUnits="userSpaceOnUse" width="8" height="8" patternTransform="rotate(45)">
+          <rect width="8" height="8" fill="#22d3ee" fill-opacity="0.15"/>
+          <line x1="0" y1="0" x2="0" y2="8" stroke="#22d3ee" stroke-width="2" stroke-opacity="0.55"/>
+        </pattern>
+        <!-- Overlap highlight -->
+        <pattern id="saveStripe" patternUnits="userSpaceOnUse" width="6" height="6" patternTransform="rotate(45)">
+          <rect width="6" height="6" fill="#f59e0b" fill-opacity="0.12"/>
+          <line x1="0" y1="0" x2="0" y2="6" stroke="#f59e0b" stroke-width="1.5" stroke-opacity="0.55"/>
+        </pattern>
+        <!-- Arrow -->
+        <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="currentColor"/>
+        </marker>
+      </defs>
+
+      <!-- ============ TIME AXIS ============ -->
+      <!-- Axis line at y=440, covering 0..600ms, mapped to x = 80..860 (780px wide) -->
+      <!-- Scale: 1ms = 1.3px ; 0ms @ x=80, 600ms @ x=860 -->
+
+      <!-- Ticks + labels -->
+      <g font-family="JetBrains Mono, monospace" font-size="10" fill="currentColor" style="color:var(--muted)">
+        <!-- axis baseline -->
+        <line x1="80" y1="440" x2="860" y2="440" stroke="currentColor" stroke-opacity="0.5" stroke-width="1"/>
+
+        <!-- 0ms -->
+        <line x1="80" y1="436" x2="80" y2="444" stroke="currentColor" stroke-opacity="0.6"/>
+        <text x="80" y="458" text-anchor="middle">0ms</text>
+        <!-- 100ms -->
+        <line x1="210" y1="436" x2="210" y2="444" stroke="currentColor" stroke-opacity="0.4"/>
+        <text x="210" y="458" text-anchor="middle">100</text>
+        <!-- 200ms -->
+        <line x1="340" y1="436" x2="340" y2="444" stroke="currentColor" stroke-opacity="0.4"/>
+        <text x="340" y="458" text-anchor="middle">200</text>
+        <!-- 300ms -->
+        <line x1="470" y1="436" x2="470" y2="444" stroke="currentColor" stroke-opacity="0.6"/>
+        <text x="470" y="458" text-anchor="middle">300</text>
+        <!-- 400ms -->
+        <line x1="600" y1="436" x2="600" y2="444" stroke="currentColor" stroke-opacity="0.4"/>
+        <text x="600" y="458" text-anchor="middle">400</text>
+        <!-- 500ms -->
+        <line x1="730" y1="436" x2="730" y2="444" stroke="currentColor" stroke-opacity="0.6"/>
+        <text x="730" y="458" text-anchor="middle">500</text>
+        <!-- 600ms -->
+        <line x1="860" y1="436" x2="860" y2="444" stroke="currentColor" stroke-opacity="0.4"/>
+        <text x="860" y="458" text-anchor="middle">600ms</text>
+
+        <!-- Axis title -->
+        <text x="470" y="475" text-anchor="middle" fill="currentColor" style="color:var(--muted)" font-size="10.5">
+          <tspan class="lz">时间 (ms) →</tspan><tspan class="le" display="none">Time (ms) →</tspan>
+        </text>
+      </g>
+
+      <!-- Vertical reference lines (soft) -->
+      <g stroke="currentColor" stroke-opacity="0.08" stroke-dasharray="2,3" style="color:var(--muted)">
+        <line x1="470" y1="40" x2="470" y2="430"/>
+        <line x1="730" y1="40" x2="730" y2="430"/>
+      </g>
+
+      <!-- ============ TOP LANE: WITHOUT SPECULATION ============ -->
+      <!-- Lane label -->
+      <g font-family="JetBrains Mono, monospace">
+        <text x="80" y="42" font-size="12.5" font-weight="700" fill="var(--slate)">
+          <tspan class="lz">① 无投机 · Without Speculation</tspan>
+          <tspan class="le" display="none">(1) Without Speculation</tspan>
+        </text>
+        <text x="80" y="58" font-size="10.5" fill="currentColor" style="color:var(--muted)">
+          <tspan class="lz">顺序执行：等用户点击后才开始下一步</tspan>
+          <tspan class="le" display="none">Sequential: next step starts only after user clicks</tspan>
+        </text>
+      </g>
+
+      <!-- Track background -->
+      <rect x="80" y="78" width="780" height="110" fill="var(--subtle)" fill-opacity="0.25" rx="6"/>
+
+      <!-- User reading bar: 0-300ms  (x: 80→470) -->
+      <g>
+        <rect x="80" y="90" width="390" height="34" rx="5" fill="#3b82f6" fill-opacity="0.82"/>
+        <text x="275" y="112" text-anchor="middle" font-family="JetBrains Mono, monospace"
+              font-size="11.5" font-weight="600" fill="#ffffff">
+          <tspan class="lz">用户阅读响应 (300ms)</tspan>
+          <tspan class="le" display="none">User reads (300ms)</tspan>
+        </text>
+      </g>
+
+      <!-- User click marker at 300ms (x=470) -->
+      <g>
+        <circle cx="470" cy="107" r="5.5" fill="var(--amber)" stroke="var(--bg)" stroke-width="1.5"/>
+        <text x="470" y="85" text-anchor="middle" font-family="JetBrains Mono, monospace"
+              font-size="10" fill="var(--amber)" font-weight="600">
+          <tspan class="lz">① 点击 300ms</tspan>
+          <tspan class="le" display="none">(1) Click @300ms</tspan>
+        </text>
+      </g>
+
+      <!-- Claude fetch bar: 300-500ms (x: 470→730) -->
+      <g>
+        <rect x="470" y="132" width="260" height="30" rx="5" fill="var(--slate)" fill-opacity="0.85"/>
+        <text x="600" y="152" text-anchor="middle" font-family="JetBrains Mono, monospace"
+              font-size="11" font-weight="600" fill="#ffffff">
+          <tspan class="lz">Claude 取数据 (200ms)</tspan>
+          <tspan class="le" display="none">Claude fetches (200ms)</tspan>
+        </text>
+      </g>
+
+      <!-- Send result marker @500ms -->
+      <g>
+        <circle cx="730" cy="147" r="4.5" fill="var(--slate)"/>
+        <line x1="730" y1="132" x2="730" y2="176" stroke="var(--slate)" stroke-width="1.4" stroke-dasharray="3,2"/>
+        <text x="730" y="184" text-anchor="middle" font-family="JetBrains Mono, monospace"
+              font-size="10" fill="currentColor" style="color:var(--muted)" font-weight="600">
+          <tspan class="lz">返回 500ms</tspan>
+          <tspan class="le" display="none">Return @500ms</tspan>
+        </text>
+      </g>
+
+      <!-- Total span bracket -->
+      <g font-family="JetBrains Mono, monospace" font-size="10.5" fill="var(--slate)">
+        <line x1="80" y1="172" x2="730" y2="172" stroke="var(--slate)" stroke-width="1" stroke-opacity="0.5"/>
+        <line x1="80" y1="168" x2="80" y2="176" stroke="var(--slate)" stroke-width="1" stroke-opacity="0.5"/>
+        <line x1="730" y1="168" x2="730" y2="176" stroke="var(--slate)" stroke-width="1" stroke-opacity="0.5"/>
+        <rect x="375" y="163" width="120" height="18" rx="3" fill="var(--panel)"/>
+        <text x="435" y="175" text-anchor="middle" font-weight="700">
+          <tspan class="lz">总计 500ms</tspan>
+          <tspan class="le" display="none">Total 500ms</tspan>
+        </text>
+      </g>
+
+      <!-- ============ CENTER SAVINGS BADGE ============ -->
+      <g transform="translate(460,210)">
+        <rect x="-90" y="-18" width="180" height="36" rx="18"
+              fill="var(--amber)" fill-opacity="0.16"
+              stroke="var(--amber)" stroke-width="1.4"/>
+        <text x="0" y="5" text-anchor="middle" font-family="JetBrains Mono, monospace"
+              font-size="13" font-weight="700" fill="var(--amber)">
+          <tspan class="lz">⚡ ~195ms 节省</tspan>
+          <tspan class="le" display="none">⚡ ~195ms saved</tspan>
+        </text>
+      </g>
+
+      <!-- Connecting savings band: vertical strip from 305→500ms (x=476..730) across the gap -->
+      <g>
+        <rect x="476.5" y="195" width="253.5" height="30" fill="url(#saveStripe)" opacity="0.85"/>
+        <line x1="476.5" y1="195" x2="476.5" y2="225" stroke="var(--amber)" stroke-width="1.2" stroke-dasharray="2,2"/>
+        <line x1="730" y1="195" x2="730" y2="225" stroke="var(--amber)" stroke-width="1.2" stroke-dasharray="2,2"/>
+      </g>
+
+      <!-- ============ BOTTOM LANE: WITH SPECULATION ============ -->
+      <g font-family="JetBrains Mono, monospace">
+        <text x="80" y="252" font-size="12.5" font-weight="700" fill="var(--cyan)">
+          <tspan class="lz">② 有投机 · With Speculation</tspan>
+          <tspan class="le" display="none">(2) With Speculation</tspan>
+        </text>
+        <text x="80" y="268" font-size="10.5" fill="currentColor" style="color:var(--muted)">
+          <tspan class="lz">并行执行：趁用户阅读时预计算下一步</tspan>
+          <tspan class="le" display="none">Parallel: pre-compute next step while user reads</tspan>
+        </text>
+      </g>
+
+      <!-- Track background -->
+      <rect x="80" y="288" width="780" height="120" fill="var(--subtle)" fill-opacity="0.25" rx="6"/>
+
+      <!-- Track A: User reading 0-300ms (x: 80→470) -->
+      <g>
+        <rect x="80" y="300" width="390" height="30" rx="5" fill="#3b82f6" fill-opacity="0.82"/>
+        <text x="275" y="320" text-anchor="middle" font-family="JetBrains Mono, monospace"
+              font-size="11" font-weight="600" fill="#ffffff">
+          <tspan class="lz">用户阅读 (300ms)</tspan>
+          <tspan class="le" display="none">User reads (300ms)</tspan>
+        </text>
+      </g>
+
+      <!-- User click marker at 300ms -->
+      <g>
+        <circle cx="470" cy="315" r="5.5" fill="var(--amber)" stroke="var(--bg)" stroke-width="1.5"/>
+      </g>
+
+      <!-- Track B: Speculation 0-150ms (x: 80→275) dashed cyan -->
+      <g>
+        <rect x="80" y="340" width="195" height="30" rx="5"
+              fill="url(#specStripe)"
+              stroke="var(--cyan)" stroke-width="1.6" stroke-dasharray="5,3"/>
+        <text x="177" y="359" text-anchor="middle" font-family="JetBrains Mono, monospace"
+              font-size="11" font-weight="600" fill="var(--cyan)">
+          <tspan class="lz">Claude 预计算 (150ms · 隐式)</tspan>
+          <tspan class="le" display="none">Claude speculates (150ms · hidden)</tspan>
+        </text>
+      </g>
+
+      <!-- "Precomputed" marker at 150ms -->
+      <g>
+        <circle cx="275" cy="355" r="4" fill="var(--cyan)"/>
+        <line x1="275" y1="340" x2="275" y2="378" stroke="var(--cyan)" stroke-width="1.2" stroke-dasharray="2,2" stroke-opacity="0.7"/>
+        <text x="275" y="390" text-anchor="middle" font-family="JetBrains Mono, monospace"
+              font-size="10" fill="var(--cyan)" font-weight="600">
+          <tspan class="lz">结果就绪 150ms</tspan>
+          <tspan class="le" display="none">Ready @150ms</tspan>
+        </text>
+      </g>
+
+      <!-- Return precomputed result: 300-305ms (thin cyan bar, x: 470→476.5) -->
+      <g>
+        <rect x="470" y="340" width="6.5" height="30" rx="2" fill="var(--cyan)"/>
+        <!-- Connector from precomputed @150 to return @305 (cached) -->
+        <path d="M 275 370 Q 375 390 470 355"
+              stroke="var(--cyan)" stroke-width="1.2" stroke-opacity="0.5"
+              fill="none" stroke-dasharray="3,3"/>
+      </g>
+
+      <!-- Return marker @305ms -->
+      <g>
+        <circle cx="476.5" cy="355" r="4.5" fill="var(--emerald)"/>
+        <text x="500" y="360" font-family="JetBrains Mono, monospace"
+              font-size="10.5" font-weight="700" fill="var(--emerald)">
+          <tspan class="lz">✓ 返回 305ms</tspan>
+          <tspan class="le" display="none">✓ Return @305ms</tspan>
+        </text>
+      </g>
+
+      <!-- Total span bracket -->
+      <g font-family="JetBrains Mono, monospace" font-size="10.5" fill="var(--cyan)">
+        <line x1="80" y1="395" x2="476.5" y2="395" stroke="var(--cyan)" stroke-width="1" stroke-opacity="0.55"/>
+        <line x1="80" y1="391" x2="80" y2="399" stroke="var(--cyan)" stroke-width="1" stroke-opacity="0.55"/>
+        <line x1="476.5" y1="391" x2="476.5" y2="399" stroke="var(--cyan)" stroke-width="1" stroke-opacity="0.55"/>
+        <rect x="215" y="386" width="130" height="18" rx="3" fill="var(--panel)"/>
+        <text x="280" y="398" text-anchor="middle" font-weight="700">
+          <tspan class="lz">总计 305ms</tspan>
+          <tspan class="le" display="none">Total 305ms</tspan>
+        </text>
+      </g>
+
+      <!-- Parallel annotation -->
+      <g font-family="JetBrains Mono, monospace">
+        <path d="M 275 330 L 275 340" stroke="var(--cyan)" stroke-width="1" stroke-opacity="0.5"/>
+        <text x="285" y="336" font-size="10" fill="var(--cyan)" font-style="italic">
+          <tspan class="lz">↑ 并行 parallel</tspan>
+          <tspan class="le" display="none">↑ parallel</tspan>
+        </text>
+      </g>
+
+    </svg>
+
+    <!-- Legend -->
+    <div class="legend">
+      <span><i class="dot blue"></i>
+        <span class="lz">用户动作</span><span class="le" style="display:none">User action</span>
+      </span>
+      <span><i class="dot slate"></i>
+        <span class="lz">Claude 串行取数</span><span class="le" style="display:none">Claude sequential fetch</span>
+      </span>
+      <span><i class="dot cyan"></i>
+        <span class="lz">Claude 预计算 (虚线 = 隐式并行)</span><span class="le" style="display:none">Claude speculation (dashed = hidden parallel)</span>
+      </span>
+      <span><i class="dot amber"></i>
+        <span class="lz">节省窗口</span><span class="le" style="display:none">Savings window</span>
+      </span>
+    </div>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat amber">
+        <div class="stat-label">
+          <span class="lz">延迟节省</span><span class="le" style="display:none">Latency saved</span>
+        </div>
+        <div class="stat-value">~195ms</div>
+      </div>
+      <div class="stat cyan">
+        <div class="stat-label">
+          <span class="lz">执行模式</span><span class="le" style="display:none">Mode</span>
+        </div>
+        <div class="stat-value">
+          <span class="lz">并行预测</span><span class="le" style="display:none">Parallel predict</span>
+        </div>
+      </div>
+      <div class="stat emerald">
+        <div class="stat-label">
+          <span class="lz">命中率</span><span class="le" style="display:none">Hit rate</span>
+        </div>
+        <div class="stat-value">60–80%</div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span class="lz">说明：预计算结果仅在用户选择符合预测时命中；未命中则回退到串行路径，无额外延迟。</span>
+      <span class="le" style="display:none">Note: the precomputed result hits only when the user's choice matches the prediction; misses fall back to sequential with no extra latency.</span>
+    </div>
+
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

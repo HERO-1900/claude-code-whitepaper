@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<!--
+  VIS-0-014 · 本书知识图谱 · Book Knowledge Graph
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  五边形辐射布局 · 静态SVG · 88章 / 5部分
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · 本书知识图谱</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root,[data-theme="dark"]{
+      --bg:#020617;--bg-card:rgba(15,23,42,0.5);--border:#1e293b;
+      --text:#f8fafc;--muted:#94a3b8;--subtle:#64748b;--footer-c:#475569;--pulse:#22d3ee;
+      --svg-bg:#020617;--svg-grid:#1e293b;--mask-fill:#0f172a;
+      --emerald-f:rgba(6,78,59,0.45);  --emerald-s:#34d399; --emerald-t:#6ee7b7;
+      --amber-f:rgba(120,53,15,0.45);  --amber-s:#fbbf24;   --amber-t:#fcd34d;
+      --cyan-f:rgba(8,51,68,0.5);      --cyan-s:#22d3ee;    --cyan-t:#67e8f9;
+      --violet-f:rgba(76,29,149,0.45); --violet-s:#a78bfa;  --violet-t:#c4b5fd;
+      --orange-f:rgba(154,52,18,0.45); --orange-s:#fb923c;  --orange-t:#fdba74;
+      --rose-f:rgba(136,19,55,0.45);   --rose-s:#fb7185;    --rose-t:#fda4af;
+      --svg-text:#f8fafc;--svg-sub:#94a3b8;--svg-tiny:#64748b;
+      --conn-c:rgba(148,163,184,0.2);--conn-cross:rgba(148,163,184,0.1);
+      --btn-bg:rgba(15,23,42,0.85);--btn-active:#22d3ee;
+      --center-f:rgba(30,41,59,0.8);--center-s:#475569;
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3;--bg-card:rgba(255,255,255,0.85);--border:#e8e0d4;
+      --text:#1a1412;--muted:#6b5a4e;--subtle:#9c8878;--footer-c:#b5a99a;--pulse:#0891b2;
+      --svg-bg:#faf7f2;--svg-grid:#ddd4c4;--mask-fill:#faf7f2;
+      --emerald-f:rgba(6,78,59,0.12);  --emerald-s:#059669; --emerald-t:#047857;
+      --amber-f:rgba(180,83,9,0.12);   --amber-s:#d97706;   --amber-t:#b45309;
+      --cyan-f:rgba(8,51,68,0.1);      --cyan-s:#0891b2;    --cyan-t:#0e7490;
+      --violet-f:rgba(76,29,149,0.1);  --violet-s:#7c3aed;  --violet-t:#6d28d9;
+      --orange-f:rgba(154,52,18,0.1);  --orange-s:#ea580c;  --orange-t:#c2410c;
+      --rose-f:rgba(136,19,55,0.1);    --rose-s:#e11d48;    --rose-t:#be123c;
+      --svg-text:#1a1412;--svg-sub:#6b5a4e;--svg-tiny:#9c8878;
+      --conn-c:rgba(107,90,78,0.25);--conn-cross:rgba(107,90,78,0.12);
+      --btn-bg:rgba(255,255,255,0.9);--btn-active:#0891b2;
+      --center-f:rgba(230,220,205,0.9);--center-s:#9c8878;
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--bg-card:rgba(248,250,252,0.95);--border:#e2e8f0;
+      --text:#0f172a;--muted:#475569;--subtle:#94a3b8;--footer-c:#94a3b8;--pulse:#0ea5e9;
+      --svg-bg:#f8fafc;--svg-grid:#e2e8f0;--mask-fill:#f1f5f9;
+      --emerald-f:rgba(16,185,129,0.1); --emerald-s:#10b981; --emerald-t:#059669;
+      --amber-f:rgba(245,158,11,0.1);   --amber-s:#f59e0b;   --amber-t:#d97706;
+      --cyan-f:rgba(6,182,212,0.1);     --cyan-s:#06b6d4;    --cyan-t:#0891b2;
+      --violet-f:rgba(139,92,246,0.1);  --violet-s:#8b5cf6;  --violet-t:#7c3aed;
+      --orange-f:rgba(249,115,22,0.1);  --orange-s:#f97316;  --orange-t:#ea580c;
+      --rose-f:rgba(244,63,94,0.1);     --rose-s:#f43f5e;    --rose-t:#e11d48;
+      --svg-text:#0f172a;--svg-sub:#475569;--svg-tiny:#94a3b8;
+      --conn-c:rgba(71,85,105,0.2);--conn-cross:rgba(71,85,105,0.1);
+      --btn-bg:rgba(248,250,252,0.95);--btn-active:#0ea5e9;
+      --center-f:rgba(226,232,240,0.9);--center-s:#94a3b8;
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:2rem;transition:background .25s,color .25s;}
+    .container{max-width:1100px;margin:0 auto;}
+
+    .controls{position:fixed;top:1rem;right:1rem;display:flex;gap:5px;z-index:100;
+      background:var(--btn-bg);border:1px solid var(--border);border-radius:10px;
+      padding:5px 7px;backdrop-filter:blur(8px);}
+    .cb{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;padding:4px 9px;
+      border-radius:5px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+    .cb:hover{color:var(--text);border-color:var(--border);}
+    .cb.active{border-color:var(--btn-active);color:var(--text);}
+    .cdiv{width:1px;background:var(--border);margin:2px;}
+
+    .header{margin-bottom:1.5rem;}
+    .header-row{display:flex;align-items:center;gap:.875rem;margin-bottom:.375rem;}
+    .pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--pulse);animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
+    h1{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;}
+    .subtitle{font-size:.75rem;color:var(--muted);letter-spacing:.06em;}
+    [lang="en"] .lz{display:none;}
+    [lang="zh"] .le{display:none;}
+
+    .chart-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;
+      padding:1.25rem;margin-bottom:1.5rem;overflow:hidden;}
+    .chart-wrap svg{display:block;width:100%;height:auto;}
+
+    .cards-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:.875rem;margin-bottom:1.5rem;}
+    @media(max-width:900px){.cards-grid{grid-template-columns:repeat(3,1fr);}}
+    @media(max-width:600px){.cards-grid{grid-template-columns:repeat(2,1fr);}}
+    .part-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;
+      padding:.875rem;border-top:3px solid transparent;transition:border-color .2s;}
+    .part-card.c0{border-top-color:var(--cyan-s);}
+    .part-card.c1{border-top-color:var(--violet-s);}
+    .part-card.c2{border-top-color:var(--orange-s);}
+    .part-card.c3{border-top-color:var(--emerald-s);}
+    .part-card.c4{border-top-color:var(--rose-s);}
+    .part-card .pname{font-size:.72rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;margin-bottom:.4rem;}
+    .part-card .pcount{font-size:1.5rem;font-weight:700;line-height:1;margin-bottom:.25rem;}
+    .part-card.c0 .pcount{color:var(--cyan-s);}
+    .part-card.c1 .pcount{color:var(--violet-s);}
+    .part-card.c2 .pcount{color:var(--orange-s);}
+    .part-card.c3 .pcount{color:var(--emerald-s);}
+    .part-card.c4 .pcount{color:var(--rose-s);}
+    .part-card .plabel{font-size:.68rem;color:var(--subtle);}
+    .part-card .pchaps{margin-top:.5rem;display:flex;flex-direction:column;gap:2px;}
+    .part-card .pchap{font-size:.72rem;color:var(--muted);padding:3px 5px;background:var(--border);border-radius:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+
+    .footer{text-align:center;font-size:.65rem;color:var(--footer-c);letter-spacing:.05em;padding-top:.75rem;border-top:1px solid var(--border);}
+  </style>
+</head>
+<body data-theme="dark">
+<div class="controls">
+  <button class="cb active" onclick="setTheme('dark')"><span class="lz">暗</span><span class="le">Dark</span></button>
+  <button class="cb" onclick="setTheme('warm')"><span class="lz">暖</span><span class="le">Warm</span></button>
+  <button class="cb" onclick="setTheme('light')"><span class="lz">亮</span><span class="le">Light</span></button>
+  <div class="cdiv"></div>
+  <button class="cb" onclick="toggleLang()"><span class="lz">EN</span><span class="le">中</span></button>
+</div>
+
+<div class="container">
+  <div class="header">
+    <div class="header-row">
+      <div class="pulse-dot"></div>
+      <h1><span class="lz">本书知识图谱</span><span class="le">Book Knowledge Graph</span></h1>
+    </div>
+    <div class="subtitle">
+      <span class="lz">VIS-0-014 · Claude Code 白皮书 · 88章 · 5部分 · 章节关联图谱</span>
+      <span class="le">VIS-0-014 · Claude Code Whitepaper · 88 Chapters · 5 Parts · Chapter Interconnection Map</span>
+    </div>
+  </div>
+
+  <div class="chart-wrap">
+    <svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="grid14" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--svg-grid)" stroke-width="0.5"/>
+        </pattern>
+        <!-- Zone fills -->
+        <radialGradient id="gCyan" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="var(--cyan-s)" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="var(--cyan-s)" stop-opacity="0.04"/>
+        </radialGradient>
+        <radialGradient id="gViolet" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="var(--violet-s)" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="var(--violet-s)" stop-opacity="0.04"/>
+        </radialGradient>
+        <radialGradient id="gOrange" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="var(--orange-s)" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="var(--orange-s)" stop-opacity="0.04"/>
+        </radialGradient>
+        <radialGradient id="gEmerald" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="var(--emerald-s)" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="var(--emerald-s)" stop-opacity="0.04"/>
+        </radialGradient>
+        <radialGradient id="gRose" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="var(--rose-s)" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="var(--rose-s)" stop-opacity="0.04"/>
+        </radialGradient>
+        <radialGradient id="gCenter" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="var(--cyan-s)" stop-opacity="0.15"/>
+          <stop offset="100%" stop-color="var(--violet-s)" stop-opacity="0.05"/>
+        </radialGradient>
+        <marker id="arrowGray" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+          <polygon points="0 0, 6 2.5, 0 5" fill="var(--conn-c)"/>
+        </marker>
+        <filter id="glow14">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- Background -->
+      <rect width="960" height="600" fill="var(--svg-bg)"/>
+      <rect width="960" height="600" fill="url(#grid14)"/>
+
+      <!-- Cross-part connections (faint, behind everything) -->
+      <!-- P0 ↔ P1 -->
+      <path d="M 480,140 Q 630,160 700,220" fill="none" stroke="var(--conn-cross)" stroke-width="1.5" stroke-dasharray="4,4"/>
+      <!-- P1 ↔ P2 -->
+      <path d="M 720,282 Q 760,380 710,435" fill="none" stroke="var(--conn-cross)" stroke-width="1.5" stroke-dasharray="4,4"/>
+      <!-- P2 ↔ P3 -->
+      <path d="M 650,460 Q 480,500 310,460" fill="none" stroke="var(--conn-cross)" stroke-width="1.5" stroke-dasharray="4,4"/>
+      <!-- P3 ↔ P4 -->
+      <path d="M 250,435 Q 200,380 240,282" fill="none" stroke="var(--conn-cross)" stroke-width="1.5" stroke-dasharray="4,4"/>
+      <!-- P4 ↔ P0 -->
+      <path d="M 260,220 Q 330,160 480,140" fill="none" stroke="var(--conn-cross)" stroke-width="1.5" stroke-dasharray="4,4"/>
+      <!-- P0 ↔ P2 (cross) -->
+      <path d="M 550,150 Q 720,250 700,440" fill="none" stroke="var(--conn-cross)" stroke-width="1" stroke-dasharray="2,6"/>
+      <!-- P1 ↔ P3 (cross) -->
+      <path d="M 700,282 Q 600,400 310,460" fill="none" stroke="var(--conn-cross)" stroke-width="1" stroke-dasharray="2,6"/>
+
+      <!-- Center to zone connection lines -->
+      <!-- Center(480,298) → P0 (top) -->
+      <line x1="480" y1="258" x2="480" y2="166" stroke="var(--conn-c)" stroke-width="2" marker-end="url(#arrowGray)"/>
+      <!-- Center → P1 (upper right) -->
+      <line x1="514" y1="278" x2="700" y2="260" stroke="var(--conn-c)" stroke-width="2" marker-end="url(#arrowGray)"/>
+      <!-- Center → P2 (lower right) -->
+      <line x1="510" y1="319" x2="672" y2="432" stroke="var(--conn-c)" stroke-width="2" marker-end="url(#arrowGray)"/>
+      <!-- Center → P3 (lower left) -->
+      <line x1="450" y1="319" x2="288" y2="432" stroke="var(--conn-c)" stroke-width="2" marker-end="url(#arrowGray)"/>
+      <!-- Center → P4 (upper left) -->
+      <line x1="446" y1="278" x2="260" y2="260" stroke="var(--conn-c)" stroke-width="2" marker-end="url(#arrowGray)"/>
+
+      <!-- ── ZONE 0: 架构基础 · Architecture (top center, cyan) ── -->
+      <!-- opaque mask -->
+      <ellipse cx="480" cy="110" rx="180" ry="90" fill="var(--mask-fill)"/>
+      <ellipse cx="480" cy="110" rx="180" ry="90" fill="url(#gCyan)" stroke="var(--cyan-s)" stroke-width="1.5"/>
+      <!-- Part label -->
+      <text x="480" y="62" fill="var(--cyan-s)" font-size="13" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Part 0 · 架构基础</tspan>
+        <tspan class="le">Part 0 · Architecture</tspan>
+      </text>
+      <text x="480" y="80" fill="var(--svg-sub)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">15章</tspan><tspan class="le">15 chaps</tspan>
+      </text>
+      <!-- Chapter chips · row 1 (3 pills) -->
+      <rect x="344" y="95" width="76" height="20" rx="4" fill="rgba(34,211,238,0.12)" stroke="var(--cyan-s)" stroke-width="0.5"/>
+      <text x="382" y="109" fill="var(--cyan-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">项目概览</tspan><tspan class="le">Overview</tspan>
+      </text>
+      <rect x="428" y="95" width="76" height="20" rx="4" fill="rgba(34,211,238,0.12)" stroke="var(--cyan-s)" stroke-width="0.5"/>
+      <text x="466" y="109" fill="var(--cyan-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">配置系统</tspan><tspan class="le">Config</tspan>
+      </text>
+      <rect x="512" y="95" width="86" height="20" rx="4" fill="rgba(34,211,238,0.12)" stroke="var(--cyan-s)" stroke-width="0.5"/>
+      <text x="555" y="109" fill="var(--cyan-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">模块化设计</tspan><tspan class="le">Modular</tspan>
+      </text>
+      <!-- Chapter chips · row 2 (2 pills) -->
+      <rect x="386" y="123" width="86" height="20" rx="4" fill="rgba(34,211,238,0.12)" stroke="var(--cyan-s)" stroke-width="0.5"/>
+      <text x="429" y="137" fill="var(--cyan-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">技术栈分析</tspan><tspan class="le">Tech Stack</tspan>
+      </text>
+      <rect x="480" y="123" width="86" height="20" rx="4" fill="rgba(34,211,238,0.12)" stroke="var(--cyan-s)" stroke-width="0.5"/>
+      <text x="523" y="137" fill="var(--cyan-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">依赖管理</tspan><tspan class="le">Deps</tspan>
+      </text>
+
+      <!-- ── ZONE 1: 核心引擎 · Core Engine (upper right, violet) ── -->
+      <ellipse cx="720" cy="250" rx="168" ry="92" fill="var(--mask-fill)"/>
+      <ellipse cx="720" cy="250" rx="168" ry="92" fill="url(#gViolet)" stroke="var(--violet-s)" stroke-width="1.5"/>
+      <text x="720" y="206" fill="var(--violet-s)" font-size="13" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Part 1 · 核心引擎</tspan>
+        <tspan class="le">Part 1 · Core Engine</tspan>
+      </text>
+      <text x="720" y="224" fill="var(--svg-sub)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">18章</tspan><tspan class="le">18 chaps</tspan>
+      </text>
+      <!-- Chapter chips · row 1 (3 pills) -->
+      <rect x="588" y="238" width="90" height="20" rx="4" fill="rgba(167,139,250,0.12)" stroke="var(--violet-s)" stroke-width="0.5"/>
+      <text x="633" y="252" fill="var(--violet-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Agent Loop</tspan><tspan class="le">Agent Loop</tspan>
+      </text>
+      <rect x="686" y="238" width="76" height="20" rx="4" fill="rgba(167,139,250,0.12)" stroke="var(--violet-s)" stroke-width="0.5"/>
+      <text x="724" y="252" fill="var(--violet-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">消息系统</tspan><tspan class="le">Messaging</tspan>
+      </text>
+      <rect x="770" y="238" width="76" height="20" rx="4" fill="rgba(167,139,250,0.12)" stroke="var(--violet-s)" stroke-width="0.5"/>
+      <text x="808" y="252" fill="var(--violet-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">流式处理</tspan><tspan class="le">Streaming</tspan>
+      </text>
+      <!-- Chapter chips · row 2 (2 pills) -->
+      <rect x="624" y="266" width="90" height="20" rx="4" fill="rgba(167,139,250,0.12)" stroke="var(--violet-s)" stroke-width="0.5"/>
+      <text x="669" y="280" fill="var(--violet-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Prompt工程</tspan><tspan class="le">Prompting</tspan>
+      </text>
+      <rect x="722" y="266" width="94" height="20" rx="4" fill="rgba(167,139,250,0.12)" stroke="var(--violet-s)" stroke-width="0.5"/>
+      <text x="769" y="280" fill="var(--violet-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">上下文流转</tspan><tspan class="le">Context</tspan>
+      </text>
+
+      <!-- ── ZONE 2: 工具系统 · Tool System (lower right, orange) ── -->
+      <ellipse cx="690" cy="455" rx="168" ry="88" fill="var(--mask-fill)"/>
+      <ellipse cx="690" cy="455" rx="168" ry="88" fill="url(#gOrange)" stroke="var(--orange-s)" stroke-width="1.5"/>
+      <text x="690" y="412" fill="var(--orange-s)" font-size="13" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Part 2 · 工具系统</tspan>
+        <tspan class="le">Part 2 · Tool System</tspan>
+      </text>
+      <text x="690" y="430" fill="var(--svg-sub)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">18章</tspan><tspan class="le">18 chaps</tspan>
+      </text>
+      <!-- Chapter chips · row 1 (3 pills) -->
+      <rect x="558" y="444" width="80" height="20" rx="4" fill="rgba(251,146,60,0.12)" stroke="var(--orange-s)" stroke-width="0.5"/>
+      <text x="598" y="458" fill="var(--orange-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">工具基类</tspan><tspan class="le">Base Tool</tspan>
+      </text>
+      <rect x="646" y="444" width="80" height="20" rx="4" fill="rgba(251,146,60,0.12)" stroke="var(--orange-s)" stroke-width="0.5"/>
+      <text x="686" y="458" fill="var(--orange-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">文件操作</tspan><tspan class="le">File Ops</tspan>
+      </text>
+      <rect x="734" y="444" width="80" height="20" rx="4" fill="rgba(251,146,60,0.12)" stroke="var(--orange-s)" stroke-width="0.5"/>
+      <text x="774" y="458" fill="var(--orange-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">搜索系统</tspan><tspan class="le">Search</tspan>
+      </text>
+      <!-- Chapter chips · row 2 (3 pills) -->
+      <rect x="558" y="472" width="80" height="20" rx="4" fill="rgba(251,146,60,0.12)" stroke="var(--orange-s)" stroke-width="0.5"/>
+      <text x="598" y="486" fill="var(--orange-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Bash执行</tspan><tspan class="le">Bash</tspan>
+      </text>
+      <rect x="646" y="472" width="80" height="20" rx="4" fill="rgba(251,146,60,0.12)" stroke="var(--orange-s)" stroke-width="0.5"/>
+      <text x="686" y="486" fill="var(--orange-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Agent工具</tspan><tspan class="le">Agent Tools</tspan>
+      </text>
+      <rect x="734" y="472" width="80" height="20" rx="4" fill="rgba(251,146,60,0.12)" stroke="var(--orange-s)" stroke-width="0.5"/>
+      <text x="774" y="486" fill="var(--orange-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">工具注册</tspan><tspan class="le">Registry</tspan>
+      </text>
+
+      <!-- ── ZONE 3: 安全与扩展 · Security & Ext (lower left, emerald) ── -->
+      <ellipse cx="270" cy="455" rx="168" ry="88" fill="var(--mask-fill)"/>
+      <ellipse cx="270" cy="455" rx="168" ry="88" fill="url(#gEmerald)" stroke="var(--emerald-s)" stroke-width="1.5"/>
+      <text x="270" y="412" fill="var(--emerald-s)" font-size="13" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Part 3 · 安全与扩展</tspan>
+        <tspan class="le">Part 3 · Security</tspan>
+      </text>
+      <text x="270" y="430" fill="var(--svg-sub)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">20章</tspan><tspan class="le">20 chaps</tspan>
+      </text>
+      <!-- Chapter chips · row 1 (3 pills) -->
+      <rect x="138" y="444" width="88" height="20" rx="4" fill="rgba(52,211,153,0.12)" stroke="var(--emerald-s)" stroke-width="0.5"/>
+      <text x="182" y="458" fill="var(--emerald-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">权限系统</tspan><tspan class="le">Permissions</tspan>
+      </text>
+      <rect x="234" y="444" width="72" height="20" rx="4" fill="rgba(52,211,153,0.12)" stroke="var(--emerald-s)" stroke-width="0.5"/>
+      <text x="270" y="458" fill="var(--emerald-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">MCP协议</tspan><tspan class="le">MCP</tspan>
+      </text>
+      <rect x="314" y="444" width="80" height="20" rx="4" fill="rgba(52,211,153,0.12)" stroke="var(--emerald-s)" stroke-width="0.5"/>
+      <text x="354" y="458" fill="var(--emerald-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Hooks系统</tspan><tspan class="le">Hooks</tspan>
+      </text>
+      <!-- Chapter chips · row 2 (3 pills) -->
+      <rect x="138" y="472" width="72" height="20" rx="4" fill="rgba(52,211,153,0.12)" stroke="var(--emerald-s)" stroke-width="0.5"/>
+      <text x="174" y="486" fill="var(--emerald-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">沙箱</tspan><tspan class="le">Sandbox</tspan>
+      </text>
+      <rect x="218" y="472" width="92" height="20" rx="4" fill="rgba(52,211,153,0.12)" stroke="var(--emerald-s)" stroke-width="0.5"/>
+      <text x="264" y="486" fill="var(--emerald-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">CLAUDE.md</tspan><tspan class="le">CLAUDE.md</tspan>
+      </text>
+      <rect x="318" y="472" width="80" height="20" rx="4" fill="rgba(52,211,153,0.12)" stroke="var(--emerald-s)" stroke-width="0.5"/>
+      <text x="358" y="486" fill="var(--emerald-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">扩展架构</tspan><tspan class="le">Extensions</tspan>
+      </text>
+
+      <!-- ── ZONE 4: 高级主题 · Advanced Topics (upper left, rose) ── -->
+      <ellipse cx="240" cy="250" rx="168" ry="92" fill="var(--mask-fill)"/>
+      <ellipse cx="240" cy="250" rx="168" ry="92" fill="url(#gRose)" stroke="var(--rose-s)" stroke-width="1.5"/>
+      <text x="240" y="206" fill="var(--rose-s)" font-size="13" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Part 4 · 高级主题</tspan>
+        <tspan class="le">Part 4 · Advanced</tspan>
+      </text>
+      <text x="240" y="224" fill="var(--svg-sub)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">17章</tspan><tspan class="le">17 chaps</tspan>
+      </text>
+      <!-- Chapter chips · row 1 (3 pills) -->
+      <rect x="108" y="238" width="88" height="20" rx="4" fill="rgba(251,113,133,0.12)" stroke="var(--rose-s)" stroke-width="0.5"/>
+      <text x="152" y="252" fill="var(--rose-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">性能优化</tspan><tspan class="le">Performance</tspan>
+      </text>
+      <rect x="204" y="238" width="76" height="20" rx="4" fill="rgba(251,113,133,0.12)" stroke="var(--rose-s)" stroke-width="0.5"/>
+      <text x="242" y="252" fill="var(--rose-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">缓存机制</tspan><tspan class="le">Caching</tspan>
+      </text>
+      <rect x="288" y="238" width="92" height="20" rx="4" fill="rgba(251,113,133,0.12)" stroke="var(--rose-s)" stroke-width="0.5"/>
+      <text x="334" y="252" fill="var(--rose-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">错误处理</tspan><tspan class="le">Error Handling</tspan>
+      </text>
+      <!-- Chapter chips · row 2 (3 pills) -->
+      <rect x="108" y="266" width="72" height="20" rx="4" fill="rgba(251,113,133,0.12)" stroke="var(--rose-s)" stroke-width="0.5"/>
+      <text x="144" y="280" fill="var(--rose-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">监控</tspan><tspan class="le">Monitor</tspan>
+      </text>
+      <rect x="188" y="266" width="80" height="20" rx="4" fill="rgba(251,113,133,0.12)" stroke="var(--rose-s)" stroke-width="0.5"/>
+      <text x="228" y="280" fill="var(--rose-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">测试策略</tspan><tspan class="le">Testing</tspan>
+      </text>
+      <rect x="276" y="266" width="88" height="20" rx="4" fill="rgba(251,113,133,0.12)" stroke="var(--rose-s)" stroke-width="0.5"/>
+      <text x="320" y="280" fill="var(--rose-t)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">并发控制</tspan><tspan class="le">Concurrency</tspan>
+      </text>
+
+      <!-- ── CENTER NODE ── -->
+      <!-- Opaque mask background -->
+      <circle cx="480" cy="298" r="68" fill="var(--mask-fill)"/>
+      <circle cx="480" cy="298" r="68" fill="url(#gCenter)" stroke="var(--subtle)" stroke-width="1.5"/>
+      <circle cx="480" cy="298" r="68" fill="none" stroke="var(--border)" stroke-width="1" stroke-dasharray="3,3"/>
+      <text x="480" y="284" fill="var(--svg-text)" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">本书知识图谱</tspan>
+        <tspan class="le">Knowledge Graph</tspan>
+      </text>
+      <text x="480" y="300" fill="var(--cyan-s)" font-size="18" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">88</text>
+      <text x="480" y="316" fill="var(--svg-sub)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">章 · 5部分</tspan>
+        <tspan class="le">Chapters · 5 Parts</tspan>
+      </text>
+      <text x="480" y="330" fill="var(--svg-tiny)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Claude Code 白皮书</tspan>
+        <tspan class="le">Claude Code Whitepaper</tspan>
+      </text>
+
+      <!-- Legend -->
+      <rect x="34" y="555" width="892" height="34" rx="6" fill="var(--mask-fill)" stroke="var(--border)" stroke-width="0.5"/>
+      <circle cx="60" cy="572" r="5" fill="var(--cyan-s)"/>
+      <text x="70" y="576" fill="var(--svg-sub)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">架构基础</tspan><tspan class="le">Architecture</tspan>
+      </text>
+      <circle cx="180" cy="572" r="5" fill="var(--violet-s)"/>
+      <text x="190" y="576" fill="var(--svg-sub)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">核心引擎</tspan><tspan class="le">Core Engine</tspan>
+      </text>
+      <circle cx="300" cy="572" r="5" fill="var(--orange-s)"/>
+      <text x="310" y="576" fill="var(--svg-sub)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">工具系统</tspan><tspan class="le">Tool System</tspan>
+      </text>
+      <circle cx="420" cy="572" r="5" fill="var(--emerald-s)"/>
+      <text x="430" y="576" fill="var(--svg-sub)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">安全与扩展</tspan><tspan class="le">Security &amp; Ext</tspan>
+      </text>
+      <circle cx="540" cy="572" r="5" fill="var(--rose-s)"/>
+      <text x="550" y="576" fill="var(--svg-sub)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">高级主题</tspan><tspan class="le">Advanced Topics</tspan>
+      </text>
+      <!-- line legend -->
+      <line x1="660" y1="572" x2="680" y2="572" stroke="var(--conn-c)" stroke-width="2"/>
+      <text x="684" y="576" fill="var(--svg-tiny)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">主连接</tspan><tspan class="le">Main Link</tspan>
+      </text>
+      <line x1="750" y1="572" x2="770" y2="572" stroke="var(--conn-cross)" stroke-width="1.5" stroke-dasharray="3,3"/>
+      <text x="774" y="576" fill="var(--svg-tiny)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">跨部交叉引用</tspan><tspan class="le">Cross-part Ref</tspan>
+      </text>
+    </svg>
+  </div>
+
+  <!-- Part Cards -->
+  <div class="cards-grid">
+    <div class="part-card c0">
+      <div class="pname"><span class="lz">Part 0</span><span class="le">Part 0</span></div>
+      <div class="pcount">15</div>
+      <div class="plabel"><span class="lz">架构基础</span><span class="le">Architecture</span></div>
+      <div class="pchaps">
+        <div class="pchap"><span class="lz">项目概览</span><span class="le">Project Overview</span></div>
+        <div class="pchap"><span class="lz">CLI入口设计</span><span class="le">CLI Entry</span></div>
+        <div class="pchap"><span class="lz">配置系统</span><span class="le">Config System</span></div>
+      </div>
+    </div>
+    <div class="part-card c1">
+      <div class="pname"><span class="lz">Part 1</span><span class="le">Part 1</span></div>
+      <div class="pcount">18</div>
+      <div class="plabel"><span class="lz">核心引擎</span><span class="le">Core Engine</span></div>
+      <div class="pchaps">
+        <div class="pchap"><span class="lz">Agent Loop核心</span><span class="le">Agent Loop Core</span></div>
+        <div class="pchap"><span class="lz">消息系统</span><span class="le">Message System</span></div>
+        <div class="pchap"><span class="lz">Prompt工程</span><span class="le">Prompt Engineering</span></div>
+      </div>
+    </div>
+    <div class="part-card c2">
+      <div class="pname"><span class="lz">Part 2</span><span class="le">Part 2</span></div>
+      <div class="pcount">18</div>
+      <div class="plabel"><span class="lz">工具系统</span><span class="le">Tool System</span></div>
+      <div class="pchaps">
+        <div class="pchap"><span class="lz">工具基类</span><span class="le">Base Tool Class</span></div>
+        <div class="pchap"><span class="lz">文件操作</span><span class="le">File Operations</span></div>
+        <div class="pchap"><span class="lz">Bash执行</span><span class="le">Bash Execution</span></div>
+      </div>
+    </div>
+    <div class="part-card c3">
+      <div class="pname"><span class="lz">Part 3</span><span class="le">Part 3</span></div>
+      <div class="pcount">20</div>
+      <div class="plabel"><span class="lz">安全与扩展</span><span class="le">Security &amp; Ext</span></div>
+      <div class="pchaps">
+        <div class="pchap"><span class="lz">权限系统</span><span class="le">Permission System</span></div>
+        <div class="pchap"><span class="lz">MCP协议</span><span class="le">MCP Protocol</span></div>
+        <div class="pchap"><span class="lz">Hooks系统</span><span class="le">Hooks System</span></div>
+      </div>
+    </div>
+    <div class="part-card c4">
+      <div class="pname"><span class="lz">Part 4</span><span class="le">Part 4</span></div>
+      <div class="pcount">17</div>
+      <div class="plabel"><span class="lz">高级主题</span><span class="le">Advanced Topics</span></div>
+      <div class="pchaps">
+        <div class="pchap"><span class="lz">性能优化</span><span class="le">Performance</span></div>
+        <div class="pchap"><span class="lz">测试策略</span><span class="le">Testing Strategy</span></div>
+        <div class="pchap"><span class="lz">错误处理</span><span class="le">Error Handling</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    VIS-0-014 · <span class="lz">本书知识图谱</span><span class="le">Book Knowledge Graph</span>
+    · Claude Code 2.1.88 · 88 Chapters · 5 Parts
+    · <span class="lz">数据来源：白皮书章节目录</span><span class="le">Source: Whitepaper Chapter Catalog</span>
+    · v2 2026-04-14
+  </div>
+</div>
+
+<script>
+(function(){
+  function setTheme(t){try{localStorage.setItem('vtheme',t);}catch(e){}
+    document.body.setAttribute('data-theme',t);
+    document.querySelectorAll('.controls .cb').forEach(b=>{
+      b.classList.toggle('active',b.getAttribute('onclick').includes("'"+t+"'"));
+    });
+  }
+  function toggleLang(){
+    const cur=document.documentElement.getAttribute('lang')||'zh';
+    document.documentElement.setAttribute('lang',cur==='zh'?'en':'zh');
+  }
+  // cc-restore-on-load
+  try{
+    var _t=localStorage.getItem('vtheme');
+    if(_t==='dark'||_t==='warm'||_t==='light')setTheme(_t);
+    var _l=localStorage.getItem('vlang');
+    if(_l==='en'&&document.documentElement.lang!=='en')toggleLang();
+  }catch(e){}
+  window.setTheme=setTheme;
+  window.toggleLang=toggleLang;
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

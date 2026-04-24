@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-3-015 | Agent生命周期图</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--panel:#0f172a;--card:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--subtle:#475569;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="warm"]{--bg:#1c1410;--panel:#2a1f16;--card:#3d2d20;--border:#5c4a3a;--text:#f5e6d3;--muted:#c4a882;--subtle:#8b7355;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="light"]{--bg:#f8fafc;--panel:#f1f5f9;--card:#e2e8f0;--border:#cbd5e1;--text:#0f172a;--muted:#475569;--subtle:#94a3b8;--amber:#d97706;--cyan:#0891b2;--violet:#7c3aed;--emerald:#059669;--rose:#e11d48;--slate:#475569;--orange:#ea580c}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;padding:60px 24px 40px}
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:100}
+.ctrl button{font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:background .15s}
+.ctrl button:hover{background:var(--border)}
+.header{text-align:center;margin-bottom:32px}
+.header .badge{display:inline-block;font-size:11px;padding:3px 10px;background:var(--card);border:1px solid var(--border);border-radius:4px;color:var(--muted);margin-bottom:10px}
+.header h1{font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px}
+.header p{font-size:13px;color:var(--muted)}
+.svg-wrap{width:100%;max-width:960px;margin:0 auto 32px;border:1px solid var(--border);border-radius:12px;background:var(--panel);overflow:hidden}
+.svg-wrap svg{width:100%;height:auto;display:block}
+.cards{display:flex;gap:16px;max-width:960px;margin:0 auto 24px;flex-wrap:wrap}
+.card{flex:1;min-width:200px;padding:16px 20px;border-radius:10px;border:1px solid var(--border);background:var(--card)}
+.card .label{font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.card .title{font-size:14px;font-weight:600;margin-bottom:4px}
+.card .desc{font-size:11px;color:var(--muted);line-height:1.5}
+.card.violet{border-color:rgba(167,139,250,.35);background:rgba(167,139,250,.07)}
+.card.violet .title{color:var(--violet)}
+.card.emerald{border-color:rgba(52,211,153,.35);background:rgba(52,211,153,.07)}
+.card.emerald .title{color:var(--emerald)}
+.card.orange{border-color:rgba(251,146,60,.35);background:rgba(251,146,60,.07)}
+.card.orange .title{color:var(--orange)}[data-lang="en"] .lz{display:none}
+[data-lang="en"] .le{display:inline}
+</style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="cycleTheme()">Theme</button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<div class="header">
+  <div class="badge">VIS-3-015</div>
+  <h1><span class="lz">Agent 生命周期图</span><span class="le">Agent Lifecycle Diagram</span></h1>
+  <p><span class="lz">子 Agent 从创建到清理的完整生命周期状态机</span><span class="le">Complete lifecycle state machine from creation to cleanup of a sub-agent</span></p>
+</div>
+
+<div class="svg-wrap">
+<svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" style="font-family:'JetBrains Mono',monospace">
+<defs>
+  <!-- Arrow markers -->
+  <marker id="arr-gray" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#475569"/>
+  </marker>
+  <marker id="arr-rose" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#fb7185"/>
+  </marker>
+  <marker id="arr-emerald" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#34d399"/>
+  </marker>
+  <marker id="arr-violet" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#a78bfa"/>
+  </marker>
+  <marker id="arr-orange" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#fb923c"/>
+  </marker>
+  <marker id="arr-cyan" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+    <path d="M0,0 L0,6 L8,3 z" fill="#22d3ee"/>
+  </marker>
+  <!-- Glow filters -->
+  <filter id="glow-violet" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur stdDeviation="3" result="blur"/>
+    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="glow-emerald" x="-30%" y="-30%" width="160%" height="160%">
+    <feGaussianBlur stdDeviation="3" result="blur"/>
+    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <!-- Background pattern -->
+  <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+    <path d="M20,0 L0,0 0,20" fill="none" stroke="#1e293b" stroke-width=".5"/>
+  </pattern>
+</defs>
+
+<!-- Background -->
+<rect width="960" height="560" fill="#0f172a"/>
+<rect width="960" height="560" fill="url(#grid)"/>
+
+<!-- ===== SECTION TITLE ===== -->
+<text x="480" y="28" text-anchor="middle" font-size="13" font-weight="700" fill="#f1f5f9" letter-spacing="1">
+  <tspan class="lz">Agent 生命周期状态机</tspan>
+  <tspan class="le">Agent Lifecycle State Machine</tspan>
+</text>
+
+<!-- ===== MAIN FLOW ROW (y=60 to y=200) ===== -->
+
+<!-- Start node -->
+<circle cx="60" cy="130" r="10" fill="#a78bfa" filter="url(#glow-violet)"/>
+<circle cx="60" cy="130" r="14" fill="none" stroke="#a78bfa" stroke-width="1.5" opacity=".4"/>
+
+<!-- Arrow: Start → Phase1 -->
+<line x1="74" y1="130" x2="108" y2="130" stroke="#475569" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+
+<!-- ===== PHASE 1: CREATE (violet) x=110-300 ===== -->
+<rect x="110" y="68" width="192" height="124" rx="10" fill="rgba(167,139,250,0.10)" stroke="#a78bfa" stroke-width="1.8"/>
+<!-- Phase label strip -->
+<rect x="110" y="68" width="192" height="26" rx="10" fill="rgba(167,139,250,0.25)"/>
+<rect x="110" y="80" width="192" height="14" fill="rgba(167,139,250,0.25)"/><!-- flatten bottom of strip -->
+<text x="206" y="86" text-anchor="middle" font-size="13" font-weight="700" fill="#a78bfa">
+  <tspan class="lz">创建</tspan>
+  <tspan class="le">Create</tspan>
+</text>
+<text x="206" y="100" text-anchor="middle" font-size="10" fill="#c4b5fd">Phase 1</text>
+
+<!-- Phase 1 steps -->
+<text x="126" y="118" font-size="10.5" fill="#e2d9ff">
+  <tspan dy="0">· </tspan><tspan fill="#a78bfa">spawn()</tspan><tspan fill="#c4b5fd"> — </tspan>
+  <tspan class="lz" fill="#e2d9ff">启动子 Agent</tspan>
+  <tspan class="le" fill="#e2d9ff">launch sub-agent</tspan>
+</text>
+<text x="126" y="134" font-size="10.5" fill="#e2d9ff">
+  <tspan>· </tspan>
+  <tspan class="lz">初始化 context window</tspan>
+  <tspan class="le">init context window</tspan>
+</text>
+<text x="126" y="150" font-size="10.5" fill="#e2d9ff">
+  <tspan>· </tspan>
+  <tspan class="lz">挂载 CoW worktree</tspan>
+  <tspan class="le">mount CoW worktree</tspan>
+</text>
+<text x="126" y="166" font-size="10.5" fill="#e2d9ff">
+  <tspan>· </tspan><tspan fill="#a78bfa">SubagentStart</tspan><tspan> hook</tspan>
+</text>
+
+<!-- Arrow: Phase1 → Phase2 -->
+<line x1="303" y1="130" x2="337" y2="130" stroke="#475569" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+
+<!-- ===== PHASE 2: RUN (emerald) x=338-598 ===== -->
+<rect x="338" y="68" width="222" height="124" rx="10" fill="rgba(52,211,153,0.08)" stroke="#34d399" stroke-width="1.8"/>
+<rect x="338" y="68" width="222" height="26" rx="10" fill="rgba(52,211,153,0.22)"/>
+<rect x="338" y="80" width="222" height="14" fill="rgba(52,211,153,0.22)"/>
+<text x="449" y="86" text-anchor="middle" font-size="13" font-weight="700" fill="#34d399">
+  <tspan class="lz">运行</tspan>
+  <tspan class="le">Run</tspan>
+</text>
+<text x="449" y="100" text-anchor="middle" font-size="10" fill="#6ee7b7">Phase 2</text>
+
+<text x="354" y="118" font-size="10.5" fill="#d1fae5">
+  <tspan>· </tspan><tspan fill="#34d399">queryLoop</tspan>
+  <tspan class="lz"> — 执行推理循环</tspan>
+  <tspan class="le"> — execute loop</tspan>
+</text>
+<text x="354" y="134" font-size="10.5" fill="#d1fae5">
+  <tspan>· </tspan>
+  <tspan class="lz">API 调用 · 流式响应</tspan>
+  <tspan class="le">API calls · streaming</tspan>
+</text>
+<text x="354" y="150" font-size="10.5" fill="#d1fae5">
+  <tspan>· </tspan>
+  <tspan class="lz">工具执行 · 权限检查</tspan>
+  <tspan class="le">tool exec · permission</tspan>
+</text>
+<text x="354" y="166" font-size="10.5" fill="#d1fae5">
+  <tspan>· </tspan>
+  <tspan class="lz">可递归 spawn 子 Agent</tspan>
+  <tspan class="le">can recursively spawn</tspan>
+</text>
+
+<!-- Arrow: Phase2 → Phase3 -->
+<line x1="561" y1="130" x2="596" y2="130" stroke="#475569" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+
+<!-- ===== PHASE 3: CLEANUP (orange) x=598-790 ===== -->
+<rect x="598" y="68" width="190" height="124" rx="10" fill="rgba(251,146,60,0.08)" stroke="#fb923c" stroke-width="1.8"/>
+<rect x="598" y="68" width="190" height="26" rx="10" fill="rgba(251,146,60,0.22)"/>
+<rect x="598" y="80" width="190" height="14" fill="rgba(251,146,60,0.22)"/>
+<text x="693" y="86" text-anchor="middle" font-size="13" font-weight="700" fill="#fb923c">
+  <tspan class="lz">清理</tspan>
+  <tspan class="le">Cleanup</tspan>
+</text>
+<text x="693" y="100" text-anchor="middle" font-size="10" fill="#fdba74">Phase 3</text>
+
+<text x="614" y="118" font-size="10.5" fill="#ffedd5">
+  <tspan>· </tspan><tspan fill="#fb923c">SubagentStop</tspan><tspan> hook</tspan>
+</text>
+<text x="614" y="134" font-size="10.5" fill="#ffedd5">
+  <tspan>· </tspan>
+  <tspan class="lz">收集结果 / 产物</tspan>
+  <tspan class="le">collect results</tspan>
+</text>
+<text x="614" y="150" font-size="10.5" fill="#ffedd5">
+  <tspan>· </tspan>
+  <tspan class="lz">CoW merge 或 discard</tspan>
+  <tspan class="le">CoW merge or discard</tspan>
+</text>
+<text x="614" y="166" font-size="10.5" fill="#ffedd5">
+  <tspan>· </tspan>
+  <tspan class="lz">返回结果给父 Agent</tspan>
+  <tspan class="le">return to parent agent</tspan>
+</text>
+
+<!-- Arrow: Phase3 → End -->
+<line x1="789" y1="130" x2="823" y2="130" stroke="#475569" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+
+<!-- End node -->
+<circle cx="848" cy="130" r="12" fill="#34d399" filter="url(#glow-emerald)"/>
+<circle cx="848" cy="130" r="17" fill="none" stroke="#34d399" stroke-width="2" opacity=".5"/>
+
+<!-- Labels below start/end -->
+<text x="60" y="152" text-anchor="middle" font-size="10" fill="#94a3b8">START</text>
+<text x="848" y="154" text-anchor="middle" font-size="10" fill="#34d399">DONE</text>
+
+<!-- ===== ABORTED NODE (rose) at bottom-center ===== -->
+<rect x="382" y="242" width="196" height="46" rx="8" fill="rgba(251,113,133,0.10)" stroke="#fb7185" stroke-width="1.8"/>
+<text x="480" y="261" text-anchor="middle" font-size="13" font-weight="700" fill="#fb7185">
+  <tspan class="lz">中止 / Aborted</tspan>
+  <tspan class="le">Aborted</tspan>
+</text>
+<text x="480" y="278" text-anchor="middle" font-size="10" fill="#fda4af">
+  <tspan class="lz">timeout · 权限拒绝 · 用户取消</tspan>
+  <tspan class="le">timeout · perm denied · user cancel</tspan>
+</text>
+
+<!-- ===== ERROR ARROWS (rose, dashed) from each phase to Aborted ===== -->
+
+<!-- Phase1 → Aborted: arc down-left from bottom-center of Phase1 -->
+<path d="M206,193 C206,220 340,242 382,262" fill="none" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-rose)"/>
+<text x="248" y="228" font-size="10" fill="#fb7185">
+  <tspan class="lz">init 超时</tspan>
+  <tspan class="le">init timeout</tspan>
+</text>
+
+<!-- Phase2 → Aborted: straight down from bottom of Phase2 -->
+<path d="M449,193 L449,240" fill="none" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-rose)"/>
+<text x="455" y="222" font-size="10" fill="#fb7185">
+  <tspan class="lz">取消</tspan>
+  <tspan class="le">cancel</tspan>
+</text>
+
+<!-- Phase3 → Aborted: arc down-right to Aborted -->
+<path d="M693,193 C693,220 596,242 578,262" fill="none" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-rose)"/>
+<text x="648" y="228" font-size="10" fill="#fb7185">
+  <tspan class="lz">回滚错误</tspan>
+  <tspan class="le">rollback err</tspan>
+</text>
+
+<!-- ===== RIGHT PANEL: Key metrics ===== -->
+<rect x="880" y="60" width="66" height="110" rx="8" fill="rgba(15,23,42,0.95)" stroke="#334155" stroke-width="1"/>
+<text x="886" y="77" font-size="10" font-weight="600" fill="#94a3b8">
+  <tspan class="lz">关键指标</tspan>
+  <tspan class="le">Key Metrics</tspan>
+</text>
+<rect x="880" y="81" width="66" height="1" fill="#334155"/>
+<text x="886" y="96" font-size="10" fill="#22d3ee">
+  <tspan class="lz">生命周期</tspan>
+  <tspan class="le">Lifecycle</tspan>
+</text>
+<text x="886" y="108" font-size="10" font-weight="600" fill="#f1f5f9">30–300s</text>
+<text x="886" y="123" font-size="10" fill="#fbbf24">
+  <tspan class="lz">最大嵌套</tspan>
+  <tspan class="le">Max depth</tspan>
+</text>
+<text x="886" y="135" font-size="10" font-weight="600" fill="#f1f5f9">5 <tspan class="lz">层</tspan><tspan class="le">levels</tspan></text>
+<text x="886" y="150" font-size="10" fill="#34d399">CoW discard</text>
+<text x="886" y="162" font-size="10" font-weight="600" fill="#f1f5f9">O(1)</text>
+
+<!-- ===== DIVIDER ===== -->
+<line x1="20" y1="308" x2="940" y2="308" stroke="#1e293b" stroke-width="1.5"/>
+<text x="24" y="327" font-size="11" font-weight="600" fill="#94a3b8" letter-spacing=".5">
+  <tspan class="lz">补充说明</tspan>
+  <tspan class="le">Supplemental Detail</tspan>
+</text>
+
+<!-- ===== SUB-DIAGRAM 1: 递归嵌套 (left) ===== -->
+<rect x="20" y="336" width="300" height="200" rx="8" fill="rgba(15,23,42,.7)" stroke="#334155" stroke-width="1"/>
+<!-- Title -->
+<text x="170" y="356" text-anchor="middle" font-size="11" font-weight="600" fill="#94a3b8">
+  <tspan class="lz">递归嵌套示意</tspan>
+  <tspan class="le">Recursive Nesting</tspan>
+</text>
+<line x1="20" y1="361" x2="320" y2="361" stroke="#334155" stroke-width="1"/>
+
+<!-- Parent agent box -->
+<rect x="60" y="372" width="180" height="36" rx="6" fill="rgba(167,139,250,0.12)" stroke="#a78bfa" stroke-width="1.5"/>
+<text x="150" y="386" text-anchor="middle" font-size="11" font-weight="600" fill="#a78bfa">
+  <tspan class="lz">父 Agent</tspan>
+  <tspan class="le">Parent Agent</tspan>
+</text>
+<text x="150" y="400" text-anchor="middle" font-size="10" fill="#c4b5fd">
+  <tspan class="lz">Coordinator / 主进程</tspan>
+  <tspan class="le">Coordinator / main process</tspan>
+</text>
+
+<!-- Arrow down -->
+<line x1="150" y1="408" x2="150" y2="426" stroke="#475569" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+
+<!-- Child agent box -->
+<rect x="80" y="426" width="140" height="32" rx="6" fill="rgba(52,211,153,0.10)" stroke="#34d399" stroke-width="1.5"/>
+<text x="150" y="440" text-anchor="middle" font-size="10.5" font-weight="600" fill="#34d399">
+  <tspan class="lz">子 Agent</tspan>
+  <tspan class="le">Sub-Agent</tspan>
+</text>
+<text x="150" y="452" text-anchor="middle" font-size="10" fill="#6ee7b7">spawn() Level 1</text>
+
+<!-- Arrow down -->
+<line x1="150" y1="458" x2="150" y2="476" stroke="#475569" stroke-width="1.5" marker-end="url(#arr-gray)"/>
+
+<!-- Grandchild agent box -->
+<rect x="96" y="476" width="108" height="30" rx="6" fill="rgba(251,146,60,0.10)" stroke="#fb923c" stroke-width="1.2"/>
+<text x="150" y="490" text-anchor="middle" font-size="10" font-weight="600" fill="#fb923c">
+  <tspan class="lz">孙 Agent</tspan>
+  <tspan class="le">Grand-child</tspan>
+</text>
+<text x="150" y="503" text-anchor="middle" font-size="10" fill="#fdba74">spawn() Level 2</text>
+
+<!-- Max depth note -->
+<text x="170" y="524" text-anchor="middle" font-size="10" fill="#475569">
+  <tspan class="lz">最大深度 5 层 · 超出则拒绝</tspan>
+  <tspan class="le">Max depth 5 · rejected beyond</tspan>
+</text>
+
+<!-- ===== SUB-DIAGRAM 2: CoW 状态 (right) ===== -->
+<rect x="340" y="336" width="300" height="200" rx="8" fill="rgba(15,23,42,.7)" stroke="#334155" stroke-width="1"/>
+<text x="490" y="356" text-anchor="middle" font-size="11" font-weight="600" fill="#94a3b8">
+  <tspan class="lz">CoW Overlay 状态路径</tspan>
+  <tspan class="le">CoW Overlay State Paths</tspan>
+</text>
+<line x1="340" y1="361" x2="640" y2="361" stroke="#334155" stroke-width="1"/>
+
+<!-- CoW start node -->
+<rect x="414" y="374" width="152" height="30" rx="6" fill="rgba(30,41,59,.8)" stroke="#475569" stroke-width="1.2"/>
+<text x="490" y="385" text-anchor="middle" font-size="10" fill="#94a3b8">
+  <tspan class="lz">CoW upper layer 存在</tspan>
+  <tspan class="le">CoW upper layer exists</tspan>
+</text>
+<text x="490" y="397" text-anchor="middle" font-size="10" fill="#64748b">
+  <tspan class="lz">（子 Agent 的所有写操作）</tspan>
+  <tspan class="le">(all writes by sub-agent)</tspan>
+</text>
+
+<!-- Fork arrows -->
+<line x1="414" y1="389" x2="394" y2="420" stroke="#475569" stroke-width="1.2" marker-end="url(#arr-gray)"/>
+<line x1="566" y1="389" x2="586" y2="420" stroke="#475569" stroke-width="1.2" marker-end="url(#arr-gray)"/>
+
+<!-- Success label -->
+<text x="365" y="417" font-size="10" fill="#34d399">
+  <tspan class="lz">成功</tspan>
+  <tspan class="le">success</tspan>
+</text>
+<!-- Fail label -->
+<text x="572" y="417" font-size="10" fill="#fb7185">
+  <tspan class="lz">中止</tspan>
+  <tspan class="le">abort</tspan>
+</text>
+
+<!-- Commit path (left) -->
+<rect x="348" y="420" width="130" height="50" rx="6" fill="rgba(52,211,153,0.10)" stroke="#34d399" stroke-width="1.5"/>
+<text x="413" y="438" text-anchor="middle" font-size="10.5" font-weight="600" fill="#34d399">
+  <tspan class="lz">Merge 提交</tspan>
+  <tspan class="le">Merge Commit</tspan>
+</text>
+<text x="413" y="452" text-anchor="middle" font-size="10" fill="#6ee7b7">upper → base</text>
+<text x="413" y="464" text-anchor="middle" font-size="10" fill="#6ee7b7">O(n) copy</text>
+
+<!-- Discard path (right) -->
+<rect x="502" y="420" width="130" height="50" rx="6" fill="rgba(251,113,133,0.10)" stroke="#fb7185" stroke-width="1.5"/>
+<text x="567" y="438" text-anchor="middle" font-size="10.5" font-weight="600" fill="#fb7185">
+  <tspan class="lz">Discard 丢弃</tspan>
+  <tspan class="le">Discard</tspan>
+</text>
+<text x="567" y="452" text-anchor="middle" font-size="10" fill="#fda4af">drop upper</text>
+<text x="567" y="464" text-anchor="middle" font-size="10" fill="#fda4af">O(1) free</text>
+
+<!-- Result labels -->
+<text x="413" y="489" text-anchor="middle" font-size="10" fill="#34d399">
+  <tspan class="lz">✓ 变更持久化</tspan>
+  <tspan class="le">✓ changes persisted</tspan>
+</text>
+<text x="567" y="489" text-anchor="middle" font-size="10" fill="#fb7185">
+  <tspan class="lz">✗ 变更全部撤销</tspan>
+  <tspan class="le">✗ all changes reverted</tspan>
+</text>
+
+<!-- ===== SUB-DIAGRAM 3: Hook events (right side) ===== -->
+<rect x="660" y="336" width="280" height="200" rx="8" fill="rgba(15,23,42,.7)" stroke="#334155" stroke-width="1"/>
+<text x="800" y="356" text-anchor="middle" font-size="11" font-weight="600" fill="#94a3b8">
+  <tspan class="lz">Hook 触发顺序</tspan>
+  <tspan class="le">Hook Firing Order</tspan>
+</text>
+<line x1="660" y1="361" x2="940" y2="361" stroke="#334155" stroke-width="1"/>
+
+<!-- Hook timeline line -->
+<line x1="705" y1="390" x2="705" y2="520" stroke="#334155" stroke-width="2"/>
+
+<!-- Hook 1: SubagentStart -->
+<circle cx="705" cy="398" r="5" fill="#a78bfa"/>
+<rect x="718" y="389" width="168" height="20" rx="4" fill="rgba(167,139,250,0.12)" stroke="rgba(167,139,250,.3)" stroke-width="1"/>
+<text x="726" y="402" font-size="10" font-weight="600" fill="#a78bfa">SubagentStart</text>
+<text x="898" y="402" text-anchor="end" font-size="10" fill="#94a3b8">
+  <tspan class="lz">blockable</tspan>
+  <tspan class="le">blockable</tspan>
+</text>
+
+<!-- Hook 2: PreToolCall (repeated) -->
+<circle cx="705" cy="438" r="4" fill="#34d399"/>
+<rect x="718" y="429" width="168" height="20" rx="4" fill="rgba(52,211,153,0.08)" stroke="rgba(52,211,153,.3)" stroke-width="1"/>
+<text x="726" y="442" font-size="10" fill="#34d399">PreToolCall</text>
+<text x="898" y="442" text-anchor="end" font-size="10" fill="#94a3b8">×N</text>
+
+<!-- Hook 3: PostToolCall (repeated) -->
+<circle cx="705" cy="468" r="4" fill="#34d399"/>
+<rect x="718" y="459" width="168" height="20" rx="4" fill="rgba(52,211,153,0.08)" stroke="rgba(52,211,153,.3)" stroke-width="1"/>
+<text x="726" y="472" font-size="10" fill="#34d399">PostToolCall</text>
+<text x="898" y="472" text-anchor="end" font-size="10" fill="#94a3b8">×N</text>
+
+<!-- Hook 4: SubagentStop -->
+<circle cx="705" cy="508" r="5" fill="#fb923c"/>
+<rect x="718" y="499" width="168" height="20" rx="4" fill="rgba(251,146,60,0.12)" stroke="rgba(251,146,60,.3)" stroke-width="1"/>
+<text x="726" y="512" font-size="10" font-weight="600" fill="#fb923c">SubagentStop</text>
+<text x="898" y="512" text-anchor="end" font-size="10" fill="#94a3b8">
+  <tspan class="lz">blockable</tspan>
+  <tspan class="le">blockable</tspan>
+</text>
+
+<!-- Phase label for hook context -->
+<text x="675" y="402" text-anchor="end" font-size="10" fill="#a78bfa">P1</text>
+<text x="675" y="442" text-anchor="end" font-size="10" fill="#34d399">P2</text>
+<text x="675" y="472" text-anchor="end" font-size="10" fill="#34d399">P2</text>
+<text x="675" y="512" text-anchor="end" font-size="10" fill="#fb923c">P3</text>
+
+<!-- ===== FOOTER ===== -->
+<rect x="0" y="548" width="960" height="12" fill="rgba(167,139,250,0.04)"/>
+<text x="480" y="557" text-anchor="middle" font-size="10" fill="#334155" letter-spacing=".5">
+  VIS-3-015 · Claude Code Agent Lifecycle · v2 Production
+</text>
+
+</svg>
+</div>
+
+<!-- Summary Cards -->
+<div class="cards">
+  <div class="card violet">
+    <div class="label"><span class="lz">阶段 1</span><span class="le">Phase 1</span></div>
+    <div class="title"><span class="lz">创建阶段</span><span class="le">Create Phase</span></div>
+    <div class="desc"><span class="lz">隔离 worktree + SubagentStart hook 触发，完成 context 初始化</span><span class="le">Isolated worktree + SubagentStart hook fires, context initialized</span></div>
+  </div>
+  <div class="card emerald">
+    <div class="label"><span class="lz">阶段 2</span><span class="le">Phase 2</span></div>
+    <div class="title"><span class="lz">运行阶段</span><span class="le">Run Phase</span></div>
+    <div class="desc"><span class="lz">完整 queryLoop 执行，可递归 spawn 子 Agent，深度最大 5 层</span><span class="le">Full queryLoop execution, can recursively spawn sub-agents up to depth 5</span></div>
+  </div>
+  <div class="card orange">
+    <div class="label"><span class="lz">阶段 3</span><span class="le">Phase 3</span></div>
+    <div class="title"><span class="lz">清理阶段</span><span class="le">Cleanup Phase</span></div>
+    <div class="desc"><span class="lz">SubagentStop hook + CoW 提交或回滚，O(1) discard 极速释放</span><span class="le">SubagentStop hook + CoW commit or discard, O(1) free on discard</span></div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-theme',t);
+  document.documentElement.setAttribute('data-lang',l);
+  document.getElementById('langBtn').textContent=l==='zh'?'EN':'中';
+  window.cycleTheme=function(){
+    var themes=['dark','warm','light'];
+    var cur=document.documentElement.getAttribute('data-theme')||'dark';
+    var next=themes[(themes.indexOf(cur)+1)%themes.length];
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('vtheme',next);
+  };
+  window.toggleLang=function(){
+    var cur=document.documentElement.getAttribute('data-lang')||'zh';
+    var next=cur==='zh'?'en':'zh';
+    document.documentElement.setAttribute('data-lang',next);
+    localStorage.setItem('vlang',next);
+    document.getElementById('langBtn').textContent=next==='zh'?'EN':'中';
+    document.querySelectorAll('svg .le, svg .lz').forEach(function(e){
+      var show=(next==='en')?e.classList.contains('le'):e.classList.contains('lz');
+      e.style.display=show?'':'none';
+      e.setAttribute('display',show?'inline':'none');
+    });
+  };
+  // Apply initial lang state to SVG elements
+  if(l==='en'){
+    document.querySelectorAll('svg .le').forEach(function(e){e.style.display='';e.setAttribute('display','inline');});
+    document.querySelectorAll('svg .lz').forEach(function(e){e.style.display='none';e.setAttribute('display','none');});
+  }
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-3-007 | 插件信任链安全架构图</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--panel:#0f172a;--card:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--subtle:#475569;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="warm"]{--bg:#1c1410;--panel:#2a1f16;--card:#3d2d20;--border:#5c4a3a;--text:#f5e6d3;--muted:#c4a882;--subtle:#8b7355;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="light"]{--bg:#f8fafc;--panel:#f1f5f9;--card:#e2e8f0;--border:#cbd5e1;--text:#0f172a;--muted:#475569;--subtle:#94a3b8;--amber:#d97706;--cyan:#0891b2;--violet:#7c3aed;--emerald:#059669;--rose:#e11d48;--slate:#475569;--orange:#ea580c}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px 40px}
+
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:100}
+.ctrl button{font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:background 0.2s}
+.ctrl button:hover{background:var(--border)}
+
+header{text-align:center;margin-bottom:28px;max-width:900px}
+.vid{font-size:11px;color:var(--subtle);letter-spacing:0.12em;margin-bottom:6px}
+h1{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.01em;line-height:1.3;margin-bottom:8px}
+.subtitle{font-size:12px;color:var(--muted);line-height:1.6}
+
+.chart-wrap{width:100%;max-width:960px;background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;padding:12px 0}
+
+svg{display:block;width:100%;height:auto}
+
+/* Attack animation: rose dashed arrows moving inward */
+@keyframes attack-dash{
+  0%{stroke-dashoffset:30}
+  100%{stroke-dashoffset:0}
+}
+.attack-arrow{
+  stroke:var(--rose,#fb7185);
+  stroke-width:2;
+  fill:none;
+  stroke-dasharray:6 4;
+  animation:attack-dash 0.8s linear infinite;
+}
+
+/* Trust-granted animation: emerald dashed arrows moving outward */
+@keyframes trust-dash{
+  0%{stroke-dashoffset:0}
+  100%{stroke-dashoffset:30}
+}
+.trust-arrow{
+  stroke:var(--emerald,#34d399);
+  stroke-width:2;
+  fill:none;
+  stroke-dasharray:6 4;
+  animation:trust-dash 1.2s linear infinite;
+}
+
+/* Pulse on core ring */
+@keyframes core-pulse{
+  0%,100%{opacity:1}
+  50%{opacity:0.7}
+}
+.core-pulse{animation:core-pulse 2s ease-in-out infinite}
+
+/* Shield glow */
+@keyframes ring-glow{
+  0%,100%{filter:drop-shadow(0 0 0px transparent)}
+  50%{filter:drop-shadow(0 0 6px rgba(34,211,238,0.4))}
+}
+.glow-ring{animation:ring-glow 3s ease-in-out infinite}
+
+/* cards */
+.cards{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;margin-top:20px;max-width:960px;width:100%}
+.card{flex:1;min-width:240px;max-width:300px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
+.card-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.card-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.card-title{font-size:13px;font-weight:600;color:var(--text)}
+.card-body{font-size:11px;color:var(--muted);line-height:1.6}
+
+[data-lang="en"] .lz{display:none}
+[data-lang="en"] .le{display:inline}
+[data-lang="en"] .lz-block{display:none}
+[data-lang="en"] .le-block{display:flex}
+.le-block{display:none}
+
+/* SVG text forced CSS vars via fill */
+text{font-family:'JetBrains Mono',monospace}
+</style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="cycleTheme()">Theme</button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<header>
+  <div class="vid">VIS-3-007</div>
+  <h1>
+    <span class="lz">插件信任链安全架构图</span>
+    <span class="le">Plugin Trust Chain Security Architecture</span>
+  </h1>
+  <div class="subtitle">
+    <span class="lz">Claude Code MCP 插件系统的多层信任验证机制 — 从外部输入到核心保护区的六层防御纵深</span>
+    <span class="le">Claude Code MCP plugin system multi-layer trust verification — six-layer defense-in-depth from external input to core protected zone</span>
+  </div>
+</header>
+
+<div class="chart-wrap">
+<svg viewBox="0 0 960 640" xmlns="http://www.w3.org/2000/svg" aria-label="Plugin Trust Chain Security Architecture Diagram">
+  <defs>
+    <!-- Background grid -->
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke="#334155" stroke-width="0.3" opacity="0.4"/>
+    </pattern>
+
+    <!-- Radial gradient for rings -->
+    <radialGradient id="bg-grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#0f172a" stop-opacity="0.0"/>
+      <stop offset="100%" stop-color="#020617" stop-opacity="0.8"/>
+    </radialGradient>
+
+    <!-- Ring fill gradients -->
+    <radialGradient id="fill-slate" cx="50%" cy="50%" r="50%">
+      <stop offset="60%" stop-color="#020617" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#94a3b8" stop-opacity="0.08"/>
+    </radialGradient>
+    <radialGradient id="fill-rose" cx="50%" cy="50%" r="50%">
+      <stop offset="60%" stop-color="#020617" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#fb7185" stop-opacity="0.09"/>
+    </radialGradient>
+    <radialGradient id="fill-amber" cx="50%" cy="50%" r="50%">
+      <stop offset="60%" stop-color="#020617" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#fbbf24" stop-opacity="0.1"/>
+    </radialGradient>
+    <radialGradient id="fill-orange" cx="50%" cy="50%" r="50%">
+      <stop offset="60%" stop-color="#020617" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#fb923c" stop-opacity="0.11"/>
+    </radialGradient>
+    <radialGradient id="fill-emerald" cx="50%" cy="50%" r="50%">
+      <stop offset="60%" stop-color="#020617" stop-opacity="0"/>
+      <stop offset="100%" stop-color="#34d399" stop-opacity="0.13"/>
+    </radialGradient>
+    <radialGradient id="fill-cyan" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.25"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.08"/>
+    </radialGradient>
+
+    <!-- Arrow markers -->
+    <marker id="arrow-rose" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#fb7185"/>
+    </marker>
+    <marker id="arrow-emerald" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="#34d399"/>
+    </marker>
+    <marker id="arrow-rose-sm" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+      <polygon points="0 0, 6 2.5, 0 5" fill="#fb7185"/>
+    </marker>
+    <marker id="arrow-emerald-sm" markerWidth="6" markerHeight="5" refX="5" refY="2.5" orient="auto">
+      <polygon points="0 0, 6 2.5, 0 5" fill="#34d399"/>
+    </marker>
+
+    <!-- Glow filter for core -->
+    <filter id="glow-cyan" x="-40%" y="-40%" width="180%" height="180%">
+      <feGaussianBlur stdDeviation="4" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-rose" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+      <feMerge><feMergeNode in="coloredBlur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="text-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="#020617" flood-opacity="0.9"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="960" height="640" fill="url(#bg-grad)"/>
+  <rect width="960" height="640" fill="url(#grid)"/>
+
+  <!-- ===================== CONCENTRIC RINGS ===================== -->
+  <!-- Center point: 460, 320 (slightly left to leave room for labels on right) -->
+
+  <!-- Ring 1 - Outermost: User / Attack Surface (radius 278, slate) -->
+  <circle cx="460" cy="320" r="278" fill="url(#fill-slate)" stroke="#94a3b8" stroke-width="1.5" opacity="0.7"/>
+
+  <!-- Ring 2: MCP Server (radius 228, rose) -->
+  <circle cx="460" cy="320" r="228" fill="url(#fill-rose)" stroke="#fb7185" stroke-width="1.8" opacity="0.8"/>
+
+  <!-- Ring 3: Tool Schema (radius 178, amber) -->
+  <circle cx="460" cy="320" r="178" fill="url(#fill-amber)" stroke="#fbbf24" stroke-width="1.8" opacity="0.85"/>
+
+  <!-- Ring 4: Permission Check (radius 128, orange) -->
+  <circle cx="460" cy="320" r="128" fill="url(#fill-orange)" stroke="#fb923c" stroke-width="2" opacity="0.9"/>
+
+  <!-- Ring 5: Execution (radius 88, emerald) -->
+  <circle cx="460" cy="320" r="88" fill="url(#fill-emerald)" stroke="#34d399" stroke-width="2" opacity="0.9"/>
+
+  <!-- Ring 6 - Innermost: Core System (radius 50, cyan) -->
+  <circle cx="460" cy="320" r="50" fill="url(#fill-cyan)" stroke="#22d3ee" stroke-width="2.5" class="glow-ring" filter="url(#glow-cyan)"/>
+
+  <!-- ===================== RING LABELS (right side) ===================== -->
+  <!-- Each label anchored to the right of the diagram at varying Y positions -->
+  <!-- Label connector lines from ring edge to label -->
+
+  <!-- Ring 1 label: User / Attack Surface -->
+  <line x1="738" y1="320" x2="770" y2="290" stroke="#94a3b8" stroke-width="0.8" opacity="0.5"/>
+  <rect x="772" y="270" width="170" height="38" rx="4" fill="#1e293b" stroke="#94a3b8" stroke-width="1" opacity="0.9"/>
+  <text x="858" y="285" text-anchor="middle" fill="#94a3b8" font-size="11" font-weight="600">
+    <tspan class="lz">① 用户 / 攻击面</tspan><tspan class="le">① User / Attack Surface</tspan>
+  </text>
+  <text x="858" y="300" text-anchor="middle" fill="#94a3b8" font-size="10" opacity="0.7">
+    <tspan class="lz">初始不可信</tspan><tspan class="le">Initially untrusted</tspan>
+  </text>
+
+  <!-- Ring 2 label: MCP Server -->
+  <line x1="688" y1="320" x2="770" y2="330" stroke="#fb7185" stroke-width="0.8" opacity="0.5"/>
+  <rect x="772" y="316" width="170" height="38" rx="4" fill="#1e293b" stroke="#fb7185" stroke-width="1" opacity="0.9"/>
+  <text x="858" y="331" text-anchor="middle" fill="#fb7185" font-size="11" font-weight="600">
+    <tspan class="lz">② MCP Server</tspan><tspan class="le">② MCP Server</tspan>
+  </text>
+  <text x="858" y="346" text-anchor="middle" fill="#fb7185" font-size="10" opacity="0.7">
+    <tspan class="lz">低信任 · Schema验证</tspan><tspan class="le">Low trust · Schema check</tspan>
+  </text>
+
+  <!-- Ring 3 label: Tool Schema -->
+  <line x1="638" y1="320" x2="770" y2="368" stroke="#fbbf24" stroke-width="0.8" opacity="0.5"/>
+  <rect x="772" y="354" width="170" height="38" rx="4" fill="#1e293b" stroke="#fbbf24" stroke-width="1" opacity="0.9"/>
+  <text x="858" y="369" text-anchor="middle" fill="#fbbf24" font-size="11" font-weight="600">
+    <tspan class="lz">③ Tool Schema 层</tspan><tspan class="le">③ Tool Schema Layer</tspan>
+  </text>
+  <text x="858" y="384" text-anchor="middle" fill="#fbbf24" font-size="10" opacity="0.7">
+    <tspan class="lz">中信任 · 输入清洗</tspan><tspan class="le">Med trust · Input sanitization</tspan>
+  </text>
+
+  <!-- Ring 4 label: Permission Check -->
+  <line x1="588" y1="320" x2="770" y2="406" stroke="#fb923c" stroke-width="0.8" opacity="0.5"/>
+  <rect x="772" y="392" width="170" height="38" rx="4" fill="#1e293b" stroke="#fb923c" stroke-width="1" opacity="0.9"/>
+  <text x="858" y="407" text-anchor="middle" fill="#fb923c" font-size="11" font-weight="600">
+    <tspan class="lz">④ 权限检查层</tspan><tspan class="le">④ Permission Check</tspan>
+  </text>
+  <text x="858" y="422" text-anchor="middle" fill="#fb923c" font-size="10" opacity="0.7">
+    <tspan class="lz">受控 · 路径白名单</tspan><tspan class="le">Controlled · Path allowlist</tspan>
+  </text>
+
+  <!-- Ring 5 label: Execution -->
+  <line x1="548" y1="320" x2="770" y2="444" stroke="#34d399" stroke-width="0.8" opacity="0.5"/>
+  <rect x="772" y="430" width="170" height="38" rx="4" fill="#1e293b" stroke="#34d399" stroke-width="1" opacity="0.9"/>
+  <text x="858" y="445" text-anchor="middle" fill="#34d399" font-size="11" font-weight="600">
+    <tspan class="lz">⑤ 执行层</tspan><tspan class="le">⑤ Execution Layer</tspan>
+  </text>
+  <text x="858" y="460" text-anchor="middle" fill="#34d399" font-size="10" opacity="0.7">
+    <tspan class="lz">已验证 · 沙箱隔离</tspan><tspan class="le">Validated · Sandboxed</tspan>
+  </text>
+
+  <!-- Ring 6 label: Core System (innermost) -->
+  <line x1="510" y1="305" x2="770" y2="475" stroke="#22d3ee" stroke-width="0.8" opacity="0.5"/>
+  <rect x="772" y="462" width="170" height="38" rx="4" fill="#1e293b" stroke="#22d3ee" stroke-width="1.5" opacity="0.95"/>
+  <text x="858" y="477" text-anchor="middle" fill="#22d3ee" font-size="11" font-weight="700">
+    <tspan class="lz">⑥ Core System</tspan><tspan class="le">⑥ Core System</tspan>
+  </text>
+  <text x="858" y="492" text-anchor="middle" fill="#22d3ee" font-size="10" opacity="0.7">
+    <tspan class="lz">最高信任 · 绝对隔离</tspan><tspan class="le">Highest trust · Isolated</tspan>
+  </text>
+
+  <!-- ===================== CENTER LABEL ===================== -->
+  <text x="460" y="312" text-anchor="middle" fill="#22d3ee" font-size="13" font-weight="700" class="core-pulse" filter="url(#text-shadow)">Core</text>
+  <text x="460" y="330" text-anchor="middle" fill="#22d3ee" font-size="10" font-weight="500" class="core-pulse" filter="url(#text-shadow)">
+    <tspan class="lz">受保护</tspan><tspan class="le">Protected</tspan>
+  </text>
+
+  <!-- ===================== ATTACK ARROWS (2 o'clock direction, rose dashed) ===================== -->
+  <!-- Attack path 1: Direct Injection — blocked at MCP ring (ring 2) -->
+  <!-- 2 o'clock on unit circle ≈ 60° → x offset: cos(60)=0.5, y offset: -sin(60)=-0.866 -->
+  <!-- From outside radius ~340 to ring2 edge at 228 -->
+  <!-- Direction vector: normalized cos(60°)=0.5, sin(-60°)=-0.866 -->
+  <!-- Start: 460+340*0.5=630, 320+340*(-0.866)=26 → 460+230*0.5=575, 320+230*(-0.866)=121 -->
+
+  <!-- Attack 1: from outer edge toward ring2, blocked at ring2 -->
+  <path d="M 625 48 L 573 129" class="attack-arrow" marker-end="url(#arrow-rose-sm)" filter="url(#glow-rose)"/>
+  <!-- Block symbol at ring2 intersection -->
+  <circle cx="568" cy="137" r="7" fill="#fb7185" opacity="0.9"/>
+  <text x="568" y="141" text-anchor="middle" fill="#020617" font-size="10" font-weight="700">✗</text>
+  <!-- Attack label -->
+  <rect x="630" y="36" width="140" height="20" rx="3" fill="#1e293b" stroke="#fb7185" stroke-width="0.8" opacity="0.85"/>
+  <text x="700" y="50" text-anchor="middle" fill="#fb7185" font-size="10">
+    <tspan class="lz">① 直接注入攻击</tspan><tspan class="le">① Direct Injection</tspan>
+  </text>
+
+  <!-- Attack 2: from outer edge toward ring3, blocked at ring3 -->
+  <!-- Direction: 1:30 o'clock ≈ 45° → cos45=0.707, sin45=-0.707 -->
+  <!-- Start: 460+340*0.707=700, 320+340*(-0.707)=80 → ring3 edge: 460+178*0.707=586, 320+178*(-0.707)=194 -->
+  <path d="M 696 80 L 584 200" class="attack-arrow" marker-end="url(#arrow-rose-sm)" filter="url(#glow-rose)" style="animation-delay:0.3s"/>
+  <!-- Block symbol at ring3 intersection -->
+  <circle cx="579" cy="207" r="7" fill="#fb7185" opacity="0.9"/>
+  <text x="579" y="211" text-anchor="middle" fill="#020617" font-size="10" font-weight="700">✗</text>
+  <rect x="700" y="68" width="148" height="20" rx="3" fill="#1e293b" stroke="#fb7185" stroke-width="0.8" opacity="0.85"/>
+  <text x="774" y="82" text-anchor="middle" fill="#fb7185" font-size="10">
+    <tspan class="lz">② Schema绕过尝试</tspan><tspan class="le">② Schema Bypass</tspan>
+  </text>
+
+  <!-- Attack 3: from outer edge toward ring4, blocked at ring4 -->
+  <!-- Direction: 1:00 o'clock ≈ 30° → cos30=0.866, sin30=-0.5 -->
+  <!-- Start: 460+340*0.866=754, 320+340*(-0.5)=150 → ring4: 460+128*0.866=571, 320+128*(-0.5)=256 -->
+  <path d="M 750 148 L 567 258" class="attack-arrow" marker-end="url(#arrow-rose-sm)" filter="url(#glow-rose)" style="animation-delay:0.6s"/>
+  <!-- Block symbol at ring4 intersection -->
+  <circle cx="562" cy="264" r="7" fill="#fb7185" opacity="0.9"/>
+  <text x="562" y="268" text-anchor="middle" fill="#020617" font-size="10" font-weight="700">✗</text>
+  <rect x="748" y="136" width="162" height="20" rx="3" fill="#1e293b" stroke="#fb7185" stroke-width="0.8" opacity="0.85"/>
+  <text x="829" y="150" text-anchor="middle" fill="#fb7185" font-size="10">
+    <tspan class="lz">③ 权限提升尝试</tspan><tspan class="le">③ Privilege Escalation</tspan>
+  </text>
+
+  <!-- ===================== TRUST FLOW ARROWS (10 o'clock, emerald, inner to outer) ===================== -->
+  <!-- 10 o'clock ≈ 120° from positive x → cos(120°)=-0.5, sin(120°)=-0.866 (up-left) -->
+  <!-- We use the 10:30 position (upper-left arc) going outward for trust propagation -->
+  <!-- Inner to outer: from ring5→ring4, ring4→ring3, ring3→ring2, ring2→ring1 -->
+
+  <!-- Direction: 10 o'clock ≈ angle 300° in standard, i.e., upper-left: cos(150°)=-0.866, sin(150°)=-0.5 -->
+  <!-- Let's use upper-left direction: dx=-0.707, dy=-0.707 (10:30 position) -->
+
+  <!-- Trust flow: Core→Execution (ring6 to ring5 edge outward) -->
+  <!-- From: 460+50*(-0.707)=425, 320+50*(-0.707)=285 → 460+88*(-0.707)=398, 320+88*(-0.707)=258 -->
+  <path d="M 425 285 L 398 258" class="trust-arrow" marker-end="url(#arrow-emerald-sm)"/>
+
+  <!-- Trust flow: Execution→Permission (ring5 to ring4 edge) -->
+  <!-- From: 460+88*(-0.707)=398, 320+88*(-0.707)=258 → 460+128*(-0.707)=369, 320+128*(-0.707)=229 -->
+  <path d="M 396 256 L 369 227" class="trust-arrow" marker-end="url(#arrow-emerald-sm)" style="animation-delay:0.2s"/>
+  <!-- "Granted" label -->
+  <text x="370" y="247" text-anchor="middle" fill="#34d399" font-size="10" opacity="0.8" filter="url(#text-shadow)">
+    <tspan class="lz">已授权</tspan><tspan class="le">Granted</tspan>
+  </text>
+
+  <!-- Trust flow: Permission→Tool (ring4 to ring3 edge) -->
+  <!-- From: 460+128*(-0.707)=369, 320+128*(-0.707)=229 → 460+178*(-0.707)=334, 320+178*(-0.707)=194 -->
+  <path d="M 367 225 L 334 192" class="trust-arrow" marker-end="url(#arrow-emerald-sm)" style="animation-delay:0.4s"/>
+  <text x="338" y="214" text-anchor="middle" fill="#34d399" font-size="10" opacity="0.8" filter="url(#text-shadow)">
+    <tspan class="lz">已授权</tspan><tspan class="le">Granted</tspan>
+  </text>
+
+  <!-- Trust flow: Tool→MCP (ring3 to ring2 edge) -->
+  <!-- From: 460+178*(-0.707)=334, 320+178*(-0.707)=194 → 460+228*(-0.707)=299, 320+228*(-0.707)=159 -->
+  <path d="M 332 190 L 300 157" class="trust-arrow" marker-end="url(#arrow-emerald-sm)" style="animation-delay:0.6s"/>
+  <text x="302" y="178" text-anchor="middle" fill="#34d399" font-size="10" opacity="0.8" filter="url(#text-shadow)">
+    <tspan class="lz">已授权</tspan><tspan class="le">Granted</tspan>
+  </text>
+
+  <!-- Trust flow: MCP→User (ring2 to ring1 edge) -->
+  <!-- From: 460+228*(-0.707)=299, 320+228*(-0.707)=159 → 460+278*(-0.707)=264, 320+278*(-0.707)=123 -->
+  <path d="M 298 155 L 264 121" class="trust-arrow" marker-end="url(#arrow-emerald-sm)" style="animation-delay:0.8s"/>
+  <text x="265" y="142" text-anchor="middle" fill="#34d399" font-size="10" opacity="0.8" filter="url(#text-shadow)">
+    <tspan class="lz">已授权</tspan><tspan class="le">Granted</tspan>
+  </text>
+
+  <!-- ===================== SECURITY ANNOTATIONS at each ring ===================== -->
+  <!-- Left side annotations: security mechanism descriptions for each ring -->
+  <!-- These are at the 9 o'clock position (directly left) -->
+
+  <!-- Ring 2 annotation (left) -->
+  <line x1="232" y1="320" x2="160" y2="320" stroke="#fb7185" stroke-width="0.7" opacity="0.4" stroke-dasharray="3 2"/>
+  <rect x="10" y="308" width="148" height="24" rx="4" fill="#1e293b" stroke="#fb7185" stroke-width="0.8" opacity="0.85"/>
+  <text x="84" y="324" text-anchor="middle" fill="#fb7185" font-size="10" filter="url(#text-shadow)">
+    <tspan class="lz">Schema / 版本 / 白名单</tspan><tspan class="le">Schema / Version / Allowlist</tspan>
+  </text>
+
+  <!-- Ring 3 annotation (left) -->
+  <!-- ring3 left edge: 460-178=282, 320 -->
+  <line x1="282" y1="320" x2="160" y2="350" stroke="#fbbf24" stroke-width="0.7" opacity="0.4" stroke-dasharray="3 2"/>
+  <rect x="10" y="338" width="148" height="24" rx="4" fill="#1e293b" stroke="#fbbf24" stroke-width="0.8" opacity="0.85"/>
+  <text x="84" y="354" text-anchor="middle" fill="#fbbf24" font-size="10" filter="url(#text-shadow)">
+    <tspan class="lz">输入清洗 / 类型检查</tspan><tspan class="le">Sanitize / Type-check</tspan>
+  </text>
+
+  <!-- Ring 4 annotation (left) -->
+  <!-- ring4 left edge: 460-128=332 -->
+  <line x1="332" y1="320" x2="160" y2="378" stroke="#fb923c" stroke-width="0.7" opacity="0.4" stroke-dasharray="3 2"/>
+  <rect x="10" y="366" width="148" height="24" rx="4" fill="#1e293b" stroke="#fb923c" stroke-width="0.8" opacity="0.85"/>
+  <text x="84" y="382" text-anchor="middle" fill="#fb923c" font-size="10" filter="url(#text-shadow)">
+    <tspan class="lz">操作类型 / 路径白名单</tspan><tspan class="le">Op type / Path allowlist</tspan>
+  </text>
+
+  <!-- Ring 5 annotation (left) -->
+  <!-- ring5 left edge: 460-88=372 -->
+  <line x1="372" y1="320" x2="160" y2="406" stroke="#34d399" stroke-width="0.7" opacity="0.4" stroke-dasharray="3 2"/>
+  <rect x="10" y="394" width="148" height="24" rx="4" fill="#1e293b" stroke="#34d399" stroke-width="0.8" opacity="0.85"/>
+  <text x="84" y="410" text-anchor="middle" fill="#34d399" font-size="10" filter="url(#text-shadow)">
+    <tspan class="lz">沙箱环境 / 资源限制</tspan><tspan class="le">Sandbox / Resource limits</tspan>
+  </text>
+
+  <!-- ===================== TOP TITLE INSIDE SVG ===================== -->
+  <text x="460" y="28" text-anchor="middle" fill="#475569" font-size="10" letter-spacing="0.1em">
+    TRUST LEVEL: LOW ──────────────────────── HIGH
+  </text>
+  <!-- Trust level bar -->
+  <defs>
+    <linearGradient id="trust-bar" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#94a3b8"/>
+      <stop offset="20%" stop-color="#fb7185"/>
+      <stop offset="40%" stop-color="#fbbf24"/>
+      <stop offset="60%" stop-color="#fb923c"/>
+      <stop offset="80%" stop-color="#34d399"/>
+      <stop offset="100%" stop-color="#22d3ee"/>
+    </linearGradient>
+  </defs>
+  <rect x="200" y="33" width="520" height="3" rx="2" fill="url(#trust-bar)" opacity="0.6"/>
+
+  <!-- ===================== LEGEND (bottom-left area) ===================== -->
+  <rect x="12" y="530" width="210" height="100" rx="6" fill="#1e293b" stroke="#334155" stroke-width="1" opacity="0.9"/>
+  <text x="117" y="549" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600" letter-spacing="0.05em">
+    <tspan class="lz">图例</tspan><tspan class="le">LEGEND</tspan>
+  </text>
+
+  <!-- Legend: attack arrow -->
+  <line x1="26" y1="564" x2="60" y2="564" stroke="#fb7185" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#arrow-rose-sm)"/>
+  <text x="70" y="568" fill="#fb7185" font-size="10">
+    <tspan class="lz">⚔ 攻击尝试</tspan><tspan class="le">⚔ Attack attempt</tspan>
+  </text>
+
+  <!-- Legend: trust arrow -->
+  <line x1="26" y1="584" x2="60" y2="584" stroke="#34d399" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#arrow-emerald-sm)"/>
+  <text x="70" y="588" fill="#34d399" font-size="10">
+    <tspan class="lz">✓ 信任授予</tspan><tspan class="le">✓ Trust granted</tspan>
+  </text>
+
+  <!-- Legend: blocked symbol -->
+  <circle cx="43" cy="604" r="7" fill="#fb7185"/>
+  <text x="43" y="608" text-anchor="middle" fill="#020617" font-size="10" font-weight="700">✗</text>
+  <text x="70" y="608" fill="#fb7185" font-size="10">
+    <tspan class="lz">✗ 已拦截</tspan><tspan class="le">✗ Blocked</tspan>
+  </text>
+
+  <!-- Legend: ring color explanation -->
+  <circle cx="43" cy="622" r="5" fill="none" stroke="#22d3ee" stroke-width="2"/>
+  <text x="70" y="626" fill="#22d3ee" font-size="10">
+    <tspan class="lz">● 同心防护层</tspan><tspan class="le">● Defense ring</tspan>
+  </text>
+
+  <!-- ===================== BOTTOM WATERMARK ===================== -->
+  <text x="460" y="632" text-anchor="middle" fill="#334155" font-size="10" letter-spacing="0.06em">VIS-3-007 · Claude Code Plugin Trust Chain · CC Research</text>
+</svg>
+</div>
+
+<!-- ===================== SUMMARY CARDS ===================== -->
+<div class="cards">
+  <!-- Card 1: Default Untrust -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-dot" style="background:var(--rose)"></div>
+      <div class="card-title">
+        <span class="lz">默认不信任</span>
+        <span class="le">Default Untrusted</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <span class="lz">MCP Server 默认处于最低信任级别。所有外部来源的插件在通过显式验证前均视为不可信输入，不会获得任何执行权限。</span>
+      <span class="le">MCP Servers start at minimum trust. All external plugin sources are treated as untrusted inputs until they pass explicit validation at every ring boundary.</span>
+    </div>
+  </div>
+
+  <!-- Card 2: Layer-by-layer verification -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-dot" style="background:var(--amber)"></div>
+      <div class="card-title">
+        <span class="lz">逐层独立验证</span>
+        <span class="le">Per-Layer Validation</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <span class="lz">每一层独立执行验证逻辑，不依赖上层已有的信任结论。即使上层被绕过，内层防御仍独立生效，避免级联失效。</span>
+      <span class="le">Each layer runs independent validation, never inheriting trust from outer layers. Even if an outer ring is bypassed, inner defenses remain fully effective.</span>
+    </div>
+  </div>
+
+  <!-- Card 3: Core isolation -->
+  <div class="card">
+    <div class="card-head">
+      <div class="card-dot" style="background:var(--emerald)"></div>
+      <div class="card-title">
+        <span class="lz">核心绝对隔离</span>
+        <span class="le">Core Absolute Isolation</span>
+      </div>
+    </div>
+    <div class="card-body">
+      <span class="lz">Core 层从不直接接触任何外部输入。所有到达核心的数据都已经历六层过滤，并在严格沙箱内执行，资源访问受到硬性限制。</span>
+      <span class="le">The Core never directly touches external input. All data reaching the core has passed six validation layers and executes within a strict sandbox with hard resource limits.</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t = localStorage.getItem('vtheme') || 'dark';
+  var l = localStorage.getItem('vlang') || 'zh';
+  document.documentElement.setAttribute('data-theme', t);
+  document.documentElement.setAttribute('data-lang', l);
+  document.getElementById('langBtn').textContent = l === 'zh' ? 'EN' : '中';
+
+  window.cycleTheme = function(){
+    var themes = ['dark','warm','light'];
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = themes[(themes.indexOf(cur)+1) % themes.length];
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('vtheme', next);
+  };
+
+  window.toggleLang = function(){
+    var cur = document.documentElement.getAttribute('data-lang') || 'zh';
+    var next = cur === 'zh' ? 'en' : 'zh';
+    document.documentElement.setAttribute('data-lang', next);
+    localStorage.setItem('vlang', next);
+    document.getElementById('langBtn').textContent = next === 'zh' ? 'EN' : '中';
+    document.querySelectorAll('svg .le, svg .lz').forEach(function(e){
+      var show = (next === 'en') ? e.classList.contains('le') : e.classList.contains('lz');
+      e.style.display = show ? '' : 'none';
+      e.setAttribute('display', show ? 'inline' : 'none');
+    });
+  };
+
+  // Apply initial lang state to SVG elements
+  if (l === 'en') {
+    document.querySelectorAll('svg .lz').forEach(function(e){
+      e.style.display = 'none';
+      e.setAttribute('display','none');
+    });
+    document.querySelectorAll('svg .le').forEach(function(e){
+      e.style.display = '';
+      e.setAttribute('display','inline');
+    });
+  }
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

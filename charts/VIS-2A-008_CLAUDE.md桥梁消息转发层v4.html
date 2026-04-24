@@ -1,0 +1,474 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<title>VIS-12-A Bridge 消息转发层</title>
+<style>
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;--svg-text:#f1f5f9;--svg-muted:#94a3b8;--zone-local:#22d3ee;--zone-bridge:#8b5cf6;--zone-remote:#10b981;--zone-local-stroke-o:.55;--zone-bridge-stroke-o:.7;--zone-remote-stroke-o:.55;--zone-bridge-fill:rgba(139,92,246,.14);--zone-remote-fill:rgba(16,185,129,.1);}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;--svg-text:#f5f0eb;--svg-muted:#a8a29e;--zone-local:#22d3ee;--zone-bridge:#8b5cf6;--zone-remote:#10b981;--zone-local-stroke-o:.55;--zone-bridge-stroke-o:.7;--zone-remote-stroke-o:.55;--zone-bridge-fill:rgba(139,92,246,.14);--zone-remote-fill:rgba(16,185,129,.1);}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;--svg-text:#0f172a;--svg-muted:#64748b;--zone-local:#0891b2;--zone-bridge:#7c3aed;--zone-remote:#059669;--zone-local-stroke-o:.85;--zone-bridge-stroke-o:.9;--zone-remote-stroke-o:.85;--zone-bridge-fill:rgba(124,58,237,.12);--zone-remote-fill:rgba(5,150,105,.1);}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+/* light theme SVG color overrides for defs elements */
+:root[data-theme="light"] #gLocal stop { stop-color: #0891b2; }
+:root[data-theme="light"] #gBridge stop { stop-color: #7c3aed; }
+:root[data-theme="light"] #gRemote stop { stop-color: #059669; }
+:root[data-theme="light"] #ar-cyan polygon { fill: #0891b2; }
+:root[data-theme="light"] #ar-violet polygon { fill: #7c3aed; }
+:root[data-theme="light"] #ar-emerald polygon { fill: #059669; }
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Helvetica Neue","PingFang SC","Microsoft YaHei",Arial,sans-serif;min-height:100vh;}
+.wrap{max-width:1100px;margin:0 auto;padding:32px 24px;}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;gap:12px;flex-wrap:wrap;}
+.titleblock h1{font-size:24px;font-weight:700;letter-spacing:.5px;margin-bottom:6px;}
+.titleblock p{font-size:13px;color:var(--muted);}
+.controls{display:flex;gap:8px;}
+.btn{background:var(--panel);color:var(--text);border:1px solid var(--border);padding:8px 14px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;transition:all .15s;}
+.btn:hover{background:var(--subtle);}
+.notice{background:rgba(245,158,11,.12);border:1px solid rgba(245,158,11,.45);border-left:3px solid var(--amber);border-radius:10px;padding:12px 16px;margin-bottom:18px;font-size:12.5px;color:var(--text);line-height:1.6;}
+.notice b{color:var(--amber);}
+.chart-card{background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:24px;margin-bottom:20px;}
+.chart-wrap{width:100%;aspect-ratio:920/560;}
+svg{width:100%;height:100%;display:block;}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:18px;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:14px;text-align:center;}
+.stat .v{font-size:20px;font-weight:700;color:var(--amber);}
+.stat .k{font-size:11px;color:var(--muted);margin-top:4px;line-height:1.4;}
+.legend{display:flex;justify-content:center;gap:22px;flex-wrap:wrap;margin-top:14px;font-size:12px;color:var(--muted);}
+.legend .item{display:flex;align-items:center;gap:6px;}
+.legend .sw{width:14px;height:14px;border-radius:3px;}
+.caption{font-size:12px;color:var(--muted);text-align:center;margin-top:10px;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="topbar">
+    <div class="titleblock">
+      <h1><span class="lz">Bridge 消息转发层</span><span class="le" style="display:none;">Bridge Message Relay</span></h1>
+      <p><span class="lz">本地 CLI 与 Anthropic 后端之间的 poll-based 薄转发层</span><span class="le" style="display:none;">Poll-based thin relay between local CLI and Anthropic backend</span></p>
+    </div>
+    <div class="controls">
+      <button class="btn" onclick="cycleTheme()"><span class="lz">切换主题</span><span class="le" style="display:none;">Theme</span></button>
+      <button class="btn" onclick="toggleLang()"><span class="lz">EN</span><span class="le" style="display:none;">中文</span></button>
+    </div>
+  </div>
+
+  <div class="notice">
+    <span class="lz"><b>⚠ 源码精读更新 (2026-04-15)</b> — 本图替换了早期基于 CRDT / Reconciler 的虚构版本。Bridge 实际是薄的 poll-based 消息转发层，模块名全部取自 <code>src/bridge/</code> 真实文件。</span>
+    <span class="le" style="display:none;"><b>⚠ Source-verified update (2026-04-15)</b> — This chart replaces an earlier fabricated CRDT / Reconciler version. Bridge is actually a thin poll-based message relay; module names are taken directly from <code>src/bridge/</code>.</span>
+  </div>
+
+  <div class="chart-card">
+    <div class="chart-wrap">
+      <svg viewBox="0 0 920 560" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="ar-cyan" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+            <polygon points="0 0, 10 5, 0 10" fill="#22d3ee"/>
+          </marker>
+          <marker id="ar-violet" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+            <polygon points="0 0, 10 5, 0 10" fill="#8b5cf6"/>
+          </marker>
+          <marker id="ar-emerald" markerWidth="10" markerHeight="10" refX="9" refY="5" orient="auto">
+            <polygon points="0 0, 10 5, 0 10" fill="#10b981"/>
+          </marker>
+
+          <linearGradient id="gLocal" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#22d3ee" stop-opacity=".18"/>
+            <stop offset="100%" stop-color="#22d3ee" stop-opacity=".02"/>
+          </linearGradient>
+          <linearGradient id="gBridge" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#8b5cf6" stop-opacity=".22"/>
+            <stop offset="100%" stop-color="#8b5cf6" stop-opacity=".04"/>
+          </linearGradient>
+          <linearGradient id="gRemote" x1="0" x2="0" y1="0" y2="1">
+            <stop offset="0%" stop-color="#10b981" stop-opacity=".18"/>
+            <stop offset="100%" stop-color="#10b981" stop-opacity=".02"/>
+          </linearGradient>
+        </defs>
+
+        <!-- ========== ZONES ========== -->
+        <rect x="30"  y="90" width="250" height="420" rx="16" fill="url(#gLocal)"  stroke="var(--zone-local)" stroke-width="1.5" stroke-opacity="var(--zone-local-stroke-o)"/>
+        <rect x="310" y="90" width="300" height="420" rx="16" fill="url(#gBridge)" stroke="var(--zone-bridge)" stroke-width="1.5" stroke-opacity="var(--zone-bridge-stroke-o)"/>
+        <rect x="640" y="90" width="250" height="420" rx="16" fill="url(#gRemote)" stroke="var(--zone-remote)" stroke-width="1.5" stroke-opacity="var(--zone-remote-stroke-o)"/>
+
+        <!-- Zone titles -->
+        <text x="155" y="50" text-anchor="middle" fill="var(--zone-local)" font-size="17" font-weight="700" class="lz">Local · CLI 端</text>
+        <text x="155" y="50" text-anchor="middle" fill="var(--zone-local)" font-size="17" font-weight="700" class="le" display="none">Local · CLI Side</text>
+        <text x="155" y="72" text-anchor="middle" fill="var(--svg-muted)" font-size="11" class="lz">Node 进程 · REPL 会话</text>
+        <text x="155" y="72" text-anchor="middle" fill="var(--svg-muted)" font-size="11" class="le" display="none">Node process · REPL session</text>
+
+        <text x="460" y="50" text-anchor="middle" fill="var(--zone-bridge)" font-size="17" font-weight="700" class="lz">Bridge Core · 转发层</text>
+        <text x="460" y="50" text-anchor="middle" fill="var(--zone-bridge)" font-size="17" font-weight="700" class="le" display="none">Bridge Core · Relay</text>
+        <text x="460" y="72" text-anchor="middle" fill="var(--svg-muted)" font-size="11" class="lz">HTTPS · Poll · JWT 鉴权</text>
+        <text x="460" y="72" text-anchor="middle" fill="var(--svg-muted)" font-size="11" class="le" display="none">HTTPS · Poll · JWT auth</text>
+
+        <text x="765" y="50" text-anchor="middle" fill="var(--zone-remote)" font-size="17" font-weight="700" class="lz">Remote · Anthropic 后端</text>
+        <text x="765" y="50" text-anchor="middle" fill="var(--zone-remote)" font-size="17" font-weight="700" class="le" display="none">Remote · Anthropic Backend</text>
+        <text x="765" y="72" text-anchor="middle" fill="var(--svg-muted)" font-size="11" class="lz">session-ingress 服务</text>
+        <text x="765" y="72" text-anchor="middle" fill="var(--svg-muted)" font-size="11" class="le" display="none">session-ingress service</text>
+
+        <!-- ========== LOCAL MODULES (x=44, w=222) ========== -->
+        <!-- L1: replBridge -->
+        <g>
+          <rect x="44" y="110" width="222" height="60" rx="10" fill="var(--card)" stroke="var(--zone-local)" stroke-width="1.5"/>
+          <text x="58" y="130" fill="var(--zone-local)" font-size="12.5" font-weight="700">replBridge.ts</text>
+          <text x="58" y="146" fill="var(--svg-text)" font-size="11" class="lz">REPL 桥接入口（env 版）</text>
+          <text x="58" y="146" fill="var(--svg-text)" font-size="11" class="le" display="none">REPL bridge entry (env)</text>
+          <text x="58" y="162" fill="var(--svg-muted)" font-size="10" class="lz">2406 行 · initBridgeCore / poll 主循环</text>
+          <text x="58" y="162" fill="var(--svg-muted)" font-size="10" class="le" display="none">2406 LOC · initBridgeCore / main poll</text>
+        </g>
+
+        <!-- L2: initReplBridge -->
+        <g>
+          <rect x="44" y="182" width="222" height="60" rx="10" fill="var(--card)" stroke="var(--zone-local)" stroke-width="1.5"/>
+          <text x="58" y="202" fill="var(--zone-local)" font-size="12.5" font-weight="700">initReplBridge.ts</text>
+          <text x="58" y="218" fill="var(--svg-text)" font-size="11" class="lz">env-less 初始化（SDK /bridge）</text>
+          <text x="58" y="218" fill="var(--svg-text)" font-size="11" class="le" display="none">env-less init (SDK /bridge)</text>
+          <text x="58" y="234" fill="var(--svg-muted)" font-size="10" class="lz">569 行 · 不依赖 config.ts 重链路</text>
+          <text x="58" y="234" fill="var(--svg-muted)" font-size="10" class="le" display="none">569 LOC · skips heavy config chain</text>
+        </g>
+
+        <!-- L3: bridgeMessaging -->
+        <g>
+          <rect x="44" y="254" width="222" height="60" rx="10" fill="var(--card)" stroke="var(--zone-local)" stroke-width="1.5"/>
+          <text x="58" y="274" fill="var(--zone-local)" font-size="12.5" font-weight="700">bridgeMessaging.ts</text>
+          <text x="58" y="290" fill="var(--svg-text)" font-size="11" class="lz">出站消息分发 · 回显去重</text>
+          <text x="58" y="290" fill="var(--svg-text)" font-size="11" class="le" display="none">Outbound dispatch · echo-dedup</text>
+          <text x="58" y="306" fill="var(--svg-muted)" font-size="10" class="lz">461 行 · SDK 消息 · 控制请求</text>
+          <text x="58" y="306" fill="var(--svg-muted)" font-size="10" class="le" display="none">461 LOC · SDK msg · control req</text>
+        </g>
+
+        <!-- L4: inboundMessages -->
+        <g>
+          <rect x="44" y="326" width="222" height="60" rx="10" fill="var(--card)" stroke="var(--zone-local)" stroke-width="1.5"/>
+          <text x="58" y="346" fill="var(--zone-local)" font-size="12.5" font-weight="700">inboundMessages.ts</text>
+          <text x="58" y="362" fill="var(--svg-text)" font-size="11" class="lz">入站队列 · 图片 media_type 归一</text>
+          <text x="58" y="362" fill="var(--svg-text)" font-size="11" class="le" display="none">Inbound queue · image normalize</text>
+          <text x="58" y="378" fill="var(--svg-muted)" font-size="10" class="lz">80 行 + inboundAttachments 175 行</text>
+          <text x="58" y="378" fill="var(--svg-muted)" font-size="10" class="le" display="none">80 LOC + inboundAttachments 175</text>
+        </g>
+
+        <!-- L5: flushGate -->
+        <g>
+          <rect x="44" y="398" width="222" height="60" rx="10" fill="var(--card)" stroke="var(--zone-local)" stroke-width="1.5"/>
+          <text x="58" y="418" fill="var(--zone-local)" font-size="12.5" font-weight="700">flushGate.ts</text>
+          <text x="58" y="434" fill="var(--svg-text)" font-size="11" class="lz">首刷闸门 · 防历史/新消息交错</text>
+          <text x="58" y="434" fill="var(--svg-text)" font-size="11" class="le" display="none">Flush gate · prevents interleave</text>
+          <text x="58" y="450" fill="var(--svg-muted)" font-size="10" class="lz">71 行 · start/end/drop/deactivate</text>
+          <text x="58" y="450" fill="var(--svg-muted)" font-size="10" class="le" display="none">71 LOC · start/end/drop/deactivate</text>
+        </g>
+
+        <!-- Local footer -->
+        <text x="155" y="482" text-anchor="middle" fill="var(--zone-local)" font-size="11" font-weight="600" class="lz">💡 就像你办公室里的收发员</text>
+        <text x="155" y="482" text-anchor="middle" fill="var(--zone-local)" font-size="11" font-weight="600" class="le" display="none">💡 Like your office mail clerk</text>
+        <text x="155" y="500" text-anchor="middle" fill="var(--svg-muted)" font-size="10.5" class="lz">收件/发件 · 不负责远程事务</text>
+        <text x="155" y="500" text-anchor="middle" fill="var(--svg-muted)" font-size="10.5" class="le" display="none">In/out mail · no remote state</text>
+
+        <!-- ========== BRIDGE MODULES (x=324, w=272) ========== -->
+        <!-- B1: bridgeApi -->
+        <g>
+          <rect x="324" y="110" width="272" height="56" rx="10" fill="var(--card)" stroke="var(--zone-bridge)" stroke-width="1.6"/>
+          <circle cx="348" cy="138" r="13" fill="var(--zone-bridge)" fill-opacity=".22" stroke="var(--zone-bridge)" stroke-width="1.2"/>
+          <text x="348" y="143" text-anchor="middle" fill="var(--zone-bridge)" font-size="13" font-weight="700">API</text>
+          <text x="370" y="132" fill="var(--svg-text)" font-size="12.5" font-weight="700">bridgeApi.ts</text>
+          <text x="370" y="148" fill="var(--svg-muted)" font-size="10.5" class="lz">HTTPS 客户端 · axios · 401 重试</text>
+          <text x="370" y="148" fill="var(--svg-muted)" font-size="10.5" class="le" display="none">HTTPS client · axios · 401 retry</text>
+          <text x="370" y="162" fill="var(--svg-muted)" font-size="10" class="lz">539 行 · 含 BridgeFatalError</text>
+          <text x="370" y="162" fill="var(--svg-muted)" font-size="10" class="le" display="none">539 LOC · incl. BridgeFatalError</text>
+        </g>
+
+        <!-- B2: pollConfig -->
+        <g>
+          <rect x="324" y="176" width="272" height="56" rx="10" fill="var(--card)" stroke="var(--zone-bridge)" stroke-width="1.6"/>
+          <circle cx="348" cy="204" r="13" fill="var(--zone-bridge)" fill-opacity=".22" stroke="var(--zone-bridge)" stroke-width="1.2"/>
+          <text x="348" y="209" text-anchor="middle" fill="var(--zone-bridge)" font-size="12" font-weight="700">⏱</text>
+          <text x="370" y="198" fill="var(--svg-text)" font-size="12.5" font-weight="700">pollConfig.ts + Defaults</text>
+          <text x="370" y="214" fill="var(--svg-muted)" font-size="10.5" class="lz">空闲 2s · 满载 600s · 复活 5s</text>
+          <text x="370" y="214" fill="var(--svg-muted)" font-size="10.5" class="le" display="none">idle 2s · full 600s · reclaim 5s</text>
+          <text x="370" y="228" fill="var(--svg-muted)" font-size="10" class="lz">110 + 82 行 · GrowthBook 可调</text>
+          <text x="370" y="228" fill="var(--svg-muted)" font-size="10" class="le" display="none">110+82 LOC · GrowthBook-tunable</text>
+        </g>
+
+        <!-- B3: capacityWake -->
+        <g>
+          <rect x="324" y="242" width="272" height="56" rx="10" fill="var(--card)" stroke="var(--zone-bridge)" stroke-width="1.6"/>
+          <circle cx="348" cy="270" r="13" fill="var(--zone-bridge)" fill-opacity=".22" stroke="var(--zone-bridge)" stroke-width="1.2"/>
+          <text x="348" y="275" text-anchor="middle" fill="var(--zone-bridge)" font-size="12" font-weight="700">⚡</text>
+          <text x="370" y="264" fill="var(--svg-text)" font-size="12.5" font-weight="700">capacityWake.ts</text>
+          <text x="370" y="280" fill="var(--svg-muted)" font-size="10.5" class="lz">满载唤醒 · AbortSignal 合并</text>
+          <text x="370" y="280" fill="var(--svg-muted)" font-size="10.5" class="le" display="none">At-capacity wake · signal merge</text>
+          <text x="370" y="294" fill="var(--svg-muted)" font-size="10" class="lz">56 行 · 替换重复的 wake 逻辑</text>
+          <text x="370" y="294" fill="var(--svg-muted)" font-size="10" class="le" display="none">56 LOC · dedupes wake controllers</text>
+        </g>
+
+        <!-- B4: JWT auth -->
+        <g>
+          <rect x="324" y="308" width="272" height="56" rx="10" fill="var(--card)" stroke="var(--zone-bridge)" stroke-width="1.6"/>
+          <circle cx="348" cy="336" r="13" fill="var(--zone-bridge)" fill-opacity=".22" stroke="var(--zone-bridge)" stroke-width="1.2"/>
+          <text x="348" y="341" text-anchor="middle" fill="var(--zone-bridge)" font-size="12" font-weight="700">🔑</text>
+          <text x="370" y="330" fill="var(--svg-text)" font-size="12.5" font-weight="700" class="lz">JWT 鉴权层</text>
+          <text x="370" y="330" fill="var(--svg-text)" font-size="12.5" font-weight="700" class="le" display="none">JWT Auth Layer</text>
+          <text x="370" y="346" fill="var(--svg-muted)" font-size="10.5" class="lz">jwtUtils · workSecret · trustedDevice</text>
+          <text x="370" y="346" fill="var(--svg-muted)" font-size="10.5" class="le" display="none">jwtUtils · workSecret · trustedDevice</text>
+          <text x="370" y="360" fill="var(--svg-muted)" font-size="10" class="lz">256 + 127 + 210 行 · Bearer + X-Device</text>
+          <text x="370" y="360" fill="var(--svg-muted)" font-size="10" class="le" display="none">256+127+210 LOC · Bearer + X-Device</text>
+        </g>
+
+        <!-- B5: remoteBridgeCore -->
+        <g>
+          <rect x="324" y="374" width="272" height="56" rx="10" fill="var(--card)" stroke="var(--zone-bridge)" stroke-width="1.6"/>
+          <circle cx="348" cy="402" r="13" fill="var(--zone-bridge)" fill-opacity=".22" stroke="var(--zone-bridge)" stroke-width="1.2"/>
+          <text x="348" y="407" text-anchor="middle" fill="var(--zone-bridge)" font-size="12" font-weight="700">◎</text>
+          <text x="370" y="396" fill="var(--svg-text)" font-size="12.5" font-weight="700">remoteBridgeCore.ts</text>
+          <text x="370" y="412" fill="var(--svg-muted)" font-size="10.5" class="lz">核心远程循环 · work 领取/归还</text>
+          <text x="370" y="412" fill="var(--svg-muted)" font-size="10.5" class="le" display="none">Core remote loop · work claim/ack</text>
+          <text x="370" y="426" fill="var(--svg-muted)" font-size="10" class="lz">1008 行 · 会话状态机 · 多会话调度</text>
+          <text x="370" y="426" fill="var(--svg-muted)" font-size="10" class="le" display="none">1008 LOC · session FSM · multi-session</text>
+        </g>
+
+        <!-- Bridge config hint -->
+        <g>
+          <rect x="340" y="446" width="240" height="46" rx="8" fill="var(--zone-bridge-fill)" stroke="var(--zone-bridge)" stroke-width="1" stroke-dasharray="3,3"/>
+          <text x="460" y="463" text-anchor="middle" fill="var(--zone-bridge)" font-size="10.5" font-weight="700" class="lz">bridgeConfig.ts + envLessBridgeConfig.ts</text>
+          <text x="460" y="463" text-anchor="middle" fill="var(--zone-bridge)" font-size="10.5" font-weight="700" class="le" display="none">bridgeConfig.ts + envLessBridgeConfig.ts</text>
+          <text x="460" y="478" text-anchor="middle" fill="var(--svg-muted)" font-size="10" class="lz">48 + 165 行 · baseUrl / runnerVersion / token 来源</text>
+          <text x="460" y="478" text-anchor="middle" fill="var(--svg-muted)" font-size="10" class="le" display="none">48 + 165 LOC · baseUrl / runnerVersion / token</text>
+        </g>
+
+        <text x="460" y="506" text-anchor="middle" fill="var(--svg-muted)" font-size="10.5" class="lz">💡 就像跨境快递中转仓：不拆包、不仲裁，只搬运+登记</text>
+        <text x="460" y="506" text-anchor="middle" fill="var(--svg-muted)" font-size="10.5" class="le" display="none">💡 Like a cross-border transshipment hub: ship &amp; log only</text>
+
+        <!-- ========== REMOTE MODULES (x=654, w=222) ========== -->
+        <!-- R1: codeSessionApi -->
+        <g>
+          <rect x="654" y="130" width="222" height="70" rx="10" fill="var(--card)" stroke="var(--zone-remote)" stroke-width="1.5"/>
+          <text x="668" y="152" fill="var(--zone-remote)" font-size="12.5" font-weight="700">codeSessionApi.ts</text>
+          <text x="668" y="170" fill="var(--svg-text)" font-size="11" class="lz">会话创建 · 凭据拉取</text>
+          <text x="668" y="170" fill="var(--svg-text)" font-size="11" class="le" display="none">Session create · fetch credentials</text>
+          <text x="668" y="186" fill="var(--svg-muted)" font-size="10" class="lz">168 行 · /v1/code/sessions</text>
+          <text x="668" y="186" fill="var(--svg-muted)" font-size="10" class="le" display="none">168 LOC · /v1/code/sessions</text>
+        </g>
+
+        <!-- R2: Anthropic API -->
+        <g>
+          <rect x="654" y="216" width="222" height="100" rx="10" fill="var(--card)" stroke="var(--zone-remote)" stroke-width="1.5"/>
+          <circle cx="682" cy="248" r="14" fill="var(--zone-remote)" fill-opacity=".22" stroke="var(--zone-remote)" stroke-width="1.2"/>
+          <text x="682" y="253" text-anchor="middle" fill="var(--zone-remote)" font-size="14" font-weight="700">☁</text>
+          <text x="708" y="242" fill="var(--svg-text)" font-size="12.5" font-weight="700" class="lz">Anthropic API</text>
+          <text x="708" y="242" fill="var(--svg-text)" font-size="12.5" font-weight="700" class="le" display="none">Anthropic API</text>
+          <text x="708" y="260" fill="var(--svg-muted)" font-size="10.5" class="lz">session-ingress · work 派发</text>
+          <text x="708" y="260" fill="var(--svg-muted)" font-size="10.5" class="le" display="none">session-ingress · work dispatch</text>
+          <text x="668" y="284" fill="var(--svg-muted)" font-size="10" class="lz">• 模型推理（claude-* 系列）</text>
+          <text x="668" y="284" fill="var(--svg-muted)" font-size="10" class="le" display="none">• Model inference (claude-*)</text>
+          <text x="668" y="300" fill="var(--svg-muted)" font-size="10" class="lz">• Redis 排队 · 4h TTL 存活</text>
+          <text x="668" y="300" fill="var(--svg-muted)" font-size="10" class="le" display="none">• Redis queue · 4h TTL</text>
+        </g>
+
+        <!-- R3: Server constraints -->
+        <g>
+          <rect x="654" y="332" width="222" height="90" rx="10" fill="var(--zone-remote-fill)" stroke="var(--zone-remote)" stroke-width="1" stroke-dasharray="3,3"/>
+          <text x="765" y="352" text-anchor="middle" fill="var(--zone-remote)" font-size="11.5" font-weight="700" class="lz">服务端约束（来自源码注释）</text>
+          <text x="765" y="352" text-anchor="middle" fill="var(--zone-remote)" font-size="11.5" font-weight="700" class="le" display="none">Server-side constraints (from src)</text>
+          <text x="668" y="372" fill="var(--svg-text)" font-size="10.5" class="lz">BRIDGE_LAST_POLL_TTL = 4h</text>
+          <text x="668" y="372" fill="var(--svg-text)" font-size="10.5" class="le" display="none">BRIDGE_LAST_POLL_TTL = 4h</text>
+          <text x="668" y="388" fill="var(--svg-muted)" font-size="10" class="lz">Redis key 过期 → 环境自动归档</text>
+          <text x="668" y="388" fill="var(--svg-muted)" font-size="10" class="le" display="none">Key expires → env auto-archived</text>
+          <text x="668" y="406" fill="var(--svg-text)" font-size="10.5" class="lz">max_poll_stale = 24h（健康门）</text>
+          <text x="668" y="406" fill="var(--svg-text)" font-size="10.5" class="le" display="none">max_poll_stale = 24h (health gate)</text>
+        </g>
+
+        <!-- Remote footer -->
+        <text x="765" y="454" text-anchor="middle" fill="var(--zone-remote)" font-size="11" font-weight="600" class="lz">无状态接收端</text>
+        <text x="765" y="454" text-anchor="middle" fill="var(--zone-remote)" font-size="11" font-weight="600" class="le" display="none">Stateless receiver</text>
+        <text x="765" y="474" text-anchor="middle" fill="var(--svg-muted)" font-size="10.5" class="lz">💡 就像云端的信箱服务商</text>
+        <text x="765" y="474" text-anchor="middle" fill="var(--svg-muted)" font-size="10.5" class="le" display="none">💡 Like a cloud mailbox provider</text>
+        <text x="765" y="492" text-anchor="middle" fill="var(--svg-muted)" font-size="10" class="lz">Bridge 投递/取件，信箱不主动推</text>
+        <text x="765" y="492" text-anchor="middle" fill="var(--svg-muted)" font-size="10" class="le" display="none">Bridge delivers/picks up; no push</text>
+
+        <!-- ========== FLOW ARROWS — clean orthogonal paths ========== -->
+        <!--
+          Layout:  Local(x=44..266) | gap(266-322) | Bridge(x=322..596) | gap(596-640) | Remote(x=640..876)
+          Module vertical centers:
+            Local:  L1=138, L2=204, L3=270, L4=336, L5=402
+            Bridge: B1=138, B2=204, B3=270, B4=336, B5=402
+            Remote: R1=165, R2=266, R3=377
+        -->
+
+        <!-- ── OUTBOUND: Local → Bridge (cyan) ── -->
+        <!-- L1→B1: bridgeApi ← replBridge -->
+        <path d="M 266 138 L 322 138" stroke="var(--zone-local)" stroke-width="2" fill="none" marker-end="url(#ar-cyan)"/>
+        <!-- L2→B2: pollConfig ← initReplBridge -->
+        <path d="M 266 204 L 322 204" stroke="var(--zone-local)" stroke-width="2" fill="none" marker-end="url(#ar-cyan)"/>
+        <!-- L3→B3: capacityWake ← bridgeMessaging -->
+        <path d="M 266 270 L 322 270" stroke="var(--zone-local)" stroke-width="2" fill="none" marker-end="url(#ar-cyan)"/>
+        <!-- L4→B4: JWT ← inboundMessages -->
+        <path d="M 266 336 L 322 336" stroke="var(--zone-local)" stroke-width="2" fill="none" marker-end="url(#ar-cyan)"/>
+        <!-- L5→B5: remoteBridgeCore ← flushGate -->
+        <path d="M 266 402 L 322 402" stroke="var(--zone-local)" stroke-width="2" fill="none" marker-end="url(#ar-cyan)"/>
+
+        <!-- ── OUTBOUND: Bridge → Remote (cyan) ── -->
+        <!-- B1→R1: poll POST to codeSessionApi -->
+        <path d="M 596 138 Q 618 138 618 165 L 654 165" stroke="var(--zone-local)" stroke-width="2" fill="none" marker-end="url(#ar-cyan)"/>
+        <!-- B1→R2: poll POST to Anthropic API -->
+        <path d="M 596 146 Q 618 146 618 266 L 654 266" stroke="var(--zone-local)" stroke-width="1.6" stroke-opacity=".7" fill="none" marker-end="url(#ar-cyan)"/>
+        <!-- B5→R3: reclaim to server constraints -->
+        <path d="M 596 402 Q 618 402 618 377 L 654 377" stroke="var(--zone-local)" stroke-width="1.6" stroke-opacity=".7" fill="none" marker-end="url(#ar-cyan)"/>
+
+        <!-- ── INBOUND: Remote → Bridge (violet) ── -->
+        <!-- R1→B2: session response to pollConfig -->
+        <path d="M 654 165 L 618 165 Q 618 204 322 204" stroke="var(--zone-bridge)" stroke-width="2" fill="none" marker-end="url(#ar-violet)"/>
+        <!-- R2→B3: work response to capacityWake -->
+        <path d="M 654 266 L 618 266 Q 618 270 322 270" stroke="var(--zone-bridge)" stroke-width="2" fill="none" marker-end="url(#ar-violet)"/>
+        <!-- R3→B5: constraints ack to remoteBridgeCore -->
+        <path d="M 654 377 L 618 377 Q 618 402 322 402" stroke="var(--zone-bridge)" stroke-width="1.6" stroke-opacity=".65" fill="none" marker-end="url(#ar-violet)"/>
+
+        <!-- ── INBOUND: Bridge → Local (violet) ── -->
+        <!-- B2→L2: pollConfig → initReplBridge -->
+        <path d="M 322 204 L 266 204" stroke="var(--zone-bridge)" stroke-width="2" fill="none" marker-end="url(#ar-violet)"/>
+        <!-- B3→L4: capacityWake → inboundMessages -->
+        <path d="M 322 270 L 266 270" stroke="var(--zone-bridge)" stroke-width="2" fill="none" marker-end="url(#ar-violet)"/>
+        <!-- B5→L5: remoteBridgeCore → flushGate -->
+        <path d="M 322 402 L 266 402" stroke="var(--zone-bridge)" stroke-width="1.6" stroke-opacity=".65" fill="none" marker-end="url(#ar-violet)"/>
+
+        <!-- Arrow labels -->
+        <text x="294" y="130" text-anchor="middle" fill="var(--zone-local)" font-size="10.5" font-weight="600" class="lz">出站 ▶</text>
+        <text x="294" y="130" text-anchor="middle" fill="var(--zone-local)" font-size="10.5" font-weight="600" class="le" display="none">out ▶</text>
+        <text x="294" y="426" text-anchor="middle" fill="var(--zone-bridge)" font-size="10.5" font-weight="600" class="lz">◀ 入站</text>
+        <text x="294" y="426" text-anchor="middle" fill="var(--zone-bridge)" font-size="10.5" font-weight="600" class="le" display="none">◀ in</text>
+        <text x="625" y="130" text-anchor="middle" fill="var(--zone-local)" font-size="10.5" font-weight="600" class="lz">▶ poll POST</text>
+        <text x="625" y="130" text-anchor="middle" fill="var(--zone-local)" font-size="10.5" font-weight="600" class="le" display="none">▶ poll POST</text>
+        <text x="625" y="360" text-anchor="middle" fill="var(--zone-bridge)" font-size="10.5" font-weight="600" class="lz">◀ 响应</text>
+        <text x="625" y="360" text-anchor="middle" fill="var(--zone-bridge)" font-size="10.5" font-weight="600" class="le" display="none">◀ resp</text>
+
+        <!-- ========== LEGEND STRIP ========== -->
+        <rect x="30" y="524" width="860" height="28" rx="8" fill="var(--card)" stroke="var(--border)"/>
+        <text x="50" y="542" fill="var(--svg-muted)" font-size="11" class="lz">流向：</text>
+        <text x="50" y="542" fill="var(--svg-muted)" font-size="11" class="le" display="none">Flow:</text>
+        <circle cx="108" cy="538" r="4" fill="var(--zone-local)"/>
+        <text x="118" y="542" fill="var(--svg-text)" font-size="11" class="lz">出站（Local → Bridge → Remote，HTTPS POST）</text>
+        <text x="118" y="542" fill="var(--svg-text)" font-size="11" class="le" display="none">Outbound (Local → Bridge → Remote, HTTPS POST)</text>
+        <circle cx="478" cy="538" r="4" fill="var(--zone-bridge)"/>
+        <text x="488" y="542" fill="var(--svg-text)" font-size="11" class="lz">入站（Remote → Bridge → Local，poll 响应）</text>
+        <text x="488" y="542" fill="var(--svg-text)" font-size="11" class="le" display="none">Inbound (Remote → Bridge → Local, poll response)</text>
+      </svg>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="v">31</div>
+        <div class="k"><span class="lz">src/bridge/ 文件数</span><span class="le" style="display:none;">files in src/bridge/</span></div>
+      </div>
+      <div class="stat">
+        <div class="v" style="color:var(--cyan);">2s / 600s</div>
+        <div class="k"><span class="lz">空闲 / 满载轮询间隔</span><span class="le" style="display:none;">idle / at-capacity poll</span></div>
+      </div>
+      <div class="stat">
+        <div class="v" style="color:var(--violet);">~12.6k</div>
+        <div class="k"><span class="lz">Bridge 模块总行数</span><span class="le" style="display:none;">total LOC in bridge/</span></div>
+      </div>
+      <div class="stat">
+        <div class="v" style="color:var(--emerald);">0</div>
+        <div class="k"><span class="lz">CRDT / 冲突解析器（实际不存在）</span><span class="le" style="display:none;">CRDT / conflict resolvers (none)</span></div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <div class="item"><div class="sw" style="background:#22d3ee;"></div><span class="lz">Local · CLI 端</span><span class="le" style="display:none;">Local · CLI side</span></div>
+      <div class="item"><div class="sw" style="background:#8b5cf6;"></div><span class="lz">Bridge Core · 转发层</span><span class="le" style="display:none;">Bridge Core · relay</span></div>
+      <div class="item"><div class="sw" style="background:#10b981;"></div><span class="lz">Remote · Anthropic 后端</span><span class="le" style="display:none;">Remote · Anthropic backend</span></div>
+    </div>
+
+    <div class="caption">
+      <span class="lz">💡 通俗理解：Bridge 不是"分布式协调员"，而是"跨办公室的快递员+登记员"。左边的收发员（replBridge/bridgeMessaging）把信交给它，它贴邮票（JWT）、按时刻表（pollConfig）跑到对面信箱（Anthropic API）投递，再把回信带回来——期间不拆包、不仲裁、不合并。源码里真的没有 CRDT。</span>
+      <span class="le" style="display:none;">Plain English: Bridge is not a "distributed coordinator" — it's a cross-office courier + log keeper. The local clerks (replBridge / bridgeMessaging) hand it a letter; it stamps (JWT), runs on schedule (pollConfig) to the mailbox (Anthropic API), delivers, and brings replies back. It never opens, arbitrates, or merges. There is literally no CRDT in the source.</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

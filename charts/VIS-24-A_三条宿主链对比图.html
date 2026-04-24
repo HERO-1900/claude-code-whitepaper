@@ -1,0 +1,552 @@
+<!DOCTYPE html>
+<!--
+  VIS-24-A · 三条宿主链对比图 · Three Host Chains Comparison
+  CC 白皮书 v2 图表体系 · 全主题（dark/warm/light）+ 双语（zh/en）
+  对比 Claude Code 的三种宿主执行环境：Terminal · IDE · Web
+-->
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code · 三条宿主链对比 · Three Host Chains</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+  :root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+  :root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+  :root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+  *{margin:0;padding:0;box-sizing:border-box;}
+  html,body{background:var(--bg);color:var(--text);}
+  body{font-family:'JetBrains Mono','SF Mono',Menlo,monospace;min-height:100vh;padding:1.75rem;line-height:1.55;transition:background .25s,color .25s;}
+  .container{max-width:1240px;margin:0 auto;}
+
+  /* ===== 顶部控件 ===== */
+  .controls{position:fixed;top:.875rem;right:.875rem;display:flex;gap:4px;z-index:100;
+    background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:5px 7px;backdrop-filter:blur(10px);}
+  .cb{font-family:inherit;font-size:11px;font-weight:500;padding:5px 11px;border-radius:6px;
+    border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+  .cb:hover{color:var(--text);border-color:var(--border);}
+  .cb.active{background:var(--subtle);color:var(--text);border-color:var(--border);}
+  .cdiv{width:1px;background:var(--border);margin:3px 2px;}
+
+  /* ===== Header ===== */
+  .header{margin-bottom:1.5rem;}
+  .header-row{display:flex;align-items:center;gap:.75rem;margin-bottom:.4rem;}
+  .pulse-dot{width:9px;height:9px;border-radius:50%;background:var(--cyan);box-shadow:0 0 12px var(--cyan);animation:pulse 2s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.55;transform:scale(.85);}}
+  h1{font-size:1.55rem;font-weight:700;letter-spacing:-.02em;}
+  .subtitle{font-size:.78rem;color:var(--muted);letter-spacing:.04em;margin-left:1.25rem;}
+
+  /* ===== Stats Row ===== */
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.875rem;margin-bottom:1.5rem;}
+  .stat{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:.95rem 1.15rem;display:flex;align-items:center;gap:.875rem;}
+  .stat-icon{width:34px;height:34px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0;}
+  .stat-1 .stat-icon{background:rgba(34,211,238,.14);color:var(--cyan);}
+  .stat-2 .stat-icon{background:rgba(139,92,246,.14);color:var(--violet);}
+  .stat-3 .stat-icon{background:rgba(16,185,129,.14);color:var(--emerald);}
+  .stat-num{font-size:1.05rem;font-weight:700;line-height:1.15;}
+  .stat-label{font-size:.66rem;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:2px;}
+
+  /* ===== 三栏卡片网格 ===== */
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.1rem;margin-bottom:1.5rem;}
+  @media(max-width:980px){.grid{grid-template-columns:1fr;}.stats{grid-template-columns:1fr;}}
+
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;overflow:hidden;display:flex;flex-direction:column;}
+  .card-head{padding:1rem 1.1rem .85rem;border-bottom:1px solid var(--border);}
+  .card-1 .card-head{background:linear-gradient(135deg,rgba(34,211,238,.16),rgba(34,211,238,.04));}
+  .card-2 .card-head{background:linear-gradient(135deg,rgba(139,92,246,.16),rgba(139,92,246,.04));}
+  .card-3 .card-head{background:linear-gradient(135deg,rgba(16,185,129,.16),rgba(16,185,129,.04));}
+
+  .ch-top{display:flex;align-items:center;gap:.65rem;margin-bottom:.5rem;}
+  .ch-icon{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;justify-content:center;flex-shrink:0;background:var(--card);border:1px solid var(--border);}
+  .ch-tag{font-size:.62rem;font-weight:600;letter-spacing:.1em;padding:3px 7px;border-radius:4px;text-transform:uppercase;}
+  .card-1 .ch-tag{background:rgba(34,211,238,.18);color:var(--cyan);}
+  .card-2 .ch-tag{background:rgba(139,92,246,.18);color:var(--violet);}
+  .card-3 .ch-tag{background:rgba(16,185,129,.18);color:var(--emerald);}
+  .ch-title{font-size:1.02rem;font-weight:700;letter-spacing:-.01em;margin-top:.2rem;}
+  .ch-sub{font-size:.7rem;color:var(--muted);margin-top:3px;letter-spacing:.02em;}
+
+  .card-body{padding:1rem 1.1rem 1.15rem;display:flex;flex-direction:column;gap:.95rem;flex:1;}
+
+  .row{display:flex;gap:.55rem;font-size:.72rem;}
+  .row-label{color:var(--muted);min-width:64px;font-weight:600;letter-spacing:.04em;font-size:.66rem;text-transform:uppercase;padding-top:1px;}
+  .row-val{color:var(--text);flex:1;line-height:1.55;}
+
+  /* ===== Mini layer stack ===== */
+  .layer-block{margin-top:.15rem;}
+  .layer-title{font-size:.66rem;color:var(--muted);font-weight:600;letter-spacing:.08em;text-transform:uppercase;margin-bottom:.5rem;}
+  .layers{display:flex;flex-direction:column;gap:5px;}
+  .layer{position:relative;padding:7px 10px;border-radius:6px;font-size:.7rem;font-weight:500;text-align:center;border:1px solid var(--border);background:var(--card);}
+  .card-1 .layer{border-left:3px solid var(--cyan);}
+  .card-2 .layer{border-left:3px solid var(--violet);}
+  .card-3 .layer{border-left:3px solid var(--emerald);}
+  .layer-arr{text-align:center;color:var(--muted);font-size:10px;line-height:1;margin:1px 0;}
+
+  .uses{display:flex;flex-wrap:wrap;gap:5px;}
+  .chip{font-size:.64rem;padding:3px 8px;border-radius:11px;border:1px solid var(--border);background:var(--card);color:var(--muted);font-weight:500;}
+  .card-1 .chip{color:var(--cyan);border-color:rgba(34,211,238,.3);}
+  .card-2 .chip{color:var(--violet);border-color:rgba(139,92,246,.3);}
+  .card-3 .chip{color:var(--emerald);border-color:rgba(16,185,129,.3);}
+
+  /* ===== Comparison matrix ===== */
+  .matrix-wrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:1.1rem 1.2rem 1.25rem;margin-bottom:1.5rem;}
+  .matrix-head{display:flex;align-items:center;gap:.6rem;margin-bottom:.85rem;}
+  .matrix-head h2{font-size:.92rem;font-weight:700;letter-spacing:-.005em;}
+  .matrix-head .badge{font-size:.6rem;padding:2px 8px;border-radius:4px;background:var(--subtle);color:var(--muted);letter-spacing:.08em;text-transform:uppercase;font-weight:600;}
+
+  table.matrix{width:100%;border-collapse:separate;border-spacing:0;font-size:.72rem;}
+  table.matrix th,table.matrix td{padding:9px 11px;text-align:left;border-bottom:1px solid var(--border);}
+  table.matrix th{font-size:.64rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);background:var(--card);}
+  table.matrix th:first-child,table.matrix td:first-child{padding-left:13px;}
+  table.matrix tr:last-child td{border-bottom:none;}
+  table.matrix .col-h{font-weight:600;}
+  table.matrix .col-1{color:var(--cyan);}
+  table.matrix .col-2{color:var(--violet);}
+  table.matrix .col-3{color:var(--emerald);}
+  table.matrix tbody tr:hover td{background:var(--card);}
+  .lat-bar{display:inline-block;height:4px;background:var(--subtle);border-radius:2px;width:60px;vertical-align:middle;margin-right:6px;position:relative;overflow:hidden;}
+  .lat-bar::after{content:"";position:absolute;left:0;top:0;height:100%;background:currentColor;border-radius:2px;}
+  .lat-1::after{width:18%;}
+  .lat-2::after{width:42%;}
+  .lat-3::after{width:78%;}
+
+  footer{font-size:.66rem;color:var(--muted);text-align:center;padding-top:1rem;border-top:1px solid var(--border);letter-spacing:.05em;}
+  footer span{color:var(--text);font-weight:600;}
+
+  /* Bilingual: hidden via JS class on lz/le elements */
+  .lz,.le{}
+</style>
+</head>
+<body>
+
+<div class="controls">
+  <button class="cb" id="btn-theme" onclick="cycleTheme()" title="Cycle theme">
+    <span class="lz">主题</span><span class="le">Theme</span>
+  </button>
+  <div class="cdiv"></div>
+  <button class="cb" id="btn-lang" onclick="toggleLang()" title="Toggle language">
+    <span class="lz">中 / EN</span><span class="le">EN / 中</span>
+  </button>
+</div>
+
+<div class="container">
+
+  <!-- ===== Header ===== -->
+  <div class="header">
+    <div class="header-row">
+      <div class="pulse-dot"></div>
+      <h1>
+        <span class="lz">三条宿主链对比图</span>
+        <span class="le">Three Host Chains Comparison</span>
+      </h1>
+    </div>
+    <p class="subtitle">
+      <span class="lz">VIS-24-A · Claude Code 三种执行环境（Terminal / IDE / Web）的协议、渲染与分层对比</span>
+      <span class="le">VIS-24-A · Three execution environments of Claude Code: protocols, rendering &amp; layered stacks</span>
+    </p>
+  </div>
+
+  <!-- ===== Stats Row ===== -->
+  <div class="stats">
+    <div class="stat stat-1">
+      <div class="stat-icon">3</div>
+      <div>
+        <div class="stat-num">
+          <span class="lz">3 条宿主链</span>
+          <span class="le">3 Host Chains</span>
+        </div>
+        <div class="stat-label">
+          <span class="lz">Terminal · IDE · Web</span>
+          <span class="le">Terminal · IDE · Web</span>
+        </div>
+      </div>
+    </div>
+    <div class="stat stat-2">
+      <div class="stat-icon">≠</div>
+      <div>
+        <div class="stat-num">
+          <span class="lz">不同 IO 协议</span>
+          <span class="le">Different IO Protocols</span>
+        </div>
+        <div class="stat-label">
+          <span class="lz">stdio · LSP · WebSocket · HTTPS · SSE</span>
+          <span class="le">stdio · LSP · WebSocket · HTTPS · SSE</span>
+        </div>
+      </div>
+    </div>
+    <div class="stat stat-3">
+      <div class="stat-icon">=</div>
+      <div>
+        <div class="stat-num">
+          <span class="lz">统一业务逻辑</span>
+          <span class="le">Unified Business Logic</span>
+        </div>
+        <div class="stat-label">
+          <span class="lz">同一 Agent Loop · 同一工具集</span>
+          <span class="le">Same Agent Loop · Same Toolset</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== Three Host Chain Cards ===== -->
+  <div class="grid">
+
+    <!-- Chain 1: Terminal -->
+    <div class="card card-1">
+      <div class="card-head">
+        <div class="ch-top">
+          <div class="ch-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#22d3ee" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/>
+            </svg>
+          </div>
+          <span class="ch-tag">Chain 01</span>
+        </div>
+        <div class="ch-title">
+          <span class="lz">Terminal 终端宿主</span>
+          <span class="le">Terminal Host</span>
+        </div>
+        <div class="ch-sub">
+          <span class="lz">最原生 · 最轻量 · 脚本友好</span>
+          <span class="le">Most native · Lightweight · Script-friendly</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="row-label"><span class="lz">环境</span><span class="le">Env</span></div>
+          <div class="row-val">bash / zsh / fish shell</div>
+        </div>
+        <div class="row">
+          <div class="row-label">IO</div>
+          <div class="row-val">stdin / stdout / stderr</div>
+        </div>
+        <div class="row">
+          <div class="row-label"><span class="lz">渲染</span><span class="le">Render</span></div>
+          <div class="row-val">
+            <span class="lz">ANSI 转义码 · log-update 原地刷新</span>
+            <span class="le">ANSI escape codes · log-update redraw</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><span class="lz">用途</span><span class="le">Use</span></div>
+          <div class="row-val">
+            <div class="uses">
+              <span class="chip"><span class="lz">CLI 交互</span><span class="le">CLI interactive</span></span>
+              <span class="chip"><span class="lz">脚本化</span><span class="le">scripting</span></span>
+              <span class="chip"><span class="lz">CI/CD</span><span class="le">CI/CD</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="layer-block">
+          <div class="layer-title">
+            <span class="lz">分层栈</span><span class="le">Layer Stack</span>
+          </div>
+          <div class="layers">
+            <div class="layer">Shell</div>
+            <div class="layer-arr">▼</div>
+            <div class="layer">Claude CLI</div>
+            <div class="layer-arr">▼</div>
+            <div class="layer">Ink (React-TUI)</div>
+            <div class="layer-arr">▼</div>
+            <div class="layer">stdout</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chain 2: IDE -->
+    <div class="card card-2">
+      <div class="card-head">
+        <div class="ch-top">
+          <div class="ch-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#8b5cf6" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="4" width="18" height="14" rx="2"/><line x1="3" y1="10" x2="21" y2="10"/><circle cx="6" cy="7" r=".6" fill="#8b5cf6"/>
+            </svg>
+          </div>
+          <span class="ch-tag">Chain 02</span>
+        </div>
+        <div class="ch-title">
+          <span class="lz">IDE 编辑器宿主</span>
+          <span class="le">IDE Editor Host</span>
+        </div>
+        <div class="ch-sub">
+          <span class="lz">深度集成 · 内联建议 · 上下文感知</span>
+          <span class="le">Deep integration · Inline suggestions · Context-aware</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="row-label"><span class="lz">环境</span><span class="le">Env</span></div>
+          <div class="row-val">VS Code · Cursor · JetBrains</div>
+        </div>
+        <div class="row">
+          <div class="row-label">IO</div>
+          <div class="row-val">LSP / WebSocket / IPC</div>
+        </div>
+        <div class="row">
+          <div class="row-label"><span class="lz">渲染</span><span class="le">Render</span></div>
+          <div class="row-val">
+            <span class="lz">原生 UI 组件（编辑器面板/装饰器）</span>
+            <span class="le">Native UI components (panels &amp; decorations)</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label"><span class="lz">用途</span><span class="le">Use</span></div>
+          <div class="row-val">
+            <div class="uses">
+              <span class="chip"><span class="lz">内联建议</span><span class="le">inline suggest</span></span>
+              <span class="chip"><span class="lz">侧边面板</span><span class="le">side panels</span></span>
+              <span class="chip"><span class="lz">代码 lens</span><span class="le">code lens</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="layer-block">
+          <div class="layer-title">
+            <span class="lz">分层栈</span><span class="le">Layer Stack</span>
+          </div>
+          <div class="layers">
+            <div class="layer">IDE</div>
+            <div class="layer-arr">▼</div>
+            <div class="layer">Bridge / Extension</div>
+            <div class="layer-arr">▼</div>
+            <div class="layer">Claude Daemon</div>
+            <div class="layer-arr">▼</div>
+            <div class="layer">WebSocket</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Chain 3: Web -->
+    <div class="card card-3">
+      <div class="card-head">
+        <div class="ch-top">
+          <div class="ch-icon">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <circle cx="12" cy="12" r="9"/><line x1="3" y1="12" x2="21" y2="12"/><path d="M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/>
+            </svg>
+          </div>
+          <span class="ch-tag">Chain 03</span>
+        </div>
+        <div class="ch-title">
+          <span class="lz">Web 网页宿主</span>
+          <span class="le">Web Browser Host</span>
+        </div>
+        <div class="ch-sub">
+          <span class="lz">零安装 · 全平台 · 富 UI 体验</span>
+          <span class="le">Zero install · Cross-platform · Rich UI</span>
+        </div>
+      </div>
+      <div class="card-body">
+        <div class="row">
+          <div class="row-label"><span class="lz">环境</span><span class="le">Env</span></div>
+          <div class="row-val">
+            <span class="lz">浏览器（claude.ai/code）</span>
+            <span class="le">Browser (claude.ai/code)</span>
+          </div>
+        </div>
+        <div class="row">
+          <div class="row-label">IO</div>
+          <div class="row-val">HTTPS / WebSocket</div>
+        </div>
+        <div class="row">
+          <div class="row-label"><span class="lz">渲染</span><span class="le">Render</span></div>
+          <div class="row-val">React / HTML / CSS</div>
+        </div>
+        <div class="row">
+          <div class="row-label"><span class="lz">用途</span><span class="le">Use</span></div>
+          <div class="row-val">
+            <div class="uses">
+              <span class="chip"><span class="lz">对话 UI</span><span class="le">chat UI</span></span>
+              <span class="chip"><span class="lz">文件编辑器</span><span class="le">file editor</span></span>
+              <span class="chip"><span class="lz">分享链接</span><span class="le">share links</span></span>
+            </div>
+          </div>
+        </div>
+
+        <div class="layer-block">
+          <div class="layer-title">
+            <span class="lz">分层栈</span><span class="le">Layer Stack</span>
+          </div>
+          <div class="layers">
+            <div class="layer">Browser</div>
+            <div class="layer-arr">▼</div>
+            <div class="layer">API Gateway</div>
+            <div class="layer-arr">▼</div>
+            <div class="layer">Claude Backend</div>
+            <div class="layer-arr">▼</div>
+            <div class="layer">SSE Stream</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ===== Comparison Matrix ===== -->
+  <div class="matrix-wrap">
+    <div class="matrix-head">
+      <h2>
+        <span class="lz">横向对比矩阵</span>
+        <span class="le">Cross-Comparison Matrix</span>
+      </h2>
+      <span class="badge">
+        <span class="lz">Env · IO · Render · Latency</span>
+        <span class="le">Env · IO · Render · Latency</span>
+      </span>
+    </div>
+    <table class="matrix">
+      <thead>
+        <tr>
+          <th><span class="lz">维度</span><span class="le">Dimension</span></th>
+          <th class="col-1"><span class="lz">Terminal 终端</span><span class="le">Terminal</span></th>
+          <th class="col-2"><span class="lz">IDE 编辑器</span><span class="le">IDE</span></th>
+          <th class="col-3"><span class="lz">Web 网页</span><span class="le">Web</span></th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="col-h"><span class="lz">环境 Env</span><span class="le">Environment</span></td>
+          <td class="col-1">bash / zsh / fish</td>
+          <td class="col-2">VS Code · Cursor · JetBrains</td>
+          <td class="col-3"><span class="lz">浏览器 (claude.ai/code)</span><span class="le">Browser (claude.ai/code)</span></td>
+        </tr>
+        <tr>
+          <td class="col-h">IO</td>
+          <td class="col-1">stdin / stdout / stderr</td>
+          <td class="col-2">LSP / WebSocket / IPC</td>
+          <td class="col-3">HTTPS / WebSocket</td>
+        </tr>
+        <tr>
+          <td class="col-h"><span class="lz">渲染 Render</span><span class="le">Rendering</span></td>
+          <td class="col-1"><span class="lz">ANSI 转义码 · log-update</span><span class="le">ANSI escape · log-update</span></td>
+          <td class="col-2"><span class="lz">原生 UI 组件</span><span class="le">Native UI components</span></td>
+          <td class="col-3">React / HTML / CSS</td>
+        </tr>
+        <tr>
+          <td class="col-h"><span class="lz">典型延迟 Latency</span><span class="le">Typical Latency</span></td>
+          <td class="col-1"><span class="col-1"><span class="lat-bar lat-1"></span></span>~5 ms</td>
+          <td class="col-2"><span class="col-2"><span class="lat-bar lat-2"></span></span>~20 ms</td>
+          <td class="col-3"><span class="col-3"><span class="lat-bar lat-3"></span></span>~80 ms</td>
+        </tr>
+        <tr>
+          <td class="col-h"><span class="lz">分层栈 Stack</span><span class="le">Layer Stack</span></td>
+          <td class="col-1">Shell → CLI → Ink → stdout</td>
+          <td class="col-2">IDE → Bridge → Daemon → WebSocket</td>
+          <td class="col-3">Browser → Gateway → Backend → SSE</td>
+        </tr>
+        <tr>
+          <td class="col-h"><span class="lz">最佳场景 Best For</span><span class="le">Best For</span></td>
+          <td class="col-1"><span class="lz">脚本 · CI · 远程 SSH</span><span class="le">scripts · CI · remote SSH</span></td>
+          <td class="col-2"><span class="lz">日常编码 · 内联补全</span><span class="le">daily coding · inline completions</span></td>
+          <td class="col-3"><span class="lz">协作 · 分享 · 移动端</span><span class="le">collaboration · sharing · mobile</span></td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>
+    <span class="lz">VIS-24-A · 三条宿主链对比 · </span>
+    <span class="le">VIS-24-A · Three Host Chains · </span>
+    <span>Claude Code 2.1.88</span>
+    <span class="lz"> · 同一业务逻辑 · 三种执行表面</span>
+    <span class="le"> · One business logic · Three execution surfaces</span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

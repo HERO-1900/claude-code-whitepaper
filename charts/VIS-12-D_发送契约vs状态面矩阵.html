@@ -1,0 +1,550 @@
+<!DOCTYPE html>
+<!-- VIS-12-D · Bridge Message Flow Control Matrix · v2 · 2026-04-15 source re-read -->
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code · Bridge 消息流控矩阵</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root[data-theme="dark"]{--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]{--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"]{--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'JetBrains Mono',ui-monospace,monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:2rem;transition:background .25s,color .25s;}
+.container{max-width:1240px;margin:0 auto;}
+.controls{position:fixed;top:1rem;right:1rem;display:flex;gap:5px;z-index:100;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:5px 7px;backdrop-filter:blur(8px);}
+.cb{font-family:inherit;font-size:11px;font-weight:500;padding:5px 10px;border-radius:6px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+.cb:hover{color:var(--text);border-color:var(--border);}
+.cb.active{border-color:var(--cyan);color:var(--text);}
+.cdiv{width:1px;background:var(--border);margin:2px 4px;}
+.header{margin-bottom:1.5rem;}
+.header-row{display:flex;align-items:center;gap:.875rem;margin-bottom:.375rem;}
+.pulse-dot{width:9px;height:9px;border-radius:50%;background:var(--cyan);animation:pulse 2s infinite;box-shadow:0 0 12px var(--cyan);}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}
+50%{opacity:.55;transform:scale(.85);}
+}
+h1{font-size:1.55rem;font-weight:700;letter-spacing:-.02em;}
+.subtitle{font-size:12px;color:var(--muted);letter-spacing:.05em;}
+.banner{background:linear-gradient(90deg,rgba(245,158,11,.18),rgba(245,158,11,.06));border:1px solid rgba(245,158,11,.45);border-left:4px solid var(--amber);border-radius:10px;padding:.85rem 1.1rem;margin-bottom:1.5rem;font-size:11.5px;line-height:1.65;color:var(--text);}
+.banner-hd{font-size:11px;font-weight:700;color:var(--amber);letter-spacing:.06em;margin-bottom:.3rem;display:flex;align-items:center;gap:.35rem;}
+.banner-body{color:var(--muted);font-size:11px;line-height:1.7;}
+.banner-body b{color:var(--text);}
+.banner-body code{font-size:10.5px;background:rgba(0,0,0,.22);padding:1px 5px;border-radius:4px;color:var(--amber);}
+:root[data-theme="light"] .banner-body code{background:rgba(0,0,0,.06);}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1rem 1.25rem;position:relative;overflow:hidden;}
+.stat::before{content:"";position:absolute;inset:0;width:3px;background:linear-gradient(180deg,var(--cyan),var(--emerald));}
+.stat-num{font-size:1.5rem;font-weight:700;color:var(--text);letter-spacing:-.02em;}
+.stat-label{font-size:11px;color:var(--muted);margin-top:.25rem;letter-spacing:.05em;}
+.axes{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:1.5rem;display:grid;grid-template-columns:1fr 1fr;gap:1.25rem;}
+@media(max-width:900px){.axes,.stats{grid-template-columns:1fr;}
+}
+.axis-block{display:flex;flex-direction:column;gap:.5rem;}
+.axis-head{font-size:12px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:.5rem;}
+.axis-head .dot{width:8px;height:8px;border-radius:50%;}
+.axis-row{font-size:11px;color:var(--muted);line-height:1.6;padding-left:1rem;position:relative;}
+.axis-row::before{content:"·";position:absolute;left:.3rem;color:var(--subtle);}
+.axis-row b{color:var(--text);font-weight:600;}
+.axis-row code{font-size:10.5px;background:rgba(0,0,0,.18);padding:1px 5px;border-radius:3px;color:var(--cyan);}
+:root[data-theme="light"] .axis-row code{background:rgba(0,0,0,.06);}
+.matrix-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:1.5rem;overflow-x:auto;}
+.matrix-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:.85rem;display:flex;align-items:center;gap:.5rem;}
+.matrix-title::before{content:"";width:4px;height:14px;background:var(--cyan);border-radius:2px;}
+table.mx{width:100%;border-collapse:separate;border-spacing:6px;font-size:11px;table-layout:fixed;}
+table.mx th,table.mx td{vertical-align:top;}
+table.mx th.corner{background:transparent;border:none;width:140px;font-size:10px;color:var(--muted);text-align:left;padding:.4rem .5rem;line-height:1.4;}
+.corner .axis-x{color:var(--cyan);font-weight:600;}
+.corner .axis-y{color:var(--violet);font-weight:600;}
+.corner .arrow{color:var(--subtle);}
+table.mx th.colh{background:rgba(34,211,238,.08);border:1px solid rgba(34,211,238,.25);border-radius:8px;padding:.55rem .65rem;color:var(--cyan);font-size:11px;font-weight:600;letter-spacing:.04em;text-align:center;}
+.colh .ch-sub{display:block;font-size:10px;color:var(--muted);font-weight:400;margin-top:2px;letter-spacing:.04em;}
+table.mx th.rowh{background:rgba(139,92,246,.08);border:1px solid rgba(139,92,246,.25);border-radius:8px;padding:.55rem .65rem;color:var(--violet);font-size:11px;font-weight:600;letter-spacing:.04em;text-align:center;width:140px;}
+.rowh .rh-sub{display:block;font-size:10px;color:var(--muted);font-weight:400;margin-top:2px;letter-spacing:.04em;}
+table.mx td.cell{border-radius:8px;padding:.7rem .75rem;background:var(--card);border:1px solid var(--border);cursor:help;position:relative;min-height:120px;transition:transform .15s,box-shadow .15s;}
+table.mx td.cell:hover{transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,0,0,.25);z-index:5;}
+.cell-icon{font-size:18px;line-height:1;margin-bottom:.4rem;display:block;}
+.cell-title{font-size:11px;font-weight:600;line-height:1.35;margin-bottom:.35rem;}
+.cell-desc{font-size:10px;color:var(--muted);line-height:1.55;}
+.cell-tag{display:inline-block;font-size:10px;letter-spacing:.06em;font-weight:600;padding:1px 6px;border-radius:4px;margin-top:.45rem;text-transform:uppercase;}
+.c-emerald{background:rgba(16,185,129,.10);border-color:rgba(16,185,129,.35);}
+.c-emerald .cell-icon,.c-emerald .cell-title{color:var(--emerald);}
+.c-emerald .cell-tag{background:rgba(16,185,129,.18);color:var(--emerald);}
+.c-amber{background:rgba(245,158,11,.10);border-color:rgba(245,158,11,.35);}
+.c-amber .cell-icon,.c-amber .cell-title{color:var(--amber);}
+.c-amber .cell-tag{background:rgba(245,158,11,.18);color:var(--amber);}
+.c-cyan{background:rgba(34,211,238,.10);border-color:rgba(34,211,238,.35);}
+.c-cyan .cell-icon,.c-cyan .cell-title{color:var(--cyan);}
+.c-cyan .cell-tag{background:rgba(34,211,238,.18);color:var(--cyan);}
+.c-rose{background:rgba(244,63,94,.10);border-color:rgba(244,63,94,.35);}
+.c-rose .cell-icon,.c-rose .cell-title{color:var(--rose);}
+.c-rose .cell-tag{background:rgba(244,63,94,.18);color:var(--rose);}
+.cell .tip{visibility:hidden;opacity:0;position:absolute;left:50%;top:calc(100% + 8px);transform:translateX(-50%);background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:.55rem .7rem;font-size:10.5px;color:var(--text);line-height:1.55;width:240px;z-index:20;box-shadow:0 8px 24px rgba(0,0,0,.4);transition:opacity .15s;text-align:left;}
+.cell:hover .tip{visibility:visible;opacity:1;}
+.tip .tip-hd{font-size:10px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:.3rem;}
+.tip code{font-size:10px;background:rgba(0,0,0,.2);padding:1px 4px;border-radius:3px;color:var(--cyan);}
+:root[data-theme="light"] .tip code{background:rgba(0,0,0,.06);}
+.legend{display:flex;flex-wrap:wrap;gap:.6rem;margin-top:1rem;padding-top:.85rem;border-top:1px dashed var(--border);}
+.legend-item{display:flex;align-items:center;gap:.4rem;font-size:10.5px;color:var(--muted);padding:3px 8px;border-radius:6px;background:var(--card);border:1px solid var(--border);}
+.legend-item .swatch{width:10px;height:10px;border-radius:3px;}
+.sw-emerald{background:var(--emerald);}
+.sw-amber{background:var(--amber);}
+.sw-cyan{background:var(--cyan);}
+.sw-rose{background:var(--rose);}
+.src-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:1.1rem 1.25rem;margin-bottom:1.5rem;}
+.src-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:.85rem;display:flex;align-items:center;gap:.5rem;}
+.src-title::before{content:"";width:4px;height:14px;background:var(--emerald);border-radius:2px;}
+.src-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.85rem;}
+@media(max-width:900px){.src-grid{grid-template-columns:1fr;}
+}
+.src-card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:.75rem .85rem;display:flex;flex-direction:column;gap:.4rem;}
+.src-hd{font-size:11px;font-weight:600;color:var(--text);display:flex;align-items:center;gap:.45rem;}
+.src-hd .src-num{font-size:11px;width:18px;height:18px;border-radius:5px;display:inline-flex;align-items:center;justify-content:center;font-weight:700;background:rgba(34,211,238,.18);color:var(--cyan);}
+.src-path{font-size:10px;color:var(--muted);font-weight:500;font-family:inherit;}
+.src-body{font-size:10.5px;color:var(--muted);line-height:1.6;}
+.src-body code{font-size:10.5px;color:var(--text);background:rgba(0,0,0,.18);padding:2px 6px;border-radius:4px;}
+:root[data-theme="light"] .src-body code{background:rgba(0,0,0,.06);}
+footer{font-size:11px;color:var(--muted);text-align:center;padding-top:1rem;border-top:1px solid var(--border);letter-spacing:.04em;}
+.lz,.le{display:inline;}
+</style>
+</head>
+<body>
+<div class="controls">
+<button class="cb" id="btn-theme" onclick="cycleTheme()"><span class="lz">主题</span><span class="le">Theme</span></button>
+<div class="cdiv"></div>
+<button class="cb active" onclick="toggleLang()"><span class="lz">中</span><span class="le">EN</span></button>
+</div>
+<div class="container">
+<!-- ============ HEADER ============ -->
+<div class="header">
+<div class="header-row">
+<div class="pulse-dot"></div>
+<h1>
+<span class="lz">Bridge 消息流控矩阵</span>
+<span class="le">Bridge Message Flow Control Matrix</span>
+</h1>
+</div>
+<p class="subtitle">
+<span class="lz">VIS-12-D · flushGate 状态 × 消息优先级 · Bridge 初始化窗口的 9 种流控行为</span>
+<span class="le">VIS-12-D · flushGate state × message priority · 9 flow-control behaviors in Bridge init window</span>
+</p>
+</div>
+<!-- ============ REWRITE BANNER ============ -->
+<div class="banner">
+<div class="banner-hd">
+<span>⚠</span>
+<span class="lz">源码精读更新 · 2026-04-15</span>
+<span class="le">Source Re-Read Update · 2026-04-15</span>
+</div>
+<div class="banner-body">
+<span class="lz">
+本图替换了早期虚构的 <code>sendContract × statePlane</code> 矩阵。真实维度来自 <b>src/bridge/flushGate.ts</b> + <b>remoteBridgeCore.ts</b> + <b>replBridge.ts</b>：横轴是 <b>flushGate 状态</b>（Open / Closed / Draining），纵轴是 <b>消息优先级</b>（Critical / Normal / Background）。这不是我们发明的契约语义，而是 Bridge 初始化窗口真实的闸门逻辑。
+</span>
+<span class="le">
+This chart replaces the earlier fabricated <code>sendContract × statePlane</code> matrix. The real dimensions come from <b>src/bridge/flushGate.ts</b> + <b>remoteBridgeCore.ts</b> + <b>replBridge.ts</b>: X-axis is <b>flushGate state</b> (Open / Closed / Draining), Y-axis is <b>message priority</b> (Critical / Normal / Background). This is not our invented contract semantics — it's the real gate logic in Bridge's init window.
+</span>
+</div>
+</div>
+<!-- ============ STATS ============ -->
+<div class="stats">
+<div class="stat">
+<div class="stat-num">3×3 = 9 <span style="font-size:12px;color:var(--muted);font-weight:400;"><span class="lz">行为格</span><span class="le">cells</span></span></div>
+<div class="stat-label">
+<span class="lz">闸门状态 × 消息优先级</span>
+<span class="le">Gate state × message priority</span>
+</div>
+</div>
+<div class="stat">
+<div class="stat-num">4 <span style="font-size:12px;color:var(--muted);font-weight:400;"><span class="lz">类行为</span><span class="le">actions</span></span></div>
+<div class="stat-label">
+<span class="lz">立即 / 排队 / 暂停 / 丢弃</span>
+<span class="le">Send / Queue / Pause / Drop</span>
+</div>
+</div>
+<div class="stat">
+<div class="stat-num">71 <span style="font-size:12px;color:var(--muted);font-weight:400;"><span class="lz">行实现</span><span class="le">LoC</span></span></div>
+<div class="stat-label">
+<span class="lz">flushGate.ts 总行数</span>
+<span class="le">Lines in flushGate.ts</span>
+</div>
+</div>
+</div>
+<!-- ============ AXES EXPLANATION ============ -->
+<div class="axes">
+<div class="axis-block">
+<div class="axis-head">
+<span class="dot" style="background:var(--violet);"></span>
+<span class="lz">行轴 · 消息优先级（Priority）</span>
+<span class="le">Row axis · Message Priority</span>
+</div>
+<div class="axis-row">
+<b><span class="lz">Critical 关键</span><span class="le">Critical</span></b>
+<span class="lz">：用户输入 / 工具结果 / stopWork · 不能丢不能等</span>
+<span class="le">: user input, tool results, stopWork — cannot drop, cannot wait</span>
+</div>
+<div class="axis-row">
+<b><span class="lz">Normal 常规</span><span class="le">Normal</span></b>
+<span class="lz">：轮询心跳 · 受 </span><code>pollConfig</code><span class="lz"> 节拍约束</span>
+<span class="le">: polling heartbeats — paced by </span><code>pollConfig</code>
+</div>
+<div class="axis-row">
+<b><span class="lz">Background 后台</span><span class="le">Background</span></b>
+<span class="lz">：telemetry / 事件批次 · 可合并可丢</span>
+<span class="le">: telemetry &amp; event batches — mergeable, droppable</span>
+</div>
+</div>
+<div class="axis-block">
+<div class="axis-head">
+<span class="dot" style="background:var(--cyan);"></span>
+<span class="lz">列轴 · flushGate 状态（Gate State）</span>
+<span class="le">Column axis · flushGate State</span>
+</div>
+<div class="axis-row">
+<b><span class="lz">Open 开放</span><span class="le">Open</span></b>
+<span class="lz">：</span><code>_active=false</code><span class="lz"> · 常态，enqueue() 返回 false，直接下发</span>
+<span class="le">: </span><code>_active=false</code><span class="le"> — normal state, enqueue() returns false, send directly</span>
+</div>
+<div class="axis-row">
+<b><span class="lz">Closed 关闭</span><span class="le">Closed</span></b>
+<span class="lz">：</span><code>start()</code><span class="lz"> 后 · 历史消息 POST 在途，写入被拦进 _pending</span>
+<span class="le">: after </span><code>start()</code><span class="le"> — historical POST in flight, writes intercepted into _pending</span>
+</div>
+<div class="axis-row">
+<b><span class="lz">Draining 排空</span><span class="le">Draining</span></b>
+<span class="lz">：</span><code>end()</code><span class="lz"> 触发 · 返回队列交调用方发送，新写入再次直发</span>
+<span class="le">: triggered by </span><code>end()</code><span class="le"> — returns queue to caller, new writes pass through</span>
+</div>
+</div>
+</div>
+<!-- ============ MATRIX ============ -->
+<div class="matrix-wrap">
+<div class="matrix-title">
+<span class="lz">流控行为矩阵 · 9 格穷举</span>
+<span class="le">Flow Control Behavior Matrix · Exhaustive 9 Cells</span>
+</div>
+<table class="mx">
+<thead>
+<tr>
+<th class="corner">
+<span class="axis-y"><span class="lz">优先级</span><span class="le">Priority</span></span>
+<span class="arrow"> \ </span>
+<span class="axis-x"><span class="lz">闸门</span><span class="le">Gate</span></span>
+</th>
+<th class="colh">
+<span class="lz">Open 开放</span><span class="le">Open</span>
+<span class="ch-sub"><span class="lz">_active = false</span><span class="le">_active = false</span></span>
+</th>
+<th class="colh">
+<span class="lz">Closed 关闭</span><span class="le">Closed</span>
+<span class="ch-sub"><span class="lz">flush 在途</span><span class="le">flush in flight</span></span>
+</th>
+<th class="colh">
+<span class="lz">Draining 排空</span><span class="le">Draining</span>
+<span class="ch-sub"><span class="lz">end() 返回队列</span><span class="le">end() drains queue</span></span>
+</th>
+</tr>
+</thead>
+<tbody>
+<!-- Row 1: Critical -->
+<tr>
+<th class="rowh">
+<span class="lz">Critical</span><span class="le">Critical</span>
+<span class="rh-sub"><span class="lz">用户输入 · 工具结果</span><span class="le">user input · tool result</span></span>
+</th>
+<td class="cell c-emerald">
+<span class="cell-icon">⚡</span>
+<div class="cell-title"><span class="lz">立即发送</span><span class="le">Immediate</span></div>
+<div class="cell-desc">
+<span class="lz">enqueue() 返 false，writeMessages 直接走 transport。常态路径。</span>
+<span class="le">enqueue() returns false, writeMessages goes straight to transport. Normal path.</span>
+</div>
+<span class="cell-tag"><span class="lz">IMMEDIATE</span><span class="le">IMMEDIATE</span></span>
+<div class="tip">
+<div class="tip-hd">remoteBridgeCore.ts:790</div>
+<span class="lz"><code>if (flushGate.enqueue(...filtered))</code> 为 false → fall-through 直发，延迟最低。</span>
+<span class="le"><code>if (flushGate.enqueue(...filtered))</code> is false → fall-through direct send, lowest latency.</span>
+</div>
+</td>
+<td class="cell c-cyan">
+<span class="cell-icon">⏳</span>
+<div class="cell-title"><span class="lz">排队等待</span><span class="le">Queue &amp; Wait</span></div>
+<div class="cell-desc">
+<span class="lz">压入 _pending 数组。不丢、不越历史，等 end() 后成批释放。</span>
+<span class="le">Pushed into _pending. Not dropped, not reordered before history; released after end().</span>
+</div>
+<span class="cell-tag"><span class="lz">QUEUED</span><span class="le">QUEUED</span></span>
+<div class="tip">
+<div class="tip-hd">flushGate.ts:46–50</div>
+<span class="lz"><code>enqueue()</code> 返 true，消息进 <code>_pending.push(...items)</code>，保序。</span>
+<span class="le"><code>enqueue()</code> returns true, items go into <code>_pending.push(...items)</code>, ordered.</span>
+</div>
+</td>
+<td class="cell c-emerald">
+<span class="cell-icon">➡</span>
+<div class="cell-title"><span class="lz">直接发送</span><span class="le">Force-Send</span></div>
+<div class="cell-desc">
+<span class="lz">end() 已置 _active=false，enqueue() 即刻返 false，新 Critical 跟 drain 后的写入并行直发。</span>
+<span class="le">end() already set _active=false; enqueue() immediately returns false, new Critical flows alongside post-drain writes.</span>
+</div>
+<span class="cell-tag"><span class="lz">FORCE-SEND</span><span class="le">FORCE-SEND</span></span>
+<div class="tip">
+<div class="tip-hd">flushGate.ts:37–40</div>
+<span class="lz"><code>end()</code> 把 _active 清零并 splice 队列，返回给 <code>drainFlushGate</code> 批量下发。</span>
+<span class="le"><code>end()</code> clears _active and splices the queue, returning it to <code>drainFlushGate</code> for batch send.</span>
+</div>
+</td>
+</tr>
+<!-- Row 2: Normal -->
+<tr>
+<th class="rowh">
+<span class="lz">Normal</span><span class="le">Normal</span>
+<span class="rh-sub"><span class="lz">轮询心跳 · poll loop</span><span class="le">poll loop · heartbeat</span></span>
+</th>
+<td class="cell c-cyan">
+<span class="cell-icon">🔁</span>
+<div class="cell-title"><span class="lz">按 pollConfig 节奏</span><span class="le">Paced by pollConfig</span></div>
+<div class="cell-desc">
+<span class="lz">不走 flushGate，由独立 poll loop 按配置间隔推进。</span>
+<span class="le">Does not go through flushGate; independent poll loop advances at configured cadence.</span>
+</div>
+<span class="cell-tag"><span class="lz">PACED</span><span class="le">PACED</span></span>
+<div class="tip">
+<div class="tip-hd">pollConfig.ts:31–43</div>
+<span class="lz">at_capacity / not_at_capacity 两档，<code>.min(100)</code> 防止粗手指打穿 DB。</span>
+<span class="le">Two tiers (at_capacity / not), <code>.min(100)</code> floor prevents fat-finger DB hammering.</span>
+</div>
+</td>
+<td class="cell c-amber">
+<span class="cell-icon">⏸</span>
+<div class="cell-title"><span class="lz">暂停轮询</span><span class="le">Paused</span></div>
+<div class="cell-desc">
+<span class="lz">Bridge 初始化阶段不开轮询，等 flush 完成再起 loop。避免与历史 POST 竞争连接。</span>
+<span class="le">Poll loop not started during init; waits for flush to complete. Avoids racing the history POST.</span>
+</div>
+<span class="cell-tag"><span class="lz">PAUSED</span><span class="le">PAUSED</span></span>
+<div class="tip">
+<div class="tip-hd">remoteBridgeCore.ts:594–597</div>
+<span class="lz">"Start flushGate BEFORE connect" — 闸门先启，loop 后起。</span>
+<span class="le">"Start flushGate BEFORE connect" — gate first, loop later.</span>
+</div>
+</td>
+<td class="cell c-amber">
+<span class="cell-icon">🕓</span>
+<div class="cell-title"><span class="lz">本批后暂停</span><span class="le">After-Flush Pause</span></div>
+<div class="cell-desc">
+<span class="lz">drain 完再接入 poll loop 节拍；避免 drain 期间与心跳 write 冲突。</span>
+<span class="le">Poll loop reconnects to cadence only after drain completes; prevents heartbeat clash.</span>
+</div>
+<span class="cell-tag"><span class="lz">AFTER-FLUSH</span><span class="le">AFTER-FLUSH</span></span>
+<div class="tip">
+<div class="tip-hd">replBridge.ts:1308–1324</div>
+<span class="lz"><code>drainFlushGate()</code> 完再继续 else-if 分支的轮询调度。</span>
+<span class="le">Poll scheduling in the else-if branch resumes only after <code>drainFlushGate()</code> returns.</span>
+</div>
+</td>
+</tr>
+<!-- Row 3: Background -->
+<tr>
+<th class="rowh">
+<span class="lz">Background</span><span class="le">Background</span>
+<span class="rh-sub"><span class="lz">telemetry · 事件批</span><span class="le">telemetry · event batch</span></span>
+</th>
+<td class="cell c-cyan">
+<span class="cell-icon">📦</span>
+<div class="cell-title"><span class="lz">合并批次</span><span class="le">Batched</span></div>
+<div class="cell-desc">
+<span class="lz">走 SerialBatchEventUploader · 顺序 enqueue 保序，上传器自行合流。</span>
+<span class="le">Uses SerialBatchEventUploader — sequential enqueue preserves order, uploader coalesces.</span>
+</div>
+<span class="cell-tag"><span class="lz">BATCHED</span><span class="le">BATCHED</span></span>
+<div class="tip">
+<div class="tip-hd">replBridgeTransport.ts:276</div>
+<span class="lz">"sequential enqueue preserves order and the uploader coalesces" — 原注释。</span>
+<span class="le">"sequential enqueue preserves order and the uploader coalesces" — verbatim comment.</span>
+</div>
+</td>
+<td class="cell c-rose">
+<span class="cell-icon">🗑</span>
+<div class="cell-title"><span class="lz">丢弃</span><span class="le">Dropped</span></div>
+<div class="cell-desc">
+<span class="lz">drop() 一次性清空 _pending，返回被丢的条数用于日志 —— 遥测可以丢，用户消息不行。</span>
+<span class="le">drop() clears _pending in one shot, returns count for logs — telemetry droppable, user messages not.</span>
+</div>
+<span class="cell-tag"><span class="lz">DROPPED</span><span class="le">DROPPED</span></span>
+<div class="tip">
+<div class="tip-hd">flushGate.ts:56–61</div>
+<span class="lz"><code>drop()</code> "permanent transport close" 时调用，<code>_pending.length = 0</code>。</span>
+<span class="le"><code>drop()</code> called on "permanent transport close", <code>_pending.length = 0</code>.</span>
+</div>
+</td>
+<td class="cell c-rose">
+<span class="cell-icon">🗑</span>
+<div class="cell-title"><span class="lz">丢弃</span><span class="le">Dropped</span></div>
+<div class="cell-desc">
+<span class="lz">drain 路径只搬运 Critical/Normal 的队列；背景事件本来就走独立上传器，不参与 drain。</span>
+<span class="le">Drain path only handles Critical/Normal queue; background goes via separate uploader, not part of drain.</span>
+</div>
+<span class="cell-tag"><span class="lz">DROPPED</span><span class="le">DROPPED</span></span>
+<div class="tip">
+<div class="tip-hd">replBridge.ts:1619–1626</div>
+<span class="lz">stopWork/archive 后 <code>flushGate.drop()</code>，上传器 drain 靠 ~200-500ms archive 延迟兜底。</span>
+<span class="le">After stopWork/archive, <code>flushGate.drop()</code>; uploader drain relies on ~200-500ms archive latency.</span>
+</div>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Legend -->
+<div class="legend">
+<div class="legend-item"><span class="swatch sw-emerald"></span>
+<span class="lz">立即 / 直发</span><span class="le">Immediate / Force-Send</span>
+</div>
+<div class="legend-item"><span class="swatch sw-cyan"></span>
+<span class="lz">排队 / 批合并</span><span class="le">Queued / Batched</span>
+</div>
+<div class="legend-item"><span class="swatch sw-amber"></span>
+<span class="lz">暂停</span><span class="le">Paused</span>
+</div>
+<div class="legend-item"><span class="swatch sw-rose"></span>
+<span class="lz">丢弃</span><span class="le">Dropped</span>
+</div>
+</div>
+</div>
+<!-- ============ SOURCE LINES ============ -->
+<div class="src-wrap">
+<div class="src-title">
+<span class="lz">源码锚点 · 可追溯的 3 份文件</span>
+<span class="le">Source Anchors · 3 Traceable Files</span>
+</div>
+<div class="src-grid">
+<div class="src-card">
+<div class="src-hd">
+<span class="src-num">1</span>
+<span class="lz">闸门状态机</span><span class="le">Gate State Machine</span>
+</div>
+<div class="src-path">src/bridge/flushGate.ts · 71 LoC</div>
+<div class="src-body">
+<span class="lz"><code>FlushGate&lt;T&gt;</code> 类封装 <code>_active</code>+<code>_pending</code>。五个方法：<b>start</b> / <b>end</b> / <b>enqueue</b> / <b>drop</b> / <b>deactivate</b>。后者用于 transport 替换（onWorkReceived）——不丢 pending，交新 transport 接棒。</span>
+<span class="le">Class <code>FlushGate&lt;T&gt;</code> wraps <code>_active</code>+<code>_pending</code>. Five methods: <b>start</b> / <b>end</b> / <b>enqueue</b> / <b>drop</b> / <b>deactivate</b>. The last is for transport replacement (onWorkReceived) — keeps pending, new transport drains.</span>
+</div>
+</div>
+<div class="src-card">
+<div class="src-hd">
+<span class="src-num">2</span>
+<span class="lz">远端 Bridge 主循环</span><span class="le">Remote Bridge Core</span>
+</div>
+<div class="src-path">src/bridge/remoteBridgeCore.ts:278–790</div>
+<div class="src-body">
+<span class="lz">实例化 <code>flushGate = new FlushGate&lt;Message&gt;()</code>；连接前 <code>start()</code>、历史 flush 成功后 <code>drainFlushGate()</code>、失败路径 <code>drop()</code>。写路径 if/else：进队成功就 return，否则 fall-through 直发。</span>
+<span class="le">Instantiates <code>flushGate = new FlushGate&lt;Message&gt;()</code>; calls <code>start()</code> before connect, <code>drainFlushGate()</code> on flush success, <code>drop()</code> on failure. Write path: enqueue-success returns; else fall-through direct send.</span>
+</div>
+</div>
+<div class="src-card">
+<div class="src-hd">
+<span class="src-num">3</span>
+<span class="lz">REPL Bridge + Poll 配置</span><span class="le">REPL Bridge + Poll Config</span>
+</div>
+<div class="src-path">src/bridge/replBridge.ts + pollConfig.ts</div>
+<div class="src-body">
+<span class="lz">replBridge 复用同一状态机；transport 替换走 <code>deactivate()</code>，close 走 <code>drop()</code>。pollConfig 管 Normal 行的节拍（at_capacity / not），<code>.min(100)</code> 防粗手指。</span>
+<span class="le">replBridge reuses the same state machine; transport replacement uses <code>deactivate()</code>, close uses <code>drop()</code>. pollConfig paces the Normal row (at_capacity / not), <code>.min(100)</code> as fat-finger floor.</span>
+</div>
+</div>
+</div>
+</div>
+<footer>
+<span class="lz">VIS-12-D · Bridge 消息流控矩阵 · CC 白皮书 v2 · 2026-04-15 源码精读修订</span>
+<span class="le">VIS-12-D · Bridge Message Flow Control Matrix · CC Whitepaper v2 · Revised 2026-04-15 from source</span>
+</footer>
+</div>
+<script>
+(function(){
+var t=localStorage.getItem('vtheme')||'dark';
+var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+document.documentElement.setAttribute('data-theme',t);
+function applyLang(){
+document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+}
+applyLang();
+window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

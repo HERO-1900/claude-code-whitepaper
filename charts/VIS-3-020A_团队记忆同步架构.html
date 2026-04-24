@@ -1,0 +1,633 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-3-020A | 团队记忆同步架构</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+/* --- Dark theme SVG internals --- */
+[data-theme="dark"] { --svg-bg:#020617; --svg-panel:#0f172a; --svg-grid:#1e293b; --svg-mask:#0f172a; }
+[data-theme="warm"] { --svg-bg:#14100d; --svg-panel:#1e1512; --svg-grid:#2d2018; --svg-mask:#1e1512; }
+[data-theme="light"]{ --svg-bg:#f0f4f8; --svg-panel:#ffffff; --svg-grid:#e2e8f0; --svg-mask:#f8fafc; }
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 16px 40px}
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:100}
+.ctrl button{font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:background 0.2s}
+.ctrl button:hover{background:var(--subtle)}
+.header{text-align:center;margin-bottom:24px;max-width:1000px;width:100%}
+.vis-id{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:8px}
+.title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px}
+.subtitle{font-size:12px;color:var(--muted)}
+.svg-wrap{width:100%;max-width:1000px;background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+svg{width:100%;height:auto;display:block}
+.summary-cards{display:flex;gap:16px;margin-top:20px;max-width:1000px;width:100%;flex-wrap:wrap}
+.card{flex:1;min-width:180px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 20px}
+.card-icon{font-size:18px;margin-bottom:8px}
+.card-title{font-size:12px;font-weight:700;margin-bottom:4px;color:var(--text)}
+.card-desc{font-size:11px;color:var(--muted);line-height:1.6}
+.footer{margin-top:24px;font-size:10px;color:var(--muted);max-width:1000px;width:100%;text-align:right;padding:0 4px}[data-lang="en"] .lz{display:none}
+[data-lang="en"] .le{display:inline}
+</style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="cycleTheme()">Theme</button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<div class="header">
+  <div class="vis-id">VIS-3-020A</div>
+  <div class="title">
+    <span class="lz">团队记忆同步架构</span>
+    <span class="le">Team Memory Sync Architecture</span>
+  </div>
+  <div class="subtitle">
+    <span class="lz">本地文件监听 · ETag 版本控制 · 预推送安全扫描 · 3 同步组件</span>
+    <span class="le">Local File Watch · ETag Version Control · Pre-push Secret Scan · 3 Sync Components</span>
+  </div>
+</div>
+
+<div class="svg-wrap">
+<svg viewBox="0 0 920 520" xmlns="http://www.w3.org/2000/svg" font-family="'JetBrains Mono', monospace">
+  <defs>
+    <!-- Background grid pattern -->
+    <pattern id="grid" width="36" height="36" patternUnits="userSpaceOnUse">
+      <path d="M 36 0 L 0 0 0 36" fill="none" stroke="#1e293b" stroke-width="0.5" opacity="0.5"/>
+    </pattern>
+
+    <!-- Arrow markers -->
+    <marker id="arr-rose" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#f43f5e"/>
+    </marker>
+    <marker id="arr-rose-rev" markerWidth="8" markerHeight="8" refX="2" refY="3" orient="auto">
+      <path d="M8,0 L8,6 L0,3 z" fill="#f43f5e"/>
+    </marker>
+    <marker id="arr-cyan" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#22d3ee"/>
+    </marker>
+    <marker id="arr-violet" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#8b5cf6"/>
+    </marker>
+    <marker id="arr-amber" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#f59e0b"/>
+    </marker>
+    <marker id="arr-emerald" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#10b981"/>
+    </marker>
+    <marker id="arr-slate" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+      <path d="M0,0 L0,6 L8,3 z" fill="#64748b"/>
+    </marker>
+
+    <!-- Glow filters -->
+    <filter id="glow-cyan" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-rose" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-violet" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-amber" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- Animated gradients for data packets -->
+    <linearGradient id="packet-push" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#f43f5e" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#f43f5e" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#f43f5e" stop-opacity="0"/>
+    </linearGradient>
+    <linearGradient id="packet-pull" x1="100%" y1="0%" x2="0%" y2="0%">
+      <stop offset="0%" stop-color="#f43f5e" stop-opacity="0"/>
+      <stop offset="50%" stop-color="#f43f5e" stop-opacity="1"/>
+      <stop offset="100%" stop-color="#f43f5e" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- ═══════════════════ BACKGROUND ═══════════════════ -->
+  <rect width="920" height="520" fill="#020617"/>
+  <rect width="920" height="520" fill="url(#grid)"/>
+
+  <!-- Column zone backgrounds (subtle) -->
+  <!-- Left: Local Side -->
+  <rect x="14" y="14" width="248" height="492" rx="10" fill="#0a1628" stroke="#22d3ee" stroke-width="1" stroke-opacity="0.25"/>
+  <!-- Center: Process Flow -->
+  <rect x="278" y="14" width="364" height="492" rx="10" fill="#0d0a1e" stroke="#f43f5e" stroke-width="1" stroke-opacity="0.2"/>
+  <!-- Right: Remote Side -->
+  <rect x="658" y="14" width="248" height="492" rx="10" fill="#100a20" stroke="#8b5cf6" stroke-width="1" stroke-opacity="0.25"/>
+
+  <!-- Column labels -->
+  <!-- LOCAL label -->
+  <rect x="70" y="22" width="130" height="20" rx="4" fill="#22d3ee" fill-opacity="0.12" stroke="#22d3ee" stroke-width="0.8" stroke-opacity="0.6"/>
+  <text x="135" y="36" text-anchor="middle" fill="#22d3ee" font-size="11" font-weight="700" letter-spacing="2" opacity="0.9">
+    <tspan class="lz">本地端</tspan>
+    <tspan class="le">LOCAL SIDE</tspan>
+  </text>
+
+  <!-- CENTER label -->
+  <rect x="356" y="22" width="208" height="20" rx="4" fill="#f43f5e" fill-opacity="0.12" stroke="#f43f5e" stroke-width="0.8" stroke-opacity="0.6"/>
+  <text x="460" y="36" text-anchor="middle" fill="#f43f5e" font-size="11" font-weight="700" letter-spacing="2" opacity="0.9">
+    <tspan class="lz">同步流程</tspan>
+    <tspan class="le">SYNC FLOW</tspan>
+  </text>
+
+  <!-- REMOTE label -->
+  <rect x="712" y="22" width="140" height="20" rx="4" fill="#8b5cf6" fill-opacity="0.12" stroke="#8b5cf6" stroke-width="0.8" stroke-opacity="0.6"/>
+  <text x="782" y="36" text-anchor="middle" fill="#8b5cf6" font-size="11" font-weight="700" letter-spacing="2" opacity="0.9">
+    <tspan class="lz">远端</tspan>
+    <tspan class="le">REMOTE</tspan>
+  </text>
+
+  <!-- ═══════════════════ LEFT COLUMN: LOCAL SIDE ═══════════════════ -->
+
+  <!-- 1. Local Memory Directory -->
+  <rect x="28" y="58" width="222" height="68" rx="8" fill="#0f1f38" stroke="#22d3ee" stroke-width="1.5"/>
+  <rect x="28" y="58" width="6" height="68" rx="3" fill="#22d3ee" opacity="0.9"/>
+  <!-- folder icon -->
+  <rect x="42" y="72" width="26" height="20" rx="3" fill="#22d3ee" fill-opacity="0.2" stroke="#22d3ee" stroke-width="1"/>
+  <rect x="42" y="68" width="14" height="6" rx="2" fill="#22d3ee" fill-opacity="0.5"/>
+  <text x="76" y="79" fill="#22d3ee" font-size="11" font-weight="700">
+    <tspan class="lz">本地记忆目录</tspan>
+    <tspan class="le">Local Memory Dir</tspan>
+  </text>
+  <text x="76" y="93" fill="#94a3b8" font-size="10">.claude/memory/</text>
+  <text x="42" y="117" fill="#64748b" font-size="10">
+    <tspan class="lz">· Markdown 记忆文件集合</tspan>
+    <tspan class="le">· Markdown memory files</tspan>
+  </text>
+
+  <!-- Arrow down 1→2 -->
+  <line x1="138" y1="126" x2="138" y2="148" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arr-cyan)" opacity="0.7"/>
+
+  <!-- 2. File System Watcher -->
+  <rect x="28" y="148" width="222" height="68" rx="8" fill="#0f1f38" stroke="#22d3ee" stroke-width="1.5"/>
+  <rect x="28" y="148" width="6" height="68" rx="3" fill="#22d3ee" opacity="0.9"/>
+  <!-- eye icon -->
+  <ellipse cx="55" cy="182" rx="13" ry="9" fill="none" stroke="#22d3ee" stroke-width="1.2"/>
+  <circle cx="55" cy="182" r="4" fill="#22d3ee" fill-opacity="0.5"/>
+  <circle cx="55" cy="182" r="1.5" fill="#22d3ee"/>
+  <text x="76" y="175" fill="#22d3ee" font-size="11" font-weight="700">
+    <tspan class="lz">文件监听 Watcher</tspan>
+    <tspan class="le">File System Watcher</tspan>
+  </text>
+  <text x="76" y="189" fill="#94a3b8" font-size="10">inotify / FSEvents</text>
+  <text x="42" y="208" fill="#64748b" font-size="10">
+    <tspan class="lz">· 监听目录内文件变更事件</tspan>
+    <tspan class="le">· Watches for file change events</tspan>
+  </text>
+
+  <!-- Arrow down 2→3 -->
+  <line x1="138" y1="216" x2="138" y2="238" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arr-cyan)" opacity="0.7"/>
+
+  <!-- 3. Debounce -->
+  <rect x="28" y="238" width="222" height="68" rx="8" fill="#0f1f38" stroke="#22d3ee" stroke-width="1.5"/>
+  <rect x="28" y="238" width="6" height="68" rx="3" fill="#f59e0b" opacity="0.9"/>
+  <!-- timer icon -->
+  <circle cx="55" cy="272" r="12" fill="none" stroke="#f59e0b" stroke-width="1.2"/>
+  <line x1="55" y1="264" x2="55" y2="272" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="55" y1="272" x2="61" y2="275" stroke="#f59e0b" stroke-width="1.5" stroke-linecap="round"/>
+  <text x="76" y="265" fill="#f59e0b" font-size="11" font-weight="700">
+    <tspan class="lz">2s 防抖 Debounce</tspan>
+    <tspan class="le">2s Debounce Timer</tspan>
+  </text>
+  <text x="76" y="279" fill="#94a3b8" font-size="10">delay = 2000 ms</text>
+  <text x="42" y="298" fill="#64748b" font-size="10">
+    <tspan class="lz">· 合并连续写入，减少推送频率</tspan>
+    <tspan class="le">· Batch writes, reduce push rate</tspan>
+  </text>
+
+  <!-- Arrow down 3→4 -->
+  <line x1="138" y1="306" x2="138" y2="328" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arr-cyan)" opacity="0.7"/>
+
+  <!-- 4. Change Event Trigger Push -->
+  <rect x="28" y="328" width="222" height="58" rx="8" fill="#0f1f38" stroke="#22d3ee" stroke-width="1.5"/>
+  <rect x="28" y="328" width="6" height="58" rx="3" fill="#10b981" opacity="0.9"/>
+  <!-- lightning icon -->
+  <polygon points="58,337 48,358 56,358 50,374 66,351 58,351" fill="#10b981" fill-opacity="0.7" stroke="#10b981" stroke-width="0.5"/>
+  <text x="76" y="349" fill="#10b981" font-size="11" font-weight="700">
+    <tspan class="lz">变更事件触发 Push</tspan>
+    <tspan class="le">Change Event → Push</tspan>
+  </text>
+  <text x="76" y="365" fill="#94a3b8" font-size="10">
+    <tspan class="lz">哈希对比 → 仅发送变更文件</tspan>
+    <tspan class="le">Hash diff → changed files only</tspan>
+  </text>
+  <text x="42" y="380" fill="#64748b" font-size="10">
+    <tspan class="lz">· delta 检测，节省带宽</tspan>
+    <tspan class="le">· Delta detection, saves bandwidth</tspan>
+  </text>
+
+  <!-- Arrow down 4→5 -->
+  <line x1="138" y1="386" x2="138" y2="406" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arr-cyan)" opacity="0.7"/>
+
+  <!-- 5. SyncState Manager -->
+  <rect x="28" y="406" width="222" height="88" rx="8" fill="#0f1f38" stroke="#22d3ee" stroke-width="2"/>
+  <rect x="28" y="406" width="6" height="88" rx="3" fill="#22d3ee"/>
+  <!-- database icon -->
+  <ellipse cx="55" cy="430" rx="12" ry="5" fill="none" stroke="#22d3ee" stroke-width="1.2"/>
+  <line x1="43" y1="430" x2="43" y2="445" stroke="#22d3ee" stroke-width="1.2"/>
+  <line x1="67" y1="430" x2="67" y2="445" stroke="#22d3ee" stroke-width="1.2"/>
+  <ellipse cx="55" cy="445" rx="12" ry="5" fill="none" stroke="#22d3ee" stroke-width="1.2"/>
+  <text x="76" y="423" fill="#22d3ee" font-size="11" font-weight="700">SyncState</text>
+  <text x="76" y="437" fill="#94a3b8" font-size="10">
+    <tspan class="lz">状态管理器</tspan>
+    <tspan class="le">State Manager</tspan>
+  </text>
+  <!-- fields -->
+  <text x="42" y="455" fill="#64748b" font-size="10">repoId <tspan fill="#22d3ee" font-size="10">· </tspan><tspan fill="#94a3b8" font-size="10">
+    <tspan class="lz">仓库标识</tspan>
+    <tspan class="le">repo identifier</tspan>
+  </tspan></text>
+  <text x="42" y="468" fill="#64748b" font-size="10">ETag <tspan fill="#22d3ee" font-size="10">· </tspan><tspan fill="#94a3b8" font-size="10">
+    <tspan class="lz">版本标识</tspan>
+    <tspan class="le">version token</tspan>
+  </tspan></text>
+  <text x="42" y="481" fill="#64748b" font-size="10">syncTimestamp <tspan fill="#22d3ee" font-size="10">· </tspan><tspan fill="#94a3b8" font-size="10">
+    <tspan class="lz">同步时间</tspan>
+    <tspan class="le">sync time</tspan>
+  </tspan></text>
+
+  <!-- ═══════════════════ RIGHT COLUMN: REMOTE SIDE ═══════════════════ -->
+
+  <!-- Anthropic API endpoint -->
+  <rect x="672" y="58" width="222" height="88" rx="8" fill="#130a2e" stroke="#8b5cf6" stroke-width="1.5"/>
+  <rect x="672" y="58" width="6" height="88" rx="3" fill="#8b5cf6" opacity="0.9"/>
+  <!-- cloud icon -->
+  <path d="M700 102 Q698 88 710 86 Q712 80 720 80 Q730 80 732 88 Q740 86 742 96 Q744 106 736 108 L704 108 Q696 108 700 102 Z"
+        fill="#8b5cf6" fill-opacity="0.2" stroke="#8b5cf6" stroke-width="1.2"/>
+  <text x="750" y="80" fill="#8b5cf6" font-size="11" font-weight="700">Anthropic API</text>
+  <text x="686" y="94" fill="#94a3b8" font-size="10">
+    <tspan class="lz">云端服务端点</tspan>
+    <tspan class="le">Cloud Service Endpoint</tspan>
+  </text>
+  <text x="686" y="110" fill="#64748b" font-size="10">
+    <tspan class="lz">· REST · TLS · Auth Bearer</tspan>
+    <tspan class="le">· REST · TLS · Auth Bearer</tspan>
+  </text>
+  <text x="686" y="122" fill="#64748b" font-size="10">
+    <tspan class="lz">· If-None-Match: &lt;ETag&gt;</tspan>
+    <tspan class="le">· If-None-Match: &lt;ETag&gt;</tspan>
+  </text>
+  <text x="686" y="134" fill="#f59e0b" font-size="10">
+    <tspan class="lz">304 Not Modified = 无变更</tspan>
+    <tspan class="le">304 Not Modified = no change</tspan>
+  </text>
+
+  <!-- divider line between API and storage -->
+  <line x1="680" y1="158" x2="886" y2="158" stroke="#8b5cf6" stroke-opacity="0.2" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- Team Memory Storage -->
+  <rect x="672" y="168" width="222" height="100" rx="8" fill="#130a2e" stroke="#8b5cf6" stroke-width="2"/>
+  <rect x="672" y="168" width="6" height="100" rx="3" fill="#8b5cf6"/>
+  <!-- storage icon rows -->
+  <rect x="692" y="184" width="80" height="10" rx="3" fill="#8b5cf6" fill-opacity="0.25" stroke="#8b5cf6" stroke-width="0.8"/>
+  <rect x="692" y="198" width="64" height="10" rx="3" fill="#8b5cf6" fill-opacity="0.18" stroke="#8b5cf6" stroke-width="0.8"/>
+  <rect x="692" y="212" width="72" height="10" rx="3" fill="#8b5cf6" fill-opacity="0.12" stroke="#8b5cf6" stroke-width="0.8"/>
+  <!-- labels next to storage rows -->
+  <text x="784" y="192" fill="#94a3b8" font-size="10">memory-01.md</text>
+  <text x="784" y="206" fill="#94a3b8" font-size="10">memory-02.md</text>
+  <text x="784" y="220" fill="#64748b" font-size="10">…</text>
+  <text x="686" y="180" fill="#8b5cf6" font-size="11" font-weight="700">
+    <tspan class="lz">团队记忆存储</tspan>
+    <tspan class="le">Team Memory Storage</tspan>
+  </text>
+  <text x="686" y="236" fill="#64748b" font-size="10">
+    <tspan class="lz">· 版本化存储 · 团队共享</tspan>
+    <tspan class="le">· Versioned storage · Team shared</tspan>
+  </text>
+  <text x="686" y="249" fill="#64748b" font-size="10">
+    <tspan class="lz">· 按 repoId 隔离</tspan>
+    <tspan class="le">· Isolated by repoId</tspan>
+  </text>
+
+  <!-- ═══════════════════ CENTER COLUMN: PROCESS FLOW ═══════════════════ -->
+
+  <!-- CENTER header: Bidirectional sync label -->
+  <rect x="340" y="52" width="240" height="24" rx="6" fill="#f43f5e" fill-opacity="0.1" stroke="#f43f5e" stroke-width="0.8" stroke-opacity="0.5"/>
+  <text x="460" y="69" text-anchor="middle" fill="#f43f5e" font-size="11" font-weight="700" letter-spacing="1">
+    <tspan class="lz">双向增量同步</tspan>
+    <tspan class="le">Bidirectional Delta Sync</tspan>
+  </text>
+
+  <!-- ─── PULL FLOW box ─── -->
+  <rect x="302" y="88" width="230" height="160" rx="10" fill="#120d1f" stroke="#f43f5e" stroke-width="1.5" stroke-opacity="0.8"/>
+  <rect x="302" y="88" width="230" height="28" rx="10" fill="#f43f5e" fill-opacity="0.15"/>
+  <!-- PULL label -->
+  <text x="320" y="107" fill="#f43f5e" font-size="12" font-weight="700">↓ PULL</text>
+  <text x="395" y="107" fill="#94a3b8" font-size="10">
+    <tspan class="lz">从云端下载</tspan>
+    <tspan class="le">Download from Cloud</tspan>
+  </text>
+
+  <!-- pull steps -->
+  <text x="322" y="130" fill="#f43f5e" font-size="10">①</text>
+  <text x="336" y="130" fill="#94a3b8" font-size="10">
+    <tspan class="lz">发送 If-None-Match: ETag</tspan>
+    <tspan class="le">Send If-None-Match: ETag</tspan>
+  </text>
+  <text x="322" y="148" fill="#f43f5e" font-size="10">②</text>
+  <text x="336" y="148" fill="#94a3b8" font-size="10">
+    <tspan class="lz">服务器比对版本</tspan>
+    <tspan class="le">Server checks version</tspan>
+  </text>
+  <text x="322" y="166" fill="#f43f5e" font-size="10">③</text>
+  <text x="336" y="166" fill="#94a3b8" font-size="10">
+    <tspan class="lz">304 → 跳过；200 → 更新本地</tspan>
+    <tspan class="le">304 → skip; 200 → update local</tspan>
+  </text>
+  <text x="322" y="184" fill="#f43f5e" font-size="10">④</text>
+  <text x="336" y="184" fill="#94a3b8" font-size="10">
+    <tspan class="lz">写入新 ETag 到 SyncState</tspan>
+    <tspan class="le">Write new ETag to SyncState</tspan>
+  </text>
+
+  <!-- 304 badge -->
+  <rect x="310" y="218" width="80" height="18" rx="4" fill="#f59e0b" fill-opacity="0.15" stroke="#f59e0b" stroke-width="0.8"/>
+  <text x="350" y="231" text-anchor="middle" fill="#f59e0b" font-size="10" font-weight="700">304 → NOOP</text>
+  <rect x="398" y="218" width="88" height="18" rx="4" fill="#10b981" fill-opacity="0.15" stroke="#10b981" stroke-width="0.8"/>
+  <text x="442" y="231" text-anchor="middle" fill="#10b981" font-size="10" font-weight="700">200 → WRITE</text>
+
+  <!-- ─── DIVIDER ─── -->
+  <line x1="310" y1="262" x2="524" y2="262" stroke="#334155" stroke-width="1" stroke-dasharray="6,3" opacity="0.6"/>
+  <text x="417" y="259" text-anchor="middle" fill="#475569" font-size="10">──────────────────────────────</text>
+
+  <!-- ─── PUSH FLOW box ─── -->
+  <rect x="302" y="272" width="230" height="140" rx="10" fill="#120d1f" stroke="#f43f5e" stroke-width="1.5" stroke-opacity="0.8"/>
+  <rect x="302" y="272" width="230" height="28" rx="10" fill="#f43f5e" fill-opacity="0.15"/>
+  <text x="320" y="291" fill="#f43f5e" font-size="12" font-weight="700">↑ PUSH</text>
+  <text x="395" y="291" fill="#94a3b8" font-size="10">
+    <tspan class="lz">上传到云端</tspan>
+    <tspan class="le">Upload to Cloud</tspan>
+  </text>
+
+  <!-- push steps -->
+  <text x="322" y="314" fill="#f43f5e" font-size="10">①</text>
+  <text x="336" y="314" fill="#94a3b8" font-size="10">
+    <tspan class="lz">文件哈希对比 → delta</tspan>
+    <tspan class="le">File hash diff → delta set</tspan>
+  </text>
+  <text x="322" y="332" fill="#f43f5e" font-size="10">②</text>
+  <text x="336" y="332" fill="#94a3b8" font-size="10">
+    <tspan class="lz">密钥扫描（预推送）</tspan>
+    <tspan class="le">Secret scan (pre-push)</tspan>
+  </text>
+  <text x="322" y="350" fill="#f43f5e" font-size="10">③</text>
+  <text x="336" y="350" fill="#94a3b8" font-size="10">
+    <tspan class="lz">PUT /memory ← 仅变更文件</tspan>
+    <tspan class="le">PUT /memory ← changed only</tspan>
+  </text>
+  <text x="322" y="368" fill="#f43f5e" font-size="10">④</text>
+  <text x="336" y="368" fill="#94a3b8" font-size="10">
+    <tspan class="lz">更新 ETag + timestamp</tspan>
+    <tspan class="le">Update ETag + timestamp</tspan>
+  </text>
+
+  <!-- ─── SECRET SCANNER (shield) in push path ─── -->
+  <rect x="302" y="424" width="230" height="64" rx="10" fill="#1a0a10" stroke="#f43f5e" stroke-width="1.5"/>
+  <!-- shield icon -->
+  <path d="M330 442 L330 456 Q330 464 340 468 Q350 464 350 456 L350 442 L340 437 Z"
+        fill="#f43f5e" fill-opacity="0.15" stroke="#f43f5e" stroke-width="1.5"/>
+  <text x="340" y="456" text-anchor="middle" fill="#f43f5e" font-size="10" font-weight="700">✓</text>
+  <text x="360" y="445" fill="#f43f5e" font-size="11" font-weight="700">
+    <tspan class="lz">密钥扫描器</tspan>
+    <tspan class="le">Secret Scanner</tspan>
+  </text>
+  <text x="360" y="459" fill="#94a3b8" font-size="10">
+    <tspan class="lz">预推送安全检查</tspan>
+    <tspan class="le">Pre-push Security Check</tspan>
+  </text>
+  <text x="316" y="478" fill="#64748b" font-size="10">
+    <tspan class="lz">· 拦截含密钥文件 · 阻止泄漏</tspan>
+    <tspan class="le">· Block secret-containing files</tspan>
+  </text>
+
+  <!-- ════════════════════════════════════════════════════════
+       ARROWS: Left ↔ Center  and  Center ↔ Right
+       ════════════════════════════════════════════════════════ -->
+
+  <!-- LEFT → CENTER: Push arrow (upward semantics = local to center) -->
+  <!-- Arrow from Local right side → Center left (Push path) at ~y=340) -->
+  <path d="M250 355 L290 355" stroke="#f43f5e" stroke-width="2" stroke-opacity="0.9" marker-end="url(#arr-rose)" filter="url(#glow-rose)"/>
+  <!-- Push label above arrow -->
+  <text x="270" y="348" text-anchor="middle" fill="#f43f5e" font-size="10" font-weight="700">PUSH ↑</text>
+
+  <!-- CENTER → LEFT: Pull arrow (downward semantics = center to local) at ~y=155) -->
+  <path d="M302 155 L262 155" stroke="#f43f5e" stroke-width="2" stroke-opacity="0.9" marker-end="url(#arr-rose-rev)" filter="url(#glow-rose)"/>
+  <text x="282" y="148" text-anchor="middle" fill="#f43f5e" font-size="10" font-weight="700">↓ PULL</text>
+
+  <!-- CENTER → RIGHT: Push arrow at ~y=340 -->
+  <path d="M532 355 L660 355" stroke="#f43f5e" stroke-width="2" stroke-opacity="0.9" marker-end="url(#arr-rose)" filter="url(#glow-rose)"/>
+  <text x="596" y="348" text-anchor="middle" fill="#f43f5e" font-size="10" font-weight="700">PUSH ↑</text>
+
+  <!-- RIGHT → CENTER: Pull arrow at ~y=220 -->
+  <path d="M672 220 L534 220" stroke="#f43f5e" stroke-width="2" stroke-opacity="0.9" marker-end="url(#arr-rose-rev)" filter="url(#glow-rose)"/>
+  <text x="603" y="213" text-anchor="middle" fill="#f43f5e" font-size="10" font-weight="700">↓ PULL</text>
+
+  <!-- Secret Scanner connector: arrow from push box to scanner box -->
+  <line x1="417" y1="412" x2="417" y2="424" stroke="#f43f5e" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#arr-rose)" opacity="0.6"/>
+
+  <!-- ════════════════════════════════════════════════════════
+       ANIMATED DATA PACKETS
+       ════════════════════════════════════════════════════════ -->
+
+  <!-- Packet: Local→Center (Push) traveling right -->
+  <circle r="5" fill="#f43f5e" opacity="0.85" filter="url(#glow-rose)">
+    <animateMotion dur="2.4s" repeatCount="indefinite" begin="0s">
+      <mpath href="#path-push-lc"/>
+    </animateMotion>
+  </circle>
+  <path id="path-push-lc" d="M250 355 L290 355" fill="none"/>
+
+  <!-- Packet: Center→Right (Push) traveling right -->
+  <circle r="5" fill="#f43f5e" opacity="0.85" filter="url(#glow-rose)">
+    <animateMotion dur="2.4s" repeatCount="indefinite" begin="0.3s">
+      <mpath href="#path-push-cr"/>
+    </animateMotion>
+  </circle>
+  <path id="path-push-cr" d="M532 355 L660 355" fill="none"/>
+
+  <!-- Packet: Right→Center (Pull) traveling left -->
+  <circle r="5" fill="#f43f5e" opacity="0.7" filter="url(#glow-rose)">
+    <animateMotion dur="2.8s" repeatCount="indefinite" begin="1.2s">
+      <mpath href="#path-pull-rc"/>
+    </animateMotion>
+  </circle>
+  <path id="path-pull-rc" d="M672 220 L534 220" fill="none"/>
+
+  <!-- Packet: Center→Left (Pull) traveling left -->
+  <circle r="5" fill="#f43f5e" opacity="0.7" filter="url(#glow-rose)">
+    <animateMotion dur="2.8s" repeatCount="indefinite" begin="1.5s">
+      <mpath href="#path-pull-cl"/>
+    </animateMotion>
+  </circle>
+  <path id="path-pull-cl" d="M302 155 L262 155" fill="none"/>
+
+  <!-- Ambient pulse dots on SyncState -->
+  <circle cx="138" cy="450" r="3.5" fill="#22d3ee" filter="url(#glow-cyan)">
+    <animate attributeName="opacity" values="1;0.3;1" dur="2s" repeatCount="indefinite"/>
+  </circle>
+  <!-- Pulse on Anthropic API -->
+  <circle cx="782" cy="102" r="3.5" fill="#8b5cf6" filter="url(#glow-violet)">
+    <animate attributeName="opacity" values="1;0.2;1" dur="2.5s" repeatCount="indefinite" begin="0.5s"/>
+  </circle>
+
+  <!-- ════════════════════════════════════════════════════════
+       STATS ROW (bottom center)
+       ════════════════════════════════════════════════════════ -->
+  <rect x="302" y="498" width="316" height="10" rx="5" fill="#334155" fill-opacity="0.3"/>
+
+  <!-- Bottom stats strip -->
+  <!-- stat 1 -->
+  <rect x="106" y="498" width="148" height="10" rx="3" fill="none"/>
+  <text x="460" y="508" text-anchor="middle" fill="#475569" font-size="10">
+    3 SYNC COMPONENTS · ETag VERSION CONTROL · PRE-PUSH SECURITY SCAN
+  </text>
+
+</svg>
+</div>
+
+<!-- ═══════════════ SUMMARY CARDS ═══════════════ -->
+<div class="summary-cards">
+  <div class="card">
+    <div class="card-icon">🔄</div>
+    <div class="card-title">
+      <span class="lz">3 同步组件</span>
+      <span class="le">3 Sync Components</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">Watcher 监听 + Debounce 防抖 + SyncState 状态机。三者协同，确保本地变更低延迟、无重复地同步到云端。</span>
+      <span class="le">Watcher + Debounce + SyncState state machine. Three components collaborate to sync local changes to the cloud with low latency and no duplication.</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-icon">🏷️</div>
+    <div class="card-title">
+      <span class="lz">ETag 版本控制</span>
+      <span class="le">ETag Version Control</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">Pull 时携带 If-None-Match 请求头。服务器返回 304 Not Modified 时本地无需更新，节省带宽与 CPU。</span>
+      <span class="le">Pull requests carry If-None-Match header. When the server returns 304 Not Modified, no local update is needed, saving bandwidth and CPU.</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-icon">🛡️</div>
+    <div class="card-title">
+      <span class="lz">预推送安全扫描</span>
+      <span class="le">Pre-push Secret Scan</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">每次 Push 前先运行密钥扫描器，拦截含 API Key / 密码的文件，防止敏感信息意外同步到团队共享存储。</span>
+      <span class="le">A secret scanner runs before every Push, intercepting files containing API keys or passwords, preventing accidental leakage to shared team storage.</span>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  VIS-3-020A · Team Memory Sync Architecture · CC 2.1.88 · 2026-04-15
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-theme',t);
+  document.documentElement.setAttribute('data-lang',l);
+  function applyLang(){
+    document.documentElement.setAttribute('data-lang', l);
+  };
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);document.documentElement.setAttribute('data-lang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

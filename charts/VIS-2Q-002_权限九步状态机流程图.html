@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIS-2Q-002 · 权限九步状态机流程图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+    :root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+    :root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+    :root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;padding:20px 24px 32px;transition:background .25s,color .25s}
+
+    .svg-bg{fill:var(--bg)}
+    .panel-bg{fill:var(--panel)}
+    .axis-line{stroke:var(--muted);stroke-opacity:.5}
+    .tick-minor{stroke:var(--muted);stroke-opacity:.25}
+    .axis-text{fill:var(--muted)}
+    .title-text{fill:var(--text)}
+    .muted-text{fill:var(--muted)}
+    .step-card-dark{fill:#1e293b}
+    .step-card-warm{fill:#292524}
+    .step-card-light{fill:#f1f5f9}
+    .step-card{fill:var(--card)}
+    .step-text{fill:var(--text)}
+    .step-subtext{fill:var(--muted)}
+
+    .vis-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+    .vis-dot{width:10px;height:10px;border-radius:50%;background:var(--emerald);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+    .vis-title{font-size:17px;font-weight:700;color:var(--text)}
+    .vis-sub{font-size:11px;color:var(--muted);margin-left:4px}
+
+    .svg-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:16px;overflow-x:auto}
+
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+    .stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:14px}
+    .stat-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0}
+    .stat-body{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .stat-val{font-size:20px;font-weight:700;line-height:1.1}
+    .stat-lab{font-size:10px;color:var(--muted);line-height:1.3}
+
+    .cards{display:grid;grid-template-columns:repeat(2,1fr);gap:12px;margin-bottom:16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}
+    .card-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+    .card-dot{width:10px;height:10px;border-radius:50%}
+    .card-hd h3{font-size:12px;font-weight:700;color:var(--text)}
+    .card-sub{font-size:10px;color:var(--muted);margin-left:auto}
+    .card ul{list-style:none;font-size:11px;color:var(--muted);line-height:1.75}
+    .card li strong{color:var(--text);font-weight:600}
+
+    .vis-footer{font-size:10px;color:var(--muted);text-align:center;border-top:1px solid var(--border);padding-top:10px}
+
+    .ctrl{position:fixed;top:16px;right:16px;display:flex;gap:6px;z-index:999}
+    .ctrl button{background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:6px 11px;border-radius:6px;cursor:pointer;transition:all .15s}
+    .ctrl button:hover{border-color:var(--subtle);transform:translateY(-1px)}
+  </style>
+</head>
+<body>
+<div class="ctrl">
+  <button onclick="window.cycleTheme()">Theme</button>
+  <button onclick="window.toggleLang()">EN/中</button>
+</div>
+
+<div class="vis-header">
+  <div class="vis-dot"></div>
+  <div class="vis-title">
+    <span class="lz">权限九步状态机流程图</span>
+    <span class="le" style="display:none">9-Step Permission State Machine</span>
+  </div>
+  <div class="vis-sub">VIS-2Q-002 · <span class="lz">工具执行前的九道关卡 · FAIL-CLOSED</span><span class="le" style="display:none">Nine gates before tool execution · FAIL-CLOSED</span></div>
+</div>
+
+<div class="svg-wrap">
+<svg viewBox="0 0 920 680" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+  <defs>
+    <linearGradient id="gCyan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity=".28"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity=".10"/>
+    </linearGradient>
+    <linearGradient id="gViolet" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity=".28"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity=".10"/>
+    </linearGradient>
+    <linearGradient id="gRose" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f43f5e" stop-opacity=".32"/>
+      <stop offset="100%" stop-color="#f43f5e" stop-opacity=".12"/>
+    </linearGradient>
+    <linearGradient id="gEmerald" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#10b981" stop-opacity=".28"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity=".10"/>
+    </linearGradient>
+    <linearGradient id="gAmber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity=".28"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity=".10"/>
+    </linearGradient>
+    <linearGradient id="gSlate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#64748b" stop-opacity=".28"/>
+      <stop offset="100%" stop-color="#64748b" stop-opacity=".10"/>
+    </linearGradient>
+    <linearGradient id="gDeniedTerm" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f43f5e" stop-opacity=".92"/>
+      <stop offset="100%" stop-color="#f43f5e" stop-opacity=".70"/>
+    </linearGradient>
+    <linearGradient id="gAllowTerm" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#10b981" stop-opacity=".92"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity=".70"/>
+    </linearGradient>
+
+    <marker id="arrAllow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981"/>
+    </marker>
+    <marker id="arrDeny" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#f43f5e"/>
+    </marker>
+    <marker id="arrSlate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#94a3b8"/>
+    </marker>
+  </defs>
+
+  <!-- bg -->
+  <rect width="920" height="680" class="svg-bg"/>
+
+  <!-- ============================================================
+       GEOMETRY
+       Center column: x = 360..560  (width 200)  center x = 460
+       Step box height: 46
+       Step y positions (top):
+         S1: 20    (cyan)
+         S2: 82    (cyan)
+         S3: 144   (violet)
+         S4: 206   (rose)       ← denylist, side annotation
+         S5: 268   (emerald)
+         S6: 330   (amber)
+         S7: 392   (amber)
+         S8: 454   (slate)
+         S9: 516   (emerald)    ← Execute
+       Terminals:
+         Denied :  x=720..870, y=206 (aligned with S4) and lower
+         Executed: x=580..790, y=578
+       ============================================================ -->
+
+  <!-- ============ ENTRY / TITLE STRIP ============ -->
+  <rect x="36" y="14" width="260" height="34" rx="8" fill="none" stroke="#22d3ee" stroke-width="1" stroke-dasharray="4,3" opacity="0.55"/>
+  <text x="46" y="30" fill="#22d3ee" font-size="10" font-weight="700" letter-spacing="1.2">ENTRY</text>
+  <text x="46" y="44" class="muted-text" font-size="10">
+    <tspan class="lz">LLM 输出 tool_use ⟶ 权限网关</tspan><tspan class="le" display="none">LLM emits tool_use ⟶ permission gate</tspan>
+  </text>
+
+  <rect x="624" y="14" width="260" height="34" rx="8" fill="none" stroke="#f59e0b" stroke-width="1" stroke-dasharray="4,3" opacity="0.55"/>
+  <text x="634" y="30" fill="#f59e0b" font-size="10" font-weight="700" letter-spacing="1.2">
+    <tspan class="lz">FAIL-CLOSED · 任何一步拒绝立即终止</tspan>
+    <tspan class="le" display="none">FAIL-CLOSED · any deny halts</tspan>
+  </text>
+  <text x="634" y="44" fill="#f59e0b" font-size="10" font-weight="500">
+    <tspan class="lz">默认拒绝 · 必须通过九关才放行</tspan>
+    <tspan class="le" display="none">Default-deny · pass all 9 gates to run</tspan>
+  </text>
+
+  <!-- ============ STEP 1 · Receive Tool Call (cyan) ============ -->
+  <rect x="360" y="60" width="200" height="46" rx="10" fill="url(#gCyan)" stroke="#22d3ee" stroke-width="1.4"/>
+  <circle cx="378" cy="83" r="13" fill="#22d3ee"/>
+  <text x="378" y="87" font-size="13" font-weight="700" fill="#0f172a" text-anchor="middle">1</text>
+  <text x="400" y="80" class="step-text" font-size="12" font-weight="700">
+    <tspan class="lz">接收工具调用</tspan><tspan class="le" display="none">Receive Tool Call</tspan>
+  </text>
+  <text x="400" y="96" class="step-subtext" font-size="10">
+    <tspan class="lz">解析 tool_name + args</tspan><tspan class="le" display="none">Parse tool_name + args</tspan>
+  </text>
+
+  <!-- arrow 1 → 2 -->
+  <line x1="460" y1="106" x2="460" y2="120" stroke="#22d3ee" stroke-width="1.6" marker-end="url(#arrAllow)"/>
+
+  <!-- ============ STEP 2 · Look up Tool Def (cyan) ============ -->
+  <rect x="360" y="122" width="200" height="46" rx="10" fill="url(#gCyan)" stroke="#22d3ee" stroke-width="1.4"/>
+  <circle cx="378" cy="145" r="13" fill="#22d3ee"/>
+  <text x="378" y="149" font-size="13" font-weight="700" fill="#0f172a" text-anchor="middle">2</text>
+  <text x="400" y="142" class="step-text" font-size="12" font-weight="700">
+    <tspan class="lz">查找工具定义</tspan><tspan class="le" display="none">Look up Tool Def</tspan>
+  </text>
+  <text x="400" y="158" class="step-subtext" font-size="10">
+    <tspan class="lz">校验已注册 · 取 schema</tspan><tspan class="le" display="none">Validate registered · get schema</tspan>
+  </text>
+
+  <!-- arrow 2 → 3 -->
+  <line x1="460" y1="168" x2="460" y2="182" stroke="#22d3ee" stroke-width="1.6" marker-end="url(#arrAllow)"/>
+
+  <!-- ============ STEP 3 · Validate Args (violet) ============ -->
+  <rect x="360" y="184" width="200" height="46" rx="10" fill="url(#gViolet)" stroke="#8b5cf6" stroke-width="1.4"/>
+  <circle cx="378" cy="207" r="13" fill="#8b5cf6"/>
+  <text x="378" y="211" font-size="13" font-weight="700" fill="#f1f5f9" text-anchor="middle">3</text>
+  <text x="400" y="204" class="step-text" font-size="12" font-weight="700">
+    <tspan class="lz">验证参数</tspan><tspan class="le" display="none">Validate Args</tspan>
+  </text>
+  <text x="400" y="220" class="step-subtext" font-size="10">
+    <tspan class="lz">JSON schema · 类型/形状</tspan><tspan class="le" display="none">JSON schema · type/shape</tspan>
+  </text>
+
+  <!-- arrow 3 → 4 -->
+  <line x1="460" y1="230" x2="460" y2="244" stroke="#8b5cf6" stroke-width="1.6" marker-end="url(#arrAllow)"/>
+
+  <!-- ============ STEP 4 · Denylist (rose) — HIGHLIGHTED ============ -->
+  <rect x="354" y="244" width="212" height="50" rx="10" fill="url(#gRose)" stroke="#f43f5e" stroke-width="2"/>
+  <circle cx="374" cy="269" r="14" fill="#f43f5e"/>
+  <text x="374" y="274" font-size="13" font-weight="700" fill="#f1f5f9" text-anchor="middle">4</text>
+  <text x="398" y="266" class="step-text" font-size="12" font-weight="700">
+    <tspan class="lz">检查禁用列表</tspan><tspan class="le" display="none">Check Denylist</tspan>
+  </text>
+  <text x="398" y="282" class="step-subtext" font-size="10">
+    <tspan class="lz">硬编码禁止 · rm -rf / 等</tspan><tspan class="le" display="none">Hardcoded bans · rm -rf / etc.</tspan>
+  </text>
+
+  <!-- Side annotation: 不可绕过 -->
+  <g>
+    <rect x="76" y="250" width="244" height="40" rx="8" fill="none" stroke="#f43f5e" stroke-width="1.2" stroke-dasharray="5,3"/>
+    <text x="88" y="266" fill="#f43f5e" font-size="11" font-weight="700">
+      <tspan class="lz">⚠ 不可绕过 · HARD STOP</tspan><tspan class="le" display="none">⚠ Unbypassable · HARD STOP</tspan>
+    </text>
+    <text x="88" y="281" fill="#f43f5e" font-size="10" font-weight="500">
+      <tspan class="lz">任何模式 / 任何白名单都无法越过此关</tspan>
+      <tspan class="le" display="none">No mode / allowlist can override this gate</tspan>
+    </text>
+    <!-- connector from side box to step 4 -->
+    <line x1="320" y1="270" x2="354" y2="270" stroke="#f43f5e" stroke-width="1.2" stroke-dasharray="3,3" opacity="0.75"/>
+  </g>
+
+  <!-- Deny branch from Step 4 → Denied terminal (right) -->
+  <path d="M 566 270 Q 640 270 680 270" fill="none" stroke="#f43f5e" stroke-width="1.8" stroke-dasharray="5,4" marker-end="url(#arrDeny)"/>
+  <text x="600" y="262" fill="#f43f5e" font-size="10" font-weight="700">
+    <tspan class="lz">命中 → 拒绝</tspan><tspan class="le" display="none">HIT → Deny</tspan>
+  </text>
+
+  <!-- arrow 4 → 5 -->
+  <line x1="460" y1="294" x2="460" y2="308" stroke="#10b981" stroke-width="1.6" marker-end="url(#arrAllow)"/>
+  <text x="470" y="305" fill="#10b981" font-size="10" font-weight="600">
+    <tspan class="lz">未命中</tspan><tspan class="le" display="none">miss</tspan>
+  </text>
+
+  <!-- ============ STEP 5 · Allowlist (emerald) ============ -->
+  <rect x="360" y="308" width="200" height="46" rx="10" fill="url(#gEmerald)" stroke="#10b981" stroke-width="1.4"/>
+  <circle cx="378" cy="331" r="13" fill="#10b981"/>
+  <text x="378" y="335" font-size="13" font-weight="700" fill="#0f172a" text-anchor="middle">5</text>
+  <text x="400" y="328" class="step-text" font-size="12" font-weight="700">
+    <tspan class="lz">检查白名单</tspan><tspan class="le" display="none">Check Allowlist</tspan>
+  </text>
+  <text x="400" y="344" class="step-subtext" font-size="10">
+    <tspan class="lz">显式自动批准规则</tspan><tspan class="le" display="none">Explicit auto-approve rules</tspan>
+  </text>
+
+  <!-- Allowlist HIT shortcut (goes to Step 8 / execute path) -->
+  <path d="M 560 331 Q 720 331 720 470 Q 720 555 670 555" fill="none" stroke="#10b981" stroke-width="1.4" stroke-dasharray="4,3" opacity="0.8" marker-end="url(#arrAllow)"/>
+  <text x="680" y="410" fill="#10b981" font-size="10" font-weight="700">
+    <tspan class="lz">命中 → 免问</tspan><tspan class="le" display="none">HIT → skip ask</tspan>
+  </text>
+
+  <!-- arrow 5 → 6 -->
+  <line x1="460" y1="354" x2="460" y2="368" stroke="#10b981" stroke-width="1.6" marker-end="url(#arrAllow)"/>
+  <text x="470" y="365" fill="#94a3b8" font-size="10" font-weight="600">
+    <tspan class="lz">未命中</tspan><tspan class="le" display="none">miss</tspan>
+  </text>
+
+  <!-- ============ STEP 6 · Check Mode (amber) ============ -->
+  <rect x="360" y="370" width="200" height="46" rx="10" fill="url(#gAmber)" stroke="#f59e0b" stroke-width="1.4"/>
+  <circle cx="378" cy="393" r="13" fill="#f59e0b"/>
+  <text x="378" y="397" font-size="13" font-weight="700" fill="#0f172a" text-anchor="middle">6</text>
+  <text x="400" y="390" class="step-text" font-size="12" font-weight="700">
+    <tspan class="lz">检查权限模式</tspan><tspan class="le" display="none">Check Mode</tspan>
+  </text>
+  <text x="400" y="406" class="step-subtext" font-size="10">plan / default / acceptEdits / auto / bypass</text>
+
+  <!-- Deny branch from Step 6 (plan mode blocks edits) -->
+  <path d="M 566 393 Q 620 393 644 393" fill="none" stroke="#f43f5e" stroke-width="1.6" stroke-dasharray="5,4" marker-end="url(#arrDeny)"/>
+  <text x="576" y="385" fill="#f43f5e" font-size="10" font-weight="700">
+    <tspan class="lz">plan 拒写</tspan><tspan class="le" display="none">plan denies</tspan>
+  </text>
+
+  <!-- arrow 6 → 7 -->
+  <line x1="460" y1="416" x2="460" y2="430" stroke="#f59e0b" stroke-width="1.6" marker-end="url(#arrAllow)"/>
+
+  <!-- ============ STEP 7 · Ask User (amber) ============ -->
+  <rect x="360" y="432" width="200" height="46" rx="10" fill="url(#gAmber)" stroke="#f59e0b" stroke-width="1.4"/>
+  <circle cx="378" cy="455" r="13" fill="#f59e0b"/>
+  <text x="378" y="459" font-size="13" font-weight="700" fill="#0f172a" text-anchor="middle">7</text>
+  <text x="400" y="452" class="step-text" font-size="12" font-weight="700">
+    <tspan class="lz">询问用户</tspan><tspan class="le" display="none">Ask User</tspan>
+  </text>
+  <text x="400" y="468" class="step-subtext" font-size="10">
+    <tspan class="lz">仅 default 模式且不在白名单</tspan><tspan class="le" display="none">Only default mode, not allowlisted</tspan>
+  </text>
+
+  <!-- Deny branch from Step 7 (user says NO) -->
+  <path d="M 566 455 Q 620 455 644 455" fill="none" stroke="#f43f5e" stroke-width="1.6" stroke-dasharray="5,4" marker-end="url(#arrDeny)"/>
+  <text x="576" y="447" fill="#f43f5e" font-size="10" font-weight="700">
+    <tspan class="lz">用户拒绝</tspan><tspan class="le" display="none">user says NO</tspan>
+  </text>
+
+  <!-- arrow 7 → 8 -->
+  <line x1="460" y1="478" x2="460" y2="492" stroke="#10b981" stroke-width="1.6" marker-end="url(#arrAllow)"/>
+  <text x="470" y="489" fill="#10b981" font-size="10" font-weight="600">
+    <tspan class="lz">批准</tspan><tspan class="le" display="none">approved</tspan>
+  </text>
+
+  <!-- ============ STEP 8 · Log Audit (slate) ============ -->
+  <rect x="360" y="494" width="200" height="46" rx="10" fill="url(#gSlate)" stroke="#64748b" stroke-width="1.4"/>
+  <circle cx="378" cy="517" r="13" fill="#64748b"/>
+  <text x="378" y="521" font-size="13" font-weight="700" fill="#f1f5f9" text-anchor="middle">8</text>
+  <text x="400" y="514" class="step-text" font-size="12" font-weight="700">
+    <tspan class="lz">记录审计日志</tspan><tspan class="le" display="none">Log Audit</tspan>
+  </text>
+  <text x="400" y="530" class="step-subtext" font-size="10">
+    <tspan class="lz">执行前强制 · append-only</tspan><tspan class="le" display="none">Mandatory pre-exec · append-only</tspan>
+  </text>
+
+  <!-- arrow 8 → 9 -->
+  <line x1="460" y1="540" x2="460" y2="554" stroke="#10b981" stroke-width="1.6" marker-end="url(#arrAllow)"/>
+
+  <!-- ============ STEP 9 · Execute Tool (emerald) ============ -->
+  <rect x="354" y="556" width="212" height="50" rx="10" fill="url(#gEmerald)" stroke="#10b981" stroke-width="2"/>
+  <circle cx="374" cy="581" r="14" fill="#10b981"/>
+  <text x="374" y="586" font-size="13" font-weight="700" fill="#0f172a" text-anchor="middle">9</text>
+  <text x="398" y="578" class="step-text" font-size="12" font-weight="700">
+    <tspan class="lz">执行工具</tspan><tspan class="le" display="none">Execute Tool</tspan>
+  </text>
+  <text x="398" y="594" class="step-subtext" font-size="10">
+    <tspan class="lz">实际调用工具函数 · 返回结果</tspan><tspan class="le" display="none">Actually call tool function · return</tspan>
+  </text>
+
+  <!-- arrow 9 → Executed terminal -->
+  <line x1="566" y1="581" x2="610" y2="581" stroke="#10b981" stroke-width="1.8" marker-end="url(#arrAllow)"/>
+
+  <!-- ============ DENIED TERMINAL (right) ============ -->
+  <rect x="680" y="246" width="190" height="54" rx="27" fill="url(#gDeniedTerm)" stroke="#f43f5e" stroke-width="1.6"/>
+  <text x="704" y="272" font-size="20" fill="#f1f5f9">✕</text>
+  <text x="730" y="271" class="step-text" font-size="13" font-weight="700" fill="#f1f5f9">
+    <tspan class="lz">Denied · 拒绝</tspan><tspan class="le" display="none">Denied</tspan>
+  </text>
+  <text x="730" y="287" font-size="10" font-weight="500" fill="#fecdd3">
+    <tspan class="lz">错误回执给 LLM · 不执行</tspan><tspan class="le" display="none">Error back to LLM · no exec</tspan>
+  </text>
+
+  <!-- Funnel in the denied lines (from step 6 and 7 converge) -->
+  <path d="M 644 393 Q 720 393 745 300" fill="none" stroke="#f43f5e" stroke-width="1.4" stroke-dasharray="4,3" opacity="0.85"/>
+  <path d="M 644 455 Q 730 455 760 300" fill="none" stroke="#f43f5e" stroke-width="1.4" stroke-dasharray="4,3" opacity="0.85"/>
+
+  <!-- ============ EXECUTED TERMINAL (right of step 9) ============ -->
+  <rect x="610" y="554" width="200" height="54" rx="27" fill="url(#gAllowTerm)" stroke="#10b981" stroke-width="1.6"/>
+  <text x="634" y="580" font-size="20" fill="#f1f5f9">✓</text>
+  <text x="660" y="579" class="step-text" font-size="13" font-weight="700" fill="#f1f5f9">
+    <tspan class="lz">Executed · 执行</tspan><tspan class="le" display="none">Executed</tspan>
+  </text>
+  <text x="660" y="595" font-size="10" font-weight="500" fill="#a7f3d0">
+    <tspan class="lz">工具结果回流 · 继续对话</tspan><tspan class="le" display="none">Result flows back · continue</tspan>
+  </text>
+
+  <!-- ============ COLOR LEGEND (bottom left strip) ============ -->
+  <g transform="translate(36,624)">
+    <rect x="0" y="0" width="848" height="40" rx="8" fill="none" stroke="rgba(148,163,184,0.25)" stroke-width="1"/>
+    <text x="14" y="16" class="muted-text" font-size="10" font-weight="700" letter-spacing="1">
+      <tspan class="lz">阶段配色</tspan><tspan class="le" display="none">STAGE COLORS</tspan>
+    </text>
+
+    <circle cx="14" cy="30" r="5" fill="#22d3ee"/>
+    <text x="24" y="33" class="muted-text" font-size="10">
+      <tspan class="lz">接入 (1-2)</tspan><tspan class="le" display="none">Intake (1-2)</tspan>
+    </text>
+
+    <circle cx="124" cy="30" r="5" fill="#8b5cf6"/>
+    <text x="134" y="33" class="muted-text" font-size="10">
+      <tspan class="lz">校验 (3)</tspan><tspan class="le" display="none">Validate (3)</tspan>
+    </text>
+
+    <circle cx="214" cy="30" r="5" fill="#f43f5e"/>
+    <text x="224" y="33" class="muted-text" font-size="10">
+      <tspan class="lz">硬禁止 (4)</tspan><tspan class="le" display="none">Hard deny (4)</tspan>
+    </text>
+
+    <circle cx="324" cy="30" r="5" fill="#10b981"/>
+    <text x="334" y="33" class="muted-text" font-size="10">
+      <tspan class="lz">白名单 / 执行 (5, 9)</tspan><tspan class="le" display="none">Allowlist / exec (5, 9)</tspan>
+    </text>
+
+    <circle cx="500" cy="30" r="5" fill="#f59e0b"/>
+    <text x="510" y="33" class="muted-text" font-size="10">
+      <tspan class="lz">模式 / 询问 (6-7)</tspan><tspan class="le" display="none">Mode / ask (6-7)</tspan>
+    </text>
+
+    <circle cx="660" cy="30" r="5" fill="#64748b"/>
+    <text x="670" y="33" class="muted-text" font-size="10">
+      <tspan class="lz">审计 (8)</tspan><tspan class="le" display="none">Audit (8)</tspan>
+    </text>
+
+    <line x1="760" y1="30" x2="778" y2="30" stroke="#f43f5e" stroke-width="1.6" stroke-dasharray="4,3"/>
+    <text x="784" y="33" class="muted-text" font-size="10">
+      <tspan class="lz">拒路径</tspan><tspan class="le" display="none">deny path</tspan>
+    </text>
+  </g>
+
+</svg>
+</div>
+
+<!-- ===== Stats Row ===== -->
+<div class="stats">
+  <div class="stat" style="border-color:rgba(34,211,238,.35)">
+    <div class="stat-ico" style="background:rgba(34,211,238,.18);color:#22d3ee">9</div>
+    <div class="stat-body">
+      <div class="stat-val" style="color:#22d3ee">
+        <span class="lz">9 步检查</span>
+        <span class="le" style="display:none">9 Gates</span>
+      </div>
+      <div class="stat-lab">
+        <span class="lz">工具执行前的完整状态机</span>
+        <span class="le" style="display:none">Full pre-exec state machine</span>
+      </div>
+    </div>
+  </div>
+  <div class="stat" style="border-color:rgba(244,63,94,.35)">
+    <div class="stat-ico" style="background:rgba(244,63,94,.18);color:#f43f5e">✕</div>
+    <div class="stat-body">
+      <div class="stat-val" style="color:#f43f5e">
+        <span class="lz">2 条终止路径</span>
+        <span class="le" style="display:none">2 Exit Paths</span>
+      </div>
+      <div class="stat-lab">
+        <span class="lz">Denied / Executed 二选一</span>
+        <span class="le" style="display:none">Denied / Executed · only two</span>
+      </div>
+    </div>
+  </div>
+  <div class="stat" style="border-color:rgba(245,158,11,.35)">
+    <div class="stat-ico" style="background:rgba(245,158,11,.18);color:#f59e0b">⚑</div>
+    <div class="stat-body">
+      <div class="stat-val" style="color:#f59e0b">FAIL-CLOSED</div>
+      <div class="stat-lab">
+        <span class="lz">默认拒绝设计 · 任一关拒即终止</span>
+        <span class="le" style="display:none">Default-deny · any deny halts</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Explanation Cards ===== -->
+<div class="cards">
+  <div class="card" style="border-left:3px solid #f43f5e">
+    <div class="card-hd">
+      <div class="card-dot" style="background:#f43f5e"></div>
+      <h3><span class="lz">拒绝路径 · 三个分叉口</span><span class="le" style="display:none">Deny Paths · Three Branches</span></h3>
+      <span class="card-sub">Step 4 / 6 / 7</span>
+    </div>
+    <ul>
+      <li>• <strong>Step 4 Denylist</strong> <span class="lz">命中硬禁止 → 任何模式都拦</span><span class="le" style="display:none">hit hard ban → blocks all modes</span></li>
+      <li>• <strong>Step 6 Mode</strong> <span class="lz">plan 模式下写类工具被拒</span><span class="le" style="display:none">plan mode denies write tools</span></li>
+      <li>• <strong>Step 7 Ask</strong> <span class="lz">用户在终端点拒绝按钮</span><span class="le" style="display:none">user clicks deny in TUI</span></li>
+      <li>• <span class="lz">💡 通俗理解：三道关像机场安检 — 黑名单、值机柜台、登机口的最终核验，任何一道说不就回头</span><span class="le" style="display:none">Three checkpoints like airport security — watchlist, check-in, final gate; one NO and you turn back</span></li>
+    </ul>
+  </div>
+  <div class="card" style="border-left:3px solid #10b981">
+    <div class="card-hd">
+      <div class="card-dot" style="background:#10b981"></div>
+      <h3><span class="lz">放行路径 · 先登记再执行</span><span class="le" style="display:none">Allow Path · Log Before Exec</span></h3>
+      <span class="card-sub">Step 8 → 9</span>
+    </div>
+    <ul>
+      <li>• <strong>Step 5 Allowlist</strong> <span class="lz">命中则跳过 6/7 直奔审计</span><span class="le" style="display:none">hit skips 6/7 straight to audit</span></li>
+      <li>• <strong>Step 8 Log</strong> <span class="lz">append-only · 强制先写日志再执行</span><span class="le" style="display:none">append-only · log first, then exec</span></li>
+      <li>• <strong>Step 9 Execute</strong> <span class="lz">调工具函数 · 结果回流给 LLM</span><span class="le" style="display:none">call tool fn · result flows to LLM</span></li>
+      <li>• <span class="lz">💡 通俗理解：像出国盖章 — 就算护照、签证、值机都通过，最后一步也得登记入册再放你登机</span><span class="le" style="display:none">Like border stamps — even if passport/visa/checkin all pass, they still log you before boarding</span></li>
+    </ul>
+  </div>
+</div>
+
+<div class="vis-footer">
+  VIS-2Q-002 · Claude Code 2.1.88 · <span class="lz">9 步权限状态机 · 2 条终止路径 · FAIL-CLOSED 设计</span><span class="le" style="display:none">9-step permission SM · 2 exit paths · FAIL-CLOSED design</span> · <span class="lz">v2 生产版</span><span class="le" style="display:none">v2 Production</span>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

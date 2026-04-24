@@ -1,0 +1,672 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code 可复用设计模式清单 | Reusable Design Pattern Catalog</title>
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<style>
+/* ── Theme tokens ── */
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+/* ── Reset & base ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html{font-size:16px;-webkit-font-smoothing:antialiased;}
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter','PingFang SC','Helvetica Neue',sans-serif;
+  min-height:100vh;
+  padding:32px 24px 60px;
+  transition:background .3s,color .3s;
+}
+
+/* ── Controls ── */
+.controls{
+  display:flex;
+  gap:10px;
+  justify-content:flex-end;
+  margin-bottom:32px;
+}
+.ctrl-btn{
+  background:var(--panel);
+  border:1px solid var(--border);
+  color:var(--muted);
+  border-radius:8px;
+  padding:6px 14px;
+  font-size:12px;
+  cursor:pointer;
+  transition:all .2s;
+  letter-spacing:.03em;
+}
+.ctrl-btn:hover{color:var(--text);border-color:var(--muted);}
+
+/* ── Header ── */
+.header{
+  text-align:center;
+  margin-bottom:48px;
+  max-width:900px;
+  margin-left:auto;
+  margin-right:auto;
+}
+.header-eyebrow{
+  font-size:12px;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:var(--muted);
+  margin-bottom:14px;
+}
+.header-title{
+  font-size:clamp(26px,4vw,42px);
+  font-weight:800;
+  line-height:1.15;
+  background:linear-gradient(135deg,#3b82f6 0%,#8b5cf6 45%,#ec4899 100%);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  margin-bottom:10px;
+}
+.header-sub{
+  font-size:15px;
+  color:var(--muted);
+  line-height:1.6;
+}
+
+/* ── Card grid ── */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:20px;
+  max-width:1200px;
+  margin:0 auto 48px;
+}
+@media(max-width:900px){.grid{grid-template-columns:repeat(2,1fr);}}
+@media(max-width:580px){.grid{grid-template-columns:1fr;}}
+
+/* ── Card ── */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:22px 22px 20px;
+  position:relative;
+  overflow:hidden;
+  transition:transform .22s ease,box-shadow .22s ease;
+  display:flex;
+  flex-direction:column;
+  gap:14px;
+}
+.card::before{
+  content:'';
+  position:absolute;
+  left:0;top:0;bottom:0;
+  width:4px;
+  border-radius:14px 0 0 14px;
+  background:var(--accent);
+}
+.card:hover{
+  transform:translateY(-4px);
+  box-shadow:0 16px 40px rgba(0,0,0,.35);
+}
+
+/* Featured card */
+.card.featured{
+  border-color:color-mix(in srgb,var(--accent) 30%,var(--border));
+}
+.card.featured::after{
+  content:'';
+  position:absolute;
+  inset:0;
+  background:radial-gradient(ellipse at top left,color-mix(in srgb,var(--accent) 8%,transparent) 0%,transparent 65%);
+  pointer-events:none;
+  border-radius:14px;
+}
+
+/* ── Card index badge ── */
+.card-index{
+  position:absolute;
+  top:16px;right:16px;
+  font-size:11px;
+  color:var(--muted);
+  font-variant-numeric:tabular-nums;
+  letter-spacing:.02em;
+}
+
+/* ── Featured dot ── */
+.featured-dot{
+  width:8px;height:8px;
+  background:#f59e0b;
+  border-radius:50%;
+  box-shadow:0 0 6px #f59e0b;
+  display:inline-block;
+  margin-right:6px;
+  flex-shrink:0;
+}
+
+/* ── Pattern name ── */
+.pattern-label{
+  display:flex;
+  align-items:flex-start;
+  gap:6px;
+  padding-right:28px;
+}
+.pattern-name-zh{
+  font-size:16px;
+  font-weight:700;
+  color:var(--text);
+  line-height:1.3;
+}
+.pattern-name-en{
+  font-size:11px;
+  color:var(--muted);
+  font-weight:500;
+  line-height:1.3;
+  margin-top:2px;
+}
+
+/* ── Formula block ── */
+.formula{
+  background:var(--subtle);
+  border-left:3px solid var(--accent);
+  border-radius:0 8px 8px 0;
+  padding:10px 14px;
+  font-size:12px;
+  line-height:1.6;
+  color:var(--muted);
+  font-family:'JetBrains Mono','Fira Code','Menlo',monospace;
+  word-break:break-all;
+}
+.formula-label{
+  font-size:10px;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:var(--muted);
+  opacity:.7;
+  margin-bottom:4px;
+  font-family:inherit;
+}
+.formula-text{
+  color:var(--text);
+  font-size:12px;
+}
+
+/* ── Tags ── */
+.tags{
+  display:flex;
+  flex-wrap:wrap;
+  gap:6px;
+  margin-top:auto;
+}
+.tag{
+  background:color-mix(in srgb,var(--accent) 15%,transparent);
+  border:1px solid color-mix(in srgb,var(--accent) 35%,transparent);
+  color:var(--accent);
+  font-size:11px;
+  padding:3px 10px;
+  border-radius:20px;
+  font-weight:500;
+  letter-spacing:.02em;
+}
+
+/* ── Stats row ── */
+.stats{
+  max-width:1200px;
+  margin:0 auto;
+  display:flex;
+  justify-content:center;
+  gap:40px;
+  flex-wrap:wrap;
+}
+.stat-item{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+}
+.stat-number{
+  font-size:28px;
+  font-weight:800;
+  color:var(--text);
+  line-height:1;
+  background:linear-gradient(135deg,#3b82f6,#a855f7);
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+}
+.stat-label{
+  font-size:12px;
+  color:var(--muted);
+  letter-spacing:.04em;
+}
+.stats-divider{
+  width:1px;
+  height:40px;
+  background:var(--border);
+  align-self:center;
+}
+
+/* ── Footer ── */
+.footer{
+  text-align:center;
+  margin-top:48px;
+  font-size:11px;
+  color:var(--muted);
+  opacity:.6;
+  letter-spacing:.04em;
+}
+
+/* ── Color accents per card ── */
+.c-blue   {--accent:#3b82f6;}
+.c-emerald{--accent:#22c55e;}
+.c-violet {--accent:#a855f7;}
+.c-rose   {--accent:#ef4444;}
+.c-orange {--accent:#f97316;}
+.c-amber  {--accent:#eab308;}
+.c-cyan   {--accent:#06b6d4;}
+.c-pink   {--accent:#ec4899;}
+.c-indigo {--accent:#6366f1;}
+.c-slate  {--accent:#6b7280;}
+</style>
+</head>
+<body>
+
+<!-- Controls -->
+<div class="controls">
+  <button class="ctrl-btn" onclick="cycleTheme()">
+    <span class="lz">切换主题</span>
+    <span class="le" style="display:none">Theme</span>
+  </button>
+  <button class="ctrl-btn" onclick="toggleLang()">
+    <span class="lz">EN</span>
+    <span class="le" style="display:none">中文</span>
+  </button>
+</div>
+
+<!-- Header -->
+<header class="header">
+  <p class="header-eyebrow">
+    <span class="lz">源码级提炼 · VIS-5-004</span>
+    <span class="le" style="display:none">Source-level extraction · VIS-5-004</span>
+  </p>
+  <h1 class="header-title">
+    <span class="lz">Claude Code 可复用设计模式清单</span>
+    <span class="le" style="display:none">Claude Code Reusable Design Pattern Catalog</span>
+  </h1>
+  <p class="header-sub">
+    <span class="lz">从 Claude Code 源码中提炼的 10 个核心设计模式，可直接应用于工程实践</span>
+    <span class="le" style="display:none">10 key design patterns extracted from Claude Code source code, ready for engineering practice</span>
+  </p>
+</header>
+
+<!-- Card Grid -->
+<div class="grid">
+
+  <!-- Card 1: Speculative Execution — FEATURED -->
+  <div class="card c-blue featured">
+    <span class="card-index">#01</span>
+    <div class="pattern-label">
+      <span class="featured-dot"></span>
+      <div>
+        <div class="pattern-name-zh lz">投机执行</div>
+        <div class="pattern-name-en le" style="display:none">Speculative Execution</div>
+        <div class="pattern-name-en lz" style="font-size:11px;color:var(--muted);margin-top:2px;">Speculative Execution</div>
+      </div>
+    </div>
+    <div class="formula">
+      <div class="formula-label lz">公式</div>
+      <div class="formula-label le" style="display:none">Formula</div>
+      <div class="formula-text lz">找到"必须等待X"的地方<br>→ 等待期间做不依赖X的工作</div>
+      <div class="formula-text le" style="display:none">Find "must wait for X"<br>→ Do X-independent work during wait</div>
+    </div>
+    <div class="tags">
+      <span class="tag lz">性能优化</span>
+      <span class="tag le" style="display:none">Perf Opt</span>
+      <span class="tag lz">并发</span>
+      <span class="tag le" style="display:none">Concurrency</span>
+    </div>
+  </div>
+
+  <!-- Card 2: Tokens as First-Class Citizens -->
+  <div class="card c-emerald">
+    <span class="card-index">#02</span>
+    <div class="pattern-label">
+      <div>
+        <div class="pattern-name-zh lz">Token优先</div>
+        <div class="pattern-name-en le" style="display:none">Tokens as First-Class Citizens</div>
+        <div class="pattern-name-en lz" style="font-size:11px;color:var(--muted);margin-top:2px;">Tokens as First-Class Citizens</div>
+      </div>
+    </div>
+    <div class="formula">
+      <div class="formula-label lz">公式</div>
+      <div class="formula-label le" style="display:none">Formula</div>
+      <div class="formula-text lz">识别消耗 → 测量 → 优化 → 监控</div>
+      <div class="formula-text le" style="display:none">Identify → Measure → Optimize → Monitor</div>
+    </div>
+    <div class="tags">
+      <span class="tag lz">成本控制</span>
+      <span class="tag le" style="display:none">Cost Control</span>
+      <span class="tag lz">可观测性</span>
+      <span class="tag le" style="display:none">Observability</span>
+    </div>
+  </div>
+
+  <!-- Card 3: Composable AI Modules -->
+  <div class="card c-violet">
+    <span class="card-index">#03</span>
+    <div class="pattern-label">
+      <div>
+        <div class="pattern-name-zh lz">可组合AI模块</div>
+        <div class="pattern-name-en le" style="display:none">Composable AI Modules</div>
+        <div class="pattern-name-en lz" style="font-size:11px;color:var(--muted);margin-top:2px;">Composable AI Modules</div>
+      </div>
+    </div>
+    <div class="formula">
+      <div class="formula-label lz">公式</div>
+      <div class="formula-label le" style="display:none">Formula</div>
+      <div class="formula-text lz">统一执行引擎 + 不同参数配置</div>
+      <div class="formula-text le" style="display:none">Unified engine + varied param configs</div>
+    </div>
+    <div class="tags">
+      <span class="tag lz">架构设计</span>
+      <span class="tag le" style="display:none">Architecture</span>
+      <span class="tag lz">复用</span>
+      <span class="tag le" style="display:none">Reuse</span>
+    </div>
+  </div>
+
+  <!-- Card 4: Defense in Depth — FEATURED -->
+  <div class="card c-rose featured">
+    <span class="card-index">#04</span>
+    <div class="pattern-label">
+      <span class="featured-dot"></span>
+      <div>
+        <div class="pattern-name-zh lz">防御纵深</div>
+        <div class="pattern-name-en le" style="display:none">Defense in Depth</div>
+        <div class="pattern-name-en lz" style="font-size:11px;color:var(--muted);margin-top:2px;">Defense in Depth</div>
+      </div>
+    </div>
+    <div class="formula">
+      <div class="formula-label lz">公式</div>
+      <div class="formula-label le" style="display:none">Formula</div>
+      <div class="formula-text lz">硬编码禁止 → 配置拒绝<br>→ 操作自检 → 配置允许 → 默认保守</div>
+      <div class="formula-text le" style="display:none">Hardcoded deny → Config deny<br>→ Op self-check → Config allow → Safe default</div>
+    </div>
+    <div class="tags">
+      <span class="tag lz">安全设计</span>
+      <span class="tag le" style="display:none">Security Design</span>
+      <span class="tag lz">多层防护</span>
+      <span class="tag le" style="display:none">Multi-layer</span>
+    </div>
+  </div>
+
+  <!-- Card 5: Observability by Design -->
+  <div class="card c-orange">
+    <span class="card-index">#05</span>
+    <div class="pattern-label">
+      <div>
+        <div class="pattern-name-zh lz">可观测性设计</div>
+        <div class="pattern-name-en le" style="display:none">Observability by Design</div>
+        <div class="pattern-name-en lz" style="font-size:11px;color:var(--muted);margin-top:2px;">Observability by Design</div>
+      </div>
+    </div>
+    <div class="formula">
+      <div class="formula-label lz">公式</div>
+      <div class="formula-label le" style="display:none">Formula</div>
+      <div class="formula-text lz">设计功能时同时设计其可观测性</div>
+      <div class="formula-text le" style="display:none">Design observability alongside every feature</div>
+    </div>
+    <div class="tags">
+      <span class="tag lz">可观测性</span>
+      <span class="tag le" style="display:none">Observability</span>
+      <span class="tag lz">调试</span>
+      <span class="tag le" style="display:none">Debugging</span>
+    </div>
+  </div>
+
+  <!-- Card 6: Hooks Extension Points — FEATURED -->
+  <div class="card c-amber featured">
+    <span class="card-index">#06</span>
+    <div class="pattern-label">
+      <span class="featured-dot"></span>
+      <div>
+        <div class="pattern-name-zh lz">Hook扩展点</div>
+        <div class="pattern-name-en le" style="display:none">Hooks Extension Points</div>
+        <div class="pattern-name-en lz" style="font-size:11px;color:var(--muted);margin-top:2px;">Hooks Extension Points</div>
+      </div>
+    </div>
+    <div class="formula">
+      <div class="formula-label lz">公式</div>
+      <div class="formula-label le" style="display:none">Formula</div>
+      <div class="formula-text lz">事件节点 + 退出码语义<br>+ 安全默认 + 来源标记 + 异步支持</div>
+      <div class="formula-text le" style="display:none">Event node + exit code semantics<br>+ safe default + source tag + async</div>
+    </div>
+    <div class="tags">
+      <span class="tag lz">扩展性</span>
+      <span class="tag le" style="display:none">Extensibility</span>
+      <span class="tag lz">事件驱动</span>
+      <span class="tag le" style="display:none">Event-driven</span>
+    </div>
+  </div>
+
+  <!-- Card 7: Metadata-First Optimization -->
+  <div class="card c-cyan">
+    <span class="card-index">#07</span>
+    <div class="pattern-label">
+      <div>
+        <div class="pattern-name-zh lz">元数据优先</div>
+        <div class="pattern-name-en le" style="display:none">Metadata-First Optimization</div>
+        <div class="pattern-name-en lz" style="font-size:11px;color:var(--muted);margin-top:2px;">Metadata-First Optimization</div>
+      </div>
+    </div>
+    <div class="formula">
+      <div class="formula-label lz">公式</div>
+      <div class="formula-label le" style="display:none">Formula</div>
+      <div class="formula-text lz">先读元数据(stat)<br>→ 确认有变化再读内容</div>
+      <div class="formula-text le" style="display:none">Read metadata (stat) first<br>→ Read content only if changed</div>
+    </div>
+    <div class="tags">
+      <span class="tag lz">I/O优化</span>
+      <span class="tag le" style="display:none">I/O Opt</span>
+      <span class="tag lz">缓存</span>
+      <span class="tag le" style="display:none">Caching</span>
+    </div>
+  </div>
+
+  <!-- Card 8: Progressive Trust -->
+  <div class="card c-pink">
+    <span class="card-index">#08</span>
+    <div class="pattern-label">
+      <div>
+        <div class="pattern-name-zh lz">渐进式信任</div>
+        <div class="pattern-name-en le" style="display:none">Progressive Trust</div>
+        <div class="pattern-name-en lz" style="font-size:11px;color:var(--muted);margin-top:2px;">Progressive Trust</div>
+      </div>
+    </div>
+    <div class="formula">
+      <div class="formula-label lz">公式</div>
+      <div class="formula-label le" style="display:none">Formula</div>
+      <div class="formula-text lz">首次任务零信任 → 逐步扩权<br>→ 用户确认 → 自动化</div>
+      <div class="formula-text le" style="display:none">Zero trust first → Gradual grant<br>→ User confirm → Automate</div>
+    </div>
+    <div class="tags">
+      <span class="tag lz">安全</span>
+      <span class="tag le" style="display:none">Security</span>
+      <span class="tag lz">用户体验</span>
+      <span class="tag le" style="display:none">UX</span>
+    </div>
+  </div>
+
+  <!-- Card 9: Declarative Config -->
+  <div class="card c-indigo">
+    <span class="card-index">#09</span>
+    <div class="pattern-label">
+      <div>
+        <div class="pattern-name-zh lz">声明式配置</div>
+        <div class="pattern-name-en le" style="display:none">Declarative Config</div>
+        <div class="pattern-name-en lz" style="font-size:11px;color:var(--muted);margin-top:2px;">Declarative Config</div>
+      </div>
+    </div>
+    <div class="formula">
+      <div class="formula-label lz">公式</div>
+      <div class="formula-label le" style="display:none">Formula</div>
+      <div class="formula-text lz">描述目标状态，非执行步骤</div>
+      <div class="formula-text le" style="display:none">Describe desired state, not execution steps</div>
+    </div>
+    <div class="tags">
+      <span class="tag lz">配置管理</span>
+      <span class="tag le" style="display:none">Config Mgmt</span>
+      <span class="tag lz">可预测</span>
+      <span class="tag le" style="display:none">Predictable</span>
+    </div>
+  </div>
+
+  <!-- Card 10: Snapshotable State -->
+  <div class="card c-slate">
+    <span class="card-index">#10</span>
+    <div class="pattern-label">
+      <div>
+        <div class="pattern-name-zh lz">快照可回退</div>
+        <div class="pattern-name-en le" style="display:none">Snapshotable State</div>
+        <div class="pattern-name-en lz" style="font-size:11px;color:var(--muted);margin-top:2px;">Snapshotable State</div>
+      </div>
+    </div>
+    <div class="formula">
+      <div class="formula-label lz">公式</div>
+      <div class="formula-label le" style="display:none">Formula</div>
+      <div class="formula-text">trackEdit → makeSnapshot<br>→ getDiff → rewind</div>
+    </div>
+    <div class="tags">
+      <span class="tag lz">错误恢复</span>
+      <span class="tag le" style="display:none">Error Recovery</span>
+      <span class="tag lz">状态管理</span>
+      <span class="tag le" style="display:none">State Mgmt</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- Stats Row -->
+<div class="stats">
+  <div class="stat-item">
+    <span class="stat-number">10</span>
+    <span class="stat-label">
+      <span class="lz">设计模式</span>
+      <span class="le" style="display:none">Design Patterns</span>
+    </span>
+  </div>
+  <div class="stats-divider"></div>
+  <div class="stat-item">
+    <span class="stat-number">3</span>
+    <span class="stat-label">
+      <span class="lz">特色推荐</span>
+      <span class="le" style="display:none">Featured</span>
+    </span>
+  </div>
+  <div class="stats-divider"></div>
+  <div class="stat-item">
+    <span class="stat-number lz" style="font-size:22px;background:linear-gradient(135deg,#f59e0b,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">源码级提炼</span>
+    <span class="stat-number le" style="display:none;font-size:22px;background:linear-gradient(135deg,#f59e0b,#f97316);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">Source-Derived</span>
+    <span class="stat-label">
+      <span class="lz">直接可用于工程实践</span>
+      <span class="le" style="display:none">Ready for engineering practice</span>
+    </span>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <span class="lz">Claude Code 源码研究 · VIS-5-004 · 2026</span>
+  <span class="le" style="display:none">Claude Code Source Study · VIS-5-004 · 2026</span>
+</div>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

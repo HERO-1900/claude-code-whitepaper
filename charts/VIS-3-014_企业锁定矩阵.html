@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-3-014 | 企业锁定矩阵</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--panel:#0f172a;--card:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--subtle:#475569;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="warm"]{--bg:#1c1410;--panel:#2a1f16;--card:#3d2d20;--border:#5c4a3a;--text:#f5e6d3;--muted:#c4a882;--subtle:#8b7355;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="light"]{--bg:#f8fafc;--panel:#f1f5f9;--card:#e2e8f0;--border:#cbd5e1;--text:#0f172a;--muted:#475569;--subtle:#94a3b8;--amber:#d97706;--cyan:#0891b2;--violet:#7c3aed;--emerald:#059669;--rose:#e11d48;--slate:#475569;--orange:#ea580c}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:24px 16px 40px}
+
+/* Controls */
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:100}
+.ctrl button{font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:background 0.15s}
+.ctrl button:hover{background:var(--border)}
+
+[data-lang="en"] .lz{display:none}
+[data-lang="en"] .le{display:inline}
+
+/* Page header */
+.page-header{max-width:1200px;margin:0 auto 28px;padding-top:8px}
+.vis-id{font-size:11px;color:var(--subtle);letter-spacing:0.08em;margin-bottom:6px}
+.page-title{font-size:26px;font-weight:700;color:var(--text);line-height:1.2;margin-bottom:8px}
+.page-subtitle{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* Main layout */
+.layout{max-width:1200px;margin:0 auto;display:grid;grid-template-columns:1fr 280px;gap:20px;align-items:start}
+@media(max-width:900px){.layout{grid-template-columns:1fr}}
+
+/* Matrix section */
+.matrix-section{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden}
+.section-header{padding:16px 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px}
+.section-title{font-size:13px;font-weight:600;color:var(--text)}
+.section-badge{font-size:10px;padding:2px 8px;border-radius:4px;background:rgba(100,116,139,0.2);color:var(--muted);border:1px solid var(--border)}
+
+/* Matrix table wrapper */
+.table-wrap{overflow-x:auto;padding:0 0 4px}
+table{width:100%;border-collapse:collapse;font-size:12px}
+
+/* Column headers */
+thead th{padding:12px 16px;text-align:center;font-size:11px;font-weight:600;letter-spacing:0.05em;border-bottom:2px solid var(--border);position:sticky;top:0;background:var(--panel);z-index:2}
+thead th:first-child{text-align:left;min-width:180px}
+thead th.col-dev{color:var(--cyan)}
+thead th.col-team{color:var(--amber)}
+thead th.col-ent{color:var(--rose)}
+
+/* Sub-header row (icons) */
+.col-icon-row th{padding:4px 16px 10px;font-size:18px;background:var(--panel);border-bottom:1px solid var(--border)}
+.col-icon-row th:first-child{font-size:11px;color:var(--subtle);text-align:left}
+
+/* Row data */
+tbody tr{border-bottom:1px solid rgba(51,65,85,0.5);transition:background 0.1s}
+tbody tr:hover{background:rgba(255,255,255,0.03)}
+tbody tr:last-child{border-bottom:none}
+
+/* Feature cell */
+td.feature{padding:13px 16px;font-size:12px;color:var(--text);font-weight:500;white-space:nowrap}
+td.feature .feat-name{display:block;font-weight:600;margin-bottom:2px}
+td.feature .feat-desc{font-size:10px;color:var(--muted);font-weight:400}
+
+/* Category badge */
+.cat-tag{display:inline-block;font-size: 10px;padding:1px 5px;border-radius:3px;margin-bottom:4px;text-transform:uppercase;letter-spacing:0.06em}
+.cat-model{background:rgba(34,211,238,0.12);color:var(--cyan);border:1px solid rgba(34,211,238,0.25)}
+.cat-auth{background:rgba(167,139,250,0.12);color:var(--violet);border:1px solid rgba(167,139,250,0.25)}
+.cat-tool{background:rgba(251,191,36,0.12);color:var(--amber);border:1px solid rgba(251,191,36,0.25)}
+.cat-net{background:rgba(52,211,153,0.12);color:var(--emerald);border:1px solid rgba(52,211,153,0.25)}
+.cat-fs{background:rgba(251,146,60,0.12);color:var(--orange);border:1px solid rgba(251,146,60,0.25)}
+.cat-mcp{background:rgba(251,113,133,0.12);color:var(--rose);border:1px solid rgba(251,113,133,0.25)}
+.cat-log{background:rgba(148,163,184,0.12);color:var(--slate);border:1px solid rgba(148,163,184,0.25)}
+.cat-sys{background:rgba(34,211,238,0.08);color:var(--cyan);border:1px solid rgba(34,211,238,0.15)}
+
+/* Status cells */
+td.status{text-align:center;padding:10px 8px;vertical-align:middle}
+.status-pill{display:inline-flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;padding:6px 10px;border-radius:8px;min-width:72px;cursor:default;transition:transform 0.1s}
+.status-pill:hover{transform:scale(1.04)}
+.status-icon{font-size:16px;line-height:1}
+.status-label{font-size: 10px;font-weight:600;letter-spacing:0.05em;text-transform:uppercase}
+
+/* Status variants */
+.s-locked{background:rgba(251,113,133,0.15);border:1px solid rgba(251,113,133,0.35);color:var(--rose)}
+.s-allowed{background:rgba(52,211,153,0.13);border:1px solid rgba(52,211,153,0.3);color:var(--emerald)}
+.s-cond{background:rgba(251,191,36,0.13);border:1px solid rgba(251,191,36,0.3);color:var(--amber)}
+.s-blocked{background:rgba(100,116,139,0.15);border:1px solid rgba(100,116,139,0.3);color:var(--slate)}
+
+/* Legend row */
+.legend-row{padding:14px 20px;border-top:1px solid var(--border);display:flex;flex-wrap:wrap;gap:12px;align-items:center}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.legend-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.ld-locked{background:rgba(251,113,133,0.5);border:1px solid var(--rose)}
+.ld-allowed{background:rgba(52,211,153,0.5);border:1px solid var(--emerald)}
+.ld-cond{background:rgba(251,191,36,0.5);border:1px solid var(--amber)}
+.ld-blocked{background:rgba(100,116,139,0.4);border:1px solid var(--slate)}
+.legend-sep{color:var(--subtle);font-size:11px}
+
+/* Sidebar */
+.sidebar{display:flex;flex-direction:column;gap:14px}
+
+/* Info cards */
+.info-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative;overflow:hidden}
+.info-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.ic-violet::before{background:linear-gradient(90deg,var(--violet),transparent)}
+.ic-amber::before{background:linear-gradient(90deg,var(--amber),transparent)}
+.ic-cyan::before{background:linear-gradient(90deg,var(--cyan),transparent)}
+.ic-rose::before{background:linear-gradient(90deg,var(--rose),transparent)}
+.ic-emerald::before{background:linear-gradient(90deg,var(--emerald),transparent)}
+
+.ic-label{font-size:10px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:8px}
+.ic-value{font-size:12px;font-weight:600;color:var(--text);line-height:1.5;word-break:break-all}
+.ic-value.mono{font-family:'JetBrains Mono',monospace;background:rgba(0,0,0,0.2);padding:6px 10px;border-radius:6px;display:block;margin-top:4px;font-size:11px}
+.ic-value.violet{color:var(--violet)}
+.ic-value.amber{color:var(--amber)}
+.ic-value.cyan{color:var(--cyan)}
+.ic-value.rose{color:var(--rose)}
+
+/* Priority ladder */
+.priority-chain{display:flex;flex-direction:column;gap:4px;margin-top:8px}
+.prio-item{display:flex;align-items:center;gap:8px;font-size:11px}
+.prio-num{width:18px;height:18px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size: 10px;font-weight:700;flex-shrink:0}
+.prio-1{background:rgba(251,113,133,0.3);color:var(--rose);border:1px solid rgba(251,113,133,0.5)}
+.prio-2{background:rgba(167,139,250,0.3);color:var(--violet);border:1px solid rgba(167,139,250,0.5)}
+.prio-3{background:rgba(251,191,36,0.3);color:var(--amber);border:1px solid rgba(251,191,36,0.5)}
+.prio-4{background:rgba(52,211,153,0.3);color:var(--emerald);border:1px solid rgba(52,211,153,0.5)}
+.prio-arrow{color:var(--subtle);font-size: 10px;margin-left:6px}
+.prio-name{color:var(--text);font-weight:500}
+
+/* Summary cards (3) */
+.summary-cards{display:flex;flex-direction:column;gap:10px}
+.sum-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:13px 14px;display:flex;align-items:flex-start;gap:10px}
+.sum-icon{font-size:20px;flex-shrink:0;margin-top:1px}
+.sum-body{}
+.sum-num{font-size:18px;font-weight:700;line-height:1}
+.sum-title{font-size:11px;font-weight:600;color:var(--muted);margin-top:2px}
+.sum-desc{font-size:10px;color:var(--subtle);margin-top:4px;line-height:1.5}
+.sum-rose .sum-num{color:var(--rose)}
+.sum-amber .sum-num{color:var(--amber)}
+.sum-violet .sum-num{color:var(--violet)}
+
+/* Sidebar section header */
+.sb-header{font-size:10px;color:var(--subtle);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:6px;padding-left:2px}
+
+/* Footer */
+.page-footer{max-width:1200px;margin:20px auto 0;padding:14px 0 0;border-top:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--subtle)}
+</style>
+</head>
+<body>
+
+<!-- Theme / Lang controls -->
+<div class="ctrl">
+  <button onclick="cycleTheme()"><span class="lz">主题</span><span class="le">Theme</span></button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<!-- Page header -->
+<div class="page-header">
+  <div class="vis-id">VIS-3-014 · <span class="lz">企业部署</span><span class="le">Enterprise Deployment</span></div>
+  <h1 class="page-title"><span class="lz">企业锁定矩阵</span><span class="le">Enterprise Lockdown Matrix</span></h1>
+  <p class="page-subtitle">
+    <span class="lz">Claude Code 2.1.88 企业功能控制权限矩阵 — IT 管理员可锁定的功能范围、条件许可策略及配置优先级层级</span>
+    <span class="le">Claude Code 2.1.88 enterprise feature control matrix — scope of IT admin lockable features, conditional permission policies, and configuration priority hierarchy</span>
+  </p>
+</div>
+
+<!-- Main layout -->
+<div class="layout">
+
+  <!-- Matrix table -->
+  <div class="matrix-section">
+    <div class="section-header">
+      <span class="section-title"><span class="lz">功能权限矩阵</span><span class="le">Feature Permission Matrix</span></span>
+      <span class="section-badge"><span class="lz">10 项功能 · 3 种部署类型</span><span class="le">10 Features · 3 Deployment Types</span></span>
+    </div>
+
+    <div class="table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="text-align:left;color:var(--muted);font-size:10px"><span class="lz">功能 / 配置项</span><span class="le">Feature / Config</span></th>
+            <th class="col-dev">
+              <div style="font-size:16px;margin-bottom:2px">💻</div>
+              <span class="lz">个人开发者</span><span class="le">Individual Dev</span>
+            </th>
+            <th class="col-team">
+              <div style="font-size:16px;margin-bottom:2px">👥</div>
+              <span class="lz">团队</span><span class="le">Team</span>
+            </th>
+            <th class="col-ent">
+              <div style="font-size:16px;margin-bottom:2px">🏢</div>
+              <span class="lz">企业 / Enterprise</span><span class="le">Enterprise</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+
+          <!-- Row 1: Model selection -->
+          <tr>
+            <td class="feature">
+              <span class="cat-tag cat-model"><span class="lz">模型</span><span class="le">Model</span></span>
+              <span class="feat-name"><span class="lz">模型选择</span><span class="le">Model Selection</span></span>
+              <span class="feat-desc"><span class="lz">使用哪个 AI 模型</span><span class="le">Which AI model to use</span></span>
+            </td>
+            <td class="status">
+              <div class="status-pill s-allowed" title="Allowed — user can freely choose">
+                <span class="status-icon">✓</span>
+                <span class="status-label"><span class="lz">允许</span><span class="le">Allowed</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-allowed" title="Allowed — team members can choose">
+                <span class="status-icon">✓</span>
+                <span class="status-label"><span class="lz">允许</span><span class="le">Allowed</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-locked" title="Locked — admin-only, users cannot change">
+                <span class="status-icon">🔒</span>
+                <span class="status-label"><span class="lz">锁定</span><span class="le">Locked</span></span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 2: API key source -->
+          <tr>
+            <td class="feature">
+              <span class="cat-tag cat-auth"><span class="lz">凭证</span><span class="le">Auth</span></span>
+              <span class="feat-name"><span class="lz">API 密钥来源</span><span class="le">API Key Source</span></span>
+              <span class="feat-desc"><span class="lz">API 凭证的获取渠道</span><span class="le">Where Claude fetches credentials</span></span>
+            </td>
+            <td class="status">
+              <div class="status-pill s-allowed">
+                <span class="status-icon">✓</span>
+                <span class="status-label"><span class="lz">允许</span><span class="le">Allowed</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-allowed">
+                <span class="status-icon">✓</span>
+                <span class="status-label"><span class="lz">允许</span><span class="le">Allowed</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-locked">
+                <span class="status-icon">🔒</span>
+                <span class="status-label"><span class="lz">锁定</span><span class="le">Locked</span></span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 3: Tool: Bash -->
+          <tr>
+            <td class="feature">
+              <span class="cat-tag cat-tool"><span class="lz">工具</span><span class="le">Tool</span></span>
+              <span class="feat-name"><span class="lz">工具：Bash 执行</span><span class="le">Tool: Bash Exec</span></span>
+              <span class="feat-desc"><span class="lz">Shell 命令执行权限</span><span class="le">Shell command permissions</span></span>
+            </td>
+            <td class="status">
+              <div class="status-pill s-allowed">
+                <span class="status-icon">✓</span>
+                <span class="status-label"><span class="lz">允许</span><span class="le">Allowed</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-cond" title="Conditional — allowed with restrictions">
+                <span class="status-icon">⚡</span>
+                <span class="status-label"><span class="lz">条件</span><span class="le">Conditional</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-locked">
+                <span class="status-icon">🔒</span>
+                <span class="status-label"><span class="lz">锁定</span><span class="le">Locked</span></span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 4: Tool: Write -->
+          <tr>
+            <td class="feature">
+              <span class="cat-tag cat-tool"><span class="lz">工具</span><span class="le">Tool</span></span>
+              <span class="feat-name"><span class="lz">工具：文件写入</span><span class="le">Tool: File Write</span></span>
+              <span class="feat-desc"><span class="lz">文件写入操作权限</span><span class="le">File write operation permissions</span></span>
+            </td>
+            <td class="status">
+              <div class="status-pill s-allowed">
+                <span class="status-icon">✓</span>
+                <span class="status-label"><span class="lz">允许</span><span class="le">Allowed</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-cond">
+                <span class="status-icon">⚡</span>
+                <span class="status-label"><span class="lz">条件</span><span class="le">Conditional</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-locked">
+                <span class="status-icon">🔒</span>
+                <span class="status-label"><span class="lz">锁定</span><span class="le">Locked</span></span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 5: Network access -->
+          <tr>
+            <td class="feature">
+              <span class="cat-tag cat-net"><span class="lz">网络</span><span class="le">Network</span></span>
+              <span class="feat-name"><span class="lz">网络访问</span><span class="le">Network Access</span></span>
+              <span class="feat-desc"><span class="lz">外部网络出站请求</span><span class="le">Outbound network requests</span></span>
+            </td>
+            <td class="status">
+              <div class="status-pill s-allowed">
+                <span class="status-icon">✓</span>
+                <span class="status-label"><span class="lz">允许</span><span class="le">Allowed</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-cond">
+                <span class="status-icon">⚡</span>
+                <span class="status-label"><span class="lz">条件</span><span class="le">Conditional</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-locked">
+                <span class="status-icon">🔒</span>
+                <span class="status-label"><span class="lz">锁定</span><span class="le">Locked</span></span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 6: File system scope -->
+          <tr>
+            <td class="feature">
+              <span class="cat-tag cat-fs"><span class="lz">文件系统</span><span class="le">Filesystem</span></span>
+              <span class="feat-name"><span class="lz">文件系统范围</span><span class="le">File System Scope</span></span>
+              <span class="feat-desc"><span class="lz">读写路径访问范围</span><span class="le">Read/write access scope</span></span>
+            </td>
+            <td class="status">
+              <div class="status-pill s-allowed">
+                <span class="status-icon">✓</span>
+                <span class="status-label"><span class="lz">允许</span><span class="le">Allowed</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-allowed">
+                <span class="status-icon">✓</span>
+                <span class="status-label"><span class="lz">允许</span><span class="le">Allowed</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-cond">
+                <span class="status-icon">⚡</span>
+                <span class="status-label"><span class="lz">条件</span><span class="le">Conditional</span></span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 7: MCP servers -->
+          <tr>
+            <td class="feature">
+              <span class="cat-tag cat-mcp">MCP</span>
+              <span class="feat-name"><span class="lz">MCP 服务器</span><span class="le">MCP Servers</span></span>
+              <span class="feat-desc"><span class="lz">外部工具集成接入</span><span class="le">External tool integrations</span></span>
+            </td>
+            <td class="status">
+              <div class="status-pill s-allowed">
+                <span class="status-icon">✓</span>
+                <span class="status-label"><span class="lz">允许</span><span class="le">Allowed</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-allowed">
+                <span class="status-icon">✓</span>
+                <span class="status-label"><span class="lz">允许</span><span class="le">Allowed</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-locked">
+                <span class="status-icon">🔒</span>
+                <span class="status-label"><span class="lz">锁定</span><span class="le">Locked</span></span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 8: Telemetry -->
+          <tr>
+            <td class="feature">
+              <span class="cat-tag cat-log"><span class="lz">遥测</span><span class="le">Telemetry</span></span>
+              <span class="feat-name"><span class="lz">遥测数据</span><span class="le">Telemetry</span></span>
+              <span class="feat-desc"><span class="lz">用量数据采集上报</span><span class="le">Usage data collection</span></span>
+            </td>
+            <td class="status">
+              <div class="status-pill s-allowed">
+                <span class="status-icon">✓</span>
+                <span class="status-label"><span class="lz">允许</span><span class="le">Allowed</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-allowed">
+                <span class="status-icon">✓</span>
+                <span class="status-label"><span class="lz">允许</span><span class="le">Allowed</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-locked">
+                <span class="status-icon">🔒</span>
+                <span class="status-label"><span class="lz">锁定</span><span class="le">Locked</span></span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 9: Update channel -->
+          <tr>
+            <td class="feature">
+              <span class="cat-tag cat-sys"><span class="lz">系统</span><span class="le">System</span></span>
+              <span class="feat-name"><span class="lz">更新渠道</span><span class="le">Update Channel</span></span>
+              <span class="feat-desc"><span class="lz">安装哪个版本分支</span><span class="le">Which version to install</span></span>
+            </td>
+            <td class="status">
+              <div class="status-pill s-allowed">
+                <span class="status-icon">✓</span>
+                <span class="status-label"><span class="lz">允许</span><span class="le">Allowed</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-allowed">
+                <span class="status-icon">✓</span>
+                <span class="status-label"><span class="lz">允许</span><span class="le">Allowed</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-locked">
+                <span class="status-icon">🔒</span>
+                <span class="status-label"><span class="lz">锁定</span><span class="le">Locked</span></span>
+              </div>
+            </td>
+          </tr>
+
+          <!-- Row 10: Config overrides -->
+          <tr>
+            <td class="feature">
+              <span class="cat-tag cat-sys"><span class="lz">配置</span><span class="le">Config</span></span>
+              <span class="feat-name"><span class="lz">配置覆盖</span><span class="le">Config Overrides</span></span>
+              <span class="feat-desc"><span class="lz">用户能否覆盖企业配置</span><span class="le">Can users override enterprise settings</span></span>
+            </td>
+            <td class="status">
+              <div class="status-pill s-allowed">
+                <span class="status-icon">✓</span>
+                <span class="status-label"><span class="lz">允许</span><span class="le">Allowed</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-allowed">
+                <span class="status-icon">✓</span>
+                <span class="status-label"><span class="lz">允许</span><span class="le">Allowed</span></span>
+              </div>
+            </td>
+            <td class="status">
+              <div class="status-pill s-blocked" title="Blocked — disabled, cannot be enabled by users">
+                <span class="status-icon">✗</span>
+                <span class="status-label"><span class="lz">禁用</span><span class="le">Blocked</span></span>
+              </div>
+            </td>
+          </tr>
+
+        </tbody>
+      </table>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend-row">
+      <div class="legend-item">
+        <div class="legend-dot ld-locked"></div>
+        <span>🔒 <span class="lz">锁定 — 仅管理员</span><span class="le">Locked — Admin only</span></span>
+      </div>
+      <div class="legend-sep">·</div>
+      <div class="legend-item">
+        <div class="legend-dot ld-allowed"></div>
+        <span>✓ <span class="lz">允许 — 用户可自由使用</span><span class="le">Allowed — User can freely use</span></span>
+      </div>
+      <div class="legend-sep">·</div>
+      <div class="legend-item">
+        <div class="legend-dot ld-cond"></div>
+        <span>⚡ <span class="lz">条件 — 有限制或需审批</span><span class="le">Conditional — Restrictions apply</span></span>
+      </div>
+      <div class="legend-sep">·</div>
+      <div class="legend-item">
+        <div class="legend-dot ld-blocked"></div>
+        <span>✗ <span class="lz">禁用 — 不可启用</span><span class="le">Blocked — Cannot be enabled</span></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+
+    <!-- Summary cards -->
+    <div class="sb-header"><span class="lz">统计概览</span><span class="le">Summary</span></div>
+    <div class="summary-cards">
+      <div class="sum-card sum-rose">
+        <div class="sum-icon">🔒</div>
+        <div class="sum-body">
+          <div class="sum-num"><span class="lz">8 项可锁定</span><span class="le">8 Lockable</span></div>
+          <div class="sum-title"><span class="lz">企业版完全掌控</span><span class="le">Enterprise Full Control</span></div>
+          <div class="sum-desc"><span class="lz">IT 管理员可将 8 项核心功能设为只读策略，用户无法修改</span><span class="le">IT admins can set 8 core features to read-only policy, users cannot change</span></div>
+        </div>
+      </div>
+      <div class="sum-card sum-amber">
+        <div class="sum-icon">⚡</div>
+        <div class="sum-body">
+          <div class="sum-num"><span class="lz">条件许可</span><span class="le">Conditional</span></div>
+          <div class="sum-title"><span class="lz">白名单可配置</span><span class="le">Whitelist Configurable</span></div>
+          <div class="sum-desc"><span class="lz">Bash / Write / 网络 / 文件系统范围支持精细白名单策略</span><span class="le">Bash / Write / Network / FS scope support fine-grained whitelist policies</span></div>
+        </div>
+      </div>
+      <div class="sum-card sum-violet">
+        <div class="sum-icon">🏗️</div>
+        <div class="sum-body">
+          <div class="sum-num"><span class="lz">四级优先</span><span class="le">4-Level Priority</span></div>
+          <div class="sum-title"><span class="lz">配置层级严格</span><span class="le">Strict Config Hierarchy</span></div>
+          <div class="sum-desc"><span class="lz">System → Enterprise → Team → User 逐级覆盖，高层级策略不可绕过</span><span class="le">System → Enterprise → Team → User cascades; higher-level policies cannot be bypassed</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Enterprise config path -->
+    <div class="info-card ic-violet">
+      <div class="ic-label"><span class="lz">企业配置文件路径</span><span class="le">Enterprise Config Path</span></div>
+      <code class="ic-value mono violet">/etc/claude/policy.json</code>
+    </div>
+
+    <!-- Priority hierarchy -->
+    <div class="info-card ic-amber">
+      <div class="ic-label"><span class="lz">配置优先级（高→低）</span><span class="le">Config Priority (High→Low)</span></div>
+      <div class="priority-chain">
+        <div class="prio-item">
+          <div class="prio-num prio-1">1</div>
+          <span class="prio-name" style="color:var(--rose)"><span class="lz">系统策略</span><span class="le">System Policy</span></span>
+          <span class="prio-arrow">▼</span>
+        </div>
+        <div class="prio-item">
+          <div class="prio-num prio-2">2</div>
+          <span class="prio-name" style="color:var(--violet)"><span class="lz">企业配置</span><span class="le">Enterprise</span></span>
+          <span class="prio-arrow">▼</span>
+        </div>
+        <div class="prio-item">
+          <div class="prio-num prio-3">3</div>
+          <span class="prio-name" style="color:var(--amber)"><span class="lz">团队配置</span><span class="le">Team</span></span>
+          <span class="prio-arrow">▼</span>
+        </div>
+        <div class="prio-item">
+          <div class="prio-num prio-4">4</div>
+          <span class="prio-name" style="color:var(--emerald)"><span class="lz">用户配置</span><span class="le">User</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Audit log -->
+    <div class="info-card ic-cyan">
+      <div class="ic-label"><span class="lz">审计日志</span><span class="le">Audit Logging</span></div>
+      <div class="ic-value cyan" style="font-size:12px;line-height:1.6">
+        <span class="lz">所有锁定操作均记录日志<br>管理员可审查完整操作历史<br>不可被用户策略静默</span>
+        <span class="le">All locked operations logged<br>Admins can review full operation history<br>Cannot be silenced by user policy</span>
+      </div>
+    </div>
+
+    <!-- Feature count breakdown -->
+    <div class="info-card ic-rose">
+      <div class="ic-label"><span class="lz">企业版各状态计数</span><span class="le">Enterprise State Count</span></div>
+      <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px">
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;color:var(--rose)">🔒 <span class="lz">锁定</span><span class="le">Locked</span></span>
+          <span style="font-size:16px;font-weight:700;color:var(--rose)">8</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;color:var(--amber)">⚡ <span class="lz">条件</span><span class="le">Conditional</span></span>
+          <span style="font-size:16px;font-weight:700;color:var(--amber)">1</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;color:var(--slate)">✗ <span class="lz">禁用</span><span class="le">Blocked</span></span>
+          <span style="font-size:16px;font-weight:700;color:var(--slate)">1</span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center">
+          <span style="font-size:12px;color:var(--emerald)">✓ <span class="lz">允许</span><span class="le">Allowed</span></span>
+          <span style="font-size:16px;font-weight:700;color:var(--emerald)">0</span>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /sidebar -->
+</div><!-- /layout -->
+
+<!-- Footer -->
+<div class="page-footer">
+  <span>VIS-3-014 · <span class="lz">企业锁定矩阵</span><span class="le">Enterprise Lockdown Matrix</span> · Claude Code 2.1.88</span>
+  <span><span class="lz">CC Research 白皮书</span><span class="le">CC Research Whitepaper</span> · 2026</span>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-theme',t);
+  document.documentElement.setAttribute('data-lang',l);
+  document.getElementById('langBtn').textContent=l==='zh'?'EN':'中';
+  window.cycleTheme=function(){
+    var themes=['dark','warm','light'];
+    var cur=document.documentElement.getAttribute('data-theme')||'dark';
+    var next=themes[(themes.indexOf(cur)+1)%themes.length];
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('vtheme',next);
+  };
+  window.toggleLang=function(){
+    var cur=document.documentElement.getAttribute('data-lang')||'zh';
+    var next=cur==='zh'?'en':'zh';
+    document.documentElement.setAttribute('data-lang',next);
+    localStorage.setItem('vlang',next);
+    document.getElementById('langBtn').textContent=next==='zh'?'EN':'中';
+  };
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

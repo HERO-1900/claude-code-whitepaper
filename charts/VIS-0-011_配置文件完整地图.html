@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<!--
+  VIS-0-011 · 配置文件完整地图 · Configuration File Map
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · 配置文件完整地图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    :root,[data-theme="dark"]{
+      --bg:#020617;--bg-card:rgba(15,23,42,0.5);--border:#1e293b;
+      --text:#f8fafc;--muted:#94a3b8;--subtle:#64748b;--footer-c:#475569;--pulse:#22d3ee;
+      --svg-bg:#020617;--svg-grid:#1e293b;--mask-fill:#0f172a;
+      --global-f:rgba(8,51,68,0.45);   --global-s:#22d3ee;  --global-t:#67e8f9;
+      --project-f:rgba(6,78,59,0.45);  --project-s:#34d399; --project-t:#6ee7b7;
+      --local-f:rgba(120,53,15,0.45);  --local-s:#fbbf24;   --local-t:#fcd34d;
+      --md-f:rgba(76,29,149,0.45);     --md-s:#a78bfa;      --md-t:#c4b5fd;
+      --cache-f:rgba(30,41,59,0.5);    --cache-s:#94a3b8;   --cache-t:#cbd5e1;
+      --env-f:rgba(136,19,55,0.45);    --env-s:#fb7185;     --env-t:#fda4af;
+      --svg-text:#f8fafc;--svg-sub:#94a3b8;--svg-tiny:#64748b;
+      --btn-bg:rgba(15,23,42,0.85);--btn-active:#22d3ee;
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3;--bg-card:rgba(255,255,255,0.85);--border:#e8e0d4;
+      --text:#1a1412;--muted:#6b5a4e;--subtle:#9c8878;--footer-c:#b5a99a;--pulse:#0891b2;
+      --svg-bg:#faf7f2;--svg-grid:#ddd4c4;--mask-fill:#faf7f2;
+      --global-f:rgba(8,51,68,0.1);    --global-s:#0891b2;  --global-t:#0e7490;
+      --project-f:rgba(6,78,59,0.1);   --project-s:#059669; --project-t:#047857;
+      --local-f:rgba(180,83,9,0.1);    --local-s:#d97706;   --local-t:#b45309;
+      --md-f:rgba(76,29,149,0.1);      --md-s:#7c3aed;      --md-t:#6d28d9;
+      --cache-f:rgba(100,116,139,0.1); --cache-s:#78716c;   --cache-t:#57534e;
+      --env-f:rgba(136,19,55,0.1);     --env-s:#e11d48;     --env-t:#be123c;
+      --svg-text:#1a1412;--svg-sub:#6b5a4e;--svg-tiny:#9c8878;
+      --btn-bg:rgba(255,255,255,0.9);--btn-active:#0891b2;
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--bg-card:rgba(248,250,252,0.95);--border:#e2e8f0;
+      --text:#0f172a;--muted:#475569;--subtle:#94a3b8;--footer-c:#94a3b8;--pulse:#0ea5e9;
+      --svg-bg:#f8fafc;--svg-grid:#e2e8f0;--mask-fill:#f1f5f9;
+      --global-f:rgba(6,182,212,0.08); --global-s:#06b6d4;  --global-t:#0891b2;
+      --project-f:rgba(16,185,129,0.08);--project-s:#10b981;--project-t:#059669;
+      --local-f:rgba(245,158,11,0.08); --local-s:#f59e0b;   --local-t:#d97706;
+      --md-f:rgba(139,92,246,0.08);    --md-s:#8b5cf6;      --md-t:#7c3aed;
+      --cache-f:rgba(100,116,139,0.08);--cache-s:#94a3b8;   --cache-t:#64748b;
+      --env-f:rgba(244,63,94,0.08);    --env-s:#f43f5e;     --env-t:#e11d48;
+      --svg-text:#0f172a;--svg-sub:#475569;--svg-tiny:#94a3b8;
+      --btn-bg:rgba(248,250,252,0.95);--btn-active:#0ea5e9;
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:2rem;transition:background .25s,color .25s;}
+    .container{max-width:1100px;margin:0 auto;}
+
+    .controls{position:fixed;top:1rem;right:1rem;display:flex;gap:5px;z-index:100;
+      background:var(--btn-bg);border:1px solid var(--border);border-radius:10px;padding:5px 7px;backdrop-filter:blur(8px);}
+    .cb{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;padding:4px 9px;
+      border-radius:5px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+    .cb:hover{color:var(--text);border-color:var(--border);}
+    .cb.active{border-color:var(--btn-active);color:var(--text);}
+    .cdiv{width:1px;background:var(--border);margin:2px;}
+
+    .header{margin-bottom:1.5rem;}
+    .header-row{display:flex;align-items:center;gap:.875rem;margin-bottom:.375rem;}
+    .pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--pulse);animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
+    h1{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;}
+    .subtitle{font-size:.75rem;color:var(--muted);letter-spacing:.06em;}
+    [lang="en"] .lz{display:none;}
+.chart-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;}
+    .chart-wrap svg{display:block;width:100%;height:auto;}
+
+    .info-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;}
+    @media(max-width:700px){.info-grid{grid-template-columns:1fr;}}
+    .info-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:1rem 1.1rem;}
+    .ic-header{display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;}
+    .ic-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .ic-header h3{font-size:.72rem;font-weight:600;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;}
+    .info-card ul{list-style:none;font-size:.72rem;color:var(--muted);line-height:1.8;}
+
+    footer{font-size:.68rem;color:var(--footer-c);text-align:center;padding-top:1rem;border-top:1px solid var(--border);}
+  </style>
+</head>
+<body>
+<div class="controls">
+  <button class="cb active" onclick="setTheme('dark')">Dark</button>
+  <button class="cb" onclick="setTheme('warm')">Warm</button>
+  <button class="cb" onclick="setTheme('light')">Light</button>
+  <div class="cdiv"></div>
+  <button class="cb active" onclick="toggleLang()"><span class="lz">中</span><span class="le">EN</span></button>
+</div>
+
+<div class="container">
+  <div class="header">
+    <div class="header-row">
+      <div class="pulse-dot"></div>
+      <h1><span class="lz">配置文件完整地图</span><span class="le">Configuration File Map</span></h1>
+    </div>
+    <p class="subtitle">
+      <span class="lz">VIS-0-011 · Claude Code 2.1.88 · 6 种配置层次 · 优先级链全景</span>
+      <span class="le">VIS-0-011 · Claude Code 2.1.88 · 6 Config Layers · Priority Chain Overview</span>
+    </p>
+  </div>
+
+  <div class="chart-wrap">
+    <svg viewBox="0 0 1040 680" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="grid11" width="32" height="32" patternUnits="userSpaceOnUse">
+          <path d="M 32 0 L 0 0 0 32" fill="none" style="stroke:var(--svg-grid)" stroke-width="0.5"/>
+        </pattern>
+        <marker id="arr11" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" style="fill:var(--muted)"/>
+        </marker>
+        <marker id="arr11-down" markerWidth="6" markerHeight="6" refX="3" refY="5" orient="auto">
+          <polygon points="0 0,6 0,3 6" style="fill:var(--subtle)"/>
+        </marker>
+      </defs>
+
+      <rect width="1040" height="680" style="fill:var(--svg-bg)"/>
+      <rect width="1040" height="680" fill="url(#grid11)"/>
+
+      <!-- Priority label top-left -->
+      <text x="30" y="30" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--muted)">
+        <tspan class="lz">← 最高优先级</tspan><tspan class="le">← Highest Priority</tspan>
+      </text>
+      <text x="820" y="30" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--muted)">
+        <tspan class="lz">最低优先级 →</tspan><tspan class="le">Lowest Priority →</tspan>
+      </text>
+      <line x1="20" y1="40" x2="1020" y2="40" style="stroke:var(--border)" stroke-width="1"/>
+
+      <!-- ── LAYER 1: Directory CLAUDE.md (highest) ── -->
+      <rect x="20" y="54" width="162" height="120" rx="8" style="fill:var(--mask-fill)"/>
+      <rect x="20" y="54" width="162" height="120" rx="8" style="fill:var(--md-f);stroke:var(--md-s)" stroke-width="2"/>
+      <text x="101" y="86" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" style="fill:var(--md-t)"><tspan class="lz">目录级</tspan><tspan class="le">Directory</tspan></text>
+      <text x="101" y="106" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" style="fill:var(--md-t)">CLAUDE.md</text>
+      <text x="101" y="128" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)">&lt;dir&gt;/CLAUDE.md</text>
+      <text x="101" y="148" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">最近祖先目录</tspan><tspan class="le">nearest ancestor</tspan></text>
+      <!-- Priority badge -->
+      <rect x="20" y="54" width="34" height="20" rx="4" style="fill:var(--md-s)"/>
+      <text x="37" y="69" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#020617">P1</text>
+
+      <!-- ── LAYER 2: Project CLAUDE.md ── -->
+      <rect x="194" y="54" width="162" height="120" rx="8" style="fill:var(--mask-fill)"/>
+      <rect x="194" y="54" width="162" height="120" rx="8" style="fill:var(--md-f);stroke:var(--md-s)" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <text x="275" y="86" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" style="fill:var(--md-t)"><tspan class="lz">项目级</tspan><tspan class="le">Project</tspan></text>
+      <text x="275" y="106" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" style="fill:var(--md-t)">CLAUDE.md</text>
+      <text x="275" y="128" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)">.claude/CLAUDE.md</text>
+      <text x="275" y="148" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">git 可追踪</tspan><tspan class="le">git-trackable</tspan></text>
+      <rect x="194" y="54" width="34" height="20" rx="4" style="fill:var(--md-s)" opacity="0.7"/>
+      <text x="211" y="69" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#020617">P2</text>
+
+      <!-- ── LAYER 3: User global CLAUDE.md ── -->
+      <rect x="368" y="54" width="162" height="120" rx="8" style="fill:var(--mask-fill)"/>
+      <rect x="368" y="54" width="162" height="120" rx="8" style="fill:var(--global-f);stroke:var(--global-s)" stroke-width="1.5"/>
+      <text x="449" y="86" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" style="fill:var(--global-t)"><tspan class="lz">用户全局</tspan><tspan class="le">User Global</tspan></text>
+      <text x="449" y="106" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" style="fill:var(--global-t)">CLAUDE.md</text>
+      <text x="449" y="128" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)">~/.claude/CLAUDE.md</text>
+      <text x="449" y="148" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">跨项目通用指令</tspan><tspan class="le">cross-project rules</tspan></text>
+      <rect x="368" y="54" width="34" height="20" rx="4" style="fill:var(--global-s)" opacity="0.8"/>
+      <text x="385" y="69" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#020617">P3</text>
+
+      <!-- ── LAYER 4: .claude/settings.local.json ── -->
+      <rect x="542" y="54" width="162" height="120" rx="8" style="fill:var(--mask-fill)"/>
+      <rect x="542" y="54" width="162" height="120" rx="8" style="fill:var(--local-f);stroke:var(--local-s)" stroke-width="1.5"/>
+      <text x="623" y="86" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" style="fill:var(--local-t)">settings.local</text>
+      <text x="623" y="106" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" style="fill:var(--local-t)">.json</text>
+      <text x="623" y="128" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)">.claude/settings.local.json</text>
+      <text x="623" y="148" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--local-s)"><tspan class="lz">gitignore · 本地敏感</tspan><tspan class="le">gitignored · sensitive</tspan></text>
+      <rect x="542" y="54" width="34" height="20" rx="4" style="fill:var(--local-s)" opacity="0.8"/>
+      <text x="559" y="69" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#020617">P4</text>
+
+      <!-- ── LAYER 5: .claude/settings.json ── -->
+      <rect x="716" y="54" width="144" height="120" rx="8" style="fill:var(--mask-fill)"/>
+      <rect x="716" y="54" width="144" height="120" rx="8" style="fill:var(--project-f);stroke:var(--project-s)" stroke-width="1.5"/>
+      <text x="788" y="86" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" style="fill:var(--project-t)">settings.json</text>
+      <text x="788" y="108" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)">.claude/settings.json</text>
+      <text x="788" y="128" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">项目级 JSON 配置</tspan><tspan class="le">Project JSON config</tspan></text>
+      <text x="788" y="148" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)">hooks / permissions</text>
+      <rect x="716" y="54" width="34" height="20" rx="4" style="fill:var(--project-s)" opacity="0.8"/>
+      <text x="733" y="69" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#020617">P5</text>
+
+      <!-- ── LAYER 6: ~/.claude/settings.json ── -->
+      <rect x="872" y="54" width="148" height="120" rx="8" style="fill:var(--mask-fill)"/>
+      <rect x="872" y="54" width="148" height="120" rx="8" style="fill:var(--global-f);stroke:var(--global-s)" stroke-width="1.5"/>
+      <text x="946" y="86" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" style="fill:var(--global-t)"><tspan class="lz">全局用户</tspan><tspan class="le">Global User</tspan></text>
+      <text x="946" y="106" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" style="fill:var(--global-t)">settings.json</text>
+      <text x="946" y="128" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)">~/.claude/settings.json</text>
+      <text x="946" y="148" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">跨项目生效</tspan><tspan class="le">applies cross-project</tspan></text>
+      <rect x="872" y="54" width="34" height="20" rx="4" style="fill:var(--global-s)" opacity="0.6"/>
+      <text x="889" y="69" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" fill="#020617">P6</text>
+
+      <!-- Priority arrows between layers -->
+      <line x1="184" y1="114" x2="192" y2="114" style="stroke:var(--muted)" stroke-width="1" marker-end="url(#arr11)"/>
+      <line x1="358" y1="114" x2="366" y2="114" style="stroke:var(--muted)" stroke-width="1" marker-end="url(#arr11)"/>
+      <line x1="532" y1="114" x2="540" y2="114" style="stroke:var(--muted)" stroke-width="1" marker-end="url(#arr11)"/>
+      <line x1="706" y1="114" x2="714" y2="114" style="stroke:var(--muted)" stroke-width="1" marker-end="url(#arr11)"/>
+      <line x1="862" y1="114" x2="870" y2="114" style="stroke:var(--muted)" stroke-width="1" marker-end="url(#arr11)"/>
+
+      <!-- Priority chain text -->
+      <text x="520" y="200" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)">
+        <tspan class="lz">优先级链: 目录 CLAUDE.md &gt; 项目 CLAUDE.md &gt; 用户 CLAUDE.md &gt; settings.local.json &gt; settings.json &gt; 全局 settings.json</tspan>
+        <tspan class="le">Priority chain: dir CLAUDE.md &gt; project CLAUDE.md &gt; user CLAUDE.md &gt; settings.local.json &gt; settings.json &gt; global settings.json</tspan>
+      </text>
+
+      <!-- ── BOTTOM SECTION: Settings.json structure + other files ── -->
+      <line x1="20" y1="218" x2="1020" y2="218" style="stroke:var(--border)" stroke-width="1"/>
+
+      <!-- settings.json key fields -->
+      <rect x="20" y="234" width="480" height="222" rx="8" style="fill:var(--mask-fill)"/>
+      <rect x="20" y="234" width="480" height="222" rx="8" style="fill:var(--project-f);stroke:var(--project-s)" stroke-width="1.5"/>
+      <text x="260" y="258" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" style="fill:var(--project-t)">settings.json <tspan class="lz">关键字段</tspan><tspan class="le">Key Fields</tspan></text>
+      <!-- Fields grid - 2 columns, 3 rows -->
+      <text x="40" y="286" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--project-t)">model</text>
+      <text x="40" y="304" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">指定使用的 Claude 模型版本</tspan><tspan class="le">Claude model version</tspan></text>
+      <text x="270" y="286" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--project-t)">hooks</text>
+      <text x="270" y="304" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">Hook 事件配置数组</tspan><tspan class="le">Hook event config arrays</tspan></text>
+      <text x="40" y="332" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--project-t)">permissions</text>
+      <text x="40" y="350" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">权限模式 + 白名单</tspan><tspan class="le">Permission mode + allowlists</tspan></text>
+      <text x="270" y="332" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--project-t)">mcpServers</text>
+      <text x="270" y="350" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">MCP 服务器连接配置</tspan><tspan class="le">MCP server connections</tspan></text>
+      <text x="40" y="378" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--project-t)">env</text>
+      <text x="40" y="396" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">环境变量注入</tspan><tspan class="le">Env variable injection</tspan></text>
+      <text x="270" y="378" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--project-t)">includeCoAuthoredBy</text>
+      <text x="270" y="396" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">提交署名开关</tspan><tspan class="le">Co-author signature toggle</tspan></text>
+      <text x="40" y="424" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--project-t)">enabledMcpjsonFiles</text>
+      <text x="40" y="442" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">启用的 MCP JSON 文件路径</tspan><tspan class="le">Enabled MCP JSON paths</tspan></text>
+
+      <!-- Other config files: .env, statsig -->
+      <rect x="520" y="234" width="246" height="222" rx="8" style="fill:var(--mask-fill)"/>
+      <rect x="520" y="234" width="246" height="222" rx="8" style="fill:var(--env-f);stroke:var(--env-s)" stroke-width="1.5"/>
+      <text x="643" y="258" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" style="fill:var(--env-t)"><tspan class="lz">环境变量</tspan><tspan class="le">Environment Vars</tspan></text>
+      <text x="540" y="286" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--env-t)">ANTHROPIC_API_KEY</text>
+      <text x="540" y="304" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">API 鉴权密钥</tspan><tspan class="le">API auth key</tspan></text>
+      <text x="540" y="332" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--env-t)">ANTHROPIC_BASE_URL</text>
+      <text x="540" y="350" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">API 端点 URL 覆盖</tspan><tspan class="le">API endpoint override</tspan></text>
+      <text x="540" y="378" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--env-t)">CLAUDE_CODE_SKIP_*</text>
+      <text x="540" y="396" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">跳过特定检查</tspan><tspan class="le">Skip specific checks</tspan></text>
+      <text x="540" y="424" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--env-t)">MAX_THINKING_TOKENS</text>
+      <text x="540" y="442" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">扩展思考 token 上限</tspan><tspan class="le">Extended thinking limit</tspan></text>
+
+      <!-- Cache files -->
+      <rect x="786" y="234" width="234" height="222" rx="8" style="fill:var(--mask-fill)"/>
+      <rect x="786" y="234" width="234" height="222" rx="8" style="fill:var(--cache-f);stroke:var(--cache-s)" stroke-width="1.5"/>
+      <text x="903" y="258" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" style="fill:var(--cache-t)"><tspan class="lz">缓存 &amp; 运行时</tspan><tspan class="le">Cache &amp; Runtime</tspan></text>
+      <text x="806" y="286" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--cache-t)">~/.claude/statsig/</text>
+      <text x="806" y="304" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">A/B 测试开关缓存</tspan><tspan class="le">Feature flag cache</tspan></text>
+      <text x="806" y="332" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--cache-t)">~/.claude/projects/</text>
+      <text x="806" y="350" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">按路径的持久化记忆</tspan><tspan class="le">Per-project memory</tspan></text>
+      <text x="806" y="378" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--cache-t)">~/.claude/tool-results/</text>
+      <text x="806" y="396" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">大结果落盘存储</tspan><tspan class="le">Large tool output refs</tspan></text>
+      <text x="806" y="424" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--cache-t)">~/.claude/todos/</text>
+      <text x="806" y="442" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">TodoWrite 持久化</tspan><tspan class="le">TodoWrite persistence</tspan></text>
+
+      <!-- Load Order note -->
+      <rect x="20" y="478" width="1000" height="66" rx="6" style="fill:var(--global-f);stroke:var(--global-s)" stroke-width="1"/>
+      <text x="520" y="504" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--global-t)">
+        <tspan class="lz">加载顺序: ~/.claude/settings.json → .claude/settings.json → settings.local.json → CLAUDE.md (递归向上)</tspan>
+        <tspan class="le">Load order: ~/.claude/settings.json → .claude/settings.json → settings.local.json → CLAUDE.md (recursive upward)</tspan>
+      </text>
+      <text x="520" y="528" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)">
+        <tspan class="lz">更具体的配置覆盖更通用的配置 · settings.local.json 已加入 .gitignore</tspan>
+        <tspan class="le">More specific config overrides more general · settings.local.json is gitignored</tspan>
+      </text>
+
+      <!-- Merge strategy note -->
+      <rect x="20" y="562" width="1000" height="106" rx="6" style="fill:var(--mask-fill);stroke:var(--border)" stroke-width="1"/>
+      <text x="520" y="588" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" style="fill:var(--svg-text)">
+        <tspan class="lz">合并策略</tspan><tspan class="le">Merge Strategy</tspan>
+      </text>
+      <text x="60" y="614" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)">
+        <tspan class="lz">· CLAUDE.md 文件: 内容串联合并（多层 CLAUDE.md 同时注入 system prompt）</tspan>
+        <tspan class="le">· CLAUDE.md files: content concatenated (all levels injected into system prompt)</tspan>
+      </text>
+      <text x="60" y="636" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)">
+        <tspan class="lz">· settings.json: 深度合并（项目级覆盖全局，local 覆盖共享）</tspan>
+        <tspan class="le">· settings.json: deep merge (project overrides global, local overrides shared)</tspan>
+      </text>
+      <text x="60" y="658" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)">
+        <tspan class="lz">· 权限配置: 取最严格值（allowList 交集）</tspan>
+        <tspan class="le">· Permissions: take strictest value (allowList intersection)</tspan>
+      </text>
+    </svg>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="ic-header">
+        <div class="ic-dot" style="background:var(--md-s)"></div>
+        <h3>CLAUDE.md</h3>
+      </div>
+      <ul>
+        <li>• <span class="lz">注入 system prompt 的指令文件</span><span class="le">Instruction file injected into system prompt</span></li>
+        <li>• <span class="lz">3 层：用户全局 / 项目 / 目录</span><span class="le">3 layers: global / project / directory</span></li>
+        <li>• <span class="lz">多层同时生效，内容串联</span><span class="le">All layers active simultaneously, concatenated</span></li>
+        <li>• <span class="lz">项目级默认 git 追踪</span><span class="le">Project-level git-tracked by default</span></li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <div class="ic-header">
+        <div class="ic-dot" style="background:var(--project-s)"></div>
+        <h3>settings.json</h3>
+      </div>
+      <ul>
+        <li>• <span class="lz">JSON 格式，机器可读</span><span class="le">JSON format, machine-readable</span></li>
+        <li>• <span class="lz">控制 hooks / permissions / MCP</span><span class="le">Controls hooks / permissions / MCP</span></li>
+        <li>• <span class="lz">.local.json 变体 gitignore</span><span class="le">.local.json variant is gitignored</span></li>
+        <li>• <span class="lz">源: utils/settings.ts (24 files)</span><span class="le">Source: utils/settings.ts (24 files)</span></li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <div class="ic-header">
+        <div class="ic-dot" style="background:var(--cache-s)"></div>
+        <h3><span class="lz">运行时缓存</span><span class="le">Runtime Cache</span></h3>
+      </div>
+      <ul>
+        <li>• <span class="lz">statsig/ — 特性开关离线缓存</span><span class="le">statsig/ — feature flag offline cache</span></li>
+        <li>• <span class="lz">projects/ — 按路径索引的记忆</span><span class="le">projects/ — path-indexed memory</span></li>
+        <li>• <span class="lz">tool-results/ — 大结果落盘</span><span class="le">tool-results/ — large output on disk</span></li>
+        <li>• <span class="lz">所有缓存路径在 ~/.claude/ 下</span><span class="le">All cache paths under ~/.claude/</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>
+    VIS-0-011 · Claude Code 2.1.88 · <span class="lz">6 配置层次 · utils/settings/ 源码 24 文件</span><span class="le">6 config layers · utils/settings/ 24 source files</span> · CC 白皮书 v2
+  </footer>
+</div>
+
+<script>
+(function(){
+  function setTheme(t){try{localStorage.setItem('vtheme',t);}catch(e){}
+    document.documentElement.setAttribute('data-theme',t);
+    document.querySelectorAll('.cb').forEach(b=>b.classList.remove('active'));
+    const map={dark:0,warm:1,light:2};
+    document.querySelectorAll('.cb')[map[t]]?.classList.add('active');
+  }
+  function toggleLang(){
+    const h=document.documentElement;
+    h.lang=h.lang==='zh'?'en':'zh';
+  }
+  // cc-restore-on-load
+  try{
+    var _t=localStorage.getItem('vtheme');
+    if(_t==='dark'||_t==='warm'||_t==='light')setTheme(_t);
+    var _l=localStorage.getItem('vlang');
+    if(_l==='en'&&document.documentElement.lang!=='en')toggleLang();
+  }catch(e){}
+  window.setTheme=setTheme;
+  window.toggleLang=toggleLang;
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

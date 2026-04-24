@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Q26 · Agent 六条件金字塔 | Agent Six-Condition Pyramid</title>
+<style>
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro SC","PingFang SC","Helvetica Neue",Arial,sans-serif;min-height:100vh;transition:background .3s,color .3s}
+.wrap{max-width:1120px;margin:0 auto;padding:32px 24px 48px}
+.head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:18px;flex-wrap:wrap}
+.title{font-size:22px;font-weight:700;letter-spacing:.3px}
+.sub{font-size:13px;color:var(--muted);margin-top:4px;font-weight:400}
+.tools{display:flex;gap:8px}
+.btn{appearance:none;border:1px solid var(--border);background:var(--panel);color:var(--text);padding:7px 13px;border-radius:8px;font-size:12px;cursor:pointer;transition:all .2s;font-family:inherit}
+.btn:hover{background:var(--subtle);transform:translateY(-1px)}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:24px;box-shadow:0 1px 2px rgba(0,0,0,.04)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.stat-v{font-size:20px;font-weight:700;color:var(--rose);letter-spacing:.5px}
+.stat-l{font-size:11px;color:var(--muted);margin-top:4px;letter-spacing:.3px}
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:16px;font-size:11px;color:var(--muted)}
+.legend-item{display:flex;align-items:center;gap:6px}
+.legend-dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+.foot{margin-top:14px;font-size:11px;color:var(--muted);text-align:center;line-height:1.7}
+svg{display:block;width:100%;height:auto;max-width:100%}
+.svg-host{margin-top:4px;border-radius:10px;overflow:hidden}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="head">
+    <div>
+      <div class="title">
+        <span class="lz">Q26 · Agent 六条件金字塔</span>
+        <span class="le" style="display:none">Q26 · Agent Six-Condition Pyramid</span>
+      </div>
+      <div class="sub">
+        <span class="lz">真正的自主 Agent 必须同时满足的 6 个递进条件</span>
+        <span class="le" style="display:none">The 6 cumulative conditions a true autonomous agent must satisfy</span>
+      </div>
+    </div>
+    <div class="tools">
+      <button class="btn" onclick="cycleTheme()">
+        <span class="lz">切换主题</span><span class="le" style="display:none">Theme</span>
+      </button>
+      <button class="btn" onclick="toggleLang()">
+        <span class="lz">EN</span><span class="le" style="display:none">中文</span>
+      </button>
+    </div>
+  </div>
+
+  <div style="max-width:960px;margin:0 auto 16px;background:rgba(245,158,11,0.1);border:1px solid #f59e0b;border-radius:8px;padding:12px 16px;font-size:12px;color:var(--text);">
+    <strong style="color:#f59e0b"><span class="lz">⚠ 教学抽象</span><span class="le" style="display:none">⚠ Teaching Abstraction</span></strong><span class="lz"> · 本图的六条件分类法是作者教学概括（AI agent 通识），非源码中的结构定义。金字塔概念成立，但顶层曾误标"nO 驱动"已修正为"Agent Loop (query.ts)"。</span><span class="le" style="display:none"> · This 6-condition pyramid is an author's teaching framework (common AI agent concepts), not a source-code structure. Concept holds; previously mislabeled "nO engine" now corrected to "Agent Loop (query.ts)".</span>
+  </div>
+
+  <div class="panel">
+    <div class="svg-host">
+    <svg viewBox="0 0 920 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Agent Six-Condition Pyramid">
+      <defs>
+        <linearGradient id="gPerc" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.85"/>
+          <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.55"/>
+        </linearGradient>
+        <linearGradient id="gReas" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.85"/>
+          <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.55"/>
+        </linearGradient>
+        <linearGradient id="gMem" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.85"/>
+          <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.55"/>
+        </linearGradient>
+        <linearGradient id="gPlan" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#10b981" stop-opacity="0.85"/>
+          <stop offset="100%" stop-color="#10b981" stop-opacity="0.55"/>
+        </linearGradient>
+        <linearGradient id="gAct" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#f97316" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="#f97316" stop-opacity="0.6"/>
+        </linearGradient>
+        <linearGradient id="gAuto" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#f43f5e" stop-opacity="0.95"/>
+          <stop offset="100%" stop-color="#f43f5e" stop-opacity="0.7"/>
+        </linearGradient>
+        <linearGradient id="gArrow" x1="0" y1="1" x2="0" y2="0">
+          <stop offset="0%" stop-color="#64748b" stop-opacity="0.4"/>
+          <stop offset="100%" stop-color="#f43f5e" stop-opacity="0.95"/>
+        </linearGradient>
+        <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+          <feGaussianBlur in="SourceAlpha" stdDeviation="2"/>
+          <feOffset dx="0" dy="1" result="off"/>
+          <feComponentTransfer><feFuncA type="linear" slope="0.25"/></feComponentTransfer>
+          <feMerge><feMergeNode/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="crownGlow" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <!-- Background grid (subtle) -->
+      <rect x="0" y="0" width="920" height="540" fill="none"/>
+
+      <!-- Title row inside SVG (small) -->
+      <text x="460" y="28" text-anchor="middle" fill="currentColor" font-size="13" font-weight="600" opacity="0.85">
+        <tspan class="lz">六条件递进金字塔 · 缺一不可</tspan>
+        <tspan class="le" display="none">Six-Condition Cumulative Pyramid · All Required</tspan>
+      </text>
+
+      <!--
+        Pyramid geometry:
+        Base at y=480, apex at y=70. Vertical span 410, divided into 6 tiers = ~68 each.
+        Half-width at base = 270 (so full width 540), at apex = 45 (full 90).
+        cx = 420 (shifted left a bit to leave right column for examples)
+      -->
+
+      <!-- Tier 1: Perception (base, widest) y: 412..480 -->
+      <polygon points="150,480 690,480 648,412 192,412" fill="url(#gPerc)" stroke="#22d3ee" stroke-width="1.2" filter="url(#softShadow)"/>
+      <text x="420" y="441" text-anchor="middle" fill="#0f172a" font-size="15" font-weight="700">
+        <tspan class="lz">感知 Perception</tspan>
+        <tspan class="le" display="none">Perception</tspan>
+      </text>
+      <text x="420" y="461" text-anchor="middle" fill="#0f172a" font-size="11" opacity="0.85">
+        <tspan class="lz">能读取环境信息（文件 / 上下文 / 输出）</tspan>
+        <tspan class="le" display="none">Read context, files, outputs</tspan>
+      </text>
+
+      <!-- Tier 2: Reasoning y: 344..412 -->
+      <polygon points="192,412 648,412 606,344 234,344" fill="url(#gReas)" stroke="#8b5cf6" stroke-width="1.2" filter="url(#softShadow)"/>
+      <text x="420" y="373" text-anchor="middle" fill="#0f172a" font-size="15" font-weight="700">
+        <tspan class="lz">推理 Reasoning</tspan>
+        <tspan class="le" display="none">Reasoning</tspan>
+      </text>
+      <text x="420" y="393" text-anchor="middle" fill="#0f172a" font-size="11" opacity="0.85">
+        <tspan class="lz">能分析理解输入（LLM 驱动分析）</tspan>
+        <tspan class="le" display="none">LLM-powered analysis</tspan>
+      </text>
+
+      <!-- Tier 3: Memory y: 276..344 -->
+      <polygon points="234,344 606,344 564,276 276,276" fill="url(#gMem)" stroke="#f59e0b" stroke-width="1.2" filter="url(#softShadow)"/>
+      <text x="420" y="305" text-anchor="middle" fill="#0f172a" font-size="15" font-weight="700">
+        <tspan class="lz">记忆 Memory</tspan>
+        <tspan class="le" display="none">Memory</tspan>
+      </text>
+      <text x="420" y="325" text-anchor="middle" fill="#0f172a" font-size="11" opacity="0.85">
+        <tspan class="lz">能记住历史交互（短期 / 长期记忆）</tspan>
+        <tspan class="le" display="none">Short / long-term memory</tspan>
+      </text>
+
+      <!-- Tier 4: Planning y: 208..276 -->
+      <polygon points="276,276 564,276 522,208 318,208" fill="url(#gPlan)" stroke="#10b981" stroke-width="1.2" filter="url(#softShadow)"/>
+      <text x="420" y="237" text-anchor="middle" fill="#0f172a" font-size="15" font-weight="700">
+        <tspan class="lz">规划 Planning</tspan>
+        <tspan class="le" display="none">Planning</tspan>
+      </text>
+      <text x="420" y="257" text-anchor="middle" fill="#0f172a" font-size="11" opacity="0.85">
+        <tspan class="lz">能分解目标任务（拆成可执行步骤）</tspan>
+        <tspan class="le" display="none">Decompose goals into steps</tspan>
+      </text>
+
+      <!-- Tier 5: Action y: 140..208 -->
+      <polygon points="318,208 522,208 480,140 360,140" fill="url(#gAct)" stroke="#f97316" stroke-width="1.2" filter="url(#softShadow)"/>
+      <text x="420" y="169" text-anchor="middle" fill="#0f172a" font-size="14" font-weight="700">
+        <tspan class="lz">执行 Action</tspan>
+        <tspan class="le" display="none">Action</tspan>
+      </text>
+      <text x="420" y="188" text-anchor="middle" fill="#0f172a" font-size="10.5" opacity="0.85">
+        <tspan class="lz">能操作外部工具（产生副作用）</tspan>
+        <tspan class="le" display="none">Tool use, side effects</tspan>
+      </text>
+
+      <!-- Tier 6: Autonomy (apex) y: 70..140 -->
+      <polygon points="360,140 480,140 465,70 375,70" fill="url(#gAuto)" stroke="#f43f5e" stroke-width="1.5" filter="url(#softShadow)"/>
+      <!-- Crown icon above apex -->
+      <g transform="translate(420,50)" filter="url(#crownGlow)">
+        <path d="M -16,8 L -11,-6 L -5,2 L 0,-10 L 5,2 L 11,-6 L 16,8 Z"
+              fill="#f43f5e" stroke="#fff" stroke-width="0.9" stroke-linejoin="round"/>
+        <circle cx="-11" cy="-6" r="1.6" fill="#fff"/>
+        <circle cx="0" cy="-10" r="1.8" fill="#fff"/>
+        <circle cx="11" cy="-6" r="1.6" fill="#fff"/>
+        <rect x="-16" y="8" width="32" height="2.6" fill="#f43f5e" stroke="#fff" stroke-width="0.6"/>
+      </g>
+      <text x="420" y="100" text-anchor="middle" fill="#fff" font-size="13" font-weight="700">
+        <tspan class="lz">自主性 Autonomy</tspan>
+        <tspan class="le" display="none">Autonomy</tspan>
+      </text>
+      <text x="420" y="118" text-anchor="middle" fill="#fff" font-size="10" opacity="0.92">
+        <tspan class="lz">自主决策循环（最高）</tspan>
+        <tspan class="le" display="none">Self-directed loop (top)</tspan>
+      </text>
+      <!-- Unified OUTSIDE numbered badges (all r=16, positioned left of each tier's slope) -->
+      <g id="tier-badges">
+        <!-- Tier 1 badge -->
+        <circle cx="145" cy="446" r="16" fill="#0f172a" stroke="#22d3ee" stroke-width="2"/>
+        <text x="145" y="451" text-anchor="middle" fill="#22d3ee" font-size="14" font-weight="700">1</text>
+        <!-- Tier 2 badge -->
+        <circle cx="187" cy="378" r="16" fill="#0f172a" stroke="#8b5cf6" stroke-width="2"/>
+        <text x="187" y="383" text-anchor="middle" fill="#8b5cf6" font-size="14" font-weight="700">2</text>
+        <!-- Tier 3 badge -->
+        <circle cx="229" cy="310" r="16" fill="#0f172a" stroke="#f59e0b" stroke-width="2"/>
+        <text x="229" y="315" text-anchor="middle" fill="#f59e0b" font-size="14" font-weight="700">3</text>
+        <!-- Tier 4 badge -->
+        <circle cx="271" cy="242" r="16" fill="#0f172a" stroke="#10b981" stroke-width="2"/>
+        <text x="271" y="247" text-anchor="middle" fill="#10b981" font-size="14" font-weight="700">4</text>
+        <!-- Tier 5 badge -->
+        <circle cx="313" cy="174" r="16" fill="#0f172a" stroke="#f97316" stroke-width="2"/>
+        <text x="313" y="179" text-anchor="middle" fill="#f97316" font-size="14" font-weight="700">5</text>
+        <!-- Tier 6 badge -->
+        <circle cx="341" cy="105" r="16" fill="#0f172a" stroke="#f43f5e" stroke-width="2"/>
+        <text x="341" y="110" text-anchor="middle" fill="#f43f5e" font-size="14" font-weight="700">6</text>
+      </g>
+
+      <!-- LEFT: ascending difficulty arrow -->
+      <g>
+        <text x="70" y="44" fill="currentColor" font-size="11" font-weight="600" opacity="0.85">
+          <tspan class="lz">难度递增</tspan>
+          <tspan class="le" display="none">Difficulty</tspan>
+        </text>
+        <text x="70" y="60" fill="currentColor" font-size="10" opacity="0.6">
+          <tspan class="lz">自下而上</tspan>
+          <tspan class="le" display="none">bottom-up</tspan>
+        </text>
+        <!-- Arrow shaft -->
+        <rect x="88" y="90" width="6" height="360" rx="3" fill="url(#gArrow)"/>
+        <!-- Arrowhead up -->
+        <polygon points="91,68 80,92 102,92" fill="#f43f5e"/>
+        <!-- Base cap -->
+        <circle cx="91" cy="460" r="5" fill="#64748b"/>
+      </g>
+
+      <!-- RIGHT: real-world examples per tier -->
+      <g>
+        <text x="712" y="44" fill="currentColor" font-size="11" font-weight="600" opacity="0.85">
+          <tspan class="lz">现实对应示例</tspan>
+          <tspan class="le" display="none">Real-world examples</tspan>
+        </text>
+        <text x="712" y="60" fill="currentColor" font-size="10" opacity="0.6">
+          <tspan class="lz">CC 代码映射</tspan>
+          <tspan class="le" display="none">CC source mapping</tspan>
+        </text>
+
+        <!-- Connector lines + example text aligned to each tier midpoint -->
+        <!-- Tier 1 mid y=446 -->
+        <line x1="694" y1="446" x2="708" y2="446" stroke="#22d3ee" stroke-width="1.2" opacity="0.7"/>
+        <circle cx="708" cy="446" r="2.5" fill="#22d3ee"/>
+        <text x="716" y="443" fill="currentColor" font-size="10.5" font-weight="600">
+          <tspan class="lz">Read / Glob / Grep</tspan>
+          <tspan class="le" display="none">Read / Glob / Grep</tspan>
+        </text>
+        <text x="716" y="457" fill="var(--muted)" font-size="10" opacity="0.85">
+          <tspan class="lz">读文件、搜代码、拿上下文</tspan>
+          <tspan class="le" display="none">read files, search code</tspan>
+        </text>
+
+        <!-- Tier 2 mid y=378 -->
+        <line x1="652" y1="378" x2="708" y2="378" stroke="#8b5cf6" stroke-width="1.2" opacity="0.7"/>
+        <circle cx="708" cy="378" r="2.5" fill="#8b5cf6"/>
+        <text x="716" y="375" fill="currentColor" font-size="10.5" font-weight="600">
+          <tspan class="lz">Claude LLM 核心推理</tspan>
+          <tspan class="le" display="none">Claude LLM core</tspan>
+        </text>
+        <text x="716" y="389" fill="var(--muted)" font-size="10" opacity="0.85">
+          <tspan class="lz">理解意图、生成方案</tspan>
+          <tspan class="le" display="none">understand, plan</tspan>
+        </text>
+
+        <!-- Tier 3 mid y=310 -->
+        <line x1="610" y1="310" x2="708" y2="310" stroke="#f59e0b" stroke-width="1.2" opacity="0.7"/>
+        <circle cx="708" cy="310" r="2.5" fill="#f59e0b"/>
+        <text x="716" y="307" fill="currentColor" font-size="10.5" font-weight="600">
+          <tspan class="lz">CLAUDE.md / 对话历史</tspan>
+          <tspan class="le" display="none">CLAUDE.md / history</tspan>
+        </text>
+        <text x="716" y="321" fill="var(--muted)" font-size="10" opacity="0.85">
+          <tspan class="lz">项目记忆 + session 缓存</tspan>
+          <tspan class="le" display="none">project + session memory</tspan>
+        </text>
+
+        <!-- Tier 4 mid y=242 -->
+        <line x1="568" y1="242" x2="708" y2="242" stroke="#10b981" stroke-width="1.2" opacity="0.7"/>
+        <circle cx="708" cy="242" r="2.5" fill="#10b981"/>
+        <text x="716" y="239" fill="currentColor" font-size="10.5" font-weight="600">
+          <tspan class="lz">TodoWrite / Task 分解</tspan>
+          <tspan class="le" display="none">TodoWrite / Task</tspan>
+        </text>
+        <text x="716" y="253" fill="var(--muted)" font-size="10" opacity="0.85">
+          <tspan class="lz">把大目标拆成待办步骤</tspan>
+          <tspan class="le" display="none">goal to sub-steps</tspan>
+        </text>
+
+        <!-- Tier 5 mid y=174 -->
+        <line x1="526" y1="174" x2="708" y2="174" stroke="#f97316" stroke-width="1.2" opacity="0.7"/>
+        <circle cx="708" cy="174" r="2.5" fill="#f97316"/>
+        <text x="716" y="171" fill="currentColor" font-size="10.5" font-weight="600">
+          <tspan class="lz">Edit / Write / Bash</tspan>
+          <tspan class="le" display="none">Edit / Write / Bash</tspan>
+        </text>
+        <text x="716" y="185" fill="var(--muted)" font-size="10" opacity="0.85">
+          <tspan class="lz">真实改代码、跑命令</tspan>
+          <tspan class="le" display="none">edit files, run shells</tspan>
+        </text>
+
+        <!-- Tier 6 mid y=105 -->
+        <line x1="468" y1="105" x2="708" y2="105" stroke="#f43f5e" stroke-width="1.4" opacity="0.85"/>
+        <circle cx="708" cy="105" r="3" fill="#f43f5e"/>
+        <text x="716" y="102" fill="currentColor" font-size="10.5" font-weight="700">
+          <tspan class="lz">Agent Loop (query.ts)</tspan>
+          <tspan class="le" display="none">Agent Loop (query.ts)</tspan>
+        </text>
+        <text x="716" y="116" fill="var(--muted)" font-size="10" opacity="0.9">
+          <tspan class="lz">自我决策下一步、持续循环</tspan>
+          <tspan class="le" display="none">self-decide next step</tspan>
+        </text>
+      </g>
+
+      <!-- Bottom note -->
+      <text x="460" y="516" text-anchor="middle" fill="currentColor" font-size="10.5" opacity="0.65">
+        <tspan class="lz">上层依赖下层 · 任一缺失则不是真正的 Agent</tspan>
+        <tspan class="le" display="none">Each upper tier depends on all lower ones · missing any = not a true Agent</tspan>
+      </text>
+    </svg>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-v">6</div>
+        <div class="stat-l">
+          <span class="lz">条件层级 · 缺一不可</span>
+          <span class="le" style="display:none">Tiers · all required</span>
+        </div>
+      </div>
+      <div class="stat">
+        <div class="stat-v" style="color:var(--emerald)">→</div>
+        <div class="stat-l">
+          <span class="lz">递进式依赖 · 下层撑上层</span>
+          <span class="le" style="display:none">Cumulative · lower supports upper</span>
+        </div>
+      </div>
+      <div class="stat">
+        <div class="stat-v" style="color:var(--rose)">★</div>
+        <div class="stat-l">
+          <span class="lz">自主性为顶 · 最终判据</span>
+          <span class="le" style="display:none">Autonomy on top · final criterion</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="legend">
+      <span class="legend-item"><span class="legend-dot" style="background:#22d3ee"></span><span class="lz">感知</span><span class="le" style="display:none">Perception</span></span>
+      <span class="legend-item"><span class="legend-dot" style="background:#8b5cf6"></span><span class="lz">推理</span><span class="le" style="display:none">Reasoning</span></span>
+      <span class="legend-item"><span class="legend-dot" style="background:#f59e0b"></span><span class="lz">记忆</span><span class="le" style="display:none">Memory</span></span>
+      <span class="legend-item"><span class="legend-dot" style="background:#10b981"></span><span class="lz">规划</span><span class="le" style="display:none">Planning</span></span>
+      <span class="legend-item"><span class="legend-dot" style="background:#f97316"></span><span class="lz">执行</span><span class="le" style="display:none">Action</span></span>
+      <span class="legend-item"><span class="legend-dot" style="background:#f43f5e"></span><span class="lz">自主性</span><span class="le" style="display:none">Autonomy</span></span>
+    </div>
+
+    <div class="foot">
+      <span class="lz">Claude Code 2.1.88 · Agent 定义的必要条件集合 · 自下而上递进</span>
+      <span class="le" style="display:none">Claude Code 2.1.88 · Necessary conditions for Agent · bottom-up cumulative</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

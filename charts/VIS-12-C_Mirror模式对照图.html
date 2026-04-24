@@ -1,0 +1,749 @@
+<!DOCTYPE html>
+<!--
+  VIS-12-C · Bridge 运行模式对照图 · Bridge Operating Mode Comparison
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  2026-04-15 重写 — 替换早期"三种 mirror 模式"虚构版本
+  真实存在的是 KAIROS gated 的 perpetual / 普通 两种模式
+  源码依据: src/hooks/useReplBridge.tsx · src/bridge/initReplBridge.ts · src/bridge/replBridge.ts
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · Bridge 运行模式对照图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+    :root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+    :root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+    :root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      font-family:'JetBrains Mono',ui-monospace,monospace;
+      background:var(--bg);color:var(--text);min-height:100vh;padding:2rem;
+      transition:background .25s,color .25s;
+    }
+    .container{max-width:1200px;margin:0 auto;}
+
+    /* Top controls */
+    .controls{
+      position:fixed;top:1rem;right:1rem;display:flex;gap:5px;z-index:100;
+      background:var(--panel);border:1px solid var(--border);border-radius:10px;
+      padding:5px 7px;backdrop-filter:blur(8px);
+    }
+    .cb{
+      font-family:inherit;font-size:11px;font-weight:500;padding:5px 10px;
+      border-radius:6px;border:1px solid transparent;background:transparent;
+      color:var(--muted);cursor:pointer;transition:all .15s;
+    }
+    .cb:hover{color:var(--text);border-color:var(--border);}
+    .cb.active{border-color:var(--cyan);color:var(--text);}
+    .cdiv{width:1px;background:var(--border);margin:2px 4px;}
+
+    /* Correction banner — highly visible fact-check notice */
+    .fact-banner{
+      background:linear-gradient(90deg,rgba(245,158,11,.14),rgba(244,63,94,.10));
+      border:1px solid rgba(245,158,11,.45);border-left:4px solid var(--amber);
+      border-radius:10px;padding:.85rem 1.1rem;margin-bottom:1.25rem;
+      display:flex;gap:.8rem;align-items:flex-start;
+    }
+    .fact-banner .fb-icon{
+      font-size:16px;color:var(--amber);flex-shrink:0;line-height:1.2;
+    }
+    .fact-banner .fb-body{flex:1;min-width:0;}
+    .fact-banner .fb-title{
+      font-size:11px;font-weight:700;color:var(--amber);letter-spacing:.06em;
+      text-transform:uppercase;margin-bottom:.3rem;
+    }
+    .fact-banner .fb-text{
+      font-size:12px;color:var(--text);line-height:1.65;
+    }
+    .fact-banner code{
+      font-family:inherit;font-size:11.5px;background:rgba(245,158,11,.12);
+      color:var(--amber);padding:1px 6px;border-radius:4px;
+    }
+
+    /* Header */
+    .header{margin-bottom:1.25rem;}
+    .header-row{display:flex;align-items:center;gap:.875rem;margin-bottom:.375rem;}
+    .pulse-dot{width:9px;height:9px;border-radius:50%;background:var(--emerald);animation:pulse 2s infinite;box-shadow:0 0 12px var(--emerald);}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.55;transform:scale(.85);}}
+    h1{font-size:1.55rem;font-weight:700;letter-spacing:-.02em;}
+    .subtitle{font-size:12px;color:var(--muted);letter-spacing:.05em;}
+
+    /* Stats row */
+    .stats{
+      display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;
+    }
+    .stat{
+      background:var(--panel);border:1px solid var(--border);border-radius:12px;
+      padding:1rem 1.25rem;position:relative;overflow:hidden;
+    }
+    .stat::before{
+      content:"";position:absolute;inset:0;width:3px;
+      background:linear-gradient(180deg,var(--cyan),var(--emerald));
+    }
+    .stat-num{font-size:1.5rem;font-weight:700;color:var(--text);letter-spacing:-.02em;}
+    .stat-label{font-size:11px;color:var(--muted);margin-top:.25rem;letter-spacing:.05em;}
+
+    /* 2-col mode grid */
+    .modes{
+      display:grid;grid-template-columns:repeat(2,1fr);gap:1.1rem;margin-bottom:1.5rem;
+    }
+    @media(max-width:900px){.modes,.stats{grid-template-columns:1fr;}}
+
+    .mode{
+      background:var(--panel);border:1px solid var(--border);border-radius:12px;
+      overflow:hidden;display:flex;flex-direction:column;
+    }
+    .mode-head{
+      padding:.9rem 1.15rem;display:flex;align-items:center;gap:.7rem;
+      border-bottom:1px solid var(--border);
+    }
+    .mode-icon{
+      width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;
+      font-size:16px;font-weight:700;flex-shrink:0;
+    }
+    .mode-title{font-size:14px;font-weight:600;line-height:1.3;}
+    .mode-tag{font-size:10px;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-top:2px;}
+    .mode-flag{
+      font-size:10px;font-weight:600;margin-left:auto;padding:3px 8px;border-radius:6px;
+      letter-spacing:.04em;white-space:nowrap;
+    }
+
+    /* Mode 1: cyan — standard */
+    .m1 .mode-icon{background:rgba(34,211,238,.15);color:var(--cyan);border:1px solid rgba(34,211,238,.35);}
+    .m1 .mode-head{background:linear-gradient(90deg,rgba(34,211,238,.10),transparent);}
+    .m1 .mode-flag{background:rgba(34,211,238,.12);color:var(--cyan);border:1px solid rgba(34,211,238,.3);}
+    .m1 .accent{color:var(--cyan);}
+
+    /* Mode 2: emerald — perpetual */
+    .m2 .mode-icon{background:rgba(16,185,129,.15);color:var(--emerald);border:1px solid rgba(16,185,129,.35);}
+    .m2 .mode-head{background:linear-gradient(90deg,rgba(16,185,129,.10),transparent);}
+    .m2 .mode-flag{background:rgba(16,185,129,.12);color:var(--emerald);border:1px solid rgba(16,185,129,.3);}
+    .m2 .accent{color:var(--emerald);}
+
+    .mode-body{padding:1rem 1.15rem;display:flex;flex-direction:column;gap:.9rem;flex:1;}
+    .desc{font-size:12px;color:var(--muted);line-height:1.65;}
+
+    .section-label{
+      font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;
+      font-weight:600;margin-bottom:.4rem;
+    }
+
+    /* Flag / config block */
+    .cfg-block{
+      background:var(--card);border:1px solid var(--border);border-radius:8px;
+      padding:.6rem .75rem;
+    }
+    .cfg-row{
+      display:flex;align-items:center;gap:.5rem;font-size:11px;line-height:1.5;
+      padding:2px 0;
+    }
+    .cfg-row code{
+      font-family:inherit;background:var(--subtle);color:var(--text);
+      padding:1px 6px;border-radius:4px;font-size:11px;
+    }
+    .cfg-row .k{color:var(--muted);min-width:86px;}
+    .cfg-row .v-on{color:var(--emerald);}
+    .cfg-row .v-off{color:var(--slate);}
+
+    /* Feature list */
+    .feat-list{list-style:none;display:flex;flex-direction:column;gap:.45rem;}
+    .feat-list li{
+      font-size:11.5px;color:var(--text);line-height:1.55;padding-left:1.2em;
+      position:relative;
+    }
+    .feat-list li::before{
+      content:"▸";position:absolute;left:0;font-size:10px;top:1px;
+    }
+    .m1 .feat-list li::before{color:var(--cyan);}
+    .m2 .feat-list li::before{color:var(--emerald);}
+
+    /* Timing / lifecycle diagram */
+    .timing{
+      background:var(--card);border:1px solid var(--border);border-radius:8px;
+      padding:.65rem .75rem;
+    }
+    .timing svg{display:block;width:100%;height:auto;}
+
+    /* Use-case pill */
+    .use-pill{
+      display:inline-flex;align-items:center;gap:.4rem;font-size:11px;
+      padding:4px 10px;border-radius:6px;font-weight:500;
+      background:var(--card);border:1px solid var(--border);
+    }
+    .m1 .use-pill{border-color:rgba(34,211,238,.3);color:var(--cyan);}
+    .m2 .use-pill{border-color:rgba(16,185,129,.3);color:var(--emerald);}
+
+    /* Comparison table */
+    .compare-wrap{
+      background:var(--panel);border:1px solid var(--border);border-radius:12px;
+      padding:1.15rem 1.3rem;margin-bottom:1.5rem;overflow-x:auto;
+    }
+    .compare-title{
+      font-size:13px;font-weight:600;color:var(--text);margin-bottom:.85rem;
+      display:flex;align-items:center;gap:.5rem;
+    }
+    .compare-title::before{
+      content:"";width:4px;height:14px;background:linear-gradient(180deg,var(--cyan),var(--emerald));border-radius:2px;
+    }
+    table.ct{
+      width:100%;border-collapse:collapse;font-size:12px;
+    }
+    table.ct th,table.ct td{
+      padding:.7rem .85rem;text-align:left;border-bottom:1px solid var(--border);
+      vertical-align:top;
+    }
+    table.ct th{
+      font-size:11px;font-weight:600;color:var(--muted);letter-spacing:.05em;
+      text-transform:uppercase;white-space:nowrap;
+    }
+    table.ct th.col-cy{color:var(--cyan);}
+    table.ct th.col-em{color:var(--emerald);}
+    table.ct td.dim{color:var(--text);font-weight:600;width:170px;}
+    table.ct td.cell{color:var(--text);font-size:11.5px;line-height:1.55;}
+    table.ct td.cell .note{color:var(--muted);font-size:10.5px;display:block;margin-top:2px;}
+    table.ct tr:last-child td{border-bottom:none;}
+    .badge{
+      display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500;
+      white-space:nowrap;
+    }
+    .b-cyan{background:rgba(34,211,238,.12);color:var(--cyan);border:1px solid rgba(34,211,238,.3);}
+    .b-emerald{background:rgba(16,185,129,.12);color:var(--emerald);border:1px solid rgba(16,185,129,.3);}
+    .b-slate{background:rgba(100,116,139,.12);color:var(--muted);border:1px solid rgba(100,116,139,.3);}
+
+    /* Source block */
+    .src-block{
+      background:var(--panel);border:1px solid var(--border);border-radius:12px;
+      padding:1rem 1.25rem;margin-bottom:1.5rem;
+    }
+    .src-title{
+      font-size:12px;font-weight:600;color:var(--text);margin-bottom:.55rem;
+      display:flex;align-items:center;gap:.4rem;
+    }
+    .src-title::before{
+      content:"";width:4px;height:12px;background:var(--violet);border-radius:2px;
+    }
+    .src-list{list-style:none;display:flex;flex-direction:column;gap:.35rem;}
+    .src-list li{font-size:11px;color:var(--muted);line-height:1.6;}
+    .src-list code{
+      font-family:inherit;background:var(--card);color:var(--text);
+      padding:1px 6px;border-radius:4px;font-size:10.5px;
+    }
+
+    footer{
+      font-size:11px;color:var(--muted);text-align:center;padding-top:1rem;
+      border-top:1px solid var(--border);letter-spacing:.04em;
+    }
+
+    /* language switch baseline (IIFE toggles .lz/.le) */
+    .lz,.le{display:inline;}
+  </style>
+</head>
+<body>
+
+<div class="controls">
+  <button class="cb" id="btn-theme" onclick="cycleTheme()"><span class="lz">主题</span><span class="le">Theme</span></button>
+  <div class="cdiv"></div>
+  <button class="cb active" onclick="toggleLang()"><span class="lz">中</span><span class="le">EN</span></button>
+</div>
+
+<div class="container">
+
+  <!-- ============ FACT-CHECK BANNER ============ -->
+  <div class="fact-banner">
+    <div class="fb-icon">⚠</div>
+    <div class="fb-body">
+      <div class="fb-title">
+        <span class="lz">源码精读更新 · 2026-04-15</span>
+        <span class="le">Source Re-read Correction · 2026-04-15</span>
+      </div>
+      <div class="fb-text">
+        <span class="lz">本图替换了早期"三种 mirror 模式"虚构版本。真实存在的是 <code>KAIROS</code> gated 的 <code>perpetual</code> / 普通 两种模式（见 <code>src/hooks/useReplBridge.tsx</code>）。</span>
+        <span class="le">This chart supersedes the earlier fabricated "three mirror modes" version. What actually exists is a <code>KAIROS</code>-gated pair of <code>perpetual</code> / standard modes (see <code>src/hooks/useReplBridge.tsx</code>).</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ HEADER ============ -->
+  <div class="header">
+    <div class="header-row">
+      <div class="pulse-dot"></div>
+      <h1>
+        <span class="lz">Bridge 运行模式对照图</span>
+        <span class="le">Bridge Operating Mode Comparison</span>
+      </h1>
+    </div>
+    <div class="subtitle">
+      <span class="lz">VIS-12-C · 普通 vs 持续 · 基于 useReplBridge.tsx + initReplBridge.ts + replBridge.ts</span>
+      <span class="le">VIS-12-C · Standard vs Perpetual · from useReplBridge.tsx + initReplBridge.ts + replBridge.ts</span>
+    </div>
+  </div>
+
+  <!-- ============ STATS ============ -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">2</div>
+      <div class="stat-label">
+        <span class="lz">真实运行模式 · Operating Modes</span>
+        <span class="le">Operating Modes</span>
+      </div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">1</div>
+      <div class="stat-label">
+        <span class="lz">Feature Flag 控制开关 · KAIROS</span>
+        <span class="le">Feature Flag Gate · KAIROS</span>
+      </div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">600s</div>
+      <div class="stat-label">
+        <span class="lz">at-capacity 默认 poll 间隔</span>
+        <span class="le">at-capacity default poll interval</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ TWO MODES ============ -->
+  <div class="modes">
+
+    <!-- Mode 1: Standard -->
+    <div class="mode m1">
+      <div class="mode-head">
+        <div class="mode-icon">S</div>
+        <div>
+          <div class="mode-title">
+            <span class="lz">普通模式</span>
+            <span class="le">Standard Mode</span>
+          </div>
+          <div class="mode-tag">Standard · Per-query session</div>
+        </div>
+        <div class="mode-flag">
+          <span class="lz">默认</span>
+          <span class="le">DEFAULT</span>
+        </div>
+      </div>
+
+      <div class="mode-body">
+        <div class="desc">
+          <span class="lz">每次 CLI 调用启动一个全新的 bridge session；CLI 退出即拆除环境、清理 bridge-pointer.json。面向一次性命令场景。</span>
+          <span class="le">Every CLI invocation spins up a fresh bridge session; on clean exit, the environment is torn down and bridge-pointer.json is cleared. Built for one-shot command flows.</span>
+        </div>
+
+        <div>
+          <div class="section-label">
+            <span class="lz">Feature Flag 配置</span>
+            <span class="le">Feature-flag config</span>
+          </div>
+          <div class="cfg-block">
+            <div class="cfg-row"><span class="k">KAIROS</span><code>feature('KAIROS')</code><span class="v-off">= off</span></div>
+            <div class="cfg-row"><span class="k">perpetual</span><code>false</code><span class="v-off lz">（非 assistant mode）</span><span class="le" style="color:var(--muted);font-size:10.5px;">(non-assistant mode)</span></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label">
+            <span class="lz">关键行为</span>
+            <span class="le">Key behaviors</span>
+          </div>
+          <ul class="feat-list">
+            <li><span class="lz">每个 query 启动新 bridge session</span><span class="le">Fresh bridge session per query</span></li>
+            <li><span class="lz">退出即 archive / deregister / pointer-clear（crash-recovery 唯一使用者）</span><span class="le">Exit performs archive + deregister + pointer-clear (crash-recovery only)</span></li>
+            <li><span class="lz">transport 连上后默认 poll 间隔 10 分钟（POLL_INTERVAL_MS_AT_CAPACITY）</span><span class="le">Default 10-min at-capacity poll interval (POLL_INTERVAL_MS_AT_CAPACITY)</span></li>
+            <li><span class="lz">上线时允许展示 v2 升级提示（upgrade-nudge 生效）</span><span class="le">v2 upgrade-nudge message enabled at startup</span></li>
+          </ul>
+        </div>
+
+        <div class="timing">
+          <svg viewBox="0 0 520 90" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arr-cy" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L8,4 L0,8 z" fill="#22d3ee"/>
+              </marker>
+            </defs>
+            <!-- baseline -->
+            <line x1="10" y1="62" x2="510" y2="62" stroke="#334155" stroke-width="1"/>
+            <!-- query 1 -->
+            <rect x="20" y="36" width="90" height="26" rx="5" fill="rgba(34,211,238,.18)" stroke="#22d3ee" stroke-width="1"/>
+            <text x="65" y="53" text-anchor="middle" font-size="11" fill="#22d3ee" font-family="'JetBrains Mono',monospace" class="lz">query 1 · 新 session</text>
+            <text x="65" y="53" text-anchor="middle" font-size="11" fill="#22d3ee" font-family="'JetBrains Mono',monospace" class="le" display="none">query 1 · new session</text>
+            <text x="65" y="78" text-anchor="middle" font-size="10" fill="#94a3b8" font-family="'JetBrains Mono',monospace">teardown</text>
+            <!-- gap -->
+            <path d="M115,49 L175,49" stroke="#64748b" stroke-width="1" stroke-dasharray="3 3"/>
+            <!-- query 2 -->
+            <rect x="180" y="36" width="90" height="26" rx="5" fill="rgba(34,211,238,.18)" stroke="#22d3ee" stroke-width="1"/>
+            <text x="225" y="53" text-anchor="middle" font-size="11" fill="#22d3ee" font-family="'JetBrains Mono',monospace" class="lz">query 2 · 新 session</text>
+            <text x="225" y="53" text-anchor="middle" font-size="11" fill="#22d3ee" font-family="'JetBrains Mono',monospace" class="le" display="none">query 2 · new session</text>
+            <text x="225" y="78" text-anchor="middle" font-size="10" fill="#94a3b8" font-family="'JetBrains Mono',monospace">teardown</text>
+            <!-- gap -->
+            <path d="M275,49 L335,49" stroke="#64748b" stroke-width="1" stroke-dasharray="3 3"/>
+            <!-- query 3 -->
+            <rect x="340" y="36" width="90" height="26" rx="5" fill="rgba(34,211,238,.18)" stroke="#22d3ee" stroke-width="1"/>
+            <text x="385" y="53" text-anchor="middle" font-size="11" fill="#22d3ee" font-family="'JetBrains Mono',monospace" class="lz">query 3 · 新 session</text>
+            <text x="385" y="53" text-anchor="middle" font-size="11" fill="#22d3ee" font-family="'JetBrains Mono',monospace" class="le" display="none">query 3 · new session</text>
+            <text x="385" y="78" text-anchor="middle" font-size="10" fill="#94a3b8" font-family="'JetBrains Mono',monospace">teardown</text>
+            <!-- arrow -->
+            <line x1="432" y1="62" x2="500" y2="62" stroke="#22d3ee" stroke-width="1.2" marker-end="url(#arr-cy)"/>
+            <text x="265" y="22" text-anchor="middle" font-size="11" font-weight="600" fill="#22d3ee" font-family="'JetBrains Mono',monospace" class="lz">生命周期 · 每个 query 一个独立 session</text>
+            <text x="265" y="22" text-anchor="middle" font-size="11" font-weight="600" fill="#22d3ee" font-family="'JetBrains Mono',monospace" class="le" display="none">Lifecycle · one isolated session per query</text>
+          </svg>
+        </div>
+
+        <div>
+          <div class="section-label">
+            <span class="lz">典型场景</span>
+            <span class="le">Use case</span>
+          </div>
+          <span class="use-pill">
+            <span class="lz">CLI 一次性命令 · claude -p "..."</span>
+            <span class="le">one-shot CLI · claude -p "..."</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Mode 2: Perpetual -->
+    <div class="mode m2">
+      <div class="mode-head">
+        <div class="mode-icon">P</div>
+        <div>
+          <div class="mode-title">
+            <span class="lz">持续模式</span>
+            <span class="le">Perpetual Mode</span>
+          </div>
+          <div class="mode-tag">Perpetual · Cross-restart session</div>
+        </div>
+        <div class="mode-flag">
+          <span class="lz">KAIROS 门控</span>
+          <span class="le">KAIROS-GATED</span>
+        </div>
+      </div>
+
+      <div class="mode-body">
+        <div class="desc">
+          <span class="lz">Assistant mode 下启用：bridge session 跨 CLI 重启保持，读写同一份 bridge-pointer.json，由 api.reconnectSession() 复用 {environmentId, sessionId}。claude.ai 上表现为一条连续对话，而不是每次调用一条新会话。</span>
+          <span class="le">Enabled inside assistant mode: the bridge session survives CLI restarts, reads/writes the same bridge-pointer.json, and reuses {environmentId, sessionId} through api.reconnectSession(). On claude.ai this shows up as one continuous conversation instead of a fresh one per invocation.</span>
+        </div>
+
+        <div>
+          <div class="section-label">
+            <span class="lz">Feature Flag 配置</span>
+            <span class="le">Feature-flag config</span>
+          </div>
+          <div class="cfg-block">
+            <div class="cfg-row"><span class="k">KAIROS</span><code>feature('KAIROS')</code><span class="v-on">= on</span></div>
+            <div class="cfg-row"><span class="k">perpetual</span><code>isAssistantMode()</code><span class="v-on">= true</span></div>
+          </div>
+        </div>
+
+        <div>
+          <div class="section-label">
+            <span class="lz">关键行为</span>
+            <span class="le">Key behaviors</span>
+          </div>
+          <ul class="feat-list">
+            <li><span class="lz">bridge session 跨 query / 跨 CLI 重启保持</span><span class="le">Bridge session persists across queries and across CLI restarts</span></li>
+            <li><span class="lz">init 前读 bridge-pointer.json → reuseEnvironmentId + reconnectSession()</span><span class="le">On init, reads bridge-pointer.json → reuseEnvironmentId + reconnectSession()</span></li>
+            <li><span class="lz">teardown 跳过 archive / deregister / pointer-clear，环境存活</span><span class="le">Teardown skips archive / deregister / pointer-clear; environment stays alive</span></li>
+            <li><span class="lz">由专门的 pointerRefreshTimer 周期刷新指针文件</span><span class="le">A dedicated pointerRefreshTimer periodically refreshes the pointer file</span></li>
+            <li><span class="lz">initReplBridge 中回退到 v1 传输，跳过 v2 升级提示</span><span class="le">Falls back to v1 transport in initReplBridge; skips v2 upgrade nudge</span></li>
+          </ul>
+        </div>
+
+        <div class="timing">
+          <svg viewBox="0 0 520 90" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">
+            <defs>
+              <marker id="arr-em" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="7" markerHeight="7" orient="auto">
+                <path d="M0,0 L8,4 L0,8 z" fill="#10b981"/>
+              </marker>
+            </defs>
+            <!-- baseline -->
+            <line x1="10" y1="62" x2="510" y2="62" stroke="#334155" stroke-width="1"/>
+            <!-- single continuous session -->
+            <rect x="20" y="36" width="470" height="26" rx="5" fill="rgba(16,185,129,.18)" stroke="#10b981" stroke-width="1"/>
+            <text x="255" y="53" text-anchor="middle" font-size="11" fill="#10b981" font-family="'JetBrains Mono',monospace" class="lz">同一 bridge session · 跨 query + 跨重启</text>
+            <text x="255" y="53" text-anchor="middle" font-size="11" fill="#10b981" font-family="'JetBrains Mono',monospace" class="le" display="none">one bridge session · across queries + across restarts</text>
+            <!-- query ticks -->
+            <circle cx="90" cy="62" r="4" fill="#10b981"/>
+            <text x="90" y="78" text-anchor="middle" font-size="10" fill="#94a3b8" font-family="'JetBrains Mono',monospace">q1</text>
+            <circle cx="200" cy="62" r="4" fill="#10b981"/>
+            <text x="200" y="78" text-anchor="middle" font-size="10" fill="#94a3b8" font-family="'JetBrains Mono',monospace">q2</text>
+            <circle cx="310" cy="62" r="4" fill="#10b981"/>
+            <text x="310" y="78" text-anchor="middle" font-size="10" fill="#94a3b8" font-family="'JetBrains Mono',monospace">restart</text>
+            <circle cx="420" cy="62" r="4" fill="#10b981"/>
+            <text x="420" y="78" text-anchor="middle" font-size="10" fill="#94a3b8" font-family="'JetBrains Mono',monospace">q3</text>
+            <line x1="492" y1="62" x2="510" y2="62" stroke="#10b981" stroke-width="1.2" marker-end="url(#arr-em)"/>
+            <text x="255" y="22" text-anchor="middle" font-size="11" font-weight="600" fill="#10b981" font-family="'JetBrains Mono',monospace" class="lz">生命周期 · 所有 query 共享一条会话</text>
+            <text x="255" y="22" text-anchor="middle" font-size="11" font-weight="600" fill="#10b981" font-family="'JetBrains Mono',monospace" class="le" display="none">Lifecycle · all queries share one session</text>
+          </svg>
+        </div>
+
+        <div>
+          <div class="section-label">
+            <span class="lz">典型场景</span>
+            <span class="le">Use case</span>
+          </div>
+          <span class="use-pill">
+            <span class="lz">Assistant mode · REPL 交互 · claude.ai 连续对话</span>
+            <span class="le">Assistant mode · REPL session · continuous claude.ai conversation</span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ============ COMPARISON MATRIX ============ -->
+  <div class="compare-wrap">
+    <div class="compare-title">
+      <span class="lz">对照矩阵 · 五维度并排对比</span>
+      <span class="le">Comparison Matrix · Five-dimension side-by-side</span>
+    </div>
+    <table class="ct">
+      <thead>
+        <tr>
+          <th>
+            <span class="lz">维度</span>
+            <span class="le">Dimension</span>
+          </th>
+          <th class="col-cy">
+            <span class="lz">普通模式 · Standard</span>
+            <span class="le">Standard Mode</span>
+          </th>
+          <th class="col-em">
+            <span class="lz">持续模式 · Perpetual</span>
+            <span class="le">Perpetual Mode</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td class="dim">
+            <span class="lz">会话生命周期</span>
+            <span class="le">Session lifetime</span>
+          </td>
+          <td class="cell">
+            <span class="badge b-cyan">
+              <span class="lz">随 CLI 进程</span>
+              <span class="le">bound to CLI</span>
+            </span>
+            <span class="note">
+              <span class="lz">CLI 退出 → archive + deregister + clear pointer</span>
+              <span class="le">CLI exit → archive + deregister + clear pointer</span>
+            </span>
+          </td>
+          <td class="cell">
+            <span class="badge b-emerald">
+              <span class="lz">跨 CLI 重启</span>
+              <span class="le">cross-restart</span>
+            </span>
+            <span class="note">
+              <span class="lz">teardown 只释放本地资源，环境在服务端存活</span>
+              <span class="le">teardown only frees local resources; environment stays alive server-side</span>
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td class="dim">
+            <span class="lz">Poll 频率</span>
+            <span class="le">Poll frequency</span>
+          </td>
+          <td class="cell">
+            <span class="badge b-slate">
+              <span class="lz">节能档</span>
+              <span class="le">power-saving</span>
+            </span>
+            <span class="note">
+              <span class="lz">at-capacity 默认 600_000 ms = 10 min；not-at-capacity 2000 ms</span>
+              <span class="le">at-capacity default 600_000 ms (10 min); not-at-capacity 2000 ms</span>
+            </span>
+          </td>
+          <td class="cell">
+            <span class="badge b-slate">
+              <span class="lz">节能档（同默认）</span>
+              <span class="le">same defaults</span>
+            </span>
+            <span class="note">
+              <span class="lz">共用 DEFAULT_POLL_CONFIG；pointerRefreshTimer 额外维持指针新鲜</span>
+              <span class="le">Shares DEFAULT_POLL_CONFIG; pointerRefreshTimer keeps the pointer fresh</span>
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td class="dim">
+            <span class="lz">启动延迟</span>
+            <span class="le">Startup latency</span>
+          </td>
+          <td class="cell">
+            <span class="lz">每次建链 + 创建 session + 首次 flush</span>
+            <span class="le">Fresh connect + create session + initial flush every time</span>
+            <span class="note">
+              <span class="lz">用户可见"connecting…"等待</span>
+              <span class="le">user-visible "connecting…" wait</span>
+            </span>
+          </td>
+          <td class="cell">
+            <span class="lz">reconnectSession() 复用；历史 flush 由 FlushGate 排队</span>
+            <span class="le">reconnectSession() reuses; historical flush is queued through FlushGate</span>
+            <span class="note">
+              <span class="lz">延迟主要来自指针读 + HTTP 握手</span>
+              <span class="le">Latency dominated by pointer read + HTTP handshake</span>
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td class="dim">
+            <span class="lz">内存 / 状态足迹</span>
+            <span class="le">Memory / state footprint</span>
+          </td>
+          <td class="cell">
+            <span class="lz">纯本地；退出归零</span>
+            <span class="le">Local-only; zero on exit</span>
+            <span class="note">
+              <span class="lz">bridge-pointer.json 只作 crash-recovery，正常退出会清空</span>
+              <span class="le">bridge-pointer.json is crash-recovery only; cleared on clean exit</span>
+            </span>
+          </td>
+          <td class="cell">
+            <span class="lz">本地 + 服务端环境 + 持久指针文件</span>
+            <span class="le">Local + server-side environment + persistent pointer file</span>
+            <span class="note">
+              <span class="lz">Redis 侧受 BRIDGE_LAST_POLL_TTL = 4h 约束</span>
+              <span class="le">Server side constrained by BRIDGE_LAST_POLL_TTL = 4h</span>
+            </span>
+          </td>
+        </tr>
+        <tr>
+          <td class="dim">
+            <span class="lz">典型使用场景</span>
+            <span class="le">Use case</span>
+          </td>
+          <td class="cell">
+            <span class="lz">claude -p 单次命令 / 外部自动化 / 非 OAuth 或非 KAIROS 用户</span>
+            <span class="le">claude -p one-shot / external automation / non-OAuth or non-KAIROS users</span>
+          </td>
+          <td class="cell">
+            <span class="lz">Assistant mode（REPL 长会话）+ claude.ai 端连续对话</span>
+            <span class="le">Assistant mode (long-lived REPL) + continuous claude.ai conversation</span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ============ SOURCE EVIDENCE ============ -->
+  <div class="src-block">
+    <div class="src-title">
+      <span class="lz">源码依据 · Source anchors</span>
+      <span class="le">Source anchors</span>
+    </div>
+    <ul class="src-list">
+      <li><code>src/hooks/useReplBridge.tsx</code> · L155-170 · <span class="lz">注释明确：perpetual 由 feature('KAIROS') + isAssistantMode() 共同决定</span><span class="le">comments spell out that perpetual is driven by feature('KAIROS') + isAssistantMode()</span></li>
+      <li><code>src/bridge/initReplBridge.ts</code> · L99-125, L407-477 · <span class="lz">perpetual 传入 initBridgeCore；KAIROS 下回退 v1 传输、跳过 v2 upgrade nudge</span><span class="le">perpetual flows into initBridgeCore; under KAIROS, falls back to v1 transport and skips the v2 upgrade nudge</span></li>
+      <li><code>src/bridge/replBridge.ts</code> · L211-315, L1510, L1595-1615 · <span class="lz">perpetual 路径读 bridge-pointer.json、设置 pointerRefreshTimer、teardown 时不 archive / deregister / clear</span><span class="le">perpetual path reads bridge-pointer.json, sets pointerRefreshTimer, and on teardown skips archive / deregister / clear</span></li>
+      <li><code>src/bridge/pollConfigDefaults.ts</code> · L13-30 · <span class="lz">POLL_INTERVAL_MS_NOT_AT_CAPACITY = 2000 · POLL_INTERVAL_MS_AT_CAPACITY = 600_000</span><span class="le">POLL_INTERVAL_MS_NOT_AT_CAPACITY = 2000 · POLL_INTERVAL_MS_AT_CAPACITY = 600_000</span></li>
+      <li><code>src/bridge/flushGate.ts</code> · L1-71 · <span class="lz">启动期 FlushGate 阻塞排队历史消息，避免和 initial flush 交错</span><span class="le">FlushGate blocks and queues messages during startup so they don't interleave with the initial flush</span></li>
+    </ul>
+  </div>
+
+  <footer>
+    <span class="lz">VIS-12-C · Bridge 运行模式对照图 · 基于 cc-recovered-main（Claude Code 2.1.88）· 2026-04-15 更新</span>
+    <span class="le">VIS-12-C · Bridge Operating Mode Comparison · based on cc-recovered-main (Claude Code 2.1.88) · updated 2026-04-15</span>
+  </footer>
+
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

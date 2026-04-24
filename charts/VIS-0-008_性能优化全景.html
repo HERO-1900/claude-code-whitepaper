@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<!--
+  VIS-0-008 · 性能优化全景 · Performance Optimization Panorama
+  CC 白皮书 v2 图表体系 · 三主题 + 双语 · 3x2 网格卡片式
+  6 条 Claude Code 2.1.88 核心性能策略，每条一个小可视化
+-->
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code · 性能优化全景 · Performance Optimization Panorama</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root,[data-theme="dark"]{
+  --bg:#0d1117;--bg-elev:#161b22;--bg-card:rgba(22,27,34,0.75);
+  --border:#30363d;--border-hi:#484f58;
+  --text:#f0f6fc;--text-dim:#c9d1d9;--muted:#8b949e;--subtle:#6e7681;--footer-c:#484f58;
+  --accent:#3fb950;--accent-dim:#238636;--accent-glow:rgba(63,185,80,0.22);
+  --cyan:#39d0d8;--cyan-dim:#1f7a82;--cyan-glow:rgba(57,208,216,0.22);
+  --violet:#a78bfa;--violet-dim:#7c3aed;--violet-glow:rgba(167,139,250,0.22);
+  --amber:#fbbf24;--amber-dim:#d97706;--amber-glow:rgba(251,191,36,0.22);
+  --orange:#fb923c;--orange-dim:#c2410c;--orange-glow:rgba(251,146,60,0.22);
+  --pink:#f472b6;--pink-dim:#be185d;--pink-glow:rgba(244,114,182,0.22);
+  --bar-bg:rgba(139,148,158,0.18);
+  --btn-bg:rgba(22,27,34,0.9);--btn-active:#3fb950;
+  --mesh-1:rgba(63,185,80,0.08);--mesh-2:rgba(57,208,216,0.06);--mesh-3:rgba(167,139,250,0.05);
+}
+[data-theme="warm"]{
+  --bg:#f8f6f3;--bg-elev:#ffffff;--bg-card:rgba(255,255,255,0.88);
+  --border:#e8e0d4;--border-hi:#c9bba7;
+  --text:#1a1412;--text-dim:#3d2f28;--muted:#6b5a4e;--subtle:#9c8878;--footer-c:#b5a99a;
+  --accent:#047857;--accent-dim:#065f46;--accent-glow:rgba(4,120,87,0.18);
+  --cyan:#0891b2;--cyan-dim:#0e7490;--cyan-glow:rgba(8,145,178,0.18);
+  --violet:#7c3aed;--violet-dim:#5b21b6;--violet-glow:rgba(124,58,237,0.18);
+  --amber:#b45309;--amber-dim:#92400e;--amber-glow:rgba(180,83,9,0.18);
+  --orange:#c2410c;--orange-dim:#9a3412;--orange-glow:rgba(194,65,12,0.18);
+  --pink:#be185d;--pink-dim:#9d174d;--pink-glow:rgba(190,24,93,0.18);
+  --bar-bg:rgba(107,90,78,0.18);
+  --btn-bg:rgba(255,255,255,0.92);--btn-active:#0891b2;
+  --mesh-1:rgba(4,120,87,0.04);--mesh-2:rgba(180,83,9,0.04);--mesh-3:rgba(124,58,237,0.03);
+}
+[data-theme="light"]{
+  --bg:#ffffff;--bg-elev:#f8fafc;--bg-card:rgba(248,250,252,0.95);
+  --border:#e2e8f0;--border-hi:#cbd5e1;
+  --text:#0f172a;--text-dim:#334155;--muted:#475569;--subtle:#94a3b8;--footer-c:#94a3b8;
+  --accent:#059669;--accent-dim:#047857;--accent-glow:rgba(5,150,105,0.16);
+  --cyan:#06b6d4;--cyan-dim:#0891b2;--cyan-glow:rgba(6,182,212,0.16);
+  --violet:#8b5cf6;--violet-dim:#7c3aed;--violet-glow:rgba(139,92,246,0.16);
+  --amber:#d97706;--amber-dim:#b45309;--amber-glow:rgba(217,119,6,0.16);
+  --orange:#ea580c;--orange-dim:#c2410c;--orange-glow:rgba(234,88,12,0.16);
+  --pink:#db2777;--pink-dim:#be185d;--pink-glow:rgba(219,39,119,0.16);
+  --bar-bg:rgba(148,163,184,0.25);
+  --btn-bg:rgba(248,250,252,0.95);--btn-active:#0891b2;
+  --mesh-1:rgba(5,150,105,0.04);--mesh-2:rgba(6,182,212,0.04);--mesh-3:rgba(139,92,246,0.03);
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{
+  font-family:"Noto Sans SC","Space Grotesk",sans-serif;
+  background:var(--bg);color:var(--text-dim);min-height:100vh;
+  line-height:1.5;padding:1.5rem;overflow-x:hidden;
+  transition:background .25s,color .25s;
+}
+[lang="en"] body{font-family:"Space Grotesk","JetBrains Mono",sans-serif;}
+
+.bg-mesh{
+  position:fixed;inset:0;z-index:-2;pointer-events:none;
+  background:
+    radial-gradient(ellipse 80% 50% at 20% 30%,var(--mesh-1) 0%,transparent 60%),
+    radial-gradient(ellipse 60% 40% at 80% 20%,var(--mesh-2) 0%,transparent 55%),
+    radial-gradient(ellipse 70% 60% at 70% 90%,var(--mesh-3) 0%,transparent 50%),
+    var(--bg);
+}
+
+.container{max-width:1200px;margin:0 auto;}
+
+/* Controls */
+.controls{position:fixed;top:1rem;right:1rem;display:flex;gap:5px;z-index:100;
+  background:var(--btn-bg);border:1px solid var(--border);border-radius:10px;
+  padding:5px 7px;backdrop-filter:blur(10px);}
+.cb{font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:500;padding:5px 10px;
+  border-radius:6px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+.cb:hover{color:var(--text);border-color:var(--border-hi);}
+.cb.active{border-color:var(--btn-active);color:var(--text);}
+.cdiv{width:1px;background:var(--border);margin:2px;}
+
+/* Header */
+.header{text-align:center;margin-bottom:2rem;position:relative;}
+.header::before{
+  content:"";position:absolute;top:50%;left:50%;
+  transform:translate(-50%,-50%);width:320px;height:100px;
+  background:radial-gradient(ellipse closest-side,var(--accent-glow),transparent);
+  filter:blur(28px);z-index:-1;
+}
+.header-row{display:flex;align-items:center;justify-content:center;gap:.875rem;margin-bottom:.5rem;}
+.pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);animation:pulse 2s infinite;box-shadow:0 0 12px var(--accent-glow);}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
+h1{font-size:clamp(1.5rem,3.2vw,2.2rem);font-weight:700;letter-spacing:-.02em;color:var(--text);line-height:1.1;}
+.subtitle{font-size:.78rem;color:var(--muted);letter-spacing:.04em;margin-top:.25rem;font-family:"JetBrains Mono",monospace;}
+
+/* i18n */
+[lang="zh"] .le{display:none;}
+[lang="en"] .lz{display:none;}
+
+/* KPI strip */
+.kpi-strip{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+  margin-bottom:1.5rem;
+}
+.kpi-card{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:12px;
+  padding:1rem 1.1rem;text-align:center;backdrop-filter:blur(8px);
+  transition:border-color .25s,transform .25s;
+}
+.kpi-card:hover{border-color:var(--border-hi);transform:translateY(-2px);}
+.kpi-val{
+  font-family:"Space Grotesk","JetBrains Mono",sans-serif;
+  font-size:1.9rem;font-weight:700;line-height:1;letter-spacing:-.02em;
+}
+.kpi-val.c-cy{color:var(--cyan);text-shadow:0 0 18px var(--cyan-glow);}
+.kpi-val.c-gn{color:var(--accent);text-shadow:0 0 18px var(--accent-glow);}
+.kpi-val.c-am{color:var(--amber);text-shadow:0 0 18px var(--amber-glow);}
+.kpi-lbl{font-size:.7rem;color:var(--muted);margin-top:.35rem;letter-spacing:.02em;}
+
+/* 3x2 Grid */
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  grid-template-rows:repeat(2,1fr);
+  gap:14px;margin-bottom:1.25rem;
+}
+.cell{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:14px;
+  padding:1.1rem 1.15rem 1rem;backdrop-filter:blur(10px);
+  display:flex;flex-direction:column;gap:.6rem;
+  position:relative;overflow:hidden;
+  transition:border-color .25s,transform .25s,box-shadow .25s;
+  min-height:240px;
+}
+.cell:hover{border-color:var(--border-hi);transform:translateY(-3px);}
+.cell::before{
+  content:"";position:absolute;top:0;left:0;right:0;height:2px;
+  background:linear-gradient(90deg,var(--c-main),transparent);
+  opacity:.7;
+}
+.cell.c-cy{--c-main:var(--cyan);--c-dim:var(--cyan-dim);--c-glow:var(--cyan-glow);}
+.cell.c-gn{--c-main:var(--accent);--c-dim:var(--accent-dim);--c-glow:var(--accent-glow);}
+.cell.c-vi{--c-main:var(--violet);--c-dim:var(--violet-dim);--c-glow:var(--violet-glow);}
+.cell.c-or{--c-main:var(--orange);--c-dim:var(--orange-dim);--c-glow:var(--orange-glow);}
+.cell.c-am{--c-main:var(--amber);--c-dim:var(--amber-dim);--c-glow:var(--amber-glow);}
+.cell.c-pk{--c-main:var(--pink);--c-dim:var(--pink-dim);--c-glow:var(--pink-glow);}
+
+.cell-head{display:flex;align-items:center;gap:.6rem;}
+.cell-num{
+  font-family:"JetBrains Mono",monospace;font-size:11px;font-weight:700;
+  color:var(--c-main);background:var(--c-glow);border:1px solid var(--c-main);
+  padding:3px 7px;border-radius:5px;letter-spacing:.05em;
+}
+.cell-title{font-size:1.02rem;font-weight:700;color:var(--text);line-height:1.2;letter-spacing:-.01em;}
+.cell-subtitle{font-family:"JetBrains Mono",monospace;font-size:.68rem;color:var(--muted);margin-top:2px;}
+
+.cell-one-liner{
+  font-size:.78rem;color:var(--text-dim);line-height:1.5;
+  padding:.55rem .7rem;background:rgba(139,148,158,0.07);
+  border-left:2px solid var(--c-main);border-radius:0 6px 6px 0;
+}
+
+.cell-viz{flex:1;display:flex;align-items:center;justify-content:center;min-height:90px;padding:.2rem 0;}
+.cell-viz svg{width:100%;height:auto;max-height:110px;display:block;}
+
+.cell-foot{display:flex;align-items:baseline;justify-content:space-between;gap:.5rem;padding-top:.35rem;border-top:1px dashed var(--border);}
+.cell-metric{display:flex;align-items:baseline;gap:4px;}
+.cell-metric-val{
+  font-family:"Space Grotesk","JetBrains Mono",sans-serif;
+  font-size:1.7rem;font-weight:700;color:var(--c-main);line-height:1;
+  text-shadow:0 0 16px var(--c-glow);letter-spacing:-.02em;
+}
+.cell-metric-unit{font-family:"JetBrains Mono",monospace;font-size:.8rem;color:var(--c-main);font-weight:500;}
+.cell-metric-lbl{font-size:.68rem;color:var(--muted);text-align:right;max-width:120px;line-height:1.3;}
+
+/* Synergy */
+.synergy{
+  background:var(--bg-card);border:1px solid var(--border);border-radius:12px;
+  padding:.85rem 1.25rem;margin-bottom:1rem;
+  display:flex;align-items:center;justify-content:center;gap:10px;
+  font-size:.74rem;color:var(--muted);text-align:center;backdrop-filter:blur(8px);
+  flex-wrap:wrap;
+}
+.synergy-tag{
+  font-family:"JetBrains Mono",monospace;font-size:.68rem;
+  padding:3px 9px;border-radius:999px;
+  background:var(--accent-glow);color:var(--accent);border:1px solid var(--accent);letter-spacing:.04em;
+}
+.synergy-body{color:var(--text-dim);font-weight:500;}
+.synergy-body strong{color:var(--text);}
+
+footer{
+  font-family:"JetBrains Mono",monospace;
+  font-size:.68rem;color:var(--footer-c);text-align:center;padding-top:.9rem;border-top:1px solid var(--border);
+}
+
+/* Responsive */
+@media(max-width:960px){
+  .grid{grid-template-columns:repeat(2,1fr);grid-template-rows:repeat(3,1fr);}
+  .kpi-strip{grid-template-columns:repeat(3,1fr);}
+}
+@media(max-width:640px){
+  .grid{grid-template-columns:1fr;grid-template-rows:none;}
+  .kpi-strip{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+
+<div class="controls">
+  <button class="cb active" data-theme-btn="dark" onclick="setTheme('dark')">Dark</button>
+  <button class="cb" data-theme-btn="warm" onclick="setTheme('warm')">Warm</button>
+  <button class="cb" data-theme-btn="light" onclick="setTheme('light')">Light</button>
+  <div class="cdiv"></div>
+  <button class="cb active" onclick="toggleLang()"><span class="lz">中</span><span class="le">EN</span></button>
+</div>
+
+<div class="container">
+  <header class="header">
+    <div class="header-row">
+      <div class="pulse-dot"></div>
+      <h1>
+        <span class="lz">性能优化全景</span>
+        <span class="le">Performance Optimization Panorama</span>
+      </h1>
+    </div>
+    <p class="subtitle">
+      <span class="lz">VIS-0-008 · Claude Code 2.1.88 · 六大核心加速策略一页看完</span>
+      <span class="le">VIS-0-008 · Claude Code 2.1.88 · 6 Core Acceleration Strategies at a Glance</span>
+    </p>
+  </header>
+
+  <!-- KPI 总览 -->
+  <section class="kpi-strip">
+    <div class="kpi-card">
+      <div class="kpi-val c-cy">90%</div>
+      <div class="kpi-lbl">
+        <span class="lz">Prompt Cache 命中率</span>
+        <span class="le">Prompt Cache Hit Rate</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val c-gn">3x</div>
+      <div class="kpi-lbl">
+        <span class="lz">流式感知速度</span>
+        <span class="le">Streaming Perceived Speed</span>
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-val c-am">70%</div>
+      <div class="kpi-lbl">
+        <span class="lz">缓存后延迟降低</span>
+        <span class="le">Latency Reduction via Cache</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3x2 策略网格 -->
+  <section class="grid">
+
+    <!-- 01 · Speculation / 投机预判 -->
+    <div class="cell c-vi">
+      <div class="cell-head">
+        <span class="cell-num">01</span>
+        <div>
+          <div class="cell-title">
+            <span class="lz">投机预判</span>
+            <span class="le">Speculation</span>
+          </div>
+          <div class="cell-subtitle">Bash · Read pre-fetch</div>
+        </div>
+      </div>
+      <div class="cell-one-liner">
+        <span class="lz">预判下一步工具，提前并发执行 → 3 轮压缩为 1 轮</span>
+        <span class="le">Predict next tool &amp; pre-execute → 3 rounds collapse to 1</span>
+      </div>
+      <div class="cell-viz">
+        <!-- 时间轴对比: Before 3 blocks vs After 1 block -->
+        <svg viewBox="0 0 280 90" xmlns="http://www.w3.org/2000/svg">
+          <!-- Before label -->
+          <text x="0" y="14" font-family="JetBrains Mono" font-size="10" fill="var(--muted)">Before</text>
+          <!-- Before: 3 sequential rounds -->
+          <rect x="40" y="6" width="60" height="14" rx="3" fill="var(--bar-bg)" stroke="var(--border-hi)" stroke-width="0.5"/>
+          <rect x="104" y="6" width="60" height="14" rx="3" fill="var(--bar-bg)" stroke="var(--border-hi)" stroke-width="0.5"/>
+          <rect x="168" y="6" width="60" height="14" rx="3" fill="var(--bar-bg)" stroke="var(--border-hi)" stroke-width="0.5"/>
+          <text x="70" y="16" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="middle">R1</text>
+          <text x="134" y="16" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="middle">R2</text>
+          <text x="198" y="16" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="middle">R3</text>
+          <text x="234" y="16" font-family="JetBrains Mono" font-size="10" fill="var(--muted)">3x</text>
+
+          <!-- Divider -->
+          <line x1="0" y1="34" x2="280" y2="34" stroke="var(--border)" stroke-dasharray="2 2"/>
+
+          <!-- After label -->
+          <text x="0" y="56" font-family="JetBrains Mono" font-size="10" fill="var(--muted)">After</text>
+          <!-- After: 1 speculative round -->
+          <rect x="40" y="48" width="60" height="14" rx="3" fill="var(--violet-glow)" stroke="var(--violet)" stroke-width="1"/>
+          <text x="70" y="58" font-family="JetBrains Mono" font-size="10" fill="var(--violet)" text-anchor="middle" font-weight="700">Speculate</text>
+          <!-- Arrow -->
+          <path d="M108 55 L160 55" stroke="var(--violet)" stroke-width="1.5" marker-end="url(#arr1)"/>
+          <defs>
+            <marker id="arr1" markerWidth="8" markerHeight="8" refX="7" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L8,3 z" fill="var(--violet)"/>
+            </marker>
+          </defs>
+          <text x="134" y="46" font-family="JetBrains Mono" font-size="10" fill="var(--violet)" text-anchor="middle" font-weight="600">
+            <tspan class="lz">预加载</tspan><tspan class="le">pre-fetch</tspan>
+          </text>
+          <rect x="168" y="48" width="60" height="14" rx="3" fill="var(--violet)" opacity="0.85"/>
+          <text x="198" y="58" font-family="JetBrains Mono" font-size="10" fill="#fff" text-anchor="middle" font-weight="700">Hit</text>
+          <text x="234" y="58" font-family="JetBrains Mono" font-size="10" fill="var(--violet)" font-weight="700">1x</text>
+
+          <!-- Savings indicator -->
+          <text x="140" y="82" font-family="JetBrains Mono" font-size="10" fill="var(--violet)" text-anchor="middle" font-weight="600">−67% latency</text>
+        </svg>
+      </div>
+      <div class="cell-foot">
+        <div class="cell-metric">
+          <span class="cell-metric-val">−2</span>
+          <span class="cell-metric-unit">rounds</span>
+        </div>
+        <div class="cell-metric-lbl">
+          <span class="lz">API 往返减少</span>
+          <span class="le">API Round-trips Saved</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 02 · Parallelism / 并行执行 -->
+    <div class="cell c-or">
+      <div class="cell-head">
+        <span class="cell-num">02</span>
+        <div>
+          <div class="cell-title">
+            <span class="lz">并行执行</span>
+            <span class="le">Parallelism</span>
+          </div>
+          <div class="cell-subtitle">Promise.all · read-only tools</div>
+        </div>
+      </div>
+      <div class="cell-one-liner">
+        <span class="lz">只读工具并发执行，吞吐量随并发数线性扩展</span>
+        <span class="le">Read-only tools run concurrently, throughput scales linearly</span>
+      </div>
+      <div class="cell-viz">
+        <!-- 横向对比: 1 long bar vs 4 stacked short bars -->
+        <svg viewBox="0 0 280 90" xmlns="http://www.w3.org/2000/svg">
+          <!-- Serial (before) -->
+          <text x="0" y="12" font-family="JetBrains Mono" font-size="10" fill="var(--muted)">Serial</text>
+          <rect x="42" y="4" width="220" height="12" rx="3" fill="var(--bar-bg)" stroke="var(--border-hi)" stroke-width="0.5"/>
+          <rect x="42" y="4" width="55" height="12" rx="3" fill="var(--muted)" opacity="0.5"/>
+          <rect x="97" y="4" width="55" height="12" rx="3" fill="var(--muted)" opacity="0.7"/>
+          <rect x="152" y="4" width="55" height="12" rx="3" fill="var(--muted)" opacity="0.5"/>
+          <rect x="207" y="4" width="55" height="12" rx="3" fill="var(--muted)" opacity="0.7"/>
+          <line x1="42" y1="18" x2="42" y2="22" stroke="var(--muted)"/>
+          <line x1="262" y1="18" x2="262" y2="22" stroke="var(--muted)"/>
+          <text x="152" y="28" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="middle">4t</text>
+
+          <!-- Parallel (after) - 4 stacked bars starting same time -->
+          <text x="0" y="50" font-family="JetBrains Mono" font-size="10" fill="var(--orange)" font-weight="600">Parallel</text>
+          <rect x="42" y="40" width="55" height="8" rx="2" fill="var(--orange)" opacity="0.95"/>
+          <rect x="42" y="50" width="55" height="8" rx="2" fill="var(--orange)" opacity="0.8"/>
+          <rect x="42" y="60" width="55" height="8" rx="2" fill="var(--orange)" opacity="0.95"/>
+          <rect x="42" y="70" width="55" height="8" rx="2" fill="var(--orange)" opacity="0.8"/>
+          <text x="104" y="49" font-family="JetBrains Mono" font-size="10" fill="var(--muted)">Read A</text>
+          <text x="104" y="58" font-family="JetBrains Mono" font-size="10" fill="var(--muted)">Read B</text>
+          <text x="104" y="67" font-family="JetBrains Mono" font-size="10" fill="var(--muted)">Grep</text>
+          <text x="104" y="76" font-family="JetBrains Mono" font-size="10" fill="var(--muted)">Glob</text>
+          <line x1="42" y1="82" x2="42" y2="86" stroke="var(--orange)"/>
+          <line x1="97" y1="82" x2="97" y2="86" stroke="var(--orange)"/>
+          <text x="70" y="85" font-family="JetBrains Mono" font-size="10" fill="var(--orange)" text-anchor="middle" font-weight="700">1t → 4x</text>
+        </svg>
+      </div>
+      <div class="cell-foot">
+        <div class="cell-metric">
+          <span class="cell-metric-val">Nx</span>
+          <span class="cell-metric-unit"></span>
+        </div>
+        <div class="cell-metric-lbl">
+          <span class="lz">吞吐量线性扩展</span>
+          <span class="le">Linear Throughput</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 03 · Caching / 缓存 -->
+    <div class="cell c-cy">
+      <div class="cell-head">
+        <span class="cell-num">03</span>
+        <div>
+          <div class="cell-title">
+            <span class="lz">提示缓存</span>
+            <span class="le">Prompt Caching</span>
+          </div>
+          <div class="cell-subtitle">Anthropic Prompt Cache</div>
+        </div>
+      </div>
+      <div class="cell-one-liner">
+        <span class="lz">System Prompt 前缀缓存，命中即跳过预填充</span>
+        <span class="le">Cache system prompt prefix, hit skips re-prefill</span>
+      </div>
+      <div class="cell-viz">
+        <!-- 饼图: 90% 命中 / 10% miss -->
+        <svg viewBox="0 0 280 100" xmlns="http://www.w3.org/2000/svg">
+          <!-- Donut chart -->
+          <g transform="translate(55,50)">
+            <circle cx="0" cy="0" r="38" fill="none" stroke="var(--bar-bg)" stroke-width="14"/>
+            <!-- 90% arc: start top, go CW 90% = 324° -->
+            <circle cx="0" cy="0" r="38" fill="none" stroke="var(--cyan)" stroke-width="14"
+              stroke-dasharray="214.8 238.8" stroke-dashoffset="0"
+              transform="rotate(-90)" stroke-linecap="round"
+              style="filter:drop-shadow(0 0 8px var(--cyan-glow));"/>
+            <text x="0" y="-2" font-family="Space Grotesk,sans-serif" font-size="18" fill="var(--cyan)" text-anchor="middle" font-weight="700">90%</text>
+            <text x="0" y="14" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="middle">hit rate</text>
+          </g>
+          <!-- Legend + latency comparison -->
+          <g transform="translate(120,18)">
+            <rect x="0" y="0" width="10" height="10" rx="2" fill="var(--cyan)"/>
+            <text x="16" y="9" font-family="JetBrains Mono" font-size="10" fill="var(--text-dim)">
+              <tspan class="lz">命中 90%</tspan><tspan class="le">Hit 90%</tspan>
+            </text>
+            <rect x="0" y="16" width="10" height="10" rx="2" fill="var(--bar-bg)"/>
+            <text x="16" y="25" font-family="JetBrains Mono" font-size="10" fill="var(--muted)">
+              <tspan class="lz">未命中 10%</tspan><tspan class="le">Miss 10%</tspan>
+            </text>
+          </g>
+          <!-- Latency bars: before/after -->
+          <g transform="translate(120,52)">
+            <text x="0" y="0" font-family="JetBrains Mono" font-size="10" fill="var(--muted)">latency</text>
+            <rect x="0" y="6" width="140" height="10" rx="2" fill="var(--bar-bg)"/>
+            <text x="144" y="14" font-family="JetBrains Mono" font-size="10" fill="var(--muted)">miss</text>
+            <rect x="0" y="22" width="42" height="10" rx="2" fill="var(--cyan)" opacity="0.9"/>
+            <text x="46" y="30" font-family="JetBrains Mono" font-size="10" fill="var(--cyan)" font-weight="700">−70%</text>
+          </g>
+        </svg>
+      </div>
+      <div class="cell-foot">
+        <div class="cell-metric">
+          <span class="cell-metric-val">−70%</span>
+          <span class="cell-metric-unit"></span>
+        </div>
+        <div class="cell-metric-lbl">
+          <span class="lz">延迟降低</span>
+          <span class="le">Latency Reduction</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 04 · Compaction / 压缩 -->
+    <div class="cell c-am">
+      <div class="cell-head">
+        <span class="cell-num">04</span>
+        <div>
+          <div class="cell-title">
+            <span class="lz">压缩瀑布</span>
+            <span class="le">Compaction</span>
+          </div>
+          <div class="cell-subtitle">micro · auto · 5-layer waterfall</div>
+        </div>
+      </div>
+      <div class="cell-one-liner">
+        <span class="lz">五层压缩瀑布：token 逼近上限时逐层摘要化</span>
+        <span class="le">5-layer waterfall: summarize progressively as token limit nears</span>
+      </div>
+      <div class="cell-viz">
+        <!-- 瀑布图: 5 层递减阶梯 -->
+        <svg viewBox="0 0 280 100" xmlns="http://www.w3.org/2000/svg">
+          <!-- 5 stepped bars showing compaction levels -->
+          <!-- Level 1: 100% -->
+          <rect x="10" y="12" width="44" height="76" rx="3" fill="var(--amber)" opacity="0.9"/>
+          <text x="32" y="100" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="middle">L1·100%</text>
+          <text x="32" y="84" font-family="JetBrains Mono" font-size="10" fill="#000" text-anchor="middle" font-weight="700">raw</text>
+
+          <!-- Level 2: 72% -->
+          <rect x="64" y="34" width="44" height="54" rx="3" fill="var(--amber)" opacity="0.75"/>
+          <text x="86" y="100" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="middle">L2·72%</text>
+          <text x="86" y="50" font-family="JetBrains Mono" font-size="10" fill="var(--text)" text-anchor="middle" font-weight="700">micro</text>
+
+          <!-- Level 3: 50% -->
+          <rect x="118" y="50" width="44" height="38" rx="3" fill="var(--amber)" opacity="0.6"/>
+          <text x="140" y="100" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="middle">L3·50%</text>
+          <text x="140" y="68" font-family="JetBrains Mono" font-size="10" fill="var(--text)" text-anchor="middle" font-weight="700">auto</text>
+
+          <!-- Level 4: 30% -->
+          <rect x="172" y="64" width="44" height="24" rx="3" fill="var(--amber)" opacity="0.45"/>
+          <text x="194" y="100" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="middle">L4·30%</text>
+          <text x="194" y="80" font-family="JetBrains Mono" font-size="10" fill="var(--text)" text-anchor="middle" font-weight="700">deep</text>
+
+          <!-- Level 5: 15% -->
+          <rect x="226" y="76" width="44" height="12" rx="3" fill="var(--amber)" opacity="0.3"/>
+          <text x="248" y="100" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="middle">L5·15%</text>
+
+          <!-- Arrow: waterfall flow -->
+          <path d="M10 6 Q 140 2 270 6" fill="none" stroke="var(--amber)" stroke-width="1" stroke-dasharray="2 2" opacity="0.6"/>
+          <text x="140" y="8" font-family="JetBrains Mono" font-size="10" fill="var(--amber)" text-anchor="middle">
+            <tspan class="lz">token 上限逼近 →</tspan><tspan class="le">token limit approaching →</tspan>
+          </text>
+        </svg>
+      </div>
+      <div class="cell-foot">
+        <div class="cell-metric">
+          <span class="cell-metric-val">5</span>
+          <span class="cell-metric-unit">layers</span>
+        </div>
+        <div class="cell-metric-lbl">
+          <span class="lz">压缩层级</span>
+          <span class="le">Compaction Layers</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 05 · Streaming / 流式 -->
+    <div class="cell c-gn">
+      <div class="cell-head">
+        <span class="cell-num">05</span>
+        <div>
+          <div class="cell-title">
+            <span class="lz">流式渲染</span>
+            <span class="le">Streaming</span>
+          </div>
+          <div class="cell-subtitle">SSE · token-by-token · Ink</div>
+        </div>
+      </div>
+      <div class="cell-one-liner">
+        <span class="lz">SSE 逐 token 推送，首 token &lt; 500ms 即可阅读</span>
+        <span class="le">SSE per-token push, TTFT &lt; 500ms, read as it generates</span>
+      </div>
+      <div class="cell-viz">
+        <!-- 时间轴: Wait 3s vs Stream at 500ms -->
+        <svg viewBox="0 0 280 100" xmlns="http://www.w3.org/2000/svg">
+          <!-- Before: wait for complete -->
+          <text x="0" y="14" font-family="JetBrains Mono" font-size="10" fill="var(--muted)">Wait</text>
+          <rect x="30" y="6" width="200" height="14" rx="3" fill="var(--bar-bg)" stroke="var(--border-hi)" stroke-width="0.5"/>
+          <line x1="230" y1="2" x2="230" y2="24" stroke="var(--muted)" stroke-dasharray="2 2"/>
+          <circle cx="230" cy="13" r="4" fill="var(--muted)"/>
+          <text x="238" y="16" font-family="JetBrains Mono" font-size="10" fill="var(--muted)">3000ms</text>
+          <text x="132" y="16" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="middle">
+            <tspan class="lz">全部等待</tspan><tspan class="le">blocking</tspan>
+          </text>
+
+          <!-- Divider -->
+          <line x1="0" y1="38" x2="280" y2="38" stroke="var(--border)" stroke-dasharray="2 2"/>
+
+          <!-- After: stream starts at 500ms -->
+          <text x="0" y="58" font-family="JetBrains Mono" font-size="10" fill="var(--accent)" font-weight="600">Stream</text>
+          <!-- TTFT marker -->
+          <circle cx="60" cy="57" r="5" fill="var(--accent)" style="filter:drop-shadow(0 0 6px var(--accent-glow));"/>
+          <text x="60" y="74" font-family="JetBrains Mono" font-size="10" fill="var(--accent)" text-anchor="middle" font-weight="700">500ms</text>
+          <text x="60" y="48" font-family="JetBrains Mono" font-size="10" fill="var(--accent)" text-anchor="middle" font-weight="600">TTFT</text>
+          <!-- Streaming tokens as growing bar -->
+          <rect x="30" y="50" width="30" height="14" rx="3" fill="var(--bar-bg)"/>
+          <rect x="60" y="50" width="170" height="14" rx="3" fill="var(--accent)" opacity="0.85"/>
+          <!-- Token ticks -->
+          <g fill="#fff" opacity="0.6">
+            <rect x="70" y="54" width="2" height="6" rx="1"/>
+            <rect x="82" y="54" width="2" height="6" rx="1"/>
+            <rect x="96" y="54" width="2" height="6" rx="1"/>
+            <rect x="112" y="54" width="2" height="6" rx="1"/>
+            <rect x="130" y="54" width="2" height="6" rx="1"/>
+            <rect x="150" y="54" width="2" height="6" rx="1"/>
+            <rect x="172" y="54" width="2" height="6" rx="1"/>
+            <rect x="196" y="54" width="2" height="6" rx="1"/>
+          </g>
+          <line x1="230" y1="46" x2="230" y2="68" stroke="var(--accent)" stroke-dasharray="2 2"/>
+          <text x="238" y="60" font-family="JetBrains Mono" font-size="10" fill="var(--accent)">3000ms</text>
+          <text x="140" y="92" font-family="JetBrains Mono" font-size="10" fill="var(--accent)" text-anchor="middle" font-weight="700">6x faster first token</text>
+        </svg>
+      </div>
+      <div class="cell-foot">
+        <div class="cell-metric">
+          <span class="cell-metric-val">3x</span>
+          <span class="cell-metric-unit"></span>
+        </div>
+        <div class="cell-metric-lbl">
+          <span class="lz">感知速度提升</span>
+          <span class="le">Perceived Speed</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 06 · Incremental / 增量 -->
+    <div class="cell c-pk">
+      <div class="cell-head">
+        <span class="cell-num">06</span>
+        <div>
+          <div class="cell-title">
+            <span class="lz">增量更新</span>
+            <span class="le">Incremental</span>
+          </div>
+          <div class="cell-subtitle">dirty region tracking · Ink</div>
+        </div>
+      </div>
+      <div class="cell-one-liner">
+        <span class="lz">脏区域追踪，仅重绘变化部分，CPU 占用骤降</span>
+        <span class="le">Dirty-region tracking, redraw only changes, CPU plunges</span>
+      </div>
+      <div class="cell-viz">
+        <!-- 网格对比: 全部重绘 vs 只重绘一格 -->
+        <svg viewBox="0 0 280 100" xmlns="http://www.w3.org/2000/svg">
+          <!-- Before: full redraw grid -->
+          <text x="0" y="14" font-family="JetBrains Mono" font-size="10" fill="var(--muted)">Full Redraw</text>
+          <g transform="translate(0,18)">
+            <rect x="0" y="0" width="14" height="14" rx="2" fill="var(--pink)" opacity="0.85"/>
+            <rect x="16" y="0" width="14" height="14" rx="2" fill="var(--pink)" opacity="0.85"/>
+            <rect x="32" y="0" width="14" height="14" rx="2" fill="var(--pink)" opacity="0.85"/>
+            <rect x="48" y="0" width="14" height="14" rx="2" fill="var(--pink)" opacity="0.85"/>
+            <rect x="64" y="0" width="14" height="14" rx="2" fill="var(--pink)" opacity="0.85"/>
+            <rect x="80" y="0" width="14" height="14" rx="2" fill="var(--pink)" opacity="0.85"/>
+            <rect x="0" y="16" width="14" height="14" rx="2" fill="var(--pink)" opacity="0.85"/>
+            <rect x="16" y="16" width="14" height="14" rx="2" fill="var(--pink)" opacity="0.85"/>
+            <rect x="32" y="16" width="14" height="14" rx="2" fill="var(--pink)" opacity="0.85"/>
+            <rect x="48" y="16" width="14" height="14" rx="2" fill="var(--pink)" opacity="0.85"/>
+            <rect x="64" y="16" width="14" height="14" rx="2" fill="var(--pink)" opacity="0.85"/>
+            <rect x="80" y="16" width="14" height="14" rx="2" fill="var(--pink)" opacity="0.85"/>
+            <text x="104" y="20" font-family="JetBrains Mono" font-size="10" fill="var(--muted)">12 cells</text>
+            <text x="104" y="30" font-family="JetBrains Mono" font-size="10" fill="var(--muted)">CPU 100%</text>
+          </g>
+          <!-- VS arrow -->
+          <text x="180" y="25" font-family="JetBrains Mono" font-size="11" fill="var(--pink)" font-weight="700">→</text>
+          <!-- After: single dirty cell -->
+          <g transform="translate(195,18)">
+            <rect x="0" y="0" width="14" height="14" rx="2" fill="var(--bar-bg)"/>
+            <rect x="16" y="0" width="14" height="14" rx="2" fill="var(--bar-bg)"/>
+            <rect x="32" y="0" width="14" height="14" rx="2" fill="var(--pink)" stroke="var(--pink)" stroke-width="1.5" style="filter:drop-shadow(0 0 4px var(--pink-glow));"/>
+            <rect x="48" y="0" width="14" height="14" rx="2" fill="var(--bar-bg)"/>
+            <rect x="64" y="0" width="14" height="14" rx="2" fill="var(--bar-bg)"/>
+            <rect x="0" y="16" width="14" height="14" rx="2" fill="var(--bar-bg)"/>
+            <rect x="16" y="16" width="14" height="14" rx="2" fill="var(--bar-bg)"/>
+            <rect x="32" y="16" width="14" height="14" rx="2" fill="var(--bar-bg)"/>
+            <rect x="48" y="16" width="14" height="14" rx="2" fill="var(--bar-bg)"/>
+            <rect x="64" y="16" width="14" height="14" rx="2" fill="var(--bar-bg)"/>
+          </g>
+          <text x="195" y="14" font-family="JetBrains Mono" font-size="10" fill="var(--pink)" font-weight="600">Dirty Only</text>
+
+          <!-- Bottom: CPU comparison bar -->
+          <g transform="translate(0,62)">
+            <text x="0" y="8" font-family="JetBrains Mono" font-size="10" fill="var(--muted)">CPU</text>
+            <rect x="28" y="2" width="240" height="9" rx="2" fill="var(--bar-bg)"/>
+            <rect x="28" y="2" width="240" height="9" rx="2" fill="var(--muted)" opacity="0.5"/>
+            <text x="272" y="10" font-family="JetBrains Mono" font-size="10" fill="var(--muted)" text-anchor="end" dx="-2">100%</text>
+            <rect x="28" y="16" width="240" height="9" rx="2" fill="var(--bar-bg)"/>
+            <rect x="28" y="16" width="19" height="9" rx="2" fill="var(--pink)"/>
+            <text x="52" y="24" font-family="JetBrains Mono" font-size="10" fill="var(--pink)" font-weight="700">8%</text>
+          </g>
+          <text x="140" y="95" font-family="JetBrains Mono" font-size="10" fill="var(--pink)" text-anchor="middle" font-weight="700">
+            <tspan class="lz">仅重绘脏区域</tspan><tspan class="le">redraw only dirty region</tspan>
+          </text>
+        </svg>
+      </div>
+      <div class="cell-foot">
+        <div class="cell-metric">
+          <span class="cell-metric-val">−92%</span>
+          <span class="cell-metric-unit"></span>
+        </div>
+        <div class="cell-metric-lbl">
+          <span class="lz">CPU 占用降低</span>
+          <span class="le">CPU Usage Drop</span>
+        </div>
+      </div>
+    </div>
+
+  </section>
+
+  <!-- 协同说明 -->
+  <div class="synergy">
+    <span class="synergy-tag">
+      <span class="lz">协同效应</span>
+      <span class="le">Synergy</span>
+    </span>
+    <span class="synergy-body">
+      <span class="lz">六策略同时生效时，<strong>总体增益超过各策略独立叠加</strong>——Cache 减成本 · Stream 提速 · Speculate 减轮次 · Parallel 提吞吐 · Compact 保质量 · Incremental 省 CPU</span>
+      <span class="le">When 6 strategies compound, <strong>total gain exceeds sum of parts</strong> — Cache cuts cost · Stream speeds · Speculate skips rounds · Parallel lifts throughput · Compact preserves quality · Incremental saves CPU</span>
+    </span>
+  </div>
+
+  <footer>
+    VIS-0-008 · Claude Code 2.1.88 · <span class="lz">六大性能优化策略全景</span><span class="le">6 Core Performance Strategies Panorama</span> · CC 白皮书 v2
+  </footer>
+</div>
+
+<script>
+(function(){
+  function setTheme(t){
+    try{localStorage.setItem('vtheme',t);}catch(e){}
+    document.documentElement.setAttribute('data-theme',t);
+    document.querySelectorAll('.cb[data-theme-btn]').forEach(b=>{
+      b.classList.toggle('active', b.dataset.themeBtn===t);
+    });
+  }
+  function toggleLang(){
+    const h=document.documentElement;
+    const next = h.lang==='zh'?'en':'zh';
+    h.lang = next;
+    try{localStorage.setItem('vlang',next);}catch(e){}
+  }
+  // Restore
+  try{
+    var _t=localStorage.getItem('vtheme');
+    if(_t==='dark'||_t==='warm'||_t==='light')setTheme(_t);
+    var _l=localStorage.getItem('vlang');
+    if(_l==='en'&&document.documentElement.lang!=='en')toggleLang();
+  }catch(e){}
+  window.setTheme=setTheme;
+  window.toggleLang=toggleLang;
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

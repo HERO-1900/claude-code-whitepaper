@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-2A-034 | DA1 Sentinel Protocol 时序图</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+/* ── Design tokens ── */
+:root,[data-theme="dark"]{
+  --bg:#020617;--panel:#0f172a;--card:#1e293b;--border:#334155;
+  --text:#f1f5f9;--muted:#94a3b8;--subtle:#475569;
+  --amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;
+  --emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c;
+  --blue:#60a5fa;
+}
+[data-theme="warm"]{
+  --bg:#1c1410;--panel:#2a1f16;--card:#3d2d20;--border:#5c4a3a;
+  --text:#f5e6d3;--muted:#c4a882;--subtle:#8b7355;
+  --amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;
+  --emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c;
+  --blue:#60a5fa;
+}
+[data-theme="light"]{
+  --bg:#f8fafc;--panel:#f1f5f9;--card:#e2e8f0;--border:#cbd5e1;
+  --text:#0f172a;--muted:#475569;--subtle:#94a3b8;
+  --amber:#d97706;--cyan:#0891b2;--violet:#7c3aed;
+  --emerald:#059669;--rose:#e11d48;--slate:#475569;--orange:#ea580c;
+  --blue:#2563eb;
+}
+
+/* ── Base ── */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'JetBrains Mono',monospace;
+  background:var(--bg);color:var(--text);
+  min-height:100vh;padding:24px 20px 48px;
+  font-size:13px;line-height:1.5;
+}
+
+/* ── Controls ── */
+.ctrl{
+  position:fixed;top:16px;right:16px;
+  display:flex;gap:8px;z-index:100;
+}
+.ctrl button{
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+  padding:6px 12px;background:var(--card);color:var(--text);
+  border:1px solid var(--border);border-radius:6px;cursor:pointer;
+  transition:background .15s;
+}
+.ctrl button:hover{background:var(--border)}
+
+[data-lang="en"] .lz{display:none}
+[data-lang="en"] .le{display:inline}
+
+/* ── Header ── */
+.page-header{
+  max-width:1200px;margin:0 auto 32px;
+  display:flex;align-items:flex-start;justify-content:space-between;
+  gap:16px;position:relative;
+}
+.header-left{}
+.vis-id{
+  font-size:11px;color:var(--subtle);letter-spacing:.08em;
+  text-transform:uppercase;margin-bottom:6px;
+}
+.page-title{
+  font-size:26px;font-weight:700;color:var(--text);
+  line-height:1.2;margin-bottom:6px;
+}
+.page-subtitle{
+  font-size:13px;color:var(--muted);
+}
+
+/* ── Deprecated badge ── */
+.deprecated-badge{
+  flex-shrink:0;
+  padding:10px 14px;
+  border:1.5px solid var(--rose);
+  border-radius:8px;
+  background:rgba(251,113,133,.07);
+  color:var(--rose);
+  font-size:11px;
+  line-height:1.5;
+  transform:rotate(2deg);
+  opacity:0;
+  animation:fadeInBadge .5s ease forwards;
+  animation-delay:1.5s;
+  white-space:nowrap;
+}
+.deprecated-badge .dep-label{
+  font-weight:700;font-size:12px;display:block;margin-bottom:4px;
+}
+.deprecated-badge .dep-arrow{
+  display:block;font-size:11px;color:var(--muted);
+}
+.deprecated-badge s{
+  text-decoration-color:var(--rose);color:var(--muted);
+}
+@keyframes fadeInBadge{
+  from{opacity:0;transform:rotate(2deg) translateY(-6px)}
+  to{opacity:1;transform:rotate(2deg) translateY(0)}
+}
+
+/* ── 3-column grid ── */
+.scenarios-grid{
+  max-width:1200px;margin:0 auto 32px;
+  display:grid;grid-template-columns:1fr 1fr 1fr;
+  gap:20px;
+}
+
+/* ── Scenario card ── */
+.scenario-card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+  display:flex;flex-direction:column;
+}
+.scenario-card.s-supported{border-top:3px solid var(--emerald)}
+.scenario-card.s-unsupported{border-top:3px solid var(--subtle)}
+.scenario-card.s-parallel{border-top:3px solid var(--blue)}
+
+/* ── Scenario header ── */
+.scenario-header{
+  padding:16px 18px 14px;
+  border-bottom:1px solid var(--border);
+  display:flex;align-items:center;gap:10px;
+}
+.scenario-badge{
+  font-size:10px;font-weight:700;letter-spacing:.07em;
+  padding:3px 9px;border-radius:4px;
+  text-transform:uppercase;white-space:nowrap;
+}
+.badge-supported{background:rgba(52,211,153,.15);color:var(--emerald);border:1px solid rgba(52,211,153,.3)}
+.badge-unsupported{background:rgba(148,163,184,.12);color:var(--slate);border:1px solid rgba(148,163,184,.25)}
+.badge-parallel{background:rgba(96,165,250,.15);color:var(--blue);border:1px solid rgba(96,165,250,.3)}
+.scenario-title{
+  font-size:14px;font-weight:600;color:var(--text);
+}
+.scenario-title .sub{
+  display:block;font-size:11px;font-weight:400;color:var(--muted);margin-top:1px;
+}
+
+/* ── Sequence diagram ── */
+.seq-diagram{
+  padding:20px 18px;
+  flex:1;
+  display:flex;flex-direction:column;gap:0;
+}
+
+/* Actors row */
+.actors-row{
+  display:flex;justify-content:space-between;
+  margin-bottom:4px;
+  padding:0 8px;
+}
+.actor-box{
+  width:120px;
+  padding:7px 10px;
+  border-radius:6px;
+  font-size:11px;font-weight:600;text-align:center;
+  letter-spacing:.03em;
+}
+.actor-claude{
+  background:rgba(96,165,250,.12);
+  border:1px solid rgba(96,165,250,.35);
+  color:var(--blue);
+}
+.actor-terminal{
+  background:rgba(52,211,153,.1);
+  border:1px solid rgba(52,211,153,.3);
+  color:var(--emerald);
+}
+.actor-parent{
+  background:rgba(251,146,60,.12);
+  border:1px solid rgba(251,146,60,.32);
+  color:var(--orange);
+}
+.actor-sub{
+  background:rgba(96,165,250,.12);
+  border:1px solid rgba(96,165,250,.35);
+  color:var(--blue);
+}
+
+/* Lifeline area */
+.lifeline-area{
+  position:relative;
+  padding:0 8px;
+  display:flex;flex-direction:column;
+  gap:0;
+}
+
+/* vertical lifeline guides */
+.lifeline-area::before,
+.lifeline-area::after{
+  content:'';
+  position:absolute;
+  top:0;bottom:0;
+  width:1px;
+  background:repeating-linear-gradient(
+    to bottom,
+    var(--border) 0,var(--border) 5px,
+    transparent 5px,transparent 10px
+  );
+  z-index:0;
+}
+.lifeline-area::before{left:68px}
+.lifeline-area::after{right:68px}
+
+/* ── Message rows ── */
+.msg-row{
+  position:relative;
+  z-index:1;
+  min-height:44px;
+  display:flex;align-items:center;
+  padding:4px 0;
+}
+
+/* arrow containers */
+.arrow-wrap{
+  width:100%;
+  position:relative;
+  display:flex;
+  flex-direction:column;
+}
+.arrow-label{
+  font-size:10px;color:var(--muted);
+  text-align:center;margin-bottom:3px;
+  font-weight:500;
+  padding:0 4px;
+}
+
+/* solid right arrow (Claude→Terminal, left→right) */
+.arrow-right{
+  display:flex;align-items:center;
+  width:100%;
+}
+.arrow-right .arrow-line{
+  flex:1;height:2px;
+  background:var(--blue);
+  margin-left:68px;margin-right:68px;
+}
+.arrow-right .arrow-head{
+  width:0;height:0;
+  border-top:5px solid transparent;
+  border-bottom:5px solid transparent;
+  border-left:8px solid var(--blue);
+  margin-right:60px;flex-shrink:0;
+}
+
+/* solid left arrow (Terminal→Claude, right→left) */
+.arrow-left{
+  display:flex;align-items:center;
+  width:100%;
+}
+.arrow-left .arrow-head{
+  width:0;height:0;
+  border-top:5px solid transparent;
+  border-bottom:5px solid transparent;
+  border-right:8px solid var(--emerald);
+  margin-left:60px;flex-shrink:0;
+}
+.arrow-left .arrow-line{
+  flex:1;height:2px;
+  background:var(--emerald);
+  margin-left:68px;margin-right:68px;
+}
+
+/* internal arrow (Claude internal, full-left) */
+.arrow-internal{
+  display:flex;align-items:center;
+  width:100%;
+  justify-content:flex-start;
+}
+.arrow-internal .arrow-inner{
+  margin-left:30px;
+  display:flex;align-items:center;
+  gap:0;
+}
+.arrow-internal .arrow-line-int{
+  width:50px;height:2px;
+  background:var(--amber);
+  border-style:dashed;
+  background:repeating-linear-gradient(
+    90deg,var(--amber) 0,var(--amber) 6px,transparent 6px,transparent 10px
+  );
+}
+.arrow-internal .arrow-head-int{
+  width:0;height:0;
+  border-top:5px solid transparent;
+  border-bottom:5px solid transparent;
+  border-left:8px solid var(--amber);
+}
+.msg-label-int{
+  margin-left:12px;font-size:10px;color:var(--amber);font-weight:600;
+}
+
+/* green dashed left (Sub→Parent) */
+.arrow-left-dashed{
+  display:flex;align-items:center;
+  width:100%;
+}
+.arrow-left-dashed .arrow-head{
+  width:0;height:0;
+  border-top:5px solid transparent;
+  border-bottom:5px solid transparent;
+  border-right:8px solid var(--emerald);
+  margin-left:60px;flex-shrink:0;
+}
+.arrow-left-dashed .arrow-line{
+  flex:1;height:2px;
+  margin-left:68px;margin-right:68px;
+  background:repeating-linear-gradient(
+    90deg,var(--emerald) 0,var(--emerald) 6px,transparent 6px,transparent 10px
+  );
+}
+
+/* orange right arrow (Parent→Sub) */
+.arrow-right-orange{
+  display:flex;align-items:center;
+  width:100%;
+}
+.arrow-right-orange .arrow-line{
+  flex:1;height:2px;
+  background:var(--orange);
+  margin-left:68px;margin-right:68px;
+}
+.arrow-right-orange .arrow-head{
+  width:0;height:0;
+  border-top:5px solid transparent;
+  border-bottom:5px solid transparent;
+  border-left:8px solid var(--orange);
+  margin-right:60px;flex-shrink:0;
+}
+
+/* ── Sentinel marker ── */
+.sentinel-marker{
+  position:relative;z-index:1;
+  margin:6px 0;
+  display:flex;align-items:center;
+  justify-content:center;
+  gap:8px;
+}
+.sentinel-dot{
+  width:8px;height:8px;border-radius:50%;
+  background:var(--orange);
+  box-shadow:0 0 6px var(--orange);
+  flex-shrink:0;
+}
+.sentinel-label{
+  font-size:10px;color:var(--orange);font-weight:600;letter-spacing:.04em;
+  white-space:nowrap;
+}
+
+/* ── Timeout bar ── */
+.timeout-bar{
+  position:relative;z-index:1;
+  margin:8px 20px;
+  padding:8px 12px;
+  border:1px dashed var(--subtle);
+  border-radius:6px;
+  background:rgba(71,85,105,.1);
+  display:flex;align-items:center;
+  gap:8px;
+}
+.timeout-pulse{
+  width:10px;height:10px;border-radius:50%;
+  border:2px solid var(--subtle);
+  animation:pulse 1.2s ease-in-out infinite;
+  flex-shrink:0;
+}
+@keyframes pulse{
+  0%,100%{opacity:.3;transform:scale(1)}
+  50%{opacity:1;transform:scale(1.2)}
+}
+.timeout-text{
+  font-size:10px;color:var(--muted);font-style:italic;
+}
+.timeout-badge{
+  margin-left:auto;
+  font-size:10px;font-weight:700;
+  padding:2px 7px;border-radius:3px;
+  background:rgba(251,191,36,.12);
+  border:1px solid rgba(251,191,36,.3);
+  color:var(--amber);
+  white-space:nowrap;
+}
+
+/* ── Result box ── */
+.result-box{
+  position:relative;z-index:1;
+  margin:12px 0 4px;
+  padding:10px 14px;
+  border-radius:7px;
+  font-size:11px;line-height:1.5;
+  font-weight:500;
+}
+.result-supported{
+  background:rgba(52,211,153,.08);
+  border:1px solid rgba(52,211,153,.25);
+  color:var(--emerald);
+}
+.result-unsupported{
+  background:rgba(148,163,184,.07);
+  border:1px solid rgba(148,163,184,.2);
+  color:var(--slate);
+}
+.result-parallel{
+  background:rgba(96,165,250,.08);
+  border:1px solid rgba(96,165,250,.25);
+  color:var(--blue);
+}
+.result-icon{
+  font-size:13px;margin-right:5px;
+}
+
+/* ── Summary cards ── */
+.summary-section{
+  max-width:1200px;margin:0 auto;
+}
+.summary-title{
+  font-size:11px;text-transform:uppercase;letter-spacing:.1em;
+  color:var(--subtle);margin-bottom:14px;
+}
+.summary-grid{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;
+}
+.summary-card{
+  padding:16px 18px;
+  border-radius:10px;
+  border:1px solid var(--border);
+  background:var(--panel);
+}
+.summary-card.c-cyan{border-left:3px solid var(--cyan)}
+.summary-card.c-amber{border-left:3px solid var(--amber)}
+.summary-card.c-violet{border-left:3px solid var(--violet)}
+.sum-metric{
+  font-size:22px;font-weight:700;margin-bottom:6px;
+  line-height:1;
+}
+.c-cyan .sum-metric{color:var(--cyan)}
+.c-amber .sum-metric{color:var(--amber)}
+.c-violet .sum-metric{color:var(--violet)}
+.sum-desc{
+  font-size:11px;color:var(--muted);line-height:1.5;
+}
+
+/* ── Footer ── */
+.page-footer{
+  max-width:1200px;margin:32px auto 0;
+  display:flex;align-items:center;justify-content:space-between;
+  padding-top:16px;border-top:1px solid var(--border);
+}
+.footer-meta{font-size:10px;color:var(--subtle)}
+.footer-badge{
+  font-size:10px;color:var(--subtle);
+  padding:3px 8px;border:1px solid var(--border);border-radius:4px;
+}
+
+/* ── Divider ── */
+.h-sep{
+  position:relative;z-index:1;
+  margin:8px 20px;
+  height:1px;
+  background:var(--border);
+  opacity:.4;
+}
+
+/* ── Responsive ── */
+@media (max-width:900px){
+  .scenarios-grid,.summary-grid{grid-template-columns:1fr}
+  .page-header{flex-direction:column}
+  .deprecated-badge{transform:rotate(0deg);animation:none;opacity:1}
+}
+</style>
+</head>
+<body>
+
+<!-- Controls -->
+<div class="ctrl">
+  <button onclick="cycleTheme()"><span class="lz">主题</span><span class="le">Theme</span></button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<!-- Page Header -->
+<header class="page-header">
+  <div class="header-left">
+    <div class="vis-id">VIS-2A-034 · Claude Code 2.1.88 · Terminal Subsystem</div>
+    <h1 class="page-title">
+      <span class="lz">DA1 Sentinel Protocol 时序图</span>
+      <span class="le">DA1 Sentinel Protocol Sequence Diagram</span>
+    </h1>
+    <p class="page-subtitle">
+      <span class="lz">终端能力探测协议 | Terminal Capability Detection via Device Attributes Level 1</span>
+      <span class="le">Terminal Capability Detection via Device Attributes Level 1</span>
+    </p>
+  </div>
+
+  <!-- Legacy warning badge -->
+  <div class="deprecated-badge">
+    <span class="dep-label">⚠ DEPRECATED</span>
+    <span class="dep-arrow">
+      <s>isInteractiveShell()</s><br>
+      ↓<br>
+      DA1 query
+    </span>
+  </div>
+</header>
+
+<!-- 3-column Scenarios -->
+<section class="scenarios-grid">
+
+  <!-- ───────────────── Scenario 1: Supported ───────────────── -->
+  <div class="scenario-card s-supported">
+    <div class="scenario-header">
+      <span class="scenario-badge badge-supported">✓ SUPPORTED</span>
+      <div class="scenario-title">
+        <span class="lz">现代终端</span><span class="le">Modern Terminal</span>
+        <span class="sub">
+          <span class="lz">完整 ANSI 支持</span><span class="le">Full ANSI Support</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="seq-diagram">
+      <!-- Actors -->
+      <div class="actors-row">
+        <div class="actor-box actor-claude">Claude Code</div>
+        <div class="actor-box actor-terminal">Terminal</div>
+      </div>
+
+      <!-- Lifeline + messages -->
+      <div class="lifeline-area">
+
+        <!-- Msg 1: Claude → Terminal DA1 query -->
+        <div class="msg-row">
+          <div class="arrow-wrap">
+            <div class="arrow-label">
+              <span class="lz">发送能力查询</span><span class="le">Send capability query</span>
+            </div>
+            <div class="arrow-right">
+              <div class="arrow-line"></div>
+              <div class="arrow-head"></div>
+            </div>
+            <div style="text-align:center;font-size:10px;color:var(--blue);margin-top:3px;font-weight:600">
+              ESC[c &nbsp;(DA1 Query)
+            </div>
+          </div>
+        </div>
+
+        <!-- Sentinel marker -->
+        <div class="sentinel-marker">
+          <div class="sentinel-dot"></div>
+          <span class="sentinel-label">
+            <span class="lz">DA1 sentinel sent · 等待响应</span>
+            <span class="le">DA1 sentinel sent · awaiting response</span>
+          </span>
+        </div>
+
+        <div class="h-sep"></div>
+
+        <!-- Msg 2: Terminal → Claude response -->
+        <div class="msg-row">
+          <div class="arrow-wrap">
+            <div class="arrow-label">
+              <span class="lz">终端返回能力信息</span><span class="le">Terminal returns capability info</span>
+            </div>
+            <div class="arrow-left">
+              <div class="arrow-head"></div>
+              <div class="arrow-line"></div>
+            </div>
+            <div style="text-align:center;font-size:10px;color:var(--emerald);margin-top:3px;font-weight:600">
+              ESC[?1;2c &nbsp;(Response)
+            </div>
+          </div>
+        </div>
+
+        <div class="h-sep"></div>
+
+        <!-- Msg 3: Claude → Terminal enable advanced -->
+        <div class="msg-row">
+          <div class="arrow-wrap">
+            <div class="arrow-label">
+              <span class="lz">启用高级渲染</span><span class="le">Enable advanced rendering</span>
+            </div>
+            <div class="arrow-right">
+              <div class="arrow-line"></div>
+              <div class="arrow-head"></div>
+            </div>
+            <div style="text-align:center;font-size:10px;color:var(--blue);margin-top:3px;font-weight:600">
+              Enable advanced rendering
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /lifeline-area -->
+
+      <!-- Result -->
+      <div class="result-box result-supported">
+        <span class="result-icon">✓</span>
+        <span class="lz">ANSI 256-color / Hyperlinks / Unicode 完整支持</span>
+        <span class="le">ANSI 256-color / Hyperlinks / Full Unicode support</span>
+      </div>
+    </div>
+  </div>
+  <!-- /Scenario 1 -->
+
+  <!-- ───────────────── Scenario 2: Unsupported ───────────────── -->
+  <div class="scenario-card s-unsupported">
+    <div class="scenario-header">
+      <span class="scenario-badge badge-unsupported">✗ UNSUPPORTED</span>
+      <div class="scenario-title">
+        <span class="lz">无响应终端</span><span class="le">No Response</span>
+        <span class="sub">
+          <span class="lz">超时触发降级</span><span class="le">Timeout triggers fallback</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="seq-diagram">
+      <!-- Actors -->
+      <div class="actors-row">
+        <div class="actor-box actor-claude">Claude Code</div>
+        <div class="actor-box actor-terminal" style="background:rgba(71,85,105,.12);border-color:rgba(71,85,105,.3);color:var(--subtle)">Terminal</div>
+      </div>
+
+      <div class="lifeline-area">
+
+        <!-- Msg 1: Claude → Terminal DA1 query -->
+        <div class="msg-row">
+          <div class="arrow-wrap">
+            <div class="arrow-label">
+              <span class="lz">发送能力查询</span><span class="le">Send capability query</span>
+            </div>
+            <div class="arrow-right">
+              <div class="arrow-line"></div>
+              <div class="arrow-head"></div>
+            </div>
+            <div style="text-align:center;font-size:10px;color:var(--blue);margin-top:3px;font-weight:600">
+              ESC[c &nbsp;(DA1 Query)
+            </div>
+          </div>
+        </div>
+
+        <!-- Sentinel waiting -->
+        <div class="sentinel-marker">
+          <div class="sentinel-dot" style="animation:pulse 1.5s ease-in-out infinite"></div>
+          <span class="sentinel-label">
+            <span class="lz">waiting… no response</span>
+            <span class="le">waiting… no response</span>
+          </span>
+        </div>
+
+        <!-- Timeout bar -->
+        <div class="timeout-bar">
+          <div class="timeout-pulse"></div>
+          <span class="timeout-text">
+            <span class="lz">终端无响应，等待超时</span>
+            <span class="le">terminal silent, waiting for timeout</span>
+          </span>
+          <span class="timeout-badge">300ms</span>
+        </div>
+
+        <div class="h-sep"></div>
+
+        <!-- Msg 2: Claude internal decision -->
+        <div class="msg-row">
+          <div class="arrow-wrap">
+            <div class="arrow-label" style="color:var(--amber)">
+              <span class="lz">内部决策 · 触发降级</span><span class="le">Internal decision · fallback triggered</span>
+            </div>
+            <div class="arrow-internal">
+              <div class="arrow-inner">
+                <div class="arrow-line-int"></div>
+                <div class="arrow-head-int"></div>
+                <span class="msg-label-int">Timeout — fallback mode</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /lifeline-area -->
+
+      <!-- Result -->
+      <div class="result-box result-unsupported">
+        <span class="result-icon">✗</span>
+        <span class="lz">降级到纯文本模式 / Fallback to plain text</span>
+        <span class="le">Fallback to plain text mode</span>
+      </div>
+    </div>
+  </div>
+  <!-- /Scenario 2 -->
+
+  <!-- ───────────────── Scenario 3: Parallel ───────────────── -->
+  <div class="scenario-card s-parallel">
+    <div class="scenario-header">
+      <span class="scenario-badge badge-parallel">⟳ PARALLEL</span>
+      <div class="scenario-title">
+        <span class="lz">并发子 Agent</span><span class="le">Sub-Agent Context</span>
+        <span class="sub">
+          <span class="lz">上下文继承</span><span class="le">Context Inheritance</span>
+        </span>
+      </div>
+    </div>
+
+    <div class="seq-diagram">
+      <!-- Actors -->
+      <div class="actors-row">
+        <div class="actor-box actor-parent">
+          <span class="lz">Parent Agent</span><span class="le">Parent Agent</span>
+        </div>
+        <div class="actor-box actor-sub">
+          <span class="lz">Sub-Agent</span><span class="le">Sub-Agent</span>
+        </div>
+      </div>
+
+      <div class="lifeline-area">
+
+        <!-- Msg 1: Parent → Sub spawn -->
+        <div class="msg-row">
+          <div class="arrow-wrap">
+            <div class="arrow-label">
+              <span class="lz">携带 DA1 上下文派生子 Agent</span>
+              <span class="le">spawn with DA1 context</span>
+            </div>
+            <div class="arrow-right-orange">
+              <div class="arrow-line"></div>
+              <div class="arrow-head"></div>
+            </div>
+            <div style="text-align:center;font-size:10px;color:var(--orange);margin-top:3px;font-weight:600">
+              spawn with DA1 context
+            </div>
+          </div>
+        </div>
+
+        <!-- Msg 2: Sub → Terminal DA1 query -->
+        <div class="msg-row">
+          <div class="arrow-wrap">
+            <div class="arrow-label">
+              <span class="lz">继承式查询</span><span class="le">Inherited query</span>
+            </div>
+            <div class="arrow-right">
+              <div class="arrow-line"></div>
+              <div class="arrow-head"></div>
+            </div>
+            <div style="text-align:center;font-size:10px;color:var(--blue);margin-top:3px;font-weight:600">
+              DA1 Query (inherited)
+            </div>
+          </div>
+        </div>
+
+        <!-- Sentinel marker -->
+        <div class="sentinel-marker">
+          <div class="sentinel-dot" style="background:var(--orange);box-shadow:0 0 6px var(--orange)"></div>
+          <span class="sentinel-label" style="color:var(--orange)">
+            <span class="lz">context forwarded · 上下文已传递</span>
+            <span class="le">context forwarded · propagated</span>
+          </span>
+        </div>
+
+        <div class="h-sep"></div>
+
+        <!-- Msg 3: Terminal → Sub response (using arrow-left with blue) -->
+        <div class="msg-row">
+          <div class="arrow-wrap">
+            <div class="arrow-label">
+              <span class="lz">终端响应子 Agent</span><span class="le">Terminal responds to sub-agent</span>
+            </div>
+            <div class="arrow-left">
+              <div class="arrow-head"></div>
+              <div class="arrow-line"></div>
+            </div>
+            <div style="text-align:center;font-size:10px;color:var(--emerald);margin-top:3px;font-weight:600">
+              ESC[?1;2c
+            </div>
+          </div>
+        </div>
+
+        <div class="h-sep"></div>
+
+        <!-- Msg 4: Sub → Parent capabilities confirmed (dashed green) -->
+        <div class="msg-row">
+          <div class="arrow-wrap">
+            <div class="arrow-label">
+              <span class="lz">上报能力确认</span><span class="le">report capabilities confirmed</span>
+            </div>
+            <div class="arrow-left-dashed">
+              <div class="arrow-head"></div>
+              <div class="arrow-line"></div>
+            </div>
+            <div style="text-align:center;font-size:10px;color:var(--emerald);margin-top:3px;font-weight:600">
+              capabilities confirmed ···
+            </div>
+          </div>
+        </div>
+
+      </div><!-- /lifeline-area -->
+
+      <!-- Result -->
+      <div class="result-box result-parallel">
+        <span class="result-icon">⟳</span>
+        <span class="lz">父子 Agent 共享终端能力状态</span>
+        <span class="le">Parent &amp; Sub-Agent share terminal capability state</span>
+      </div>
+    </div>
+  </div>
+  <!-- /Scenario 3 -->
+
+</section>
+<!-- /scenarios-grid -->
+
+<!-- Summary Cards -->
+<section class="summary-section">
+  <div class="summary-title">
+    <span class="lz">关键参数</span><span class="le">Key Parameters</span>
+  </div>
+  <div class="summary-grid">
+
+    <div class="summary-card c-cyan">
+      <div class="sum-metric">300ms</div>
+      <div class="sum-desc">
+        <span class="lz">超时阈值 — 无响应则自动降级为纯文本模式，保证不阻塞启动流程</span>
+        <span class="le">Timeout threshold — no response triggers automatic fallback to plain text, startup is never blocked</span>
+      </div>
+    </div>
+
+    <div class="summary-card c-amber">
+      <div class="sum-metric">
+        <span class="lz">一次探测</span><span class="le">Single Query</span>
+      </div>
+      <div class="sum-desc">
+        <span class="lz">启动时执行，结果全程缓存 — 后续所有渲染决策直接读取缓存，零重复开销</span>
+        <span class="le">Executed once at startup; result is cached for the entire session — all subsequent rendering decisions read from cache with zero overhead</span>
+      </div>
+    </div>
+
+    <div class="summary-card c-violet">
+      <div class="sum-metric">
+        <span class="lz">上下文继承</span><span class="le">Context Inherit</span>
+      </div>
+      <div class="sum-desc">
+        <span class="lz">子 Agent 直接继承父 Agent 的探测结果，无需重复查询终端，保持一致的渲染能力</span>
+        <span class="le">Sub-agents inherit the parent's probing result without re-querying the terminal, ensuring consistent rendering capabilities</span>
+      </div>
+    </div>
+
+  </div>
+</section>
+
+<!-- Footer -->
+<footer class="page-footer">
+  <span class="footer-meta">
+    VIS-2A-034 · Claude Code 2.1.88 · DA1 Sentinel Protocol · 2026-04-15
+  </span>
+  <span class="footer-badge">
+    <span class="lz">终端子系统 · Terminal Subsystem</span>
+    <span class="le">Terminal Subsystem</span>
+  </span>
+</footer>
+
+<script>
+(function(){
+  var t = localStorage.getItem('vtheme') || 'dark';
+  var l = localStorage.getItem('vlang') || 'zh';
+  document.documentElement.setAttribute('data-theme', t);
+  document.documentElement.setAttribute('data-lang', l);
+  var btn = document.getElementById('langBtn');
+  if(btn) btn.textContent = l === 'zh' ? 'EN' : '中';
+
+  window.cycleTheme = function(){
+    var themes = ['dark', 'warm', 'light'];
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = themes[(themes.indexOf(cur) + 1) % themes.length];
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('vtheme', next);
+  };
+
+  window.toggleLang = function(){
+    var cur = document.documentElement.getAttribute('data-lang') || 'zh';
+    var next = cur === 'zh' ? 'en' : 'zh';
+    document.documentElement.setAttribute('data-lang', next);
+    localStorage.setItem('vlang', next);
+    var btn = document.getElementById('langBtn');
+    if(btn) btn.textContent = next === 'zh' ? 'EN' : '中';
+  };
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-5-003 | AI编码工具竞品架构对比</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--panel:#0f172a;--card:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--subtle:#475569;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="warm"]{--bg:#1c1410;--panel:#2a1f16;--card:#3d2d20;--border:#5c4a3a;--text:#f5e6d3;--muted:#c4a882;--subtle:#8b7355;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="light"]{--bg:#f8fafc;--panel:#f1f5f9;--card:#e2e8f0;--border:#cbd5e1;--text:#0f172a;--muted:#475569;--subtle:#94a3b8;--amber:#d97706;--cyan:#0891b2;--violet:#7c3aed;--emerald:#059669;--rose:#e11d48;--slate:#475569;--orange:#ea580c}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:24px 20px 48px}
+
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:100}
+.ctrl button{font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:background 0.15s}
+.ctrl button:hover{background:var(--border)}[data-lang="en"] .lz{display:none}
+[data-lang="en"] .le{display:inline}
+
+/* ── Header ── */
+.page-header{max-width:1100px;margin:0 auto 32px;padding-top:8px}
+.vis-id{font-size:11px;color:var(--subtle);letter-spacing:0.1em;margin-bottom:8px}
+.page-title{font-size:26px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:6px}
+.page-subtitle{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* ── Main container ── */
+.container{max-width:1100px;margin:0 auto}
+
+/* ── Tool header cards ── */
+.tool-header-row{display:grid;grid-template-columns:220px repeat(4,1fr);gap:0;margin-bottom:0;border-radius:12px 12px 0 0;overflow:hidden;border:1px solid var(--border);border-bottom:none}
+.tool-header-spacer{background:var(--panel);padding:16px;display:flex;align-items:flex-end;border-right:1px solid var(--border)}
+.tool-header-spacer span{font-size:11px;color:var(--subtle);font-weight:600;letter-spacing:0.08em;text-transform:uppercase}
+.tool-card{padding:16px 14px;border-right:1px solid var(--border);position:relative}
+.tool-card:last-child{border-right:none}
+.tool-card-inner{border-top:3px solid var(--tool-color);padding-top:10px}
+.tool-name{font-size:15px;font-weight:700;color:var(--tool-color);margin-bottom:4px;white-space:nowrap}
+.tool-desc{font-size:11px;color:var(--muted);line-height:1.4}
+
+/* ── Comparison table ── */
+.comp-table{border:1px solid var(--border);border-radius:0 0 12px 12px;overflow:hidden}
+.comp-row{display:grid;grid-template-columns:220px repeat(4,1fr);border-bottom:1px solid var(--border)}
+.comp-row:last-child{border-bottom:none}
+.comp-row.alt{background:var(--panel)}
+.comp-row:not(.alt){background:var(--card)}
+.comp-row.highlight-row{background:rgba(34,211,238,0.04);outline:1px solid rgba(34,211,238,0.15);outline-offset:-1px}
+
+.feat-cell{padding:14px 16px;border-right:1px solid var(--border);display:flex;flex-direction:column;justify-content:center;gap:3px}
+.feat-name{font-size:13px;font-weight:600;color:var(--text)}
+.feat-sub{font-size:11px;color:var(--muted)}
+
+.val-cell{padding:12px 10px;border-right:1px solid var(--border);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;text-align:center;position:relative;min-height:56px}
+.val-cell:last-child{border-right:none}
+
+/* Cell states */
+.val-cell.yes{background:rgba(52,211,153,0.12)}
+.val-cell.partial{background:rgba(251,191,36,0.08)}
+.val-cell.no{background:rgba(148,163,184,0.06)}
+
+.status-icon{font-size:18px;line-height:1}
+.status-label{font-size:11px;color:var(--muted);line-height:1.3}
+.status-label-text{font-size:12px;font-weight:500;line-height:1.4}
+
+/* Badges */
+.badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:600;padding:2px 7px;border-radius:4px;letter-spacing:0.03em;margin-top:2px}
+.badge-win{background:rgba(34,211,238,0.15);color:var(--cyan);border:1px solid rgba(34,211,238,0.3)}
+.badge-exclusive{background:rgba(167,139,250,0.18);color:var(--violet);border:1px solid rgba(167,139,250,0.35)}
+.badge-feature{background:rgba(52,211,153,0.12);color:var(--emerald);border:1px solid rgba(52,211,153,0.25);font-size:10px;margin-top:3px}
+
+/* Row label badge (left side) */
+.row-badge{display:inline-flex;align-items:center;gap:3px;font-size:10px;font-weight:700;padding:2px 6px;border-radius:4px;margin-top:4px;width:fit-content}
+.row-badge.win{background:rgba(34,211,238,0.12);color:var(--cyan);border:1px solid rgba(34,211,238,0.25)}
+.row-badge.exclusive{background:rgba(167,139,250,0.15);color:var(--violet);border:1px solid rgba(167,139,250,0.3)}
+
+/* ── Amber callout ── */
+.callout{max-width:1100px;margin:24px auto 0;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.25);border-radius:10px;padding:16px 20px;display:flex;gap:12px;align-items:center}
+.callout-icon{font-size:20px;flex-shrink:0}
+.callout-text{font-size:13px;color:var(--text);line-height:1.6}
+.callout-text strong{color:var(--amber)}
+
+/* ── Summary cards ── */
+.summary-row{max-width:1100px;margin:20px auto 0;display:grid;grid-template-columns:repeat(3,1fr);gap:16px}
+.sum-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:18px 20px;position:relative;overflow:hidden}
+.sum-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.sum-card.cyan::before{background:var(--cyan)}
+.sum-card.violet::before{background:var(--violet)}
+.sum-card.emerald::before{background:var(--emerald)}
+.sum-card-title{font-size:14px;font-weight:700;margin-bottom:6px}
+.sum-card.cyan .sum-card-title{color:var(--cyan)}
+.sum-card.violet .sum-card-title{color:var(--violet)}
+.sum-card.emerald .sum-card-title{color:var(--emerald)}
+.sum-card-desc{font-size:12px;color:var(--muted);line-height:1.5}
+
+/* ── Footer ── */
+.footer{max-width:1100px;margin:32px auto 0;display:flex;justify-content:space-between;align-items:center;border-top:1px solid var(--border);padding-top:16px}
+.footer-left{font-size:11px;color:var(--subtle)}
+.footer-right{font-size:11px;color:var(--subtle)}
+
+/* Legend */
+.legend{max-width:1100px;margin:20px auto 0;display:flex;gap:20px;align-items:center;flex-wrap:wrap}
+.legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted)}
+.legend-dot{width:28px;height:18px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:13px}
+.legend-dot.yes{background:rgba(52,211,153,0.15)}
+.legend-dot.partial{background:rgba(251,191,36,0.1)}
+.legend-dot.no{background:rgba(148,163,184,0.08)}
+
+@media(max-width:900px){
+  .tool-header-row,.comp-row{grid-template-columns:160px repeat(4,1fr)}
+  .feat-sub,.tool-desc{display:none}
+}
+@media(max-width:680px){
+  .summary-row{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<!-- Theme / Lang Controls -->
+<div class="ctrl">
+  <button onclick="cycleTheme()"><span class="lz">主题</span><span class="le">Theme</span></button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<!-- Page Header -->
+<div class="page-header">
+  <div class="vis-id">VIS-5-003 · <span class="lz">AI 编码工具竞品架构</span><span class="le">AI Coding Tools Architecture</span></div>
+  <h1 class="page-title">
+    <span class="lz">AI 编码工具竞品架构对比</span>
+    <span class="le">AI Coding Tools Architecture Comparison</span>
+  </h1>
+  <p class="page-subtitle">
+    <span class="lz">Claude Code · Cursor · GitHub Copilot · Windsurf — 四款主流 AI 编码工具的架构范式、工具能力与安全特性全面对比</span>
+    <span class="le">Claude Code · Cursor · GitHub Copilot · Windsurf — Full comparison of architecture paradigm, tool capability, and security across 4 leading AI coding tools</span>
+  </p>
+</div>
+
+<div class="container">
+
+  <!-- Tool Header Row -->
+  <div class="tool-header-row">
+    <div class="tool-header-spacer">
+      <span><span class="lz">特性对比</span><span class="le">Feature</span></span>
+    </div>
+
+    <!-- Claude Code -->
+    <div class="tool-card" style="background:rgba(34,211,238,0.04)">
+      <div class="tool-card-inner" style="--tool-color:var(--cyan)">
+        <div class="tool-name" style="color:var(--cyan)">Claude Code</div>
+        <div class="tool-desc"><span class="lz">CLI Agent · 源码级 · 安全优先</span><span class="le">CLI Agent · Source-based · Security-first</span></div>
+      </div>
+    </div>
+
+    <!-- Cursor -->
+    <div class="tool-card" style="background:rgba(167,139,250,0.04)">
+      <div class="tool-card-inner" style="--tool-color:var(--violet)">
+        <div class="tool-name" style="color:var(--violet)">Cursor</div>
+        <div class="tool-desc"><span class="lz">IDE (VSCode fork) · 上下文感知</span><span class="le">IDE (VSCode fork) · Context-aware</span></div>
+      </div>
+    </div>
+
+    <!-- GitHub Copilot -->
+    <div class="tool-card" style="background:rgba(52,211,153,0.04)">
+      <div class="tool-card-inner" style="--tool-color:var(--emerald)">
+        <div class="tool-name" style="color:var(--emerald)">GitHub Copilot</div>
+        <div class="tool-desc"><span class="lz">IDE 扩展 · 内联补全</span><span class="le">IDE Extension · Inline suggestions</span></div>
+      </div>
+    </div>
+
+    <!-- Windsurf -->
+    <div class="tool-card" style="background:rgba(251,191,36,0.04)">
+      <div class="tool-card-inner" style="--tool-color:var(--amber)">
+        <div class="tool-name" style="color:var(--amber)">Windsurf</div>
+        <div class="tool-desc"><span class="lz">IDE · Agent 优先设计</span><span class="le">IDE · Agent-first design</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Comparison Table -->
+  <div class="comp-table">
+
+    <!-- Row 1: Interface Type -->
+    <div class="comp-row">
+      <div class="feat-cell">
+        <span class="feat-name"><span class="lz">界面类型</span><span class="le">Interface</span></span>
+        <span class="feat-sub">UI paradigm</span>
+      </div>
+      <div class="val-cell" style="background:rgba(34,211,238,0.06)">
+        <span class="status-label-text" style="color:var(--cyan);font-weight:600">CLI / Terminal</span>
+        <span class="status-label"><span class="lz">原生终端</span><span class="le">Native terminal</span></span>
+      </div>
+      <div class="val-cell">
+        <span class="status-label-text" style="color:var(--violet);font-weight:600">IDE</span>
+        <span class="status-label">VSCode fork</span>
+      </div>
+      <div class="val-cell">
+        <span class="status-label-text" style="color:var(--emerald);font-weight:600"><span class="lz">插件</span><span class="le">Extension</span></span>
+        <span class="status-label"><span class="lz">IDE 扩展</span><span class="le">IDE Extension</span></span>
+      </div>
+      <div class="val-cell">
+        <span class="status-label-text" style="color:var(--amber);font-weight:600">IDE</span>
+        <span class="status-label"><span class="lz">独立 IDE</span><span class="le">Standalone IDE</span></span>
+      </div>
+    </div>
+
+    <!-- Row 2: Core Paradigm -->
+    <div class="comp-row alt">
+      <div class="feat-cell">
+        <span class="feat-name"><span class="lz">核心范式</span><span class="le">Core Paradigm</span></span>
+        <span class="feat-sub">Design philosophy</span>
+      </div>
+      <div class="val-cell" style="background:rgba(34,211,238,0.06)">
+        <span class="status-label-text" style="color:var(--cyan);font-weight:600">Agent-first</span>
+        <span class="status-label"><span class="lz">自主 Agent</span><span class="le">Autonomous agent</span></span>
+      </div>
+      <div class="val-cell">
+        <span class="status-label-text" style="font-weight:600">Context-aware</span>
+        <span class="status-label"><span class="lz">上下文感知</span><span class="le">Context-aware</span></span>
+      </div>
+      <div class="val-cell">
+        <span class="status-label-text" style="font-weight:600">Autocomplete</span>
+        <span class="status-label"><span class="lz">代码补全</span><span class="le">Code completion</span></span>
+      </div>
+      <div class="val-cell">
+        <span class="status-label-text" style="font-weight:600">Agentic IDE</span>
+        <span class="status-label"><span class="lz">Agent IDE</span><span class="le">Agent-centric</span></span>
+      </div>
+    </div>
+
+    <!-- Row 3: Tool Execution — HIGHLIGHT ROW -->
+    <div class="comp-row highlight-row">
+      <div class="feat-cell">
+        <span class="feat-name"><span class="lz">工具执行</span><span class="le">Tool Execution</span></span>
+        <span class="feat-sub">Tool invocation</span>
+        <span class="row-badge win">⭐ <span class="lz">领先</span><span class="le">Leads</span></span>
+      </div>
+      <div class="val-cell yes">
+        <span class="status-icon">✓</span>
+        <span class="status-label" style="color:var(--emerald)">40+ <span class="lz">工具</span><span class="le">tools</span></span>
+        <span class="badge badge-feature">Full (40+ tools)</span>
+      </div>
+      <div class="val-cell partial">
+        <span class="status-icon">△</span>
+        <span class="status-label"><span class="lz">有限支持</span><span class="le">Limited</span></span>
+      </div>
+      <div class="val-cell no">
+        <span class="status-icon" style="color:var(--muted)">✗</span>
+        <span class="status-label"><span class="lz">不支持</span><span class="le">None</span></span>
+      </div>
+      <div class="val-cell partial">
+        <span class="status-icon">△</span>
+        <span class="status-label"><span class="lz">部分支持</span><span class="le">Moderate</span></span>
+      </div>
+    </div>
+
+    <!-- Row 4: Multi-Agent — HIGHLIGHT ROW (exclusive) -->
+    <div class="comp-row alt highlight-row">
+      <div class="feat-cell">
+        <span class="feat-name"><span class="lz">多 Agent</span><span class="le">Multi-Agent</span></span>
+        <span class="feat-sub">Sub-agent orchestration</span>
+        <span class="row-badge exclusive">🚀 <span class="lz">独家</span><span class="le">Exclusive</span></span>
+      </div>
+      <div class="val-cell yes">
+        <span class="status-icon">✓</span>
+        <span class="status-label" style="color:var(--emerald)">Sub-agents</span>
+        <span class="badge badge-win"><span class="lz">并行子 Agent</span><span class="le">Parallel sub-agents</span></span>
+      </div>
+      <div class="val-cell no">
+        <span class="status-icon" style="color:var(--muted)">✗</span>
+        <span class="status-label"><span class="lz">不支持</span><span class="le">Not supported</span></span>
+      </div>
+      <div class="val-cell no">
+        <span class="status-icon" style="color:var(--muted)">✗</span>
+        <span class="status-label"><span class="lz">不支持</span><span class="le">Not supported</span></span>
+      </div>
+      <div class="val-cell partial">
+        <span class="status-icon">△</span>
+        <span class="status-label"><span class="lz">实验性</span><span class="le">Experimental</span></span>
+      </div>
+    </div>
+
+    <!-- Row 5: Codebase Indexing -->
+    <div class="comp-row">
+      <div class="feat-cell">
+        <span class="feat-name"><span class="lz">代码库索引</span><span class="le">Codebase Index</span></span>
+        <span class="feat-sub">RAG retrieval</span>
+      </div>
+      <div class="val-cell partial" style="background:rgba(34,211,238,0.05)">
+        <span class="status-icon">△</span>
+        <span class="status-label"><span class="lz">按需检索</span><span class="le">On-demand</span></span>
+      </div>
+      <div class="val-cell yes">
+        <span class="status-icon">✓</span>
+        <span class="status-label" style="color:var(--emerald)">Always-on RAG</span>
+      </div>
+      <div class="val-cell partial">
+        <span class="status-icon">△</span>
+        <span class="status-label"><span class="lz">按需检索</span><span class="le">On-demand</span></span>
+      </div>
+      <div class="val-cell yes">
+        <span class="status-icon">✓</span>
+        <span class="status-label" style="color:var(--emerald)">Always-on</span>
+      </div>
+    </div>
+
+    <!-- Row 6: Security Sandbox — HIGHLIGHT ROW -->
+    <div class="comp-row alt highlight-row">
+      <div class="feat-cell">
+        <span class="feat-name"><span class="lz">安全沙箱</span><span class="le">Security Sandbox</span></span>
+        <span class="feat-sub">Isolation layer</span>
+        <span class="row-badge win">⭐ <span class="lz">领先</span><span class="le">Leads</span></span>
+      </div>
+      <div class="val-cell yes">
+        <span class="status-icon">✓</span>
+        <span class="status-label" style="color:var(--emerald)">Seatbelt</span>
+        <span class="badge badge-feature"><span class="lz">macOS 沙箱</span><span class="le">macOS sandbox</span></span>
+      </div>
+      <div class="val-cell partial">
+        <span class="status-icon">△</span>
+        <span class="status-label"><span class="lz">部分隔离</span><span class="le">Partial</span></span>
+      </div>
+      <div class="val-cell no">
+        <span class="status-icon" style="color:var(--muted)">✗</span>
+        <span class="status-label"><span class="lz">无沙箱</span><span class="le">None</span></span>
+      </div>
+      <div class="val-cell partial">
+        <span class="status-icon">△</span>
+        <span class="status-label"><span class="lz">部分隔离</span><span class="le">Partial</span></span>
+      </div>
+    </div>
+
+    <!-- Row 7: MCP Support -->
+    <div class="comp-row">
+      <div class="feat-cell">
+        <span class="feat-name"><span class="lz">MCP 支持</span><span class="le">MCP Support</span></span>
+        <span class="feat-sub">Model Context Protocol</span>
+      </div>
+      <div class="val-cell yes">
+        <span class="status-icon">✓</span>
+        <span class="status-label" style="color:var(--emerald)">Native</span>
+        <span class="badge badge-win"><span class="lz">原生内置</span><span class="le">Built-in native</span></span>
+      </div>
+      <div class="val-cell partial">
+        <span class="status-icon">△</span>
+        <span class="status-label"><span class="lz">部分支持</span><span class="le">Partial</span></span>
+      </div>
+      <div class="val-cell no">
+        <span class="status-icon" style="color:var(--muted)">✗</span>
+        <span class="status-label"><span class="lz">不支持</span><span class="le">Not supported</span></span>
+      </div>
+      <div class="val-cell partial">
+        <span class="status-icon">△</span>
+        <span class="status-label"><span class="lz">部分支持</span><span class="le">Partial</span></span>
+      </div>
+    </div>
+
+    <!-- Row 8: Open Source -->
+    <div class="comp-row alt">
+      <div class="feat-cell">
+        <span class="feat-name"><span class="lz">开源 / 透明度</span><span class="le">Open Source</span></span>
+        <span class="feat-sub">Transparency</span>
+      </div>
+      <div class="val-cell partial" style="background:rgba(34,211,238,0.05)">
+        <span class="status-icon">△</span>
+        <span class="status-label"><span class="lz">CLI 部分开源</span><span class="le">CC CLI partial</span></span>
+      </div>
+      <div class="val-cell no">
+        <span class="status-icon" style="color:var(--muted)">✗</span>
+        <span class="status-label"><span class="lz">闭源</span><span class="le">Proprietary</span></span>
+      </div>
+      <div class="val-cell no">
+        <span class="status-icon" style="color:var(--muted)">✗</span>
+        <span class="status-label"><span class="lz">闭源</span><span class="le">Proprietary</span></span>
+      </div>
+      <div class="val-cell no">
+        <span class="status-icon" style="color:var(--muted)">✗</span>
+        <span class="status-label"><span class="lz">闭源</span><span class="le">Proprietary</span></span>
+      </div>
+    </div>
+
+    <!-- Row 9: Max Context -->
+    <div class="comp-row">
+      <div class="feat-cell">
+        <span class="feat-name"><span class="lz">最大上下文</span><span class="le">Max Context</span></span>
+        <span class="feat-sub">Token window</span>
+      </div>
+      <div class="val-cell yes">
+        <span class="status-label-text" style="color:var(--cyan);font-weight:700;font-size:15px">200K</span>
+        <span class="status-label">tokens</span>
+      </div>
+      <div class="val-cell partial">
+        <span class="status-label-text" style="font-weight:700;font-size:15px">40K</span>
+        <span class="status-label">chunks</span>
+      </div>
+      <div class="val-cell partial">
+        <span class="status-label-text" style="font-weight:700;font-size:15px">8K–32K</span>
+        <span class="status-label">tokens</span>
+      </div>
+      <div class="val-cell partial">
+        <span class="status-label-text" style="font-weight:700;font-size:15px">64K</span>
+        <span class="status-label">tokens</span>
+      </div>
+    </div>
+
+    <!-- Row 10: Price -->
+    <div class="comp-row alt">
+      <div class="feat-cell">
+        <span class="feat-name"><span class="lz">价格</span><span class="le">Price</span></span>
+        <span class="feat-sub">Monthly subscription</span>
+      </div>
+      <div class="val-cell" style="background:rgba(34,211,238,0.04)">
+        <span class="status-label-text" style="color:var(--cyan);font-weight:600;font-size:12px">$20/mo</span>
+        <span class="status-label"><span class="lz">或按 API 计费</span><span class="le">or API usage</span></span>
+      </div>
+      <div class="val-cell">
+        <span class="status-label-text" style="font-weight:600;font-size:13px">$20/mo</span>
+      </div>
+      <div class="val-cell">
+        <span class="status-label-text" style="font-weight:600;font-size:13px">$10–19/mo</span>
+      </div>
+      <div class="val-cell">
+        <span class="status-label-text" style="font-weight:600;font-size:13px">$15/mo</span>
+      </div>
+    </div>
+
+  </div><!-- /comp-table -->
+
+</div><!-- /container -->
+
+<!-- Legend -->
+<div class="legend">
+  <span style="font-size:11px;color:var(--subtle);font-weight:600"><span class="lz">图例</span><span class="le">Legend</span>：</span>
+  <div class="legend-item">
+    <div class="legend-dot yes">✓</div>
+    <span><span class="lz">完全支持</span><span class="le">Full support</span></span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-dot partial">△</div>
+    <span><span class="lz">部分支持</span><span class="le">Partial support</span></span>
+  </div>
+  <div class="legend-item">
+    <div class="legend-dot no">✗</div>
+    <span><span class="lz">不支持</span><span class="le">Not supported</span></span>
+  </div>
+  <div class="legend-item" style="margin-left:16px">
+    <span class="row-badge win" style="margin:0">⭐ <span class="lz">领先</span><span class="le">Leads</span></span>
+    <span style="margin-left:6px"><span class="lz">Claude Code 占优</span><span class="le">Claude Code advantage</span></span>
+  </div>
+  <div class="legend-item">
+    <span class="row-badge exclusive" style="margin:0">🚀 <span class="lz">独家</span><span class="le">Exclusive</span></span>
+    <span style="margin-left:6px"><span class="lz">唯一具备</span><span class="le">Only CC has this</span></span>
+  </div>
+</div>
+
+<!-- Amber Callout -->
+<div class="callout">
+  <div class="callout-icon">💡</div>
+  <div class="callout-text">
+    <strong><span class="lz">Claude Code 差异化优势：</span><span class="le">Claude Code Differentiation：</span></strong>
+    <span class="lz">全功能工具执行（40+ 工具）+ 多 Agent 并行协同（业界独家）+ Seatbelt 安全沙箱 + 原生 MCP 支持，构成其他产品无法复制的护城河。</span>
+    <span class="le">Full tool execution (40+ tools) + Multi-agent parallelism (industry exclusive) + Seatbelt security sandbox + Native MCP support — a moat no competitor has fully replicated.</span>
+  </div>
+</div>
+
+<!-- Summary Cards -->
+<div class="summary-row">
+  <div class="sum-card cyan">
+    <div class="sum-card-title">
+      <span class="lz">🛠 工具执行最强</span><span class="le">🛠 Strongest Tool Execution</span>
+    </div>
+    <div class="sum-card-desc">
+      <span class="lz">40+ 内置工具覆盖文件读写、Shell 执行、Web 搜索、MCP 调用，其他产品无法比拟的执行深度。</span>
+      <span class="le">40+ built-in tools spanning file I/O, shell execution, web search, and MCP calls — unmatched execution depth.</span>
+    </div>
+  </div>
+  <div class="sum-card violet">
+    <div class="sum-card-title">
+      <span class="lz">🚀 唯一多 Agent</span><span class="le">🚀 Only Multi-Agent</span>
+    </div>
+    <div class="sum-card-desc">
+      <span class="lz">并行子 Agent 编排是 Claude Code 独家能力，可同时部署多个专业化子 Agent 协同完成复杂任务。</span>
+      <span class="le">Parallel sub-agent orchestration is exclusively Claude Code's — deploy multiple specialized agents simultaneously on complex tasks.</span>
+    </div>
+  </div>
+  <div class="sum-card emerald">
+    <div class="sum-card-title">
+      <span class="lz">🔌 开放 MCP 生态</span><span class="le">🔌 Open MCP Ecosystem</span>
+    </div>
+    <div class="sum-card-desc">
+      <span class="lz">原生内置 Model Context Protocol 支持，标准化工具接口，开放生态最广，插件开发门槛最低。</span>
+      <span class="le">Native MCP support with standardized tool interfaces — the most open ecosystem with the lowest plugin development barrier.</span>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <div class="footer-left">VIS-5-003 · <span class="lz">AI 编码工具竞品架构对比</span><span class="le">AI Coding Tools Architecture Comparison</span></div>
+  <div class="footer-right"><span class="lz">数据截至 2026-04 · CC 源码研究项目</span><span class="le">Data as of 2026-04 · CC Source Study</span></div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-theme',t);
+  document.documentElement.setAttribute('data-lang',l);
+  document.getElementById('langBtn').textContent=l==='zh'?'EN':'中';
+  window.cycleTheme=function(){
+    var themes=['dark','warm','light'];
+    var cur=document.documentElement.getAttribute('data-theme')||'dark';
+    var next=themes[(themes.indexOf(cur)+1)%themes.length];
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('vtheme',next);
+  };
+  window.toggleLang=function(){
+    var cur=document.documentElement.getAttribute('data-lang')||'zh';
+    var next=cur==='zh'?'en':'zh';
+    document.documentElement.setAttribute('data-lang',next);
+    localStorage.setItem('vlang',next);
+    document.getElementById('langBtn').textContent=next==='zh'?'EN':'中';
+  };
+})();
+</script>
+
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

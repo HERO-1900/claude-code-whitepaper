@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIS-2A-014 43个工具四大类分布图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{--bg:#020617;--panel:#0f172a;--card:#0f172a;--border:#1e293b;--text:#e2e8f0;--muted:#64748b;--subtle:#334155;
+      --file:#a78bfa;--exec:#fb7185;--agent:#f97316;--ext:#34d399}
+    [data-theme="warm"]{--bg:#f8f6f3;--panel:#ffffff;--card:#faf9f7;--border:#e2d9cc;--text:#1c1917;--muted:#78716c;--subtle:#d6ccc2}
+    [data-theme="light"]{--bg:#ffffff;--panel:#f8fafc;--card:#f8fafc;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--subtle:#cbd5e1}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;padding:20px 24px 32px}
+    .vis-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+    .vis-dot{width:10px;height:10px;border-radius:50%;background:var(--ext);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+    .vis-title{font-size:17px;font-weight:700;color:var(--text)}
+    .vis-sub{font-size:11px;color:var(--muted);margin-left:4px}
+    .vis-footer{font-size:10px;color:var(--muted);text-align:center;border-top:1px solid var(--border);padding-top:10px;margin-top:16px}
+    .ctrl{position:fixed;top:16px;right:16px;display:flex;gap:6px;z-index:999}
+    .ctrl button{background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 10px;border-radius:6px;cursor:pointer}
+
+    /* Main grid */
+    .tool-grid{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:auto auto;gap:14px;margin-bottom:14px}
+
+    /* Category block */
+    .cat-block{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px;position:relative}
+    .cat-block.file{border-color:rgba(167,139,250,0.4)}
+    .cat-block.exec{border-color:rgba(251,113,133,0.4)}
+    .cat-block.agent{border-color:rgba(249,115,22,0.4)}
+    .cat-block.ext{border-color:rgba(52,211,153,0.4)}
+
+    .cat-header{display:flex;align-items:flex-start;gap:10px;margin-bottom:12px}
+    .cat-color-bar{width:4px;border-radius:2px;min-height:40px;flex-shrink:0}
+    .cat-block.file .cat-color-bar{background:var(--file)}
+    .cat-block.exec .cat-color-bar{background:var(--exec)}
+    .cat-block.agent .cat-color-bar{background:var(--agent)}
+    .cat-block.ext .cat-color-bar{background:var(--ext)}
+
+    .cat-info{flex:1}
+    .cat-title-zh{font-size:14px;font-weight:700;color:var(--text);margin-bottom:2px}
+    .cat-title-en{font-size:10px;color:var(--muted);margin-bottom:4px}
+    .cat-desc{font-size:10px;color:var(--muted);line-height:1.5}
+
+    .cat-badge{font-size:12px;font-weight:700;padding:4px 10px;border-radius:20px;flex-shrink:0}
+    .cat-block.file .cat-badge{background:rgba(167,139,250,0.15);color:var(--file);border:1px solid rgba(167,139,250,0.3)}
+    .cat-block.exec .cat-badge{background:rgba(251,113,133,0.15);color:var(--exec);border:1px solid rgba(251,113,133,0.3)}
+    .cat-block.agent .cat-badge{background:rgba(249,115,22,0.15);color:var(--agent);border:1px solid rgba(249,115,22,0.3)}
+    .cat-block.ext .cat-badge{background:rgba(52,211,153,0.15);color:var(--ext);border:1px solid rgba(52,211,153,0.3)}
+
+    /* Tool pills */
+    .pills{display:flex;flex-wrap:wrap;gap:6px}
+    .pill{display:inline-flex;align-items:center;gap:4px;font-size:10px;font-weight:500;padding:4px 8px;border-radius:5px;border:1px solid;cursor:default;transition:opacity .15s}
+    .pill.file{background:rgba(167,139,250,0.1);border-color:rgba(167,139,250,0.35);color:#c4b5fd}
+    .pill.exec{background:rgba(251,113,133,0.1);border-color:rgba(251,113,133,0.35);color:#fda4af}
+    .pill.agent{background:rgba(249,115,22,0.1);border-color:rgba(249,115,22,0.35);color:#fdba74}
+    .pill.ext{background:rgba(52,211,153,0.1);border-color:rgba(52,211,153,0.35);color:#6ee7b7}
+
+    .badge-ro{font-size: 10px;opacity:0.7;padding:1px 3px;border-radius:2px;background:rgba(255,255,255,0.1);color:var(--muted)}
+    .badge-fork{font-size: 10px;color:#f97316;border:1px solid #f97316;padding:0 3px;border-radius:2px;opacity:0.85}
+    .badge-risk{font-size: 10px;color:#ef4444;border:1px solid #ef4444;padding:0 3px;border-radius:2px}
+    .badge-win{font-size: 10px;color:#60a5fa;border:1px solid #60a5fa;padding:0 3px;border-radius:2px;opacity:0.8}
+    .badge-safe{font-size: 10px;color:#22d3ee;opacity:0.7}
+
+    /* Legend bar */
+    .legend{display:flex;gap:20px;align-items:center;padding:10px 14px;background:var(--panel);border:1px solid var(--border);border-radius:8px;margin-bottom:14px;flex-wrap:wrap}
+    .legend-item{display:flex;align-items:center;gap:6px;font-size:10px;color:var(--muted)}
+    .legend-dot{width:8px;height:8px;border-radius:2px}
+
+    /* Summary row */
+    .summary{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:14px}
+    .stat-card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px;text-align:center}
+    .stat-num{font-size:24px;font-weight:700;margin-bottom:4px}
+    .stat-lab{font-size:10px;color:var(--muted)}
+  </style>
+</head>
+<body>
+<div class="ctrl">
+  <button onclick="window.cycleTheme()">Theme</button>
+  <button onclick="window.toggleLang()">EN/中</button>
+</div>
+
+<div class="vis-header">
+  <div class="vis-dot"></div>
+  <div class="vis-title">
+    <span class="lz">43个工具四大类分布图</span>
+    <span class="le" style="display:none">43-Tool Four-Category Distribution</span>
+  </div>
+  <div class="vis-sub">VIS-2A-014 · <span class="lz">工具生态全景 · 只读/安全/分叉标注</span><span class="le" style="display:none">Tool Ecosystem · Read-only / Safe / Fork Annotations</span></div>
+</div>
+
+<!-- Summary stats -->
+<div class="summary">
+  <div class="stat-card"><div class="stat-num" style="color:var(--file)">6</div><div class="stat-lab"><span class="lz">文件操作</span><span class="le" style="display:none">File Operations</span></div></div>
+  <div class="stat-card"><div class="stat-num" style="color:var(--exec)">2</div><div class="stat-lab"><span class="lz">执行引擎</span><span class="le" style="display:none">Exec Engines</span></div></div>
+  <div class="stat-card"><div class="stat-num" style="color:var(--agent)">10</div><div class="stat-lab"><span class="lz">Agent家族</span><span class="le" style="display:none">Agent Family</span></div></div>
+  <div class="stat-card"><div class="stat-num" style="color:var(--ext)">25+</div><div class="stat-lab"><span class="lz">扩展与辅助</span><span class="le" style="display:none">Extensions & Helpers</span></div></div>
+</div>
+
+<!-- Legend -->
+<div class="legend">
+  <div class="legend-item"><div class="legend-dot" style="background:#22d3ee"></div><span class="lz">🔒 只读 (Read-only, 并发安全)</span><span class="le" style="display:none">🔒 Read-only (concurrency-safe)</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#f97316"></div><span class="lz">fork: 创建新 queryLoop 实例</span><span class="le" style="display:none">fork: Creates new queryLoop instance</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#ef4444"></div><span class="lz">HIGH RISK: 最高安全风险</span><span class="le" style="display:none">HIGH RISK: Highest security risk</span></div>
+  <div class="legend-item"><div class="legend-dot" style="background:#60a5fa"></div><span class="lz">Win: 仅 Windows 可用</span><span class="le" style="display:none">Win: Windows only</span></div>
+</div>
+
+<!-- Tool grid -->
+<div class="tool-grid">
+
+  <!-- File Operations -->
+  <div class="cat-block file">
+    <div class="cat-header">
+      <div class="cat-color-bar"></div>
+      <div class="cat-info">
+        <div class="cat-title-zh"><span class="lz">文件操作</span><span class="le" style="display:none">File Operations</span></div>
+        <div class="cat-title-en"><span class="lz">AI的"双手"—— 直接操作文件系统</span><span class="le">AI's "hands" — direct filesystem access</span></div>
+        <div class="cat-desc"><span class="lz">读取、编辑、写入、搜索文件和路径</span><span class="le" style="display:none">Read, edit, write, search files and paths</span></div>
+      </div>
+      <div class="cat-badge">6 tools</div>
+    </div>
+    <div class="pills">
+      <span class="pill file">Read <span class="badge-safe">🔒⚡</span></span>
+      <span class="pill file">Edit</span>
+      <span class="pill file">Write</span>
+      <span class="pill file">Glob <span class="badge-safe">🔒⚡</span></span>
+      <span class="pill file">Grep <span class="badge-safe">🔒⚡</span></span>
+      <span class="pill file">NotebookEdit</span>
+    </div>
+  </div>
+
+  <!-- Execution Engines -->
+  <div class="cat-block exec">
+    <div class="cat-header">
+      <div class="cat-color-bar"></div>
+      <div class="cat-info">
+        <div class="cat-title-zh"><span class="lz">执行引擎</span><span class="le" style="display:none">Execution Engines</span></div>
+        <div class="cat-title-en"><span class="lz">AI的"跑腿"—— 执行 Shell 命令</span><span class="le">AI's "runner" — execute Shell commands</span></div>
+        <div class="cat-desc"><span class="lz">最强大也最危险——直接运行系统命令</span><span class="le" style="display:none">Most powerful and dangerous — direct system commands</span></div>
+      </div>
+      <div class="cat-badge">2 tools</div>
+    </div>
+    <div class="pills">
+      <span class="pill exec">Bash <span class="badge-risk">HIGH RISK</span></span>
+      <span class="pill exec">PowerShell <span class="badge-win">Win</span></span>
+    </div>
+  </div>
+
+  <!-- Agent Family -->
+  <div class="cat-block agent">
+    <div class="cat-header">
+      <div class="cat-color-bar"></div>
+      <div class="cat-info">
+        <div class="cat-title-zh"><span class="lz">Agent家族</span><span class="le" style="display:none">Agent Family</span></div>
+        <div class="cat-title-en"><span class="lz">AI的"分身"—— fork 创建新 queryLoop 实例</span><span class="le">AI's "clone" — fork creates new queryLoop instance</span></div>
+        <div class="cat-desc"><span class="lz">创建/管理子Agent + 后台任务，可无限递归嵌套</span><span class="le" style="display:none">Create/manage sub-agents + background tasks, infinitely nestable</span></div>
+      </div>
+      <div class="cat-badge">10 tools</div>
+    </div>
+    <div class="pills">
+      <span class="pill agent">Agent <span class="badge-fork">fork</span></span>
+      <span class="pill agent">SendMessage</span>
+      <span class="pill agent">TeamCreate <span class="badge-fork">fork</span></span>
+      <span class="pill agent">TeamDelete</span>
+      <span class="pill agent">TaskCreate <span class="badge-fork">fork</span></span>
+      <span class="pill agent">TaskGet <span class="badge-safe">🔒</span></span>
+      <span class="pill agent">TaskList <span class="badge-safe">🔒</span></span>
+      <span class="pill agent">TaskOutput <span class="badge-safe">🔒</span></span>
+      <span class="pill agent">TaskUpdate</span>
+      <span class="pill agent">TaskStop</span>
+    </div>
+  </div>
+
+  <!-- Extensions & Helpers -->
+  <div class="cat-block ext">
+    <div class="cat-header">
+      <div class="cat-color-bar"></div>
+      <div class="cat-info">
+        <div class="cat-title-zh"><span class="lz">扩展与辅助</span><span class="le" style="display:none">Extensions & Helpers</span></div>
+        <div class="cat-title-en"><span class="lz">外部能力接入 + 辅助功能</span><span class="le">External capability + helper functions</span></div>
+        <div class="cat-desc"><span class="lz">Web访问、MCP接入、工作流控制、定时任务</span><span class="le" style="display:none">Web access, MCP integration, workflow control, cron jobs</span></div>
+      </div>
+      <div class="cat-badge">25+ tools</div>
+    </div>
+    <div class="pills">
+      <span class="pill ext">WebFetch <span class="badge-safe">🔒⚡</span></span>
+      <span class="pill ext">WebSearch <span class="badge-safe">🔒⚡</span></span>
+      <span class="pill ext">MCPTool</span>
+      <span class="pill ext">Skill</span>
+      <span class="pill ext">ToolSearch <span class="badge-safe">🔒</span></span>
+      <span class="pill ext">AskUserQuestion</span>
+      <span class="pill ext">Sleep</span>
+      <span class="pill ext">Brief</span>
+      <span class="pill ext">EnterPlanMode</span>
+      <span class="pill ext">ExitPlanMode</span>
+      <span class="pill ext">EnterWorktree</span>
+      <span class="pill ext">ExitWorktree</span>
+      <span class="pill ext">ReadMcpResource <span class="badge-safe">🔒</span></span>
+      <span class="pill ext">ListMcpResources <span class="badge-safe">🔒</span></span>
+      <span class="pill ext">RemoteTrigger</span>
+      <span class="pill ext">CronCreate</span>
+      <span class="pill ext">CronDelete</span>
+      <span class="pill ext">CronList <span class="badge-safe">🔒</span></span>
+      <span class="pill ext">Monitor <span class="badge-safe">🔒</span></span>
+      <span class="pill ext">NotebookEdit</span>
+      <span class="pill ext"><span class="lz">…更多MCP工具</span><span class="le">…more MCP tools</span></span>
+    </div>
+  </div>
+
+</div>
+
+<div class="vis-footer">
+  VIS-2A-014 · Claude Code 2.1.88 · <span class="lz">tools/ 目录 · Tool.ts · 43 + MCP 动态工具 · v2 生产版</span><span class="le">tools/ dir · Tool.ts · 43 + MCP dynamic tools · v2 Production</span>
+</div>
+
+<script>
+(function(){
+  const THEME_KEY='vtheme',LANG_KEY='vlang';
+  const themes=['dark','warm','light'];
+  let ti=themes.indexOf(localStorage.getItem(THEME_KEY)||'dark');
+  let isEn=localStorage.getItem(LANG_KEY)==='en';
+  function applyTheme(){document.documentElement.setAttribute('data-theme',themes[ti]);localStorage.setItem(THEME_KEY,themes[ti])}
+  function applyLang(){
+    const h=document.documentElement;
+    if(isEn){h.setAttribute('lang','en');document.querySelectorAll('.lz').forEach(e=>e.style.display='none');document.querySelectorAll('.le').forEach(e=>e.style.display='')}
+    else{h.setAttribute('lang','zh-CN');document.querySelectorAll('.lz').forEach(e=>e.style.display='');document.querySelectorAll('.le').forEach(e=>e.style.display='none')}
+    localStorage.setItem(LANG_KEY,isEn?'en':'zh')
+  }
+  window.cycleTheme=function(){ti=(ti+1)%themes.length;applyTheme()};
+  window.toggleLang=function(){isEn=!isEn;applyLang()};
+  applyTheme();applyLang();
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

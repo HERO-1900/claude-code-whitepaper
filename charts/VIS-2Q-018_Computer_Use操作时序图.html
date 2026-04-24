@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VIS-2Q-018 · Computer Use 操作时序图</title>
+<style>
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;min-height:100vh}
+.wrap{max-width:1200px;margin:0 auto;padding:32px 24px}
+.header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:24px;flex-wrap:wrap}
+.title{font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px}
+.subtitle{font-size:13px;color:var(--muted)}
+.toolbar{display:flex;gap:8px}
+.btn{background:var(--panel);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:8px;cursor:pointer;font-size:12px;font-weight:600}
+.btn:hover{border-color:var(--violet)}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:20px}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.stat-label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px;margin-bottom:4px}
+.stat-val{font-size:18px;font-weight:700;color:var(--text)}
+.chart-box{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:20px}
+.chart-box svg{width:100%;height:auto;display:block}
+.insights{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.ins{background:var(--card);border:1px solid var(--border);border-left:3px solid var(--violet);border-radius:10px;padding:14px 16px}
+.ins:nth-child(1){border-left-color:var(--amber)}
+.ins:nth-child(2){border-left-color:var(--cyan)}
+.ins:nth-child(3){border-left-color:var(--emerald)}
+.ins-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px}
+.ins-body{font-size:12px;color:var(--muted);line-height:1.6}
+@media(max-width:720px){.stats,.insights{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="header">
+    <div>
+      <div class="title">
+        <span class="lz">Computer Use 操作时序图</span>
+        <span class="le" style="display:none">Computer Use Sequence Diagram</span>
+      </div>
+      <div class="subtitle">
+        <span class="lz">Claude 点击「Submit」按钮的完整 10 步调用链 · VIS-2Q-018</span>
+        <span class="le" style="display:none">Full 10-step call chain for clicking "Submit" · VIS-2Q-018</span>
+      </div>
+    </div>
+    <div class="toolbar">
+      <button class="btn" onclick="cycleTheme()">
+        <span class="lz">主题</span><span class="le" style="display:none">Theme</span>
+      </button>
+      <button class="btn" onclick="toggleLang()">
+        <span class="lz">EN</span><span class="le" style="display:none">中</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-label"><span class="lz">参与者</span><span class="le" style="display:none">Actors</span></div>
+      <div class="stat-val">4</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label"><span class="lz">步操作</span><span class="le" style="display:none">Steps</span></div>
+      <div class="stat-val">10</div>
+    </div>
+    <div class="stat">
+      <div class="stat-label"><span class="lz">核心能力</span><span class="le" style="display:none">Core</span></div>
+      <div class="stat-val"><span class="lz">视觉 + 执行</span><span class="le" style="display:none">Vision + Act</span></div>
+    </div>
+  </div>
+
+  <div class="chart-box">
+    <svg viewBox="0 0 920 580" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <marker id="arrCyan"    markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#22d3ee"/></marker>
+        <marker id="arrViolet"  markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#8b5cf6"/></marker>
+        <marker id="arrAmber"   markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#f59e0b"/></marker>
+        <marker id="arrEmerald" markerWidth="10" markerHeight="10" refX="9" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#10b981"/></marker>
+      </defs>
+
+      <!-- time axis label on far-left -->
+      <text x="24" y="300" font-size="11" fill="#94a3b8" font-family="system-ui" transform="rotate(-90 24 300)" text-anchor="middle" class="lz">时间向下 →</text>
+      <text x="24" y="300" font-size="11" fill="#94a3b8" font-family="system-ui" transform="rotate(-90 24 300)" text-anchor="middle" class="le" display="none">Time →</text>
+
+      <!-- ================ ACTOR HEADERS (y=40..84) ================ -->
+      <!-- User @ x=130 (cyan) -->
+      <rect x="60" y="40" width="140" height="44" rx="10" fill="#22d3ee" fill-opacity="0.15" stroke="#22d3ee" stroke-width="1.5"/>
+      <circle cx="82" cy="62" r="10" fill="#22d3ee"/>
+      <text x="82" y="66" font-size="11" fill="#0f172a" font-family="system-ui" text-anchor="middle" font-weight="700">U</text>
+      <text x="100" y="60" font-size="13" fill="#22d3ee" font-family="system-ui" font-weight="700" class="lz">用户</text>
+      <text x="100" y="60" font-size="13" fill="#22d3ee" font-family="system-ui" font-weight="700" class="le" display="none">User</text>
+      <text x="100" y="76" font-size="10" fill="#94a3b8" font-family="system-ui" class="lz">User</text>
+      <text x="100" y="76" font-size="10" fill="#94a3b8" font-family="system-ui" class="le" display="none">Human</text>
+
+      <!-- Claude LLM @ x=360 (violet) -->
+      <rect x="290" y="40" width="140" height="44" rx="10" fill="#8b5cf6" fill-opacity="0.15" stroke="#8b5cf6" stroke-width="1.5"/>
+      <circle cx="312" cy="62" r="10" fill="#8b5cf6"/>
+      <text x="312" y="66" font-size="11" fill="#ffffff" font-family="system-ui" text-anchor="middle" font-weight="700">C</text>
+      <text x="330" y="60" font-size="13" fill="#8b5cf6" font-family="system-ui" font-weight="700" class="lz">Claude</text>
+      <text x="330" y="60" font-size="13" fill="#8b5cf6" font-family="system-ui" font-weight="700" class="le" display="none">Claude</text>
+      <text x="330" y="76" font-size="10" fill="#94a3b8" font-family="system-ui" class="lz">主控 LLM</text>
+      <text x="330" y="76" font-size="10" fill="#94a3b8" font-family="system-ui" class="le" display="none">Main LLM</text>
+
+      <!-- Vision @ x=590 (amber) -->
+      <rect x="520" y="40" width="140" height="44" rx="10" fill="#f59e0b" fill-opacity="0.15" stroke="#f59e0b" stroke-width="1.5"/>
+      <circle cx="542" cy="62" r="10" fill="#f59e0b"/>
+      <text x="542" y="66" font-size="11" fill="#0f172a" font-family="system-ui" text-anchor="middle" font-weight="700">V</text>
+      <text x="560" y="60" font-size="13" fill="#f59e0b" font-family="system-ui" font-weight="700" class="lz">视觉模型</text>
+      <text x="560" y="60" font-size="13" fill="#f59e0b" font-family="system-ui" font-weight="700" class="le" display="none">Vision</text>
+      <text x="560" y="76" font-size="10" fill="#94a3b8" font-family="system-ui" class="lz">Vision</text>
+      <text x="560" y="76" font-size="10" fill="#94a3b8" font-family="system-ui" class="le" display="none">VLM</text>
+
+      <!-- OS Adapter @ x=820 (emerald) -->
+      <rect x="750" y="40" width="140" height="44" rx="10" fill="#10b981" fill-opacity="0.15" stroke="#10b981" stroke-width="1.5"/>
+      <circle cx="772" cy="62" r="10" fill="#10b981"/>
+      <text x="772" y="66" font-size="11" fill="#0f172a" font-family="system-ui" text-anchor="middle" font-weight="700">O</text>
+      <text x="790" y="60" font-size="13" fill="#10b981" font-family="system-ui" font-weight="700" class="lz">OS 适配器</text>
+      <text x="790" y="60" font-size="13" fill="#10b981" font-family="system-ui" font-weight="700" class="le" display="none">OS Adapter</text>
+      <text x="790" y="76" font-size="10" fill="#94a3b8" font-family="system-ui" class="lz">OS Adapter</text>
+      <text x="790" y="76" font-size="10" fill="#94a3b8" font-family="system-ui" class="le" display="none">Host</text>
+
+      <!-- ================ LIFELINES (y=90..510, dashed) ================ -->
+      <line x1="130" y1="90" x2="130" y2="510" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.5"/>
+      <line x1="360" y1="90" x2="360" y2="510" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.5"/>
+      <line x1="590" y1="90" x2="590" y2="510" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.5"/>
+      <line x1="820" y1="90" x2="820" y2="510" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4 4" opacity="0.5"/>
+
+      <!-- ================ ACTIVATION BOXES (8px wide, centered on lifeline) ================ -->
+      <!-- Claude active through most of the sequence -->
+      <rect x="356" y="120" width="8" height="360" fill="#8b5cf6" fill-opacity="0.25" stroke="#8b5cf6" stroke-width="0.5"/>
+      <!-- OS Adapter active bursts -->
+      <rect x="816" y="160" width="8" height="40" fill="#10b981" fill-opacity="0.25" stroke="#10b981" stroke-width="0.5"/>
+      <rect x="816" y="320" width="8" height="120" fill="#10b981" fill-opacity="0.25" stroke="#10b981" stroke-width="0.5"/>
+      <!-- Vision active -->
+      <rect x="586" y="240" width="8" height="40" fill="#f59e0b" fill-opacity="0.25" stroke="#f59e0b" stroke-width="0.5"/>
+
+      <!-- ================ MESSAGE 1: y=120, User → Claude ================ -->
+      <circle cx="70" cy="120" r="10" fill="#22d3ee"/>
+      <text x="70" y="124" font-size="11" fill="#0f172a" font-family="system-ui" text-anchor="middle" font-weight="700">1</text>
+      <text x="245" y="114" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="lz">点击「Submit」按钮</text>
+      <text x="245" y="114" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="le" display="none">Click the Submit button</text>
+      <line x1="130" y1="120" x2="352" y2="120" stroke="#22d3ee" stroke-width="2" marker-end="url(#arrCyan)"/>
+
+      <!-- ================ MESSAGE 2: y=160, Claude → OS ================ -->
+      <circle cx="70" cy="160" r="10" fill="#8b5cf6"/>
+      <text x="70" y="164" font-size="11" fill="#ffffff" font-family="system-ui" text-anchor="middle" font-weight="700">2</text>
+      <text x="590" y="154" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="lz">截取当前屏幕截图</text>
+      <text x="590" y="154" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="le" display="none">Capture screenshot</text>
+      <line x1="364" y1="160" x2="812" y2="160" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrViolet)"/>
+
+      <!-- ================ MESSAGE 3: y=200, OS → Claude (return) ================ -->
+      <circle cx="70" cy="200" r="10" fill="#10b981"/>
+      <text x="70" y="204" font-size="11" fill="#0f172a" font-family="system-ui" text-anchor="middle" font-weight="700">3</text>
+      <text x="590" y="194" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="lz">返回 screenshot.png</text>
+      <text x="590" y="194" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="le" display="none">screenshot.png</text>
+      <line x1="816" y1="200" x2="368" y2="200" stroke="#10b981" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#arrEmerald)"/>
+
+      <!-- ================ MESSAGE 4: y=240, Claude → Vision ================ -->
+      <circle cx="70" cy="240" r="10" fill="#8b5cf6"/>
+      <text x="70" y="244" font-size="11" fill="#ffffff" font-family="system-ui" text-anchor="middle" font-weight="700">4</text>
+      <text x="475" y="234" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="lz">定位 Submit 按钮位置</text>
+      <text x="475" y="234" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="le" display="none">Find "Submit" button</text>
+      <line x1="364" y1="240" x2="582" y2="240" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrViolet)"/>
+
+      <!-- ================ MESSAGE 5: y=280, Vision → Claude (return) ================ -->
+      <circle cx="70" cy="280" r="10" fill="#f59e0b"/>
+      <text x="70" y="284" font-size="11" fill="#0f172a" font-family="system-ui" text-anchor="middle" font-weight="700">5</text>
+      <text x="475" y="274" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="lz">边界框 (420, 600, 80, 32)</text>
+      <text x="475" y="274" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="le" display="none">Bbox (420,600,80,32)</text>
+      <line x1="586" y1="280" x2="368" y2="280" stroke="#f59e0b" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#arrAmber)"/>
+
+      <!-- ================ MESSAGE 6: y=320, Claude → OS ================ -->
+      <circle cx="70" cy="320" r="10" fill="#8b5cf6"/>
+      <text x="70" y="324" font-size="11" fill="#ffffff" font-family="system-ui" text-anchor="middle" font-weight="700">6</text>
+      <text x="590" y="314" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="lz">移动鼠标到 (460, 616)</text>
+      <text x="590" y="314" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="le" display="none">Move mouse to (460,616)</text>
+      <line x1="364" y1="320" x2="812" y2="320" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrViolet)"/>
+
+      <!-- ================ MESSAGE 7: y=360, OS self-loop ================ -->
+      <circle cx="70" cy="360" r="10" fill="#10b981"/>
+      <text x="70" y="364" font-size="11" fill="#0f172a" font-family="system-ui" text-anchor="middle" font-weight="700">7</text>
+      <text x="720" y="354" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="lz">执行 moveMouse(460, 616)</text>
+      <text x="720" y="354" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="le" display="none">moveMouse(460,616)</text>
+      <path d="M 824 360 C 880 360, 880 400, 828 400" fill="none" stroke="#10b981" stroke-width="2" marker-end="url(#arrEmerald)"/>
+
+      <!-- ================ MESSAGE 8: y=400, Claude → OS ================ -->
+      <circle cx="70" cy="400" r="10" fill="#8b5cf6"/>
+      <text x="70" y="404" font-size="11" fill="#ffffff" font-family="system-ui" text-anchor="middle" font-weight="700">8</text>
+      <text x="590" y="394" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="lz">在当前位置执行点击</text>
+      <text x="590" y="394" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="le" display="none">Click at current position</text>
+      <line x1="364" y1="400" x2="812" y2="400" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrViolet)"/>
+
+      <!-- ================ MESSAGE 9: y=440, OS → Claude (return) ================ -->
+      <circle cx="70" cy="440" r="10" fill="#10b981"/>
+      <text x="70" y="444" font-size="11" fill="#0f172a" font-family="system-ui" text-anchor="middle" font-weight="700">9</text>
+      <text x="590" y="434" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="lz">点击成功 click success</text>
+      <text x="590" y="434" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="le" display="none">click success</text>
+      <line x1="816" y1="440" x2="368" y2="440" stroke="#10b981" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#arrEmerald)"/>
+
+      <!-- ================ MESSAGE 10: y=480, Claude → User (return) ================ -->
+      <circle cx="70" cy="480" r="10" fill="#8b5cf6"/>
+      <text x="70" y="484" font-size="11" fill="#ffffff" font-family="system-ui" text-anchor="middle" font-weight="700">10</text>
+      <text x="245" y="474" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="lz">已点击 Submit 按钮</text>
+      <text x="245" y="474" font-size="11" fill="#f1f5f9" font-family="system-ui" text-anchor="middle" class="le" display="none">Done, clicked Submit</text>
+      <line x1="356" y1="480" x2="138" y2="480" stroke="#8b5cf6" stroke-width="2" stroke-dasharray="5 3" marker-end="url(#arrViolet)"/>
+
+      <!-- ================ LEGEND FOOTER ================ -->
+      <line x1="60" y1="530" x2="880" y2="530" stroke="#334155" stroke-width="1" opacity="0.5"/>
+      <line x1="70" y1="552" x2="90" y2="552" stroke="#8b5cf6" stroke-width="2"/>
+      <text x="98" y="556" font-size="10" fill="#94a3b8" font-family="system-ui" class="lz">实线 = 请求</text>
+      <text x="98" y="556" font-size="10" fill="#94a3b8" font-family="system-ui" class="le" display="none">Solid = request</text>
+
+      <line x1="210" y1="552" x2="230" y2="552" stroke="#10b981" stroke-width="2" stroke-dasharray="5 3"/>
+      <text x="238" y="556" font-size="10" fill="#94a3b8" font-family="system-ui" class="lz">虚线 = 返回</text>
+      <text x="238" y="556" font-size="10" fill="#94a3b8" font-family="system-ui" class="le" display="none">Dashed = return</text>
+
+      <rect x="350" y="548" width="8" height="8" fill="#8b5cf6" fill-opacity="0.25" stroke="#8b5cf6" stroke-width="0.5"/>
+      <text x="366" y="556" font-size="10" fill="#94a3b8" font-family="system-ui" class="lz">激活条 = 处理中</text>
+      <text x="366" y="556" font-size="10" fill="#94a3b8" font-family="system-ui" class="le" display="none">Activation = busy</text>
+
+      <circle cx="516" cy="552" r="5" fill="#f59e0b"/>
+      <text x="526" y="556" font-size="10" fill="#94a3b8" font-family="system-ui" class="lz">编号徽章 = 步骤序号</text>
+      <text x="526" y="556" font-size="10" fill="#94a3b8" font-family="system-ui" class="le" display="none">Badge = step number</text>
+    </svg>
+  </div>
+
+  <div class="insights">
+    <div class="ins">
+      <div class="ins-title">
+        <span class="lz">为何要视觉模型</span>
+        <span class="le" style="display:none">Why Vision Model</span>
+      </div>
+      <div class="ins-body">
+        <span class="lz">原生截图只是像素矩阵。Claude 看不到按钮在哪，必须调用视觉模型把像素转成 (x,y,w,h) 语义坐标。这是整个链条的瓶颈。</span>
+        <span class="le" style="display:none">A raw screenshot is just pixels. Claude cannot "see" the button; a vision model converts pixels into (x,y,w,h) semantic coordinates. This is the bottleneck.</span>
+      </div>
+    </div>
+    <div class="ins">
+      <div class="ins-title">
+        <span class="lz">坐标精度</span>
+        <span class="le" style="display:none">Coordinate Precision</span>
+      </div>
+      <div class="ins-body">
+        <span class="lz">视觉模型给的是边界框，Claude 再算出中心点 (460, 616) 下发给 OS。差 10 像素就可能点到隔壁控件——精度决定成败。</span>
+        <span class="le" style="display:none">Vision returns a bbox; Claude computes the center (460, 616) before calling OS. A 10-pixel error may hit the wrong widget — precision decides the outcome.</span>
+      </div>
+    </div>
+    <div class="ins">
+      <div class="ins-title">
+        <span class="lz">反馈回路</span>
+        <span class="le" style="display:none">Feedback Loop</span>
+      </div>
+      <div class="ins-body">
+        <span class="lz">每次操作后 OS 必须回执「click success」，Claude 才能继续下一步。没有闭环确认，就会出现「以为点了但没点」的幽灵操作。</span>
+        <span class="le" style="display:none">After each action, OS returns "click success" so Claude can proceed. Without a closed loop, phantom actions occur.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

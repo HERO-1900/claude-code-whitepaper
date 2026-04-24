@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<!--
+  VIS-0-015 · 概念速查表 · Key Concepts Quick Reference
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · 概念速查表</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root,[data-theme="dark"]{
+      --bg:#020617;--bg-card:rgba(15,23,42,0.5);--border:#1e293b;
+      --text:#f8fafc;--muted:#94a3b8;--subtle:#64748b;--footer-c:#475569;--pulse:#22d3ee;
+      --g-exec-f:rgba(8,51,68,0.45);    --g-exec-s:#22d3ee;  --g-exec-t:#67e8f9;
+      --g-tool-f:rgba(76,29,149,0.45);  --g-tool-s:#a78bfa;  --g-tool-t:#c4b5fd;
+      --g-sec-f:rgba(136,19,55,0.45);   --g-sec-s:#fb7185;   --g-sec-t:#fda4af;
+      --g-ctx-f:rgba(6,78,59,0.45);     --g-ctx-s:#34d399;   --g-ctx-t:#6ee7b7;
+      --g-ext-f:rgba(120,53,15,0.45);   --g-ext-s:#fbbf24;   --g-ext-t:#fcd34d;
+      --svg-bg:#020617;--svg-grid:#1e293b;
+      --btn-bg:rgba(15,23,42,0.85);--btn-active:#22d3ee;
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3;--bg-card:rgba(255,255,255,0.85);--border:#e8e0d4;
+      --text:#1a1412;--muted:#6b5a4e;--subtle:#9c8878;--footer-c:#b5a99a;--pulse:#0891b2;
+      --g-exec-f:rgba(8,51,68,0.1);     --g-exec-s:#0891b2;  --g-exec-t:#0e7490;
+      --g-tool-f:rgba(76,29,149,0.1);   --g-tool-s:#7c3aed;  --g-tool-t:#6d28d9;
+      --g-sec-f:rgba(136,19,55,0.1);    --g-sec-s:#e11d48;   --g-sec-t:#be123c;
+      --g-ctx-f:rgba(6,78,59,0.1);      --g-ctx-s:#059669;   --g-ctx-t:#047857;
+      --g-ext-f:rgba(180,83,9,0.1);     --g-ext-s:#d97706;   --g-ext-t:#b45309;
+      --svg-bg:#faf7f2;--svg-grid:#ddd4c4;
+      --btn-bg:rgba(255,255,255,0.9);--btn-active:#0891b2;
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--bg-card:rgba(248,250,252,0.95);--border:#e2e8f0;
+      --text:#0f172a;--muted:#475569;--subtle:#94a3b8;--footer-c:#94a3b8;--pulse:#0ea5e9;
+      --g-exec-f:rgba(6,182,212,0.08);  --g-exec-s:#06b6d4;  --g-exec-t:#0891b2;
+      --g-tool-f:rgba(139,92,246,0.08); --g-tool-s:#8b5cf6;  --g-tool-t:#7c3aed;
+      --g-sec-f:rgba(244,63,94,0.08);   --g-sec-s:#f43f5e;   --g-sec-t:#e11d48;
+      --g-ctx-f:rgba(16,185,129,0.08);  --g-ctx-s:#10b981;   --g-ctx-t:#059669;
+      --g-ext-f:rgba(245,158,11,0.08);  --g-ext-s:#f59e0b;   --g-ext-t:#d97706;
+      --svg-bg:#f8fafc;--svg-grid:#e2e8f0;
+      --btn-bg:rgba(248,250,252,0.95);--btn-active:#0ea5e9;
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:2rem;transition:background .25s,color .25s;}
+    .container{max-width:1200px;margin:0 auto;}
+
+    .controls{position:fixed;top:1rem;right:1rem;display:flex;gap:5px;z-index:100;
+      background:var(--btn-bg);border:1px solid var(--border);border-radius:10px;padding:5px 7px;backdrop-filter:blur(8px);}
+    .cb{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;padding:4px 9px;
+      border-radius:5px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+    .cb:hover{color:var(--text);border-color:var(--border);}
+    .cb.active{border-color:var(--btn-active);color:var(--text);}
+    .cdiv{width:1px;background:var(--border);margin:2px;}
+
+    .header{margin-bottom:1.5rem;}
+    .header-row{display:flex;align-items:center;gap:.875rem;margin-bottom:.375rem;}
+    .pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--pulse);animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
+    h1{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;}
+    .subtitle{font-size:.75rem;color:var(--muted);letter-spacing:.06em;}
+    html[lang="en"] .lz{display:none;}
+    html[lang="zh"] .le{display:none;}
+
+    /* Search */
+    .search-bar{margin-bottom:1.5rem;}
+    .search-bar input{width:100%;padding:.625rem 1rem;font-family:'JetBrains Mono',monospace;
+      font-size:.82rem;background:var(--bg-card);border:1px solid var(--border);border-radius:8px;
+      color:var(--text);outline:none;transition:border-color .15s;}
+    .search-bar input::placeholder{color:var(--subtle);}
+    .search-bar input:focus{border-color:var(--pulse);}
+
+    /* Group sections */
+    .group-section{margin-bottom:2rem;}
+    .group-header{display:flex;align-items:center;gap:.75rem;margin-bottom:.875rem;
+      padding-bottom:.5rem;border-bottom:2px solid var(--border);}
+    .group-dot{width:12px;height:12px;border-radius:50%;}
+    .group-title{font-size:.9rem;font-weight:700;}
+    .group-count{font-size:.7rem;color:var(--muted);margin-left:auto;}
+
+    /* Concept cards */
+    .concepts-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:.875rem;}
+    .concept-card{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;
+      padding:.875rem 1rem;transition:background .25s,border-color .25s;border-left-width:3px;}
+    .concept-card.hidden{display:none;}
+    .c-name{font-size:.85rem;font-weight:700;margin-bottom:.2rem;}
+    .c-name-cn{font-size:.72rem;color:var(--muted);margin-bottom:.5rem;}
+    .c-def{font-size:.7rem;color:var(--muted);line-height:1.6;margin-bottom:.5rem;}
+    .c-meta{display:flex;gap:.5rem;flex-wrap:wrap;}
+    .c-tag{font-size:.6rem;padding:2px 6px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border);}
+    .c-chapter{font-size:.6rem;color:var(--subtle);}
+
+    /* Group color overrides */
+    [data-group="execution"] .concept-card{border-left-color:var(--g-exec-s);}
+    [data-group="execution"] .c-name{color:var(--g-exec-t);}
+    [data-group="tools"] .concept-card{border-left-color:var(--g-tool-s);}
+    [data-group="tools"] .c-name{color:var(--g-tool-t);}
+    [data-group="security"] .concept-card{border-left-color:var(--g-sec-s);}
+    [data-group="security"] .c-name{color:var(--g-sec-t);}
+    [data-group="context"] .concept-card{border-left-color:var(--g-ctx-s);}
+    [data-group="context"] .c-name{color:var(--g-ctx-t);}
+    [data-group="extension"] .concept-card{border-left-color:var(--g-ext-s);}
+    [data-group="extension"] .c-name{color:var(--g-ext-t);}
+
+    .no-results{text-align:center;color:var(--muted);font-size:.82rem;padding:2rem;}
+
+    footer{font-size:.68rem;color:var(--footer-c);text-align:center;padding-top:1rem;border-top:1px solid var(--border);}
+  </style>
+</head>
+<body>
+<div class="controls">
+  <button class="cb active" onclick="setTheme('dark')"><span class="lz">深色</span><span class="le">Dark</span></button>
+  <button class="cb" onclick="setTheme('warm')"><span class="lz">暖色</span><span class="le">Warm</span></button>
+  <button class="cb" onclick="setTheme('light')"><span class="lz">浅色</span><span class="le">Light</span></button>
+  <div class="cdiv"></div>
+  <button class="cb active" onclick="toggleLang()"><span class="lz">中·EN</span><span class="le">EN·中</span></button>
+</div>
+
+<div class="container">
+  <div class="header">
+    <div class="header-row">
+      <div class="pulse-dot"></div>
+      <h1><span class="lz">概念速查表</span><span class="le">Key Concepts Quick Reference</span></h1>
+    </div>
+    <p class="subtitle">
+      <span class="lz">VIS-0-015 · Claude Code 2.1.88 · 24 核心概念 · 5 分组</span>
+      <span class="le">VIS-0-015 · Claude Code 2.1.88 · 24 Core Concepts · 5 Groups</span>
+    </p>
+  </div>
+
+  <div class="search-bar">
+    <input type="text" id="searchInput" placeholder="搜索概念、定义…" data-placeholder-zh="搜索概念、定义…" data-placeholder-en="Search concepts, definitions…" oninput="filterConcepts(this.value)">
+  </div>
+
+  <div id="conceptsContainer"></div>
+  <div class="no-results" id="noResults" style="display:none">
+    <span class="lz">没有找到匹配的概念</span><span class="le">No matching concepts found</span>
+  </div>
+
+  <footer>
+    VIS-0-015 · Claude Code 2.1.88 · <span class="lz">24 核心概念 · 5 分类 · 基于源码扫描 2026-04-05</span><span class="le">24 core concepts · 5 groups · based on source scan 2026-04-05</span> · <span class="lz">CC 白皮书 v2</span><span class="le">CC Whitepaper v2</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  const LANG = () => document.documentElement.lang;
+
+  const groups = [
+    { id: 'execution', zh: '循环与执行', en: 'Execution & Loop', color: 'var(--g-exec-s)', dot: 'var(--g-exec-s)' },
+    { id: 'tools',     zh: '工具与 Agent', en: 'Tools & Agents',  color: 'var(--g-tool-s)', dot: 'var(--g-tool-s)' },
+    { id: 'security',  zh: '安全与权限', en: 'Security',          color: 'var(--g-sec-s)',  dot: 'var(--g-sec-s)' },
+    { id: 'context',   zh: '上下文与 Token', en: 'Context & Tokens', color: 'var(--g-ctx-s)', dot: 'var(--g-ctx-s)' },
+    { id: 'extension', zh: '扩展与配置', en: 'Extensions',        color: 'var(--g-ext-s)',  dot: 'var(--g-ext-s)' },
+  ];
+
+  const concepts = [
+    // execution
+    { id:'agent-loop', name:'Agent Loop', zh:'查询循环', def_zh:'Claude Code 核心运行机制——发送消息→接收响应→执行工具→循环，直到任务完成。', def_en:'Core execution loop — send message → receive response → execute tools → repeat until done.', group:'execution', chapter:'Part 2' },
+    { id:'api-client', name:'API Client', zh:'API 客户端', def_zh:'封装与 Anthropic Messages API 通信的模块，处理认证、重试、流式传输。', def_en:'Module encapsulating Anthropic Messages API — handles auth, retry, streaming.', group:'execution', chapter:'Part 2' },
+    { id:'sse', name:'SSE', zh:'Server-Sent Events', def_zh:'API 流式响应使用的 HTTP 协议，支持实时推送 content 块。', def_en:'HTTP protocol for streaming API responses — real-time content block push.', group:'execution', chapter:'Part 2' },
+    { id:'asyncgen', name:'AsyncGenerator', zh:'异步生成器', def_zh:'queryLoop 的实现模式，流式产出事件，驱动整个循环。', def_en:'queryLoop implementation pattern — stream-yields events driving the full loop.', group:'execution', chapter:'Part 2' },
+    { id:'ste', name:'StreamingToolExecutor', zh:'流式工具执行器', def_zh:'流式并行工具执行器，边解析响应边调度工具。', def_en:'Parallel tool executor that schedules tools while parsing the streaming response.', group:'execution', chapter:'Part 2' },
+    // tools
+    { id:'tool', name:'Tool', zh:'工具', def_zh:'Claude Code 赋予 Claude 的能力单元，每个工具有名称、描述、参数 Schema 和执行逻辑。', def_en:'Capability unit granted to Claude — name, description, parameter schema, and execution logic.', group:'tools', chapter:'Part 3' },
+    { id:'tool-use', name:'Tool Use', zh:'工具调用', def_zh:'Claude 模型在响应中请求执行某个工具的机制，API 返回 tool_use 内容块。', def_en:'Mechanism for Claude to request tool execution — API returns tool_use content block.', group:'tools', chapter:'Part 3' },
+    { id:'bash-tool', name:'Bash Tool', zh:'Bash 工具', def_zh:'执行 Shell 命令的工具，权限要求最高、功能最强大的工具。', def_en:'Shell command execution tool — highest-privilege, most powerful tool.', group:'tools', chapter:'Part 3' },
+    { id:'edit-tool', name:'Edit Tool', zh:'编辑工具', def_zh:'基于字符串匹配的精确文件编辑工具，比 Write 更安全更精确。', def_en:'Precise file editing via string matching — safer and more precise than Write.', group:'tools', chapter:'Part 3' },
+    { id:'agent-tool', name:'Agent Tool', zh:'子 Agent 工具', def_zh:'独立运行的 AI 实例，可递归创建，继承父权限，有最大深度限制。', def_en:'Independent AI instance — recursively created, inherits parent permissions, depth-limited.', group:'tools', chapter:'Part 3' },
+    { id:'mcp-tool', name:'MCP Tool', zh:'MCP 工具', def_zh:'通过 MCP 协议接入的外部工具，与内置工具统一管理。', def_en:'External tool registered via MCP protocol, managed alongside built-in tools.', group:'tools', chapter:'Part 4' },
+    // security
+    { id:'perm-mode', name:'Permission Mode', zh:'权限模式', def_zh:'控制自动化程度的 6 种模式，从 plan（只读）到 bypass（全自动）。', def_en:'6 modes controlling automation level — from plan (read-only) to bypass (full-auto).', group:'security', chapter:'Part 4' },
+    { id:'sandbox', name:'Sandbox', zh:'沙箱', def_zh:'操作系统级别的命令执行隔离，macOS 用 Seatbelt，Linux 用 namespace。', def_en:'OS-level command isolation — macOS: Seatbelt, Linux: namespace.', group:'security', chapter:'Part 4' },
+    { id:'trust', name:'Trust Boundary', zh:'信任边界', def_zh:'区分可信与不可信输入的安全边界，六级信任等级。', def_en:'Security boundary separating trusted/untrusted input — 6 trust levels.', group:'security', chapter:'Part 4' },
+    // context
+    { id:'system-prompt', name:'System Prompt', zh:'系统提示', def_zh:'发送给 Claude 模型的全局指令文本，定义角色、规则、工具说明。15K–34K token。', def_en:'Global instruction text sent to Claude — defines role, rules, tool descriptions. 15K–34K tokens.', group:'context', chapter:'Part 2' },
+    { id:'prompt-cache', name:'Prompt Cache', zh:'提示缓存', def_zh:'缓存 System Prompt 和历史消息前缀，90% 命中率，节省 90% 成本。', def_en:'Caches system prompt and history prefix — 90% hit rate, 90% cost savings.', group:'context', chapter:'Part 5' },
+    { id:'ctx-window', name:'Context Window', zh:'上下文窗口', def_zh:'Claude 模型的输入 token 上限（200K），需精确管理使用效率。', def_en:'Claude model input token limit (200K) — must be carefully managed.', group:'context', chapter:'Part 5' },
+    { id:'ctx-compress', name:'Context Compression', zh:'上下文压缩', def_zh:'五层策略智能裁剪消息历史，保持有效信息密度。', def_en:'5-layer strategy to intelligently trim message history — maintains info density.', group:'context', chapter:'Part 5' },
+    { id:'token', name:'Token', zh:'Token', def_zh:'模型处理文本的基本单位，Claude Code 需精确计数以管理上下文窗口。', def_en:'Basic unit of model text processing — precise counting required for context management.', group:'context', chapter:'Part 5' },
+    { id:'claude-md', name:'CLAUDE.md', zh:'CLAUDE.md', def_zh:'用自然语言定义 Claude 行为的配置文件，注入 System Prompt，支持项目/用户/目录三级。', def_en:'Natural-language config file injected into system prompt — 3 scopes: project/user/directory.', group:'context', chapter:'Part 4' },
+    // extension
+    { id:'mcp', name:'MCP', zh:'Model Context Protocol', def_zh:'Anthropic 提出的标准化协议，让 AI 应用与外部工具/数据源通信。', def_en:'Anthropic standard protocol — connects AI apps to external tools and data sources.', group:'extension', chapter:'Part 4' },
+    { id:'hooks', name:'Hooks', zh:'钩子系统', def_zh:'在生命周期关键节点注入自定义逻辑的机制，8 种事件类型。', def_en:'Lifecycle injection mechanism — 8 event types for custom logic.', group:'extension', chapter:'Part 4' },
+    { id:'skills', name:'Skills', zh:'能力模块', def_zh:'预定义的可复用能力包，通过斜杠命令触发，npm 生态管理。', def_en:'Pre-defined reusable capability packages — triggered via /slash, managed via npm.', group:'extension', chapter:'Part 4' },
+    { id:'cli', name:'CLI', zh:'命令行接口', def_zh:'Claude Code 的用户入口，基于 Commander.js 解析命令和参数。', def_en:'User entry point — Commander.js-based command and argument parsing.', group:'extension', chapter:'Part 1' },
+  ];
+
+  function renderAll(filter=''){
+    const container = document.getElementById('conceptsContainer');
+    container.innerHTML = '';
+    const lc = filter.toLowerCase();
+    let totalVisible = 0;
+
+    groups.forEach(g => {
+      const items = concepts.filter(c => c.group === g.id && (
+        !lc ||
+        c.name.toLowerCase().includes(lc) ||
+        c.zh.toLowerCase().includes(lc) ||
+        c.def_zh.toLowerCase().includes(lc) ||
+        c.def_en.toLowerCase().includes(lc)
+      ));
+      if (!items.length) return;
+      totalVisible += items.length;
+
+      const sec = document.createElement('div');
+      sec.className = 'group-section';
+      sec.setAttribute('data-group', g.id);
+
+      sec.innerHTML = `
+        <div class="group-header">
+          <div class="group-dot" style="background:${g.dot}"></div>
+          <span class="group-title" style="color:${g.color}">
+            <span class="lz">${g.zh}</span><span class="le">${g.en}</span>
+          </span>
+          <span class="group-count">${items.length} concepts</span>
+        </div>
+        <div class="concepts-grid">
+          ${items.map(c => `
+            <div class="concept-card" id="cc-${c.id}">
+              <div class="c-name">${c.name}</div>
+              <div class="c-name-cn lz">${c.zh}</div>
+              <div class="c-def">
+                <span class="lz">${c.def_zh}</span>
+                <span class="le">${c.def_en}</span>
+              </div>
+              <div class="c-meta">
+                <span class="c-tag">${g.id}</span>
+                <span class="c-chapter">${c.chapter}</span>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      `;
+      container.appendChild(sec);
+    });
+
+    document.getElementById('noResults').style.display = totalVisible === 0 ? 'block' : 'none';
+    // re-apply lang
+    applyLang();
+  }
+
+  function applyLang(){
+    const l = document.documentElement.lang;
+    document.documentElement.setAttribute('data-lang', l);
+    const inp = document.getElementById('searchInput');
+    if (inp) {
+      inp.placeholder = l === 'en'
+        ? inp.getAttribute('data-placeholder-en')
+        : inp.getAttribute('data-placeholder-zh');
+    }
+  }
+
+  function filterConcepts(val){ renderAll(val); }
+
+  function setTheme(t){try{localStorage.setItem('vtheme',t);}catch(e){}
+    document.documentElement.setAttribute('data-theme',t);
+    document.querySelectorAll('.cb').forEach(b=>b.classList.remove('active'));
+    const map={dark:0,warm:1,light:2};
+    document.querySelectorAll('.cb')[map[t]]?.classList.add('active');
+  }
+  function toggleLang(){
+    const h=document.documentElement;
+    h.lang=h.lang==='zh'?'en':'zh';
+    try{localStorage.setItem('vlang',h.lang);}catch(e){}
+    renderAll(document.getElementById('searchInput').value);
+  }
+  // cc-restore-on-load
+  try{
+    var _t=localStorage.getItem('vtheme');
+    if(_t==='dark'||_t==='warm'||_t==='light')setTheme(_t);
+    var _l=localStorage.getItem('vlang');
+    if(_l==='en'&&document.documentElement.lang!=='en')toggleLang();
+  }catch(e){}
+  window.setTheme=setTheme;
+  window.toggleLang=toggleLang;
+  window.filterConcepts=filterConcepts;
+
+  // Initial render
+  renderAll();
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

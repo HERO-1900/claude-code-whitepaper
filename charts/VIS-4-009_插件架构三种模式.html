@@ -1,0 +1,897 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>VIS-4-009 插件架构三种模式 / Plugin Architecture Modes</title>
+  <script>
+    (function(){
+      var t=localStorage.getItem('vtheme')||'dark';
+      var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+      document.documentElement.setAttribute('data-theme',t);
+      function applyLang(){
+        document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+        document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+      }
+      applyLang();
+      window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+      window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+    })();
+  </script>
+  <style>
+    /* ── Theme tokens ── */
+    :root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+    :root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+    :root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+    :root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+    /* ── Reset & base ── */
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html{font-size:16px;scroll-behavior:smooth;}
+    body{
+      background:var(--bg);
+      color:var(--text);
+      font-family:'Inter',system-ui,-apple-system,'Segoe UI',Helvetica,Arial,sans-serif;
+      min-height:100vh;
+      line-height:1.6;
+      padding:0 0 48px;
+    }
+
+    /* ── Header bar ── */
+    .page-header{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:16px 32px;
+      border-bottom:1px solid var(--border);
+      background:var(--panel);
+      position:sticky;
+      top:0;
+      z-index:100;
+    }
+    .page-header .badge{
+      font-size:11px;
+      font-weight:600;
+      letter-spacing:.06em;
+      color:var(--muted);
+      text-transform:uppercase;
+    }
+    .page-header .controls{
+      display:flex;
+      gap:8px;
+    }
+    .ctrl-btn{
+      background:var(--subtle);
+      border:1px solid var(--border);
+      color:var(--text);
+      font-size:12px;
+      font-weight:600;
+      padding:5px 14px;
+      border-radius:6px;
+      cursor:pointer;
+      transition:background .15s,color .15s;
+      letter-spacing:.02em;
+    }
+    .ctrl-btn:hover{
+      background:var(--muted);
+      color:var(--bg);
+    }
+
+    /* ── Main layout ── */
+    .main{
+      max-width:1280px;
+      margin:0 auto;
+      padding:40px 32px 0;
+    }
+
+    /* ── Section title ── */
+    .section-title{
+      text-align:center;
+      margin-bottom:10px;
+    }
+    .section-title h1{
+      font-size:26px;
+      font-weight:700;
+      letter-spacing:-.02em;
+      color:var(--text);
+      line-height:1.3;
+    }
+    .section-title .subtitle{
+      font-size:14px;
+      color:var(--muted);
+      margin-top:6px;
+    }
+
+    /* ── Stats row ── */
+    .stats-row{
+      display:flex;
+      justify-content:center;
+      gap:24px;
+      margin:24px 0 36px;
+      flex-wrap:wrap;
+    }
+    .stat-chip{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:999px;
+      padding:8px 18px;
+    }
+    .stat-chip .dot{
+      width:8px;height:8px;border-radius:50%;flex-shrink:0;
+    }
+    .stat-chip .label{
+      font-size:13px;
+      font-weight:600;
+      color:var(--text);
+    }
+    .stat-chip .sub{
+      font-size:11px;
+      color:var(--muted);
+      margin-left:2px;
+    }
+
+    /* ── Cards grid ── */
+    .cards-grid{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:20px;
+      margin-bottom:40px;
+    }
+    @media(max-width:900px){
+      .cards-grid{grid-template-columns:1fr;}
+    }
+
+    /* ── Plugin card ── */
+    .plugin-card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:16px;
+      overflow:hidden;
+      display:flex;
+      flex-direction:column;
+      transition:transform .2s,box-shadow .2s;
+    }
+    .plugin-card:hover{
+      transform:translateY(-3px);
+    }
+
+    /* Card header gradient */
+    .card-header{
+      padding:28px 24px 24px;
+      position:relative;
+      overflow:hidden;
+    }
+    /* Glow blob at top */
+    .card-header::before{
+      content:'';
+      position:absolute;
+      top:-40px;left:50%;transform:translateX(-50%);
+      width:180px;height:120px;
+      border-radius:50%;
+      filter:blur(40px);
+      opacity:.45;
+      pointer-events:none;
+    }
+    .card-emerald .card-header{background:linear-gradient(160deg,rgba(16,185,129,.12) 0%,transparent 70%);}
+    .card-emerald .card-header::before{background:var(--emerald);}
+    .card-cyan    .card-header{background:linear-gradient(160deg,rgba(34,211,238,.12) 0%,transparent 70%);}
+    .card-cyan    .card-header::before{background:var(--cyan);}
+    .card-violet  .card-header{background:linear-gradient(160deg,rgba(139,92,246,.12) 0%,transparent 70%);}
+    .card-violet  .card-header::before{background:var(--violet);}
+
+    /* Icon circle */
+    .card-icon{
+      width:48px;height:48px;
+      border-radius:12px;
+      display:flex;align-items:center;justify-content:center;
+      font-size:22px;
+      margin-bottom:14px;
+      position:relative;z-index:1;
+    }
+    .card-emerald .card-icon{background:rgba(16,185,129,.18);border:1px solid rgba(16,185,129,.3);}
+    .card-cyan    .card-icon{background:rgba(34,211,238,.18);border:1px solid rgba(34,211,238,.3);}
+    .card-violet  .card-icon{background:rgba(139,92,246,.18);border:1px solid rgba(139,92,246,.3);}
+
+    .card-title{
+      font-size:18px;
+      font-weight:700;
+      letter-spacing:-.01em;
+      position:relative;z-index:1;
+    }
+    .card-emerald .card-title{color:var(--emerald);}
+    .card-cyan    .card-title{color:var(--cyan);}
+    .card-violet  .card-title{color:var(--violet);}
+
+    .card-subtitle{
+      font-size:11px;
+      color:var(--muted);
+      margin-top:4px;
+      letter-spacing:.04em;
+      text-transform:uppercase;
+      position:relative;z-index:1;
+    }
+
+    /* Card body */
+    .card-body{
+      padding:0 24px 24px;
+      flex:1;
+      display:flex;
+      flex-direction:column;
+      gap:18px;
+    }
+
+    /* How it works */
+    .how-section .section-label{
+      font-size:10px;
+      font-weight:700;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin-bottom:8px;
+    }
+    .how-section .how-text{
+      font-size:13px;
+      color:var(--muted);
+      line-height:1.65;
+      background:var(--subtle);
+      border-radius:8px;
+      padding:10px 12px;
+      border-left:3px solid transparent;
+    }
+    .card-emerald .how-text{border-color:var(--emerald);}
+    .card-cyan    .how-text{border-color:var(--cyan);}
+    .card-violet  .how-text{border-color:var(--violet);}
+
+    /* Pros / Cons */
+    .pc-section{
+      display:flex;
+      gap:12px;
+    }
+    .pc-col{flex:1;}
+    .pc-col .pc-label{
+      font-size:10px;
+      font-weight:700;
+      letter-spacing:.08em;
+      text-transform:uppercase;
+      margin-bottom:7px;
+    }
+    .pc-col.pros .pc-label{color:var(--emerald);}
+    .pc-col.cons .pc-label{color:var(--rose);}
+    .pc-item{
+      display:flex;
+      align-items:flex-start;
+      gap:6px;
+      font-size:12px;
+      line-height:1.5;
+      color:var(--muted);
+      margin-bottom:5px;
+    }
+    .pc-item .ic{font-size:11px;flex-shrink:0;margin-top:1px;}
+    .pc-item .ic.pro{color:var(--emerald);}
+    .pc-item .ic.con{color:var(--rose);}
+    .pc-item .bi{font-size:11px;color:var(--text);}
+    .pc-item .en{font-size:10px;color:var(--muted);}
+
+    /* Use cases */
+    .uc-section .section-label{
+      font-size:10px;
+      font-weight:700;
+      letter-spacing:.1em;
+      text-transform:uppercase;
+      color:var(--muted);
+      margin-bottom:8px;
+    }
+    .uc-tags{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+    }
+    .uc-tag{
+      font-size:11px;
+      padding:3px 10px;
+      border-radius:999px;
+      font-weight:500;
+      letter-spacing:.01em;
+    }
+    .card-emerald .uc-tag{background:rgba(16,185,129,.12);color:var(--emerald);border:1px solid rgba(16,185,129,.2);}
+    .card-cyan    .uc-tag{background:rgba(34,211,238,.12);color:var(--cyan);   border:1px solid rgba(34,211,238,.2);}
+    .card-violet  .uc-tag{background:rgba(139,92,246,.12);color:var(--violet); border:1px solid rgba(139,92,246,.2);}
+
+    /* ── Comparison table ── */
+    .table-section{
+      margin-top:8px;
+    }
+    .table-title{
+      font-size:16px;
+      font-weight:700;
+      color:var(--text);
+      margin-bottom:16px;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+    .table-title::after{
+      content:'';
+      flex:1;
+      height:1px;
+      background:var(--border);
+    }
+
+    .cmp-table{
+      width:100%;
+      border-collapse:separate;
+      border-spacing:0;
+      border:1px solid var(--border);
+      border-radius:12px;
+      overflow:hidden;
+      font-size:13px;
+    }
+    .cmp-table th{
+      background:var(--subtle);
+      color:var(--muted);
+      font-size:11px;
+      font-weight:700;
+      letter-spacing:.06em;
+      text-transform:uppercase;
+      padding:12px 16px;
+      text-align:left;
+      border-bottom:1px solid var(--border);
+    }
+    .cmp-table th:first-child{min-width:150px;}
+    .cmp-table th.col-emerald{color:var(--emerald);}
+    .cmp-table th.col-cyan   {color:var(--cyan);}
+    .cmp-table th.col-violet {color:var(--violet);}
+
+    .cmp-table td{
+      padding:11px 16px;
+      border-bottom:1px solid var(--border);
+      vertical-align:middle;
+      line-height:1.5;
+    }
+    .cmp-table tr:last-child td{border-bottom:none;}
+    .cmp-table tbody tr:nth-child(odd) td{background:var(--panel);}
+    .cmp-table tbody tr:nth-child(even) td{background:var(--subtle);}
+
+    .row-label{
+      font-weight:600;
+      color:var(--text);
+      font-size:12px;
+    }
+    .row-sub{
+      font-size:10px;
+      color:var(--muted);
+      font-weight:400;
+      display:block;
+      margin-top:1px;
+    }
+
+    .cell-val{
+      font-size:12px;
+      color:var(--muted);
+      font-weight:500;
+    }
+    .cell-badge{
+      display:inline-flex;
+      align-items:center;
+      gap:4px;
+      padding:2px 9px;
+      border-radius:999px;
+      font-size:11px;
+      font-weight:600;
+    }
+    .badge-green {background:rgba(16,185,129,.12); color:var(--emerald);border:1px solid rgba(16,185,129,.25);}
+    .badge-yellow{background:rgba(245,158,11,.12);  color:var(--amber);  border:1px solid rgba(245,158,11,.25);}
+    .badge-red   {background:rgba(244,63,94,.12);   color:var(--rose);   border:1px solid rgba(244,63,94,.25);}
+    .badge-cyan  {background:rgba(34,211,238,.12);  color:var(--cyan);   border:1px solid rgba(34,211,238,.25);}
+    .badge-violet{background:rgba(139,92,246,.12);  color:var(--violet); border:1px solid rgba(139,92,246,.25);}
+
+    /* ── Footer ── */
+    .page-footer{
+      text-align:center;
+      margin-top:40px;
+      padding-top:20px;
+      border-top:1px solid var(--border);
+      font-size:11px;
+      color:var(--muted);
+      letter-spacing:.04em;
+    }
+  
+</style>
+</head>
+<body>
+
+  <!-- Header -->
+  <header class="page-header">
+    <span class="badge">VIS-4-009 &nbsp;·&nbsp; Extensibility Design Patterns</span>
+    <div class="controls">
+      <button class="ctrl-btn" onclick="cycleTheme()">
+        <span class="lz">切换主题</span><span class="le" style="display:none">Theme</span>
+      </button>
+      <button class="ctrl-btn" onclick="toggleLang()">
+        <span class="lz">EN</span><span class="le" style="display:none">中文</span>
+      </button>
+    </div>
+  </header>
+
+  <main class="main">
+
+    <!-- Section title -->
+    <div class="section-title">
+      <h1>
+        <span class="lz">扩展性设计模式 — 插件架构的三种模式</span>
+        <span class="le" style="display:none">Extensibility Design Patterns — Three Plugin Architecture Modes</span>
+      </h1>
+      <p class="subtitle">
+        <span class="lz">Hook 系统 · MCP 协议 · 内部插件系统</span>
+        <span class="le" style="display:none">Hook System · MCP Protocol · Internal Plugin System</span>
+      </p>
+    </div>
+
+    <!-- Stats row -->
+    <div class="stats-row">
+      <div class="stat-chip">
+        <span class="dot" style="background:var(--cyan);"></span>
+        <span class="label lz">3 扩展模式</span>
+        <span class="label le" style="display:none">3 Extension Modes</span>
+      </div>
+      <div class="stat-chip">
+        <span class="dot" style="background:var(--emerald);"></span>
+        <span class="label lz">Hook 最轻量</span>
+        <span class="label le" style="display:none">Hook Lightest</span>
+        <span class="sub lz">零进程开销</span>
+        <span class="sub le" style="display:none">Zero process overhead</span>
+      </div>
+      <div class="stat-chip">
+        <span class="dot" style="background:var(--cyan);"></span>
+        <span class="label lz">MCP 最灵活</span>
+        <span class="label le" style="display:none">MCP Most Flexible</span>
+        <span class="sub lz">双向·持久连接</span>
+        <span class="sub le" style="display:none">Bidirectional · Persistent</span>
+      </div>
+      <div class="stat-chip">
+        <span class="dot" style="background:var(--violet);"></span>
+        <span class="label lz">内部插件最快</span>
+        <span class="label le" style="display:none">Internal Lowest Latency</span>
+        <span class="sub lz">直接 API 访问</span>
+        <span class="sub le" style="display:none">Direct API access</span>
+      </div>
+    </div>
+
+    <!-- 3-column cards -->
+    <div class="cards-grid">
+
+      <!-- ══ Column 1: Hook ══ -->
+      <div class="plugin-card card-emerald">
+        <div class="card-header">
+          <div class="card-icon">⚡</div>
+          <div class="card-title lz">Hook 系统</div>
+          <div class="card-title le" style="display:none">Hook System</div>
+          <div class="card-subtitle">
+            <span class="lz">事件驱动扩展</span>
+            <span class="le" style="display:none">Event-driven Extension</span>
+          </div>
+        </div>
+        <div class="card-body">
+
+          <!-- How it works -->
+          <div class="how-section">
+            <div class="section-label lz">工作原理</div>
+            <div class="section-label le" style="display:none">How It Works</div>
+            <div class="how-text">
+              <span class="lz">在命名事件点注册回调脚本。Claude Code 触发事件 → Hook 脚本执行 → 结果反馈回主流程。</span>
+              <span class="le" style="display:none">Register callback at named event point. Claude Code fires event → hook script runs → result fed back to main flow.</span>
+            </div>
+          </div>
+
+          <!-- Pros / Cons -->
+          <div class="pc-section">
+            <div class="pc-col pros">
+              <div class="pc-label lz">优势</div>
+              <div class="pc-label le" style="display:none">Pros</div>
+              <div class="pc-item">
+                <span class="ic pro">✓</span>
+                <span><span class="bi lz">零侵入</span><span class="bi le" style="display:none">Zero intrusion</span><br><span class="en lz">/ Zero intrusion</span><span class="en le" style="display:none"></span></span>
+              </div>
+              <div class="pc-item">
+                <span class="ic pro">✓</span>
+                <span><span class="bi lz">语言无关</span><span class="bi le" style="display:none">Language agnostic</span><br><span class="en lz">/ Language agnostic</span><span class="en le" style="display:none"></span></span>
+              </div>
+              <div class="pc-item">
+                <span class="ic pro">✓</span>
+                <span><span class="bi lz">并行执行</span><span class="bi le" style="display:none">Parallel execution</span><br><span class="en lz">/ Parallel execution</span><span class="en le" style="display:none"></span></span>
+              </div>
+            </div>
+            <div class="pc-col cons">
+              <div class="pc-label lz">局限</div>
+              <div class="pc-label le" style="display:none">Cons</div>
+              <div class="pc-item">
+                <span class="ic con">✗</span>
+                <span><span class="bi lz">单向通信</span><span class="bi le" style="display:none">One-way comm.</span><br><span class="en lz">/ One-way by default</span><span class="en le" style="display:none"></span></span>
+              </div>
+              <div class="pc-item">
+                <span class="ic con">✗</span>
+                <span><span class="bi lz">无状态</span><span class="bi le" style="display:none">Stateless</span><br><span class="en lz">/ Stateless</span><span class="en le" style="display:none"></span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Use cases -->
+          <div class="uc-section">
+            <div class="section-label lz">典型场景</div>
+            <div class="section-label le" style="display:none">Use Cases</div>
+            <div class="uc-tags">
+              <span class="uc-tag lz">前/后置工具校验</span>
+              <span class="uc-tag le" style="display:none">Pre/post-tool validation</span>
+              <span class="uc-tag lz">审计日志</span>
+              <span class="uc-tag le" style="display:none">Audit logging</span>
+              <span class="uc-tag lz">自动格式化</span>
+              <span class="uc-tag le" style="display:none">Auto-format</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ══ Column 2: MCP ══ -->
+      <div class="plugin-card card-cyan">
+        <div class="card-header">
+          <div class="card-icon">🔌</div>
+          <div class="card-title lz">MCP 服务器</div>
+          <div class="card-title le" style="display:none">MCP Server</div>
+          <div class="card-subtitle">
+            <span class="lz">工具即服务</span>
+            <span class="le" style="display:none">Tools as a Service</span>
+          </div>
+        </div>
+        <div class="card-body">
+
+          <!-- How it works -->
+          <div class="how-section">
+            <div class="section-label lz">工作原理</div>
+            <div class="section-label le" style="display:none">How It Works</div>
+            <div class="how-text">
+              <span class="lz">外部服务器通过 MCP 协议暴露工具。Claude Code 将 MCP 工具与内置工具同等对待，透明路由调用。</span>
+              <span class="le" style="display:none">External server exposes tools via MCP protocol. Claude treats MCP tools same as built-in tools with transparent routing.</span>
+            </div>
+          </div>
+
+          <!-- Pros / Cons -->
+          <div class="pc-section">
+            <div class="pc-col pros">
+              <div class="pc-label lz">优势</div>
+              <div class="pc-label le" style="display:none">Pros</div>
+              <div class="pc-item">
+                <span class="ic pro">✓</span>
+                <span><span class="bi lz">双向通信</span><span class="bi le" style="display:none">Bidirectional</span><br><span class="en lz">/ Bidirectional</span><span class="en le" style="display:none"></span></span>
+              </div>
+              <div class="pc-item">
+                <span class="ic pro">✓</span>
+                <span><span class="bi lz">持久连接</span><span class="bi le" style="display:none">Persistent connection</span><br><span class="en lz">/ Persistent conn.</span><span class="en le" style="display:none"></span></span>
+              </div>
+              <div class="pc-item">
+                <span class="ic pro">✓</span>
+                <span><span class="bi lz">丰富类型系统</span><span class="bi le" style="display:none">Rich type system</span><br><span class="en lz">/ Rich type system</span><span class="en le" style="display:none"></span></span>
+              </div>
+            </div>
+            <div class="pc-col cons">
+              <div class="pc-label lz">局限</div>
+              <div class="pc-label le" style="display:none">Cons</div>
+              <div class="pc-item">
+                <span class="ic con">✗</span>
+                <span><span class="bi lz">独立进程</span><span class="bi le" style="display:none">Separate process</span><br><span class="en lz">/ Requires separate process</span><span class="en le" style="display:none"></span></span>
+              </div>
+              <div class="pc-item">
+                <span class="ic con">✗</span>
+                <span><span class="bi lz">网络延迟</span><span class="bi le" style="display:none">Network latency</span><br><span class="en lz">/ Network latency</span><span class="en le" style="display:none"></span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Use cases -->
+          <div class="uc-section">
+            <div class="section-label lz">典型场景</div>
+            <div class="section-label le" style="display:none">Use Cases</div>
+            <div class="uc-tags">
+              <span class="uc-tag lz">数据库访问</span>
+              <span class="uc-tag le" style="display:none">Database access</span>
+              <span class="uc-tag lz">外部 API</span>
+              <span class="uc-tag le" style="display:none">External APIs</span>
+              <span class="uc-tag lz">代码解释器</span>
+              <span class="uc-tag le" style="display:none">Code interpreters</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- ══ Column 3: Internal Plugin ══ -->
+      <div class="plugin-card card-violet">
+        <div class="card-header">
+          <div class="card-icon">🧩</div>
+          <div class="card-title lz">内部插件系统</div>
+          <div class="card-title le" style="display:none">Internal Plugin System</div>
+          <div class="card-subtitle">
+            <span class="lz">深度集成</span>
+            <span class="le" style="display:none">Deep Integration</span>
+          </div>
+        </div>
+        <div class="card-body">
+
+          <!-- How it works -->
+          <div class="how-section">
+            <div class="section-label lz">工作原理</div>
+            <div class="section-label le" style="display:none">How It Works</div>
+            <div class="how-text">
+              <span class="lz">编译进 Claude Code 二进制文件。直接访问内部 API，无进程边界，零序列化开销。</span>
+              <span class="le" style="display:none">Compiled into Claude Code binary. Direct access to internals with no process boundary or serialization overhead.</span>
+            </div>
+          </div>
+
+          <!-- Pros / Cons -->
+          <div class="pc-section">
+            <div class="pc-col pros">
+              <div class="pc-label lz">优势</div>
+              <div class="pc-label le" style="display:none">Pros</div>
+              <div class="pc-item">
+                <span class="ic pro">✓</span>
+                <span><span class="bi lz">最低延迟</span><span class="bi le" style="display:none">Lowest latency</span><br><span class="en lz">/ Lowest latency</span><span class="en le" style="display:none"></span></span>
+              </div>
+              <div class="pc-item">
+                <span class="ic pro">✓</span>
+                <span><span class="bi lz">完整 API 访问</span><span class="bi le" style="display:none">Full API access</span><br><span class="en lz">/ Full API access</span><span class="en le" style="display:none"></span></span>
+              </div>
+            </div>
+            <div class="pc-col cons">
+              <div class="pc-label lz">局限</div>
+              <div class="pc-label le" style="display:none">Cons</div>
+              <div class="pc-item">
+                <span class="ic con">✗</span>
+                <span><span class="bi lz">需重新编译</span><span class="bi le" style="display:none">Requires recompile</span><br><span class="en lz">/ Requires recompile</span><span class="en le" style="display:none"></span></span>
+              </div>
+              <div class="pc-item">
+                <span class="ic con">✗</span>
+                <span><span class="bi lz">强耦合</span><span class="bi le" style="display:none">Tight coupling</span><br><span class="en lz">/ Tight coupling</span><span class="en le" style="display:none"></span></span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Use cases -->
+          <div class="uc-section">
+            <div class="section-label lz">典型场景</div>
+            <div class="section-label le" style="display:none">Use Cases</div>
+            <div class="uc-tags">
+              <span class="uc-tag lz">核心工具扩展</span>
+              <span class="uc-tag le" style="display:none">Core tool extensions</span>
+              <span class="uc-tag lz">内置集成</span>
+              <span class="uc-tag le" style="display:none">Built-in integrations</span>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </div><!-- /cards-grid -->
+
+    <!-- ══ Comparison table ══ -->
+    <div class="table-section">
+      <div class="table-title">
+        <span class="lz">对比矩阵</span>
+        <span class="le" style="display:none">Comparison Matrix</span>
+      </div>
+
+      <table class="cmp-table">
+        <thead>
+          <tr>
+            <th>
+              <span class="lz">维度</span>
+              <span class="le" style="display:none">Dimension</span>
+            </th>
+            <th class="col-emerald">
+              <span class="lz">⚡ Hook 系统</span>
+              <span class="le" style="display:none">⚡ Hook System</span>
+            </th>
+            <th class="col-cyan">
+              <span class="lz">🔌 MCP 协议</span>
+              <span class="le" style="display:none">🔌 MCP Protocol</span>
+            </th>
+            <th class="col-violet">
+              <span class="lz">🧩 内部插件</span>
+              <span class="le" style="display:none">🧩 Internal Plugin</span>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Row 1: Communication -->
+          <tr>
+            <td>
+              <span class="row-label lz">通信方式</span>
+              <span class="row-label le" style="display:none">Communication</span>
+              <span class="row-sub lz">数据流向</span>
+              <span class="row-sub le" style="display:none">Data flow</span>
+            </td>
+            <td>
+              <span class="cell-badge badge-yellow lz">单向（默认）</span>
+              <span class="cell-badge badge-yellow le" style="display:none">Unidirectional</span>
+            </td>
+            <td>
+              <span class="cell-badge badge-cyan lz">双向</span>
+              <span class="cell-badge badge-cyan le" style="display:none">Bidirectional</span>
+            </td>
+            <td>
+              <span class="cell-badge badge-violet lz">直接调用</span>
+              <span class="cell-badge badge-violet le" style="display:none">Direct call</span>
+            </td>
+          </tr>
+          <!-- Row 2: Process Isolation -->
+          <tr>
+            <td>
+              <span class="row-label lz">进程隔离</span>
+              <span class="row-label le" style="display:none">Process Isolation</span>
+              <span class="row-sub lz">安全边界</span>
+              <span class="row-sub le" style="display:none">Safety boundary</span>
+            </td>
+            <td>
+              <span class="cell-badge badge-green lz">独立进程</span>
+              <span class="cell-badge badge-green le" style="display:none">Separate process</span>
+            </td>
+            <td>
+              <span class="cell-badge badge-green lz">独立进程</span>
+              <span class="cell-badge badge-green le" style="display:none">Separate process</span>
+            </td>
+            <td>
+              <span class="cell-badge badge-red lz">无隔离</span>
+              <span class="cell-badge badge-red le" style="display:none">No isolation</span>
+            </td>
+          </tr>
+          <!-- Row 3: Language -->
+          <tr>
+            <td>
+              <span class="row-label lz">实现语言</span>
+              <span class="row-label le" style="display:none">Language</span>
+              <span class="row-sub lz">开发门槛</span>
+              <span class="row-sub le" style="display:none">Dev barrier</span>
+            </td>
+            <td>
+              <span class="cell-badge badge-green lz">任意语言</span>
+              <span class="cell-badge badge-green le" style="display:none">Any language</span>
+            </td>
+            <td>
+              <span class="cell-badge badge-cyan lz">任意（需 MCP SDK）</span>
+              <span class="cell-badge badge-cyan le" style="display:none">Any (needs MCP SDK)</span>
+            </td>
+            <td>
+              <span class="cell-badge badge-red lz">TypeScript 专属</span>
+              <span class="cell-badge badge-red le" style="display:none">TypeScript only</span>
+            </td>
+          </tr>
+          <!-- Row 4: Latency -->
+          <tr>
+            <td>
+              <span class="row-label lz">延迟</span>
+              <span class="row-label le" style="display:none">Latency</span>
+              <span class="row-sub lz">响应速度</span>
+              <span class="row-sub le" style="display:none">Response speed</span>
+            </td>
+            <td>
+              <span class="cell-badge badge-green lz">低（进程启动）</span>
+              <span class="cell-badge badge-green le" style="display:none">Low (process start)</span>
+            </td>
+            <td>
+              <span class="cell-badge badge-yellow lz">中（网络 IPC）</span>
+              <span class="cell-badge badge-yellow le" style="display:none">Medium (network/IPC)</span>
+            </td>
+            <td>
+              <span class="cell-badge badge-violet lz">极低（函数调用）</span>
+              <span class="cell-badge badge-violet le" style="display:none">Minimal (fn call)</span>
+            </td>
+          </tr>
+          <!-- Row 5: Access Level -->
+          <tr>
+            <td>
+              <span class="row-label lz">访问权限</span>
+              <span class="row-label le" style="display:none">Access Level</span>
+              <span class="row-sub lz">内部 API 可见性</span>
+              <span class="row-sub le" style="display:none">Internal API visibility</span>
+            </td>
+            <td>
+              <span class="cell-badge badge-yellow lz">事件上下文</span>
+              <span class="cell-badge badge-yellow le" style="display:none">Event context only</span>
+            </td>
+            <td>
+              <span class="cell-badge badge-cyan lz">工具接口层</span>
+              <span class="cell-badge badge-cyan le" style="display:none">Tool interface layer</span>
+            </td>
+            <td>
+              <span class="cell-badge badge-violet lz">完整内部 API</span>
+              <span class="cell-badge badge-violet le" style="display:none">Full internal API</span>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div><!-- /table-section -->
+
+    <div class="page-footer">
+      <span class="lz">Claude Code 源码研究 · 扩展性设计模式 · VIS-4-009</span>
+      <span class="le" style="display:none">Claude Code Source Study · Extensibility Design Patterns · VIS-4-009</span>
+    </div>
+
+  </main>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

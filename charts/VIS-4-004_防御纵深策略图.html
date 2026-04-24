@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<!--
+  VIS-4-004 · 多层防线设计哲学：瑞士奶酪模型 · Defense in Depth — Swiss Cheese Model
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  5 层防御纵深 × 3 种攻击情景 · Swiss Cheese / Defense in Depth
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · 防御纵深策略图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+    :root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+    :root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+    :root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      background:var(--bg);
+      color:var(--text);
+      font-family:'JetBrains Mono',monospace;
+      min-height:100vh;
+      padding:24px;
+      transition:background .3s,color .3s;
+    }
+
+    /* ── Controls ── */
+    .controls{
+      display:flex;
+      gap:8px;
+      justify-content:flex-end;
+      margin-bottom:20px;
+    }
+    .btn{
+      background:var(--panel);
+      border:1px solid var(--border);
+      color:var(--muted);
+      border-radius:6px;
+      padding:6px 14px;
+      font-family:inherit;
+      font-size:11px;
+      cursor:pointer;
+      transition:all .2s;
+    }
+    .btn:hover{color:var(--text);border-color:var(--violet);}
+
+    /* ── Card wrapper ── */
+    .viz-card{
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:28px 28px 24px;
+      max-width:980px;
+      margin:0 auto;
+    }
+
+    /* ── Header ── */
+    .viz-header{margin-bottom:6px;}
+    .viz-tag{
+      font-size:10px;
+      color:var(--violet);
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      margin-bottom:8px;
+    }
+    .viz-title{
+      font-size:20px;
+      font-weight:700;
+      color:var(--text);
+      margin-bottom:4px;
+      line-height:1.3;
+    }
+    .viz-subtitle{
+      font-size:12px;
+      color:var(--muted);
+      margin-bottom:20px;
+    }
+
+    /* ── SVG container ── */
+    .svg-wrap{
+      width:100%;
+      overflow:hidden;
+      border-radius:10px;
+      border:1px solid var(--border);
+      background:var(--bg);
+      margin-bottom:24px;
+    }
+    .svg-wrap svg{
+      display:block;
+      width:100%;
+      height:auto;
+    }
+
+    /* ── Insight bar ── */
+    .insight-bar{
+      background:rgba(139,92,246,.12);
+      border:1px solid rgba(139,92,246,.28);
+      border-radius:8px;
+      padding:10px 16px;
+      font-size:12px;
+      color:var(--text);
+      text-align:center;
+      margin-bottom:20px;
+      letter-spacing:.02em;
+    }
+    .insight-bar span.zh{font-style:normal;}
+    .insight-bar span.en{font-style:italic;}
+    .insight-key{color:var(--violet);font-weight:600;}
+
+    /* ── Scenario cards ── */
+    .scenarios{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:14px;
+      margin-bottom:20px;
+    }
+    .sc-card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:14px 16px;
+    }
+    .sc-card-head{
+      display:flex;
+      align-items:center;
+      gap:8px;
+      margin-bottom:8px;
+    }
+    .sc-dot{
+      width:10px;height:10px;
+      border-radius:50%;
+      flex-shrink:0;
+    }
+    .sc-label{
+      font-size:11px;
+      font-weight:700;
+      color:var(--text);
+    }
+    .sc-sub{
+      font-size:10px;
+      color:var(--muted);
+      line-height:1.5;
+    }
+    .sc-outcome{
+      font-size:10px;
+      font-weight:600;
+      margin-top:8px;
+      padding:4px 8px;
+      border-radius:4px;
+      display:inline-block;
+    }
+    .sc-blocked{background:rgba(16,185,129,.15);color:#10b981;}
+    .sc-blocked-late{background:rgba(245,158,11,.15);color:#f59e0b;}
+    .sc-miss{background:rgba(244,63,94,.15);color:#f43f5e;}
+
+    /* ── Stats row ── */
+    .stats-row{
+      display:grid;
+      grid-template-columns:repeat(3,1fr);
+      gap:12px;
+    }
+    .stat-cell{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:8px;
+      padding:12px;
+      text-align:center;
+    }
+    .stat-num{
+      font-size:18px;
+      font-weight:700;
+      color:var(--violet);
+      display:block;
+    }
+    .stat-label{
+      font-size:10px;
+      color:var(--muted);
+      margin-top:4px;
+    }
+
+    /* ── Theme-aware SVG fills ── */
+    [data-theme="light"] .svg-bg-rect{fill:#f8fafc;}
+    [data-theme="warm"]  .svg-bg-rect{fill:#1c1917;}
+    [data-theme="dark"]  .svg-bg-rect{fill:#0f172a;}
+
+    [data-theme="light"] .axis-label{fill:#64748b;}
+    [data-theme="warm"]  .axis-label{fill:#a8a29e;}
+    [data-theme="dark"]  .axis-label{fill:#94a3b8;}
+
+    [data-theme="light"] .grid-line{stroke:rgba(0,0,0,.08);}
+    [data-theme="warm"]  .grid-line{stroke:rgba(255,255,255,.06);}
+    [data-theme="dark"]  .grid-line{stroke:rgba(255,255,255,.06);}
+
+    [data-theme="light"] .layer-caption{fill:#0f172a;}
+    [data-theme="warm"]  .layer-caption{fill:#f5f0eb;}
+    [data-theme="dark"]  .layer-caption{fill:#f1f5f9;}
+
+    [data-theme="light"] .layer-sub{fill:#64748b;}
+    [data-theme="warm"]  .layer-sub{fill:#a8a29e;}
+    [data-theme="dark"]  .layer-sub{fill:#94a3b8;}
+
+    [data-theme="light"] .threat-label{fill:#374151;}
+    [data-theme="warm"]  .threat-label{fill:#e8d5b7;}
+    [data-theme="dark"]  .threat-label{fill:#e2e8f0;}
+
+    @media(max-width:640px){
+      .scenarios{grid-template-columns:1fr;}
+      .stats-row{grid-template-columns:1fr 1fr 1fr;}
+    }
+  
+</style>
+</head>
+<body>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+
+<div class="viz-card">
+
+  <!-- Header -->
+  <div class="viz-header">
+    <div class="viz-tag">VIS-4-004 · Security Architecture</div>
+    <div class="viz-title">
+      <span class="lz">多层防线的设计哲学 — 瑞士奶酪模型</span>
+      <span class="le" style="display:none">Defense in Depth — Swiss Cheese Model</span>
+    </div>
+    <div class="viz-subtitle">
+      <span class="lz">单层防御有漏洞，多层防御大概率拦截 · Claude Code 安全架构核心原理</span>
+      <span class="le" style="display:none">Each layer has holes, but stacked layers drastically reduce attack success. Core security principle in Claude Code.</span>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls">
+    <button class="btn" onclick="cycleTheme()">
+      <span class="lz">切换主题</span><span class="le" style="display:none">Theme</span>
+    </button>
+    <button class="btn" onclick="toggleLang()">
+      <span class="lz">EN</span><span class="le" style="display:none">中文</span>
+    </button>
+  </div>
+
+  <!-- SVG Main Diagram -->
+  <div class="svg-wrap">
+    <svg viewBox="0 0 920 500" xmlns="http://www.w3.org/2000/svg" aria-label="Swiss Cheese Defense Model">
+      <defs>
+        <!-- Background gradient -->
+        <linearGradient id="bgGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#0f172a"/>
+          <stop offset="100%" stop-color="#1e293b"/>
+        </linearGradient>
+
+        <!-- Cheese slice gradients (violet family) -->
+        <linearGradient id="sliceGrad1" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(88,101,242,0.85)"/>
+          <stop offset="100%" stop-color="rgba(88,101,242,0.45)"/>
+        </linearGradient>
+        <linearGradient id="sliceGrad2" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(123,97,255,0.85)"/>
+          <stop offset="100%" stop-color="rgba(123,97,255,0.45)"/>
+        </linearGradient>
+        <linearGradient id="sliceGrad3" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(156,91,243,0.85)"/>
+          <stop offset="100%" stop-color="rgba(156,91,243,0.45)"/>
+        </linearGradient>
+        <linearGradient id="sliceGrad4" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(183,86,232,0.85)"/>
+          <stop offset="100%" stop-color="rgba(183,86,232,0.45)"/>
+        </linearGradient>
+        <linearGradient id="sliceGrad5" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="rgba(213,81,219,0.85)"/>
+          <stop offset="100%" stop-color="rgba(213,81,219,0.45)"/>
+        </linearGradient>
+
+        <!-- Arrow markers -->
+        <marker id="arrowRed" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#f43f5e"/>
+        </marker>
+        <marker id="arrowOrange" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#f97316"/>
+        </marker>
+        <marker id="arrowRed2" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#f43f5e" opacity="0.5"/>
+        </marker>
+        <marker id="arrowGray" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0, 8 3, 0 6" fill="#64748b"/>
+        </marker>
+
+        <!-- Hole depression gradient: off-center radial (光源 top-left) 模拟真实孔洞深度 -->
+        <radialGradient id="holeDepression" cx="35%" cy="35%" r="70%">
+          <stop offset="0%" stop-color="rgba(0,0,0,0.70)"/>
+          <stop offset="60%" stop-color="rgba(0,0,0,0.45)"/>
+          <stop offset="100%" stop-color="rgba(0,0,0,0.15)"/>
+        </radialGradient>
+        <radialGradient id="holeHighlight" cx="30%" cy="25%" r="40%">
+          <stop offset="0%" stop-color="rgba(255,255,255,0.18)"/>
+          <stop offset="100%" stop-color="rgba(255,255,255,0)"/>
+        </radialGradient>
+
+        <!-- Glow filter for blocked markers -->
+        <filter id="glowGreen" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="2" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glowRed" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+
+        <!-- Clip paths for cheese holes (per slice) -->
+        <!-- Slice 1 holes -->
+        <clipPath id="clip1">
+          <rect x="0" y="0" width="920" height="500"/>
+        </clipPath>
+        <!-- We'll use mask approach for holes -->
+        <mask id="mask1">
+          <rect x="118" y="72" width="68" height="320" rx="10" fill="white"/>
+          <!-- holes -->
+          <ellipse cx="137" cy="148" rx="13" ry="9" fill="black"/>
+          <ellipse cx="168" cy="210" rx="11" ry="15" fill="black"/>
+          <ellipse cx="145" cy="285" rx="9" ry="12" fill="black"/>
+          <ellipse cx="172" cy="335" rx="14" ry="8" fill="black"/>
+        </mask>
+        <mask id="mask2">
+          <rect x="248" y="58" width="68" height="348" rx="10" fill="white"/>
+          <ellipse cx="262" cy="130" rx="10" ry="14" fill="black"/>
+          <ellipse cx="295" cy="195" rx="13" ry="9" fill="black"/>
+          <ellipse cx="270" cy="268" rx="9" ry="11" fill="black"/>
+          <ellipse cx="300" cy="340" rx="11" ry="16" fill="black"/>
+          <ellipse cx="278" cy="378" rx="13" ry="8" fill="black"/>
+        </mask>
+        <mask id="mask3">
+          <rect x="378" y="68" width="68" height="328" rx="10" fill="white"/>
+          <ellipse cx="396" cy="140" rx="12" ry="8" fill="black"/>
+          <ellipse cx="428" cy="205" rx="9" ry="13" fill="black"/>
+          <ellipse cx="402" cy="278" rx="14" ry="10" fill="black"/>
+          <ellipse cx="432" cy="348" rx="10" ry="8" fill="black"/>
+        </mask>
+        <mask id="mask4">
+          <rect x="508" y="62" width="68" height="340" rx="10" fill="white"/>
+          <ellipse cx="524" cy="145" rx="11" ry="15" fill="black"/>
+          <ellipse cx="558" cy="218" rx="13" ry="9" fill="black"/>
+          <ellipse cx="530" cy="292" rx="9" ry="12" fill="black"/>
+          <ellipse cx="561" cy="360" rx="12" ry="8" fill="black"/>
+          <ellipse cx="540" cy="110" rx="8" ry="10" fill="black"/>
+        </mask>
+        <mask id="mask5">
+          <rect x="638" y="75" width="68" height="314" rx="10" fill="white"/>
+          <ellipse cx="657" cy="150" rx="10" ry="13" fill="black"/>
+          <ellipse cx="689" cy="222" rx="13" ry="9" fill="black"/>
+          <ellipse cx="660" cy="300" rx="9" ry="11" fill="black"/>
+          <ellipse cx="691" cy="358" rx="11" ry="7" fill="black"/>
+        </mask>
+      </defs>
+
+      <!-- Background -->
+      <rect class="svg-bg-rect" x="0" y="0" width="920" height="500" fill="url(#bgGrad)"/>
+
+      <!-- Subtle grid lines -->
+      <g class="grid-lines" opacity="0.35">
+        <line class="grid-line" x1="0" y1="100" x2="920" y2="100" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+        <line class="grid-line" x1="0" y1="200" x2="920" y2="200" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+        <line class="grid-line" x1="0" y1="300" x2="920" y2="300" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+        <line class="grid-line" x1="0" y1="400" x2="920" y2="400" stroke="rgba(255,255,255,.05)" stroke-width="1"/>
+      </g>
+
+      <!-- "ATTACK SURFACE" label on left -->
+      <text class="axis-label lz" x="14" y="242" font-size="10" fill="#94a3b8" transform="rotate(-90,14,242)" text-anchor="middle" letter-spacing="1">攻击面</text>
+      <text class="axis-label le" x="14" y="242" font-size="10" fill="#94a3b8" transform="rotate(-90,14,242)" text-anchor="middle" letter-spacing="1" display="none">ATTACK</text>
+
+      <!-- "PROTECTED ZONE" label on right -->
+      <text class="axis-label lz" x="908" y="242" font-size="10" fill="#94a3b8" transform="rotate(90,908,242)" text-anchor="middle" letter-spacing="1">受保护区</text>
+      <text class="axis-label le" x="908" y="242" font-size="10" fill="#94a3b8" transform="rotate(90,908,242)" text-anchor="middle" letter-spacing="1" display="none">PROTECTED</text>
+
+      <!-- ═══════════════════════════════════════ -->
+      <!-- CHEESE SLICES (5 layers) -->
+      <!-- ═══════════════════════════════════════ -->
+
+      <!-- Slice 1: 硬编码禁止 -->
+      <rect x="118" y="72" width="68" height="320" rx="10"
+            fill="rgba(88,101,242,0.65)"/>
+      <rect x="118" y="72" width="68" height="320" rx="10"
+            fill="none" stroke="rgba(88,101,242,0.9)" stroke-width="1.5"/>
+      <!-- visible holes outlines -->
+      <ellipse cx="137" cy="148" rx="13" ry="9" fill="url(#holeDepression)" stroke="rgba(88,101,242,0.85)" stroke-width="1.2"/>
+      <ellipse cx="168" cy="210" rx="11" ry="15" fill="url(#holeDepression)" stroke="rgba(88,101,242,0.85)" stroke-width="1.2"/>
+      <ellipse cx="145" cy="285" rx="9" ry="12" fill="url(#holeDepression)" stroke="rgba(88,101,242,0.85)" stroke-width="1.2"/>
+      <ellipse cx="172" cy="335" rx="14" ry="8" fill="url(#holeDepression)" stroke="rgba(88,101,242,0.85)" stroke-width="1.2"/>
+
+      <!-- Slice 2: 配置拒绝 -->
+      <rect x="248" y="58" width="68" height="348" rx="10"
+            fill="rgba(123,97,255,0.65)"/>
+      <rect x="248" y="58" width="68" height="348" rx="10"
+            fill="none" stroke="rgba(123,97,255,0.9)" stroke-width="1.5"/>
+      <ellipse cx="262" cy="130" rx="10" ry="14" fill="url(#holeDepression)" stroke="rgba(139,92,246,0.85)" stroke-width="1.2"/>
+      <ellipse cx="295" cy="195" rx="13" ry="9" fill="url(#holeDepression)" stroke="rgba(139,92,246,0.85)" stroke-width="1.2"/>
+      <ellipse cx="270" cy="268" rx="9" ry="11" fill="url(#holeDepression)" stroke="rgba(139,92,246,0.85)" stroke-width="1.2"/>
+      <ellipse cx="300" cy="340" rx="11" ry="16" fill="url(#holeDepression)" stroke="rgba(139,92,246,0.85)" stroke-width="1.2"/>
+      <ellipse cx="278" cy="378" rx="13" ry="8" fill="url(#holeDepression)" stroke="rgba(139,92,246,0.85)" stroke-width="1.2"/>
+
+      <!-- Slice 3: 操作自检 -->
+      <rect x="378" y="68" width="68" height="328" rx="10"
+            fill="rgba(156,91,243,0.65)"/>
+      <rect x="378" y="68" width="68" height="328" rx="10"
+            fill="none" stroke="rgba(156,91,243,0.9)" stroke-width="1.5"/>
+      <ellipse cx="396" cy="140" rx="12" ry="8" fill="url(#holeDepression)" stroke="rgba(217,70,239,0.85)" stroke-width="1.2"/>
+      <ellipse cx="428" cy="205" rx="9" ry="13" fill="url(#holeDepression)" stroke="rgba(217,70,239,0.85)" stroke-width="1.2"/>
+      <ellipse cx="402" cy="278" rx="14" ry="10" fill="url(#holeDepression)" stroke="rgba(217,70,239,0.85)" stroke-width="1.2"/>
+      <ellipse cx="432" cy="348" rx="10" ry="8" fill="url(#holeDepression)" stroke="rgba(217,70,239,0.85)" stroke-width="1.2"/>
+
+      <!-- Slice 4: 配置允许 -->
+      <rect x="508" y="62" width="68" height="340" rx="10"
+            fill="rgba(183,86,232,0.65)"/>
+      <rect x="508" y="62" width="68" height="340" rx="10"
+            fill="none" stroke="rgba(183,86,232,0.9)" stroke-width="1.5"/>
+      <ellipse cx="524" cy="145" rx="11" ry="15" fill="url(#holeDepression)" stroke="rgba(249,115,22,0.85)" stroke-width="1.2"/>
+      <ellipse cx="558" cy="218" rx="13" ry="9" fill="url(#holeDepression)" stroke="rgba(249,115,22,0.85)" stroke-width="1.2"/>
+      <ellipse cx="530" cy="292" rx="9" ry="12" fill="url(#holeDepression)" stroke="rgba(249,115,22,0.85)" stroke-width="1.2"/>
+      <ellipse cx="561" cy="360" rx="12" ry="8" fill="url(#holeDepression)" stroke="rgba(249,115,22,0.85)" stroke-width="1.2"/>
+      <ellipse cx="540" cy="110" rx="8" ry="10" fill="url(#holeDepression)" stroke="rgba(249,115,22,0.85)" stroke-width="1.2"/>
+
+      <!-- Slice 5: 默认保守 -->
+      <rect x="638" y="75" width="68" height="314" rx="10"
+            fill="rgba(213,81,219,0.65)"/>
+      <rect x="638" y="75" width="68" height="314" rx="10"
+            fill="none" stroke="rgba(213,81,219,0.9)" stroke-width="1.5"/>
+      <ellipse cx="657" cy="150" rx="10" ry="13" fill="url(#holeDepression)" stroke="rgba(239,68,68,0.85)" stroke-width="1.2"/>
+      <ellipse cx="689" cy="222" rx="13" ry="9" fill="url(#holeDepression)" stroke="rgba(239,68,68,0.85)" stroke-width="1.2"/>
+      <ellipse cx="660" cy="300" rx="9" ry="11" fill="url(#holeDepression)" stroke="rgba(239,68,68,0.85)" stroke-width="1.2"/>
+      <ellipse cx="691" cy="358" rx="11" ry="7" fill="url(#holeDepression)" stroke="rgba(239,68,68,0.85)" stroke-width="1.2"/>
+
+      <!-- ═══════════════════════════════════════ -->
+      <!-- ATTACK ARROWS — SCENARIO A (blocked at layer 1, y≈175) -->
+      <!-- ═══════════════════════════════════════ -->
+      <!-- Arrow A: hits layer 1 solid area, stops dead -->
+      <line x1="42" y1="175" x2="114" y2="175"
+            stroke="#f43f5e" stroke-width="2.5" stroke-dasharray="5,3"
+            marker-end="url(#arrowRed)"/>
+      <!-- Blocked X at layer 1 -->
+      <g filter="url(#glowGreen)" transform="translate(124,175)">
+        <circle cx="0" cy="0" r="10" fill="rgba(16,185,129,0.2)" stroke="#10b981" stroke-width="1.5"/>
+        <line x1="-5" y1="-5" x2="5" y2="5" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
+        <line x1="5" y1="-5" x2="-5" y2="5" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
+      </g>
+      <!-- Label A -->
+      <text class="lz threat-label" x="42" y="165" font-size="10" fill="#f43f5e" font-weight="600">A: rm -rf /</text>
+      <text class="le threat-label" x="42" y="165" font-size="10" fill="#f43f5e" font-weight="600" display="none">A: rm -rf /</text>
+
+      <!-- ═══════════════════════════════════════ -->
+      <!-- SCENARIO B: passes layers 1,2,3 (through holes), blocked at layer 4, y≈248 -->
+      <!-- ═══════════════════════════════════════ -->
+      <!-- Entry arrow -->
+      <line x1="42" y1="248" x2="152" y2="248"
+            stroke="#f97316" stroke-width="2" stroke-dasharray="4,3"
+            marker-end="url(#arrowOrange)"/>
+      <!-- Through hole at layer 1 (168,210 hole) — passes near y≈248, shifted -->
+      <line x1="156" y1="248" x2="242" y2="248"
+            stroke="#f97316" stroke-width="2" stroke-dasharray="4,3"
+            marker-end="url(#arrowOrange)"/>
+      <!-- Through layer 2 hole (300,268 area) -->
+      <line x1="246" y1="248" x2="372" y2="248"
+            stroke="#f97316" stroke-width="2" stroke-dasharray="4,3"
+            marker-end="url(#arrowOrange)"/>
+      <!-- Through layer 3 hole (402,278 area) -->
+      <line x1="376" y1="248" x2="502" y2="248"
+            stroke="#f97316" stroke-width="2" stroke-dasharray="4,3"
+            marker-end="url(#arrowOrange)"/>
+      <!-- Blocked at layer 4 solid area -->
+      <g filter="url(#glowGreen)" transform="translate(518,248)">
+        <circle cx="0" cy="0" r="10" fill="rgba(245,158,11,0.2)" stroke="#f59e0b" stroke-width="1.5"/>
+        <line x1="-5" y1="-5" x2="5" y2="5" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+        <line x1="5" y1="-5" x2="-5" y2="5" stroke="#f59e0b" stroke-width="2" stroke-linecap="round"/>
+      </g>
+      <!-- Label B -->
+      <text class="lz threat-label" x="42" y="238" font-size="10" fill="#f97316" font-weight="600">B: 注入攻击</text>
+      <text class="le threat-label" x="42" y="238" font-size="10" fill="#f97316" font-weight="600" display="none">B: Injection</text>
+
+      <!-- ═══════════════════════════════════════ -->
+      <!-- SCENARIO C: passes ALL layers (holes align), y≈332 — rare miss -->
+      <!-- ═══════════════════════════════════════ -->
+      <line x1="42" y1="332" x2="114" y2="332"
+            stroke="#f43f5e" stroke-width="1.5" stroke-dasharray="3,4" opacity="0.55"
+            marker-end="url(#arrowRed2)"/>
+      <line x1="186" y1="332" x2="242" y2="332"
+            stroke="#f43f5e" stroke-width="1.5" stroke-dasharray="3,4" opacity="0.55"
+            marker-end="url(#arrowRed2)"/>
+      <line x1="316" y1="332" x2="372" y2="332"
+            stroke="#f43f5e" stroke-width="1.5" stroke-dasharray="3,4" opacity="0.55"
+            marker-end="url(#arrowRed2)"/>
+      <line x1="446" y1="332" x2="502" y2="332"
+            stroke="#f43f5e" stroke-width="1.5" stroke-dasharray="3,4" opacity="0.55"
+            marker-end="url(#arrowRed2)"/>
+      <line x1="576" y1="332" x2="632" y2="332"
+            stroke="#f43f5e" stroke-width="1.5" stroke-dasharray="3,4" opacity="0.55"
+            marker-end="url(#arrowRed2)"/>
+      <!-- Passes through layer 5 and escapes — warn arrow -->
+      <line x1="706" y1="332" x2="760" y2="332"
+            stroke="#f43f5e" stroke-width="1.5" stroke-dasharray="3,4" opacity="0.55"
+            marker-end="url(#arrowRed2)"/>
+      <!-- Warning triangle at end -->
+      <g filter="url(#glowRed)" transform="translate(772,332)">
+        <polygon points="0,-12 13,8 -13,8" fill="rgba(244,63,94,0.25)" stroke="#f43f5e" stroke-width="1.5" stroke-linejoin="round"/>
+        <text x="0" y="5" font-size="10" fill="#f43f5e" text-anchor="middle" font-weight="700">!</text>
+      </g>
+      <!-- Label C -->
+      <text class="lz threat-label" x="42" y="322" font-size="10" fill="#f43f5e" opacity="0.7" font-weight="600">C: 罕见穿透</text>
+      <text class="le threat-label" x="42" y="322" font-size="10" fill="#f43f5e" opacity="0.7" font-weight="600" display="none">C: Rare miss</text>
+
+      <!-- ═══════════════════════════════════════ -->
+      <!-- LAYER LABELS (below slices) -->
+      <!-- ═══════════════════════════════════════ -->
+
+      <!-- Layer 1 -->
+      <text class="layer-caption lz" x="152" y="415" font-size="11" fill="#f1f5f9" text-anchor="middle" font-weight="700">硬编码禁止</text>
+      <text class="layer-caption le" x="152" y="415" font-size="11" fill="#f1f5f9" text-anchor="middle" font-weight="700" display="none">Hard Prohibit</text>
+      <text class="layer-sub lz" x="152" y="430" font-size="10" fill="#94a3b8" text-anchor="middle">L1</text>
+      <text class="layer-sub le" x="152" y="430" font-size="10" fill="#94a3b8" text-anchor="middle" display="none">L1</text>
+
+      <!-- Layer 2 -->
+      <text class="layer-caption lz" x="282" y="428" font-size="11" fill="#f1f5f9" text-anchor="middle" font-weight="700">配置拒绝</text>
+      <text class="layer-caption le" x="282" y="428" font-size="11" fill="#f1f5f9" text-anchor="middle" font-weight="700" display="none">Config Deny</text>
+      <text class="layer-sub lz" x="282" y="443" font-size="10" fill="#94a3b8" text-anchor="middle">L2</text>
+      <text class="layer-sub le" x="282" y="443" font-size="10" fill="#94a3b8" text-anchor="middle" display="none">L2</text>
+
+      <!-- Layer 3 -->
+      <text class="layer-caption lz" x="412" y="420" font-size="11" fill="#f1f5f9" text-anchor="middle" font-weight="700">操作自检</text>
+      <text class="layer-caption le" x="412" y="420" font-size="11" fill="#f1f5f9" text-anchor="middle" font-weight="700" display="none">Self-check</text>
+      <text class="layer-sub lz" x="412" y="435" font-size="10" fill="#94a3b8" text-anchor="middle">L3</text>
+      <text class="layer-sub le" x="412" y="435" font-size="10" fill="#94a3b8" text-anchor="middle" display="none">L3</text>
+
+      <!-- Layer 4 -->
+      <text class="layer-caption lz" x="542" y="424" font-size="11" fill="#f1f5f9" text-anchor="middle" font-weight="700">配置允许</text>
+      <text class="layer-caption le" x="542" y="424" font-size="11" fill="#f1f5f9" text-anchor="middle" font-weight="700" display="none">Config Allow</text>
+      <text class="layer-sub lz" x="542" y="439" font-size="10" fill="#94a3b8" text-anchor="middle">L4</text>
+      <text class="layer-sub le" x="542" y="439" font-size="10" fill="#94a3b8" text-anchor="middle" display="none">L4</text>
+
+      <!-- Layer 5 -->
+      <text class="layer-caption lz" x="672" y="411" font-size="11" fill="#f1f5f9" text-anchor="middle" font-weight="700">默认保守</text>
+      <text class="layer-caption le" x="672" y="411" font-size="11" fill="#f1f5f9" text-anchor="middle" font-weight="700" display="none">Default Safe</text>
+      <text class="layer-sub lz" x="672" y="426" font-size="10" fill="#94a3b8" text-anchor="middle">L5</text>
+      <text class="layer-sub le" x="672" y="426" font-size="10" fill="#94a3b8" text-anchor="middle" display="none">L5</text>
+
+      <!-- ═══════════════════════════════════════ -->
+      <!-- WHAT EACH LAYER BLOCKS (mini tooltips above slices) -->
+      <!-- ═══════════════════════════════════════ -->
+
+      <!-- L1 block tags -->
+      <rect x="100" y="42" width="104" height="22" rx="4" fill="rgba(88,101,242,0.18)" stroke="rgba(88,101,242,0.4)" stroke-width="1"/>
+      <text class="lz" x="152" y="57" font-size="10" fill="rgba(88,101,242,1)" text-anchor="middle">系统破坏 · 凭证盗取</text>
+      <text class="le" x="152" y="57" font-size="10" fill="rgba(88,101,242,1)" text-anchor="middle" display="none">Destruction · Theft</text>
+
+      <!-- L2 block tags -->
+      <rect x="226" y="28" width="112" height="22" rx="4" fill="rgba(123,97,255,0.18)" stroke="rgba(123,97,255,0.4)" stroke-width="1"/>
+      <text class="lz" x="282" y="43" font-size="10" fill="rgba(123,97,255,1)" text-anchor="middle">策略禁止 · 权限拒绝</text>
+      <text class="le" x="282" y="43" font-size="10" fill="rgba(123,97,255,1)" text-anchor="middle" display="none">Policy denied · Perms</text>
+
+      <!-- L3 block tags -->
+      <rect x="354" y="36" width="116" height="22" rx="4" fill="rgba(156,91,243,0.18)" stroke="rgba(156,91,243,0.4)" stroke-width="1"/>
+      <text class="lz" x="412" y="51" font-size="10" fill="rgba(156,91,243,1)" text-anchor="middle">注入检测 · 可疑命令</text>
+      <text class="le" x="412" y="51" font-size="10" fill="rgba(156,91,243,1)" text-anchor="middle" display="none">Injection · Suspicious</text>
+
+      <!-- L4 block tags -->
+      <rect x="483" y="32" width="118" height="22" rx="4" fill="rgba(183,86,232,0.18)" stroke="rgba(183,86,232,0.4)" stroke-width="1"/>
+      <text class="lz" x="542" y="47" font-size="10" fill="rgba(183,86,232,1)" text-anchor="middle">仅明确允许项通过</text>
+      <text class="le" x="542" y="47" font-size="10" fill="rgba(183,86,232,1)" text-anchor="middle" display="none">Only allow-listed ops</text>
+
+      <!-- L5 block tags -->
+      <rect x="614" y="45" width="116" height="22" rx="4" fill="rgba(213,81,219,0.18)" stroke="rgba(213,81,219,0.4)" stroke-width="1"/>
+      <text class="lz" x="672" y="60" font-size="10" fill="rgba(213,81,219,1)" text-anchor="middle">未知操作默认拒绝</text>
+      <text class="le" x="672" y="60" font-size="10" fill="rgba(213,81,219,1)" text-anchor="middle" display="none">Unknown ops blocked</text>
+
+      <!-- ═══════════════════════════════════════ -->
+      <!-- Legend for arrows -->
+      <!-- ═══════════════════════════════════════ -->
+      <g transform="translate(810,80)">
+        <rect x="0" y="0" width="100" height="90" rx="8" fill="rgba(30,41,59,0.85)" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+        <!-- A -->
+        <line x1="10" y1="20" x2="34" y2="20" stroke="#f43f5e" stroke-width="2.5" stroke-dasharray="4,2"/>
+        <polygon points="30,17 36,20 30,23" fill="#f43f5e"/>
+        <text class="lz" x="42" y="24" font-size="10" fill="#f43f5e">立即拦截</text>
+        <text class="le" x="42" y="24" font-size="10" fill="#f43f5e" display="none">Blocked</text>
+        <!-- B -->
+        <line x1="10" y1="46" x2="34" y2="46" stroke="#f97316" stroke-width="2" stroke-dasharray="4,2"/>
+        <polygon points="30,43 36,46 30,49" fill="#f97316"/>
+        <text class="lz" x="42" y="50" font-size="10" fill="#f97316">延迟拦截</text>
+        <text class="le" x="42" y="50" font-size="10" fill="#f97316" display="none">Late block</text>
+        <!-- C -->
+        <line x1="10" y1="72" x2="34" y2="72" stroke="#f43f5e" stroke-width="1.5" stroke-dasharray="3,4" opacity="0.55"/>
+        <polygon points="30,69 36,72 30,75" fill="#f43f5e" opacity="0.55"/>
+        <text class="lz" x="42" y="76" font-size="10" fill="#94a3b8">罕见穿透</text>
+        <text class="le" x="42" y="76" font-size="10" fill="#94a3b8" display="none">Rare miss</text>
+      </g>
+
+      <!-- Block marker legend -->
+      <g transform="translate(810,182)">
+        <rect x="0" y="0" width="100" height="64" rx="8" fill="rgba(30,41,59,0.85)" stroke="rgba(255,255,255,.08)" stroke-width="1"/>
+        <!-- green X = blocked -->
+        <circle cx="20" cy="20" r="10" fill="rgba(16,185,129,0.2)" stroke="#10b981" stroke-width="1.5"/>
+        <line x1="15" y1="15" x2="25" y2="25" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
+        <line x1="25" y1="15" x2="15" y2="25" stroke="#10b981" stroke-width="2" stroke-linecap="round"/>
+        <text class="lz" x="36" y="24" font-size="10" fill="#10b981">已拦截</text>
+        <text class="le" x="36" y="24" font-size="10" fill="#10b981" display="none">Blocked</text>
+        <!-- triangle = miss -->
+        <polygon points="20,48 30,60 10,60" fill="rgba(244,63,94,0.25)" stroke="#f43f5e" stroke-width="1.5" stroke-linejoin="round"/>
+        <text x="20" y="58" font-size="10" fill="#f43f5e" text-anchor="middle" font-weight="700">!</text>
+        <text class="lz" x="36" y="56" font-size="10" fill="#f43f5e">穿透警告</text>
+        <text class="le" x="36" y="56" font-size="10" fill="#f43f5e" display="none">Penetrated</text>
+      </g>
+
+    </svg>
+  </div>
+
+  <!-- Insight bar -->
+  <div class="insight-bar">
+    <span class="lz">
+      核心洞察：<span class="insight-key">单层防御有漏洞，多层防御大概率拦截</span>——
+      奶酪片各有漏洞，但多层叠加后，所有漏洞同时对齐的概率极低
+    </span>
+    <span class="le" style="display:none">
+      Key Insight: <span class="insight-key">Each layer has holes, but stacked layers drastically reduce breach probability</span> —
+      like Swiss cheese slices: any single slice has holes, but aligning all holes simultaneously is statistically rare
+    </span>
+  </div>
+
+  <!-- Scenario Cards -->
+  <div class="scenarios">
+    <!-- Scenario A -->
+    <div class="sc-card">
+      <div class="sc-card-head">
+        <div class="sc-dot" style="background:#f43f5e;"></div>
+        <div class="sc-label">
+          <span class="lz">情景 A — 即时拦截</span>
+          <span class="le" style="display:none">Scenario A — Full block</span>
+        </div>
+      </div>
+      <div class="sc-sub">
+        <span class="lz">攻击在第 1 层（硬编码禁止）被立即阻断。典型案例：<code>rm -rf /</code>、系统级破坏命令、凭证盗取行为。最常见的拦截路径。</span>
+        <span class="le" style="display:none">Attack blocked at Layer 1 (hard prohibition). Examples: <code>rm -rf /</code>, system destruction, credential theft. Most common outcome.</span>
+      </div>
+      <div class="sc-outcome sc-blocked">
+        <span class="lz">第 1 层拦截 · 100% 阻断</span>
+        <span class="le" style="display:none">Blocked at L1 · 100% stopped</span>
+      </div>
+    </div>
+
+    <!-- Scenario B -->
+    <div class="sc-card">
+      <div class="sc-card-head">
+        <div class="sc-dot" style="background:#f97316;"></div>
+        <div class="sc-label">
+          <span class="lz">情景 B — 延迟拦截</span>
+          <span class="le" style="display:none">Scenario B — Late block</span>
+        </div>
+      </div>
+      <div class="sc-sub">
+        <span class="lz">攻击穿过前 3 层（通过漏洞），在第 4 层（配置允许）被拦截。典型案例：伪装成合法请求的注入攻击，需要多层检测协同识别。</span>
+        <span class="le" style="display:none">Attack passes layers 1-3 through holes, blocked at Layer 4 (config allow). Example: disguised injection attacks requiring multi-layer detection.</span>
+      </div>
+      <div class="sc-outcome sc-blocked-late">
+        <span class="lz">第 4 层拦截 · 纵深生效</span>
+        <span class="le" style="display:none">Blocked at L4 · Depth works</span>
+      </div>
+    </div>
+
+    <!-- Scenario C -->
+    <div class="sc-card">
+      <div class="sc-card-head">
+        <div class="sc-dot" style="background:#f43f5e;opacity:.6"></div>
+        <div class="sc-label">
+          <span class="lz">情景 C — 罕见穿透</span>
+          <span class="le" style="display:none">Scenario C — Rare miss</span>
+        </div>
+      </div>
+      <div class="sc-sub">
+        <span class="lz">所有层的漏洞恰好对齐，攻击穿透全部 5 层。概率极低但存在，是持续改进防御的驱动力。人工审查是最终补充手段。</span>
+        <span class="le" style="display:none">All holes align, attack penetrates all 5 layers. Statistically rare but possible — drives continuous improvement. Human review is the ultimate fallback.</span>
+      </div>
+      <div class="sc-outcome sc-miss">
+        <span class="lz">全层穿透 · 极低概率</span>
+        <span class="le" style="display:none">All layers bypassed · Rare</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Stats Row -->
+  <div class="stats-row">
+    <div class="stat-cell">
+      <span class="stat-num">5</span>
+      <div class="stat-label">
+        <span class="lz">防御层次</span>
+        <span class="le" style="display:none">Defense Layers</span>
+      </div>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-num lz">瑞士奶酪</span>
+      <span class="stat-num le" style="display:none">Swiss Cheese</span>
+      <div class="stat-label">
+        <span class="lz">安全模型</span>
+        <span class="le" style="display:none">Security Model</span>
+      </div>
+    </div>
+    <div class="stat-cell">
+      <span class="stat-num lz">纵深防御</span>
+      <span class="stat-num le" style="display:none">Defense-in-Depth</span>
+      <div class="stat-label">
+        <span class="lz">核心哲学</span>
+        <span class="le" style="display:none">Core Philosophy</span>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /.viz-card -->
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

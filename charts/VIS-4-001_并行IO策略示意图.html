@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-4-001 | 并行IO策略示意图</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--panel:#0f172a;--card:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--subtle:#475569;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="warm"]{--bg:#1c1410;--panel:#2a1f16;--card:#3d2d20;--border:#5c4a3a;--text:#f5e6d3;--muted:#c4a882;--subtle:#8b7355;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="light"]{--bg:#f8fafc;--panel:#f1f5f9;--card:#e2e8f0;--border:#cbd5e1;--text:#0f172a;--muted:#475569;--subtle:#94a3b8;--amber:#d97706;--cyan:#0891b2;--violet:#7c3aed;--emerald:#059669;--rose:#e11d48;--slate:#475569;--orange:#ea580c}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'JetBrains Mono',monospace;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding:20px 24px 40px;
+}
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:100}
+.ctrl button{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;padding:6px 12px;
+  background:var(--card);color:var(--text);
+  border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:background 0.15s
+}
+.ctrl button:hover{background:var(--border)}
+
+header{margin-bottom:22px;padding-right:140px}
+.badge-id{font-size:11px;color:var(--muted);letter-spacing:0.08em;margin-bottom:6px}
+h1{font-size:20px;font-weight:700;color:var(--text);line-height:1.2}
+h1 .sub{font-size:13px;font-weight:400;color:var(--muted);margin-left:8px}
+
+.viz-wrap{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+  width:100%;
+  max-width:960px;
+  margin:0 auto 18px;
+}
+svg.main{width:100%;display:block}
+
+.code-wrap{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;
+  overflow:hidden;
+  max-width:960px;
+  margin:0 auto 18px;
+}
+.code-header{
+  background:var(--card);
+  border-bottom:1px solid var(--border);
+  padding:8px 16px;
+  display:flex;align-items:center;gap:10px;
+}
+.code-dots{display:flex;gap:6px}
+.code-dots span{width:12px;height:12px;border-radius:50%}
+.code-dots span:nth-child(1){background:#ff5f57}
+.code-dots span:nth-child(2){background:#ffbd2e}
+.code-dots span:nth-child(3){background:#28ca41}
+.code-filename{font-size:11px;color:var(--muted);margin-left:4px}
+pre{
+  padding:16px 20px;
+  font-family:'JetBrains Mono',monospace;
+  font-size:13px;line-height:1.75;
+  color:var(--text);overflow-x:auto;
+}
+.kw{color:var(--violet)}
+.fn{color:var(--cyan)}
+.str{color:var(--emerald)}
+.cm{color:var(--subtle)}
+
+.callout{
+  max-width:960px;
+  margin:0 auto 18px;
+  padding:13px 20px;
+  background:rgba(251,191,36,0.08);
+  border:1px solid rgba(251,191,36,0.3);
+  border-left:4px solid var(--amber);
+  border-radius:8px;
+  font-size:14px;color:var(--amber);
+  font-weight:600;letter-spacing:0.02em;
+}
+
+.cards{
+  max-width:960px;
+  margin:0 auto;
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:14px;
+}
+.card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;padding:16px;
+}
+.card-label{font-size:10px;letter-spacing:0.1em;font-weight:700;margin-bottom:6px;text-transform:uppercase}
+.card-title{font-size:14px;font-weight:700;margin-bottom:6px}
+.card-desc{font-size:11px;color:var(--muted);line-height:1.55}
+.card.rose{border-left:3px solid var(--rose)}
+.card.rose .card-label,.card.rose .card-title{color:var(--rose)}
+.card.cyan{border-left:3px solid var(--cyan)}
+.card.cyan .card-label,.card.cyan .card-title{color:var(--cyan)}
+.card.emerald{border-left:3px solid var(--emerald)}
+.card.emerald .card-label,.card.emerald .card-title{color:var(--emerald)}
+
+@media(max-width:640px){
+  .cards{grid-template-columns:1fr}
+  h1{font-size:16px}
+}
+</style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="cycleTheme()">Theme</button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<header>
+  <div class="badge-id">VIS-4-001 · Claude Code <span class="lz">并行策略</span><span class="le">Parallel Strategy</span></div>
+  <h1>
+    <span class="lz">并行 I/O 策略示意图</span>
+    <span class="le" style="display:none">Parallel I/O Strategy Diagram</span>
+    <span class="sub">
+      <span class="lz">在等待时间里藏工作</span>
+      <span class="le" style="display:none">Hide work inside waiting time</span>
+    </span>
+  </h1>
+</header>
+
+<!--
+  SVG coordinate system:
+  ViewBox: 0 0 960 540
+  Sequential panel: y=16-210 (height 194)
+  Gap / speedup zone: y=210-310 (height 100)
+  Parallel panel: y=310-500 (height 190)
+  Axis labels: y=510-540
+
+  Timeline X layout (shared horizontal ruler):
+    Label column: x=0-115
+    Chart start: x=120
+    Chart end: x=870
+    Chart width: 750px
+
+  Sequential: 0ms-450ms in 750px → scale=750/450 ≈ 1.6667px/ms
+    x(t) = 120 + t*1.6667
+    0ms  → 120
+    50ms → 203.3  ≈ 203
+    100ms → 286.7 ≈ 287
+    150ms → 370
+    200ms → 453.3 ≈ 453
+    250ms → 536.7 ≈ 537
+    300ms → 620
+    350ms → 703.3 ≈ 703
+    400ms → 786.7 ≈ 787
+    450ms → 870
+
+  Sequential sequence:
+    Row1 (file1): Read   t=0-200ms   → x=120, w=333
+                  Idle   t=200-250ms → x=453, w=84
+                  Process t=250-300ms→ x=537, w=83
+                  Idle   t=300-450ms → x=620, w=250
+    Row2 (file2): Idle   t=0-250ms  → x=120, w=417
+                  Read   t=250-450ms → x=537, w=333
+
+  Waste bracket: covers x=120-870 full span
+
+  Parallel panel: 0ms-200ms in 750px → scale=750/200=3.75px/ms
+    x(t) = 120 + t*3.75
+    0ms → 120
+    50ms → 307.5 ≈ 308
+    100ms → 495
+    150ms → 682.5 ≈ 683
+    200ms → 870
+
+  Parallel sequence:
+    Row1 (file1): Read   t=0-200ms → x=120, w=750 (full width)
+    Row2 (file2): Read   t=0-200ms → x=120, w=750 (full width)
+    Done bar: "all done" at t=200ms (x=870, just a line)
+-->
+
+<div class="viz-wrap">
+<svg class="main" viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <!-- Diagonal stripe pattern for idle/wasted time -->
+    <pattern id="idleStripe" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="10" height="10" fill="#0f172a"/>
+      <line x1="0" y1="0" x2="0" y2="10" stroke="#2d3f55" stroke-width="4"/>
+    </pattern>
+    <pattern id="idleStripeWarm" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="10" height="10" fill="#2a1f16"/>
+      <line x1="0" y1="0" x2="0" y2="10" stroke="#4a3828" stroke-width="4"/>
+    </pattern>
+    <pattern id="idleStripeLight" x="0" y="0" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="10" height="10" fill="#e2e8f0"/>
+      <line x1="0" y1="0" x2="0" y2="10" stroke="#cbd5e1" stroke-width="4"/>
+    </pattern>
+    <!-- Arrow markers -->
+    <marker id="arrowAmber" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+      <path d="M0,0 L0,8 L10,4 Z" fill="#fbbf24"/>
+    </marker>
+    <marker id="arrowDown" markerWidth="10" markerHeight="8" refX="5" refY="8" orient="auto">
+      <path d="M0,0 L10,0 L5,8 Z" fill="#fbbf24"/>
+    </marker>
+  </defs>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <!-- SEQUENTIAL PANEL                                            -->
+  <!-- ─────────────────────────────────────────────────────────── -->
+
+  <!-- Panel frame -->
+  <rect x="16" y="16" width="928" height="198" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+  <!-- Title bar background -->
+  <rect x="16" y="16" width="928" height="36" rx="8" fill="#1e293b"/>
+  <rect x="16" y="38" width="928" height="14" fill="#1e293b"/>
+
+  <!-- "串行" badge -->
+  <rect x="28" y="24" width="86" height="20" rx="4" fill="rgba(251,113,133,0.18)" stroke="#fb7185" stroke-width="1"/>
+  <text font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#fb7185">
+    <tspan x="71" y="38" text-anchor="middle" class="lz">串行 Sequential</tspan>
+    <tspan x="71" y="38" text-anchor="middle" class="le">Sequential</tspan>
+  </text>
+
+  <!-- Subtitle -->
+  <text font-family="JetBrains Mono" font-size="10.5" fill="#475569">
+    <tspan x="128" y="38" class="lz">· CPU 等待 I/O 期间完全空闲，时间浪费</tspan>
+    <tspan x="128" y="38" class="le">· CPU sits idle during I/O wait — wasted time</tspan>
+  </text>
+
+  <!-- Total time right -->
+  <text font-family="JetBrains Mono" font-size="11" font-weight="600" fill="#fb7185" text-anchor="end">
+    <tspan x="900" y="38" class="lz">总耗时: 450ms</tspan>
+    <tspan x="900" y="38" class="le">Total: 450ms</tspan>
+  </text>
+
+  <!-- Row labels -->
+  <text x="60" y="93" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#94a3b8">file1</text>
+  <text x="60" y="140" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#94a3b8">file2</text>
+
+  <!-- === ROW 1 (file1) Gantt bars === -->
+
+  <!-- Read file1: t=0-200ms → x=120, w=333 -->
+  <rect x="120" y="73" width="333" height="28" rx="4" fill="rgba(251,113,133,0.22)" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="286" y="92" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="600" fill="#fb7185">
+    <tspan class="lz">Read file1</tspan><tspan class="le">Read file1</tspan>
+  </text>
+
+  <!-- Idle row1 t=200-250ms → x=453, w=84 -->
+  <rect x="453" y="73" width="84" height="28" rx="2" fill="url(#idleStripe)" stroke="#334155" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="495" y="92" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#475569">idle</text>
+
+  <!-- Process file1: t=250-300ms → x=537, w=83 -->
+  <rect x="537" y="73" width="83" height="28" rx="4" fill="rgba(148,163,184,0.2)" stroke="#94a3b8" stroke-width="1.5"/>
+  <text x="578" y="92" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#94a3b8">
+    <tspan class="lz">处理</tspan><tspan class="le">Process</tspan>
+  </text>
+
+  <!-- Idle row1 t=300-450ms (waiting for file2) → x=620, w=250 -->
+  <rect x="620" y="73" width="250" height="28" rx="2" fill="url(#idleStripe)" stroke="#334155" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="745" y="92" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#475569">
+    <tspan class="lz">等待 file2…</tspan><tspan class="le">waiting file2…</tspan>
+  </text>
+
+  <!-- === ROW 2 (file2) Gantt bars === -->
+
+  <!-- Idle row2 t=0-250ms → x=120, w=417 -->
+  <rect x="120" y="120" width="417" height="28" rx="2" fill="url(#idleStripe)" stroke="#334155" stroke-width="1" stroke-dasharray="4,3"/>
+  <text x="328" y="139" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#475569">
+    <tspan class="lz">排队等待…</tspan><tspan class="le">queued, waiting…</tspan>
+  </text>
+
+  <!-- Read file2: t=250-450ms → x=537, w=333 -->
+  <rect x="537" y="120" width="333" height="28" rx="4" fill="rgba(251,113,133,0.22)" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="703" y="139" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="600" fill="#fb7185">
+    <tspan class="lz">Read file2</tspan><tspan class="le">Read file2</tspan>
+  </text>
+
+  <!-- === Waste annotation === -->
+  <!-- Bracket line at y=163 -->
+  <line x1="120" y1="163" x2="870" y2="163" stroke="#fb7185" stroke-width="1" opacity="0.35"/>
+  <line x1="120" y1="159" x2="120" y2="167" stroke="#fb7185" stroke-width="1.5"/>
+  <line x1="870" y1="159" x2="870" y2="167" stroke="#fb7185" stroke-width="1.5"/>
+  <text x="495" y="179" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#fb7185" opacity="0.75">
+    <tspan class="lz">≈ 50% 时间处于空闲等待（有色斜纹区域）</tspan>
+    <tspan class="le">≈ 50% of time is idle waiting (striped regions)</tspan>
+  </text>
+
+  <!-- === Axis ticks (sequential, y=198) === -->
+  <!-- Major ticks at every 50ms -->
+  <g font-family="JetBrains Mono" font-size="10" fill="#475569" text-anchor="middle">
+    <!-- 0ms → x=120 -->
+    <line x1="120" y1="196" x2="120" y2="202" stroke="#475569" stroke-width="1.5"/>
+    <text x="120" y="212">0</text>
+    <!-- 100ms → x=287 -->
+    <line x1="287" y1="196" x2="287" y2="202" stroke="#475569" stroke-width="1"/>
+    <text x="287" y="212">100</text>
+    <!-- 200ms → x=453 -->
+    <line x1="453" y1="196" x2="453" y2="202" stroke="#475569" stroke-width="1.5"/>
+    <text x="453" y="212">200ms</text>
+    <!-- 300ms → x=620 -->
+    <line x1="620" y1="196" x2="620" y2="202" stroke="#475569" stroke-width="1"/>
+    <text x="620" y="212">300</text>
+    <!-- 450ms → x=870 -->
+    <line x1="870" y1="196" x2="870" y2="202" stroke="#475569" stroke-width="1.5"/>
+    <text x="870" y="212">450ms</text>
+  </g>
+  <line x1="120" y1="196" x2="870" y2="196" stroke="#334155" stroke-width="1.5"/>
+
+  <!-- Subtle vertical grid lines within sequential panel -->
+  <g opacity="0.2" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,5">
+    <line x1="287" y1="60" x2="287" y2="196"/>
+    <line x1="453" y1="60" x2="453" y2="196"/>
+    <line x1="620" y1="60" x2="620" y2="196"/>
+    <line x1="703" y1="60" x2="703" y2="196"/>
+    <line x1="787" y1="60" x2="787" y2="196"/>
+  </g>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <!-- SPEEDUP ANNOTATION (center gap zone y=218-300)             -->
+  <!-- ─────────────────────────────────────────────────────────── -->
+
+  <!-- Vertical arrow from sequential result to parallel result -->
+  <!-- Centered at x=880 -->
+  <line x1="880" y1="220" x2="880" y2="292" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#arrowDown)"/>
+
+  <!-- Strikethrough 450ms -->
+  <text x="880" y="232" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#fb7185" opacity="0.7"
+        text-decoration="line-through">450ms</text>
+
+  <!-- Speedup badge -->
+  <rect x="843" y="240" width="74" height="30" rx="6" fill="rgba(251,191,36,0.15)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="880" y="260" text-anchor="middle" font-family="JetBrains Mono" font-size="14" font-weight="700" fill="#fbbf24">2.25×</text>
+
+  <!-- "提速" label -->
+  <text x="880" y="278" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#fbbf24">
+    <tspan class="lz">提速</tspan><tspan class="le">speedup</tspan>
+  </text>
+
+  <!-- 200ms label at bottom of arrow -->
+  <text x="880" y="302" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="600" fill="#34d399">200ms</text>
+
+  <!-- Small horizontal connector lines showing "450ms → 200ms" -->
+  <line x1="820" y1="232" x2="843" y2="232" stroke="#fb7185" stroke-width="1" opacity="0.4" stroke-dasharray="3,3"/>
+  <line x1="820" y1="302" x2="843" y2="302" stroke="#34d399" stroke-width="1" opacity="0.4" stroke-dasharray="3,3"/>
+
+  <!-- ─────────────────────────────────────────────────────────── -->
+  <!-- PARALLEL PANEL                                              -->
+  <!-- ─────────────────────────────────────────────────────────── -->
+
+  <!-- Panel frame -->
+  <rect x="16" y="312" width="928" height="185" rx="8" fill="#0f172a" stroke="#334155" stroke-width="1"/>
+  <!-- Title bar: slightly tinted green -->
+  <rect x="16" y="312" width="928" height="36" rx="8" fill="#0b1f15"/>
+  <rect x="16" y="334" width="928" height="14" fill="#0b1f15"/>
+
+  <!-- "并行" badge -->
+  <rect x="28" y="320" width="86" height="20" rx="4" fill="rgba(52,211,153,0.15)" stroke="#34d399" stroke-width="1"/>
+  <text font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#34d399">
+    <tspan x="71" y="334" text-anchor="middle" class="lz">并行 Parallel</tspan>
+    <tspan x="71" y="334" text-anchor="middle" class="le">Parallel</tspan>
+  </text>
+
+  <!-- Subtitle -->
+  <text font-family="JetBrains Mono" font-size="10.5" fill="#475569">
+    <tspan x="128" y="334" class="lz">· 所有独立 I/O 同时发出，总等待时间 = 最慢单次</tspan>
+    <tspan x="128" y="334" class="le">· All independent I/O fires concurrently — total wait = slowest single op</tspan>
+  </text>
+
+  <!-- Total time right (emerald) -->
+  <text font-family="JetBrains Mono" font-size="12" font-weight="700" fill="#34d399" text-anchor="end">
+    <tspan x="900" y="334" class="lz">总耗时: 200ms</tspan>
+    <tspan x="900" y="334" class="le">Total: 200ms</tspan>
+  </text>
+
+  <!-- Row labels -->
+  <text x="60" y="381" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#94a3b8">file1</text>
+  <text x="60" y="425" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#94a3b8">file2</text>
+
+  <!-- Promise.all bracket annotation above bars -->
+  <line x1="120" y1="350" x2="870" y2="350" stroke="#a78bfa" stroke-width="1" stroke-dasharray="4,4" opacity="0.45"/>
+  <line x1="120" y1="346" x2="120" y2="354" stroke="#a78bfa" stroke-width="1.5" opacity="0.6"/>
+  <line x1="870" y1="346" x2="870" y2="354" stroke="#a78bfa" stroke-width="1.5" opacity="0.6"/>
+  <text x="334" y="348" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#a78bfa" opacity="0.8">
+    Promise.all([
+  </text>
+  <text x="717" y="348" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#a78bfa" opacity="0.8">
+    ])  ←
+    <tspan class="lz">同时发出</tspan><tspan class="le">fire together</tspan>
+  </text>
+
+  <!-- === ROW 1 (file1) parallel bar === -->
+  <!-- Read file1: t=0-200ms → full width x=120 w=750 -->
+  <rect x="120" y="358" width="750" height="28" rx="4" fill="rgba(34,211,238,0.18)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="495" y="377" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="600" fill="#22d3ee">
+    <tspan class="lz">Read file1 — 进行中 (0ms → 200ms)</tspan>
+    <tspan class="le">Read file1 — running (0ms → 200ms)</tspan>
+  </text>
+
+  <!-- === ROW 2 (file2) parallel bar === -->
+  <!-- Read file2: t=0-200ms → full width x=120 w=750 -->
+  <rect x="120" y="402" width="750" height="28" rx="4" fill="rgba(34,211,238,0.18)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="495" y="421" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="600" fill="#22d3ee">
+    <tspan class="lz">Read file2 — 同步进行中 (0ms → 200ms)</tspan>
+    <tspan class="le">Read file2 — running concurrently (0ms → 200ms)</tspan>
+  </text>
+
+  <!-- Left bracket showing "both fired simultaneously" -->
+  <line x1="108" y1="358" x2="108" y2="430" stroke="#22d3ee" stroke-width="1.5" opacity="0.5"/>
+  <line x1="104" y1="358" x2="112" y2="358" stroke="#22d3ee" stroke-width="1.5"/>
+  <line x1="104" y1="430" x2="112" y2="430" stroke="#22d3ee" stroke-width="1.5"/>
+
+  <!-- "All done" result banner -->
+  <rect x="120" y="437" width="750" height="24" rx="4" fill="rgba(52,211,153,0.12)" stroke="rgba(52,211,153,0.35)" stroke-width="1.2"/>
+  <text x="495" y="454" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#34d399">
+    <tspan class="lz">✓ t=200ms：两文件同时就绪，零空闲，立即处理</tspan>
+    <tspan class="le">✓ t=200ms: both files ready simultaneously — zero idle, process immediately</tspan>
+  </text>
+
+  <!-- === Axis ticks (parallel, y=468) === -->
+  <line x1="120" y1="468" x2="870" y2="468" stroke="#334155" stroke-width="1.5"/>
+  <g font-family="JetBrains Mono" font-size="10" fill="#475569" text-anchor="middle">
+    <line x1="120" y1="468" x2="120" y2="474" stroke="#475569" stroke-width="1.5"/>
+    <text x="120" y="484">0ms</text>
+    <line x1="308" y1="468" x2="308" y2="474" stroke="#475569" stroke-width="1"/>
+    <text x="308" y="484">50</text>
+    <line x1="495" y1="468" x2="495" y2="474" stroke="#475569" stroke-width="1.5"/>
+    <text x="495" y="484">100ms</text>
+    <line x1="683" y1="468" x2="683" y2="474" stroke="#475569" stroke-width="1"/>
+    <text x="683" y="484">150</text>
+    <line x1="870" y1="468" x2="870" y2="474" stroke="#475569" stroke-width="1.5"/>
+    <text x="870" y="484">200ms</text>
+  </g>
+
+  <!-- Subtle vertical grid lines within parallel panel -->
+  <g opacity="0.2" stroke="#94a3b8" stroke-width="1" stroke-dasharray="3,5">
+    <line x1="308" y1="355" x2="308" y2="468"/>
+    <line x1="495" y1="355" x2="495" y2="468"/>
+    <line x1="683" y1="355" x2="683" y2="468"/>
+  </g>
+
+  <!-- Scale labels (x-axis titles) -->
+  <text x="120" y="502" font-family="JetBrains Mono" font-size="10" fill="#475569">
+    <tspan class="lz">← 并行时间轴 (0–200ms) →</tspan>
+    <tspan class="le">← Parallel timeline (0–200ms) →</tspan>
+  </text>
+  <text x="120" y="518" font-family="JetBrains Mono" font-size="10" fill="#475569">
+    <tspan class="lz">← 串行时间轴 (0–450ms, 缩放不同) →</tspan>
+    <tspan class="le">← Sequential timeline (0–450ms, different scale) →</tspan>
+  </text>
+
+  <!-- NOTE: 2.25× = 450/200 speedup (3 files: 1×200ms parallel vs 2×200ms+process sequential) -->
+
+</svg>
+</div>
+
+<!-- Code block -->
+<div class="code-wrap">
+  <div class="code-header">
+    <div class="code-dots"><span></span><span></span><span></span></div>
+    <span class="code-filename">
+      <span class="lz">parallel-io.ts &nbsp;·&nbsp; Promise.all 并行读取 · Claude Code 启动逻辑</span>
+      <span class="le" style="display:none">parallel-io.ts &nbsp;·&nbsp; Promise.all parallel reads · Claude Code startup logic</span>
+    </span>
+  </div>
+  <pre><span style="color:var(--subtle)">// <span class="lz">并行 I/O：3 个文件同时发出请求，总等待 ≈ 200ms（非 600ms）</span><span class="le" style="display:none">// Parallel I/O: 3 files requested simultaneously, total wait ≈ 200ms (not 600ms)</span></span>
+<span style="color:var(--violet)">const</span> [claudemd, settings, pkg] = <span style="color:var(--violet)">await</span> <span style="color:var(--cyan)">Promise</span>.<span style="color:var(--cyan)">all</span>([
+  <span style="color:var(--cyan)">readFile</span>(<span style="color:var(--emerald)">'CLAUDE.md'</span>),            <span style="color:var(--subtle)">// <span class="lz">I/O 发出，不等待结果</span><span class="le" style="display:none">// I/O fired, not awaited yet</span></span>
+  <span style="color:var(--cyan)">readFile</span>(<span style="color:var(--emerald)">'.claude/settings.json'</span>), <span style="color:var(--subtle)">// <span class="lz">同时发出</span><span class="le" style="display:none">// fired simultaneously</span></span>
+  <span style="color:var(--cyan)">readFile</span>(<span style="color:var(--emerald)">'package.json'</span>),          <span style="color:var(--subtle)">// <span class="lz">同时发出</span><span class="le" style="display:none">// fired simultaneously</span></span>
+]);
+<span style="color:var(--subtle)">// <span class="lz">↑ 所有 await 集中在这一点，3 文件只等最慢那个 ≈ 200ms</span><span class="le" style="display:none">// ↑ All awaited here — wait only for the slowest, ≈ 200ms total</span></span>
+
+<span style="color:var(--subtle)">// ❌ <span class="lz">反例：串行写法</span><span class="le" style="display:none">// ❌ Anti-pattern: sequential</span></span>
+<span style="color:var(--subtle)">// const claudemd = await readFile('CLAUDE.md');     → <span class="lz">等 200ms</span><span class="le">wait 200ms</span></span>
+<span style="color:var(--subtle)">// const settings = await readFile('settings.json'); → <span class="lz">再等 200ms</span><span class="le">wait 200ms more</span></span>
+<span style="color:var(--subtle)">// const pkg      = await readFile('package.json');  → <span class="lz">再等 200ms → 共 600ms!</span><span class="le">wait 200ms more → total 600ms!</span></span></pre>
+</div>
+
+<!-- Principle callout -->
+<div class="callout">
+  💡
+  <span class="lz">在等待时间里藏工作 — I/O 等待的那段时间，完全可以同时推进所有其他独立 I/O。N 次等待 → 1 次等待。</span>
+  <span class="le" style="display:none">Hide work inside waiting time — while waiting for one I/O, all other independent I/O can progress. N waits → 1 wait.</span>
+</div>
+
+<!-- Summary cards -->
+<div class="cards">
+  <div class="card rose">
+    <div class="card-label">
+      <span class="lz">串行代价</span><span class="le" style="display:none">Sequential cost</span>
+    </div>
+    <div class="card-title">
+      <span class="lz">I/O 空闲浪费</span><span class="le" style="display:none">I/O Idle Waste</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">串行读取 3 文件需等待 3×200ms = 600ms；I/O 等待期间 CPU 完全空闲，Gantt 图中大量斜纹区域即为浪费。</span>
+      <span class="le" style="display:none">Reading 3 files serially: 3×200ms = 600ms total. CPU sits idle during each I/O — the striped regions in the Gantt chart visualize this waste.</span>
+    </div>
+  </div>
+  <div class="card cyan">
+    <div class="card-label">Promise.all</div>
+    <div class="card-title">
+      <span class="lz">并行发出所有请求</span><span class="le" style="display:none">Fire All Requests Together</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">所有独立 I/O 通过 <code>Promise.all</code> 同时发出，总等待时间压缩为单次最慢操作的耗时。Gantt 图中两行完全对齐。</span>
+      <span class="le" style="display:none">All independent I/O fired via <code>Promise.all</code> simultaneously. Total wait collapses to the single slowest operation. Both Gantt rows fully aligned.</span>
+    </div>
+  </div>
+  <div class="card emerald">
+    <div class="card-label">
+      <span class="lz">实测效果</span><span class="le" style="display:none">Measured Result</span>
+    </div>
+    <div class="card-title">
+      <span class="lz">启动提速 ~40%</span><span class="le" style="display:none">~40% Faster Startup</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">Claude Code 启动阶段并行读取 CLAUDE.md、settings.json、package.json 等多文件，N 文件仅需 1 次等待。示例中 2.25× 提速（450ms → 200ms）。</span>
+      <span class="le" style="display:none">Claude Code startup reads CLAUDE.md, settings.json, package.json in parallel. N files, only 1 wait. Example: 2.25× speedup (450ms → 200ms).</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t = localStorage.getItem('vtheme') || 'dark';
+  var l = localStorage.getItem('vlang') || 'zh';
+  document.documentElement.setAttribute('data-theme', t);
+  document.documentElement.setAttribute('data-lang', l);
+  var btn = document.getElementById('langBtn');
+  if (btn) btn.textContent = l === 'zh' ? 'EN' : '中';
+
+  function applyLang(lang) {
+    var isEn = lang === 'en';
+    document.querySelectorAll('.le, .lz').forEach(function(el) {
+      var shouldShow = isEn ? el.classList.contains('le') : el.classList.contains('lz');
+      el.style.display = shouldShow ? '' : 'none';
+      // also handle SVG display attribute
+      if (el.namespaceURI === 'http://www.w3.org/2000/svg') {
+        el.setAttribute('display', shouldShow ? 'inline' : 'none');
+      }
+    });
+  }
+  applyLang(l);
+
+  window.cycleTheme = function() {
+    var themes = ['dark', 'warm', 'light'];
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = themes[(themes.indexOf(cur) + 1) % themes.length];
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('vtheme', next);
+  };
+
+  window.toggleLang = function() {
+    var cur = document.documentElement.getAttribute('data-lang') || 'zh';
+    var next = cur === 'zh' ? 'en' : 'zh';
+    document.documentElement.setAttribute('data-lang', next);
+    localStorage.setItem('vlang', next);
+    var btn2 = document.getElementById('langBtn');
+    if (btn2) btn2.textContent = next === 'zh' ? 'EN' : '中';
+    applyLang(next);
+  };
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

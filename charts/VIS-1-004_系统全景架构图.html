@@ -1,0 +1,609 @@
+<!DOCTYPE html>
+<!--
+  VIS-1-004 · 系统全景架构图 · System Overview: 8 Subsystems
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  QueryEngine为中心 · 7子系统六边形分布 · 3条数据流高速公路
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · 系统全景架构图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    :root,[data-theme="dark"]{
+      --bg:#020617;--bg-card:rgba(15,23,42,0.5);--border:#1e293b;
+      --text:#f8fafc;--muted:#94a3b8;--subtle:#64748b;--footer-c:#475569;--pulse:#22d3ee;
+      --svg-bg:#020617;--svg-grid:#1e293b;--mask-fill:#0f172a;
+      --emerald-f:rgba(6,78,59,0.45);  --emerald-s:#34d399;
+      --amber-f:rgba(120,53,15,0.4);   --amber-s:#fbbf24;
+      --cyan-f:rgba(8,51,68,0.5);      --cyan-s:#22d3ee;
+      --violet-f:rgba(76,29,149,0.45); --violet-s:#a78bfa;  --violet-t:#c4b5fd;
+      --orange-f:rgba(154,52,18,0.4);  --orange-s:#fb923c;
+      --rose-f:rgba(136,19,55,0.45);   --rose-s:#fb7185;
+      --slate-f:rgba(30,41,59,0.5);    --slate-s:#94a3b8;
+      --teal-f:rgba(19,78,74,0.45);    --teal-s:#2dd4bf;
+      --svg-text:#f8fafc;--svg-sub:#94a3b8;--svg-ann:#64748b;
+      --flow-req:#60a5fa;--flow-exec:#34d399;--flow-state:#fbbf24;
+      --ext-fill:rgba(15,23,42,0.6);--ext-s:#475569;
+      --btn-bg:rgba(15,23,42,0.85);--btn-active:#22d3ee;
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3;--bg-card:rgba(255,255,255,0.85);--border:#e8e0d4;
+      --text:#1a1412;--muted:#6b5a4e;--subtle:#9c8878;--footer-c:#b5a99a;--pulse:#0891b2;
+      --svg-bg:#faf7f2;--svg-grid:#ddd4c4;--mask-fill:#faf7f2;
+      --emerald-f:rgba(6,78,59,0.12);  --emerald-s:#059669;
+      --amber-f:rgba(180,83,9,0.12);   --amber-s:#d97706;
+      --cyan-f:rgba(8,51,68,0.1);      --cyan-s:#0891b2;
+      --violet-f:rgba(76,29,149,0.1);  --violet-s:#7c3aed;  --violet-t:#6d28d9;
+      --orange-f:rgba(154,52,18,0.1);  --orange-s:#ea580c;
+      --rose-f:rgba(136,19,55,0.1);    --rose-s:#e11d48;
+      --slate-f:rgba(200,190,180,0.4); --slate-s:#9c8878;
+      --teal-f:rgba(19,78,74,0.1);     --teal-s:#0d9488;
+      --svg-text:#1a1412;--svg-sub:#6b5a4e;--svg-ann:#9c8878;
+      --flow-req:#2563eb;--flow-exec:#059669;--flow-state:#d97706;
+      --ext-fill:rgba(240,230,215,0.8);--ext-s:#9c8878;
+      --btn-bg:rgba(255,255,255,0.9);--btn-active:#0891b2;
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--bg-card:rgba(248,250,252,0.95);--border:#e2e8f0;
+      --text:#0f172a;--muted:#475569;--subtle:#94a3b8;--footer-c:#94a3b8;--pulse:#0ea5e9;
+      --svg-bg:#f8fafc;--svg-grid:#e2e8f0;--mask-fill:#f1f5f9;
+      --emerald-f:rgba(16,185,129,0.1); --emerald-s:#10b981;
+      --amber-f:rgba(245,158,11,0.1);   --amber-s:#f59e0b;
+      --cyan-f:rgba(6,182,212,0.1);     --cyan-s:#06b6d4;
+      --violet-f:rgba(139,92,246,0.1);  --violet-s:#8b5cf6;  --violet-t:#7c3aed;
+      --orange-f:rgba(249,115,22,0.1);  --orange-s:#f97316;
+      --rose-f:rgba(244,63,94,0.1);     --rose-s:#f43f5e;
+      --slate-f:rgba(226,232,240,0.8);  --slate-s:#64748b;
+      --teal-f:rgba(20,184,166,0.1);    --teal-s:#14b8a6;
+      --svg-text:#0f172a;--svg-sub:#475569;--svg-ann:#94a3b8;
+      --flow-req:#3b82f6;--flow-exec:#22c55e;--flow-state:#eab308;
+      --ext-fill:rgba(241,245,249,0.9);--ext-s:#94a3b8;
+      --btn-bg:rgba(248,250,252,0.95);--btn-active:#0ea5e9;
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:2rem;transition:background .25s,color .25s;}
+    .container{max-width:1100px;margin:0 auto;}
+    .controls{position:fixed;top:1rem;right:1rem;display:flex;gap:5px;z-index:100;
+      background:var(--btn-bg);border:1px solid var(--border);border-radius:10px;
+      padding:5px 7px;backdrop-filter:blur(8px);}
+    .cb{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;padding:4px 9px;
+      border-radius:5px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+    .cb:hover{color:var(--text);border-color:var(--border);}
+    .cb.active{border-color:var(--btn-active);color:var(--text);}
+    .cdiv{width:1px;background:var(--border);margin:2px;}
+    .header{margin-bottom:1.5rem;}
+    .header-row{display:flex;align-items:center;gap:.875rem;margin-bottom:.375rem;}
+    .pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--pulse);animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
+    h1{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;}
+    .subtitle{font-size:.75rem;color:var(--muted);letter-spacing:.06em;}
+    [lang="en"] .lz{display:none;}
+.chart-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;
+      padding:1.25rem;margin-bottom:1.5rem;overflow:hidden;}
+    .chart-wrap svg{display:block;width:100%;height:auto;}
+    .analogy-box{background:var(--bg-card);border:1px solid var(--border);border-left:3px solid var(--cyan-s);
+      border-radius:8px;padding:.875rem 1.125rem;margin-bottom:1.5rem;font-size:.78rem;
+      line-height:1.75;color:var(--muted);}
+    .analogy-box strong{color:var(--text);}
+    .footer{text-align:center;font-size:.65rem;color:var(--footer-c);letter-spacing:.05em;
+      padding-top:.75rem;border-top:1px solid var(--border);}
+  </style>
+</head>
+<body data-theme="dark">
+<div class="controls">
+  <button class="cb active" onclick="setTheme('dark')"><span class="lz">暗</span><span class="le">Dark</span></button>
+  <button class="cb" onclick="setTheme('warm')"><span class="lz">暖</span><span class="le">Warm</span></button>
+  <button class="cb" onclick="setTheme('light')"><span class="lz">亮</span><span class="le">Light</span></button>
+  <div class="cdiv"></div>
+  <button class="cb" onclick="toggleLang()"><span class="lz">EN</span><span class="le">中</span></button>
+</div>
+
+<div class="container">
+  <div class="header">
+    <div class="header-row">
+      <div class="pulse-dot"></div>
+      <h1><span class="lz">系统全景架构图</span><span class="le">System Overview Architecture</span></h1>
+    </div>
+    <div class="subtitle">
+      <span class="lz">VIS-1-004 · Claude Code 八大子系统 · QueryEngine 为核心 · 三条数据流高速公路</span>
+      <span class="le">VIS-1-004 · 8 Subsystems · QueryEngine as Core Hub · 3 Data Flow Highways</span>
+    </div>
+  </div>
+
+  <div class="analogy-box">
+    <strong><span class="lz">🏙️ 城市类比：</span><span class="le">🏙️ City analogy: </span></strong>
+    <span class="lz">把 Claude Code 想象成一座城市 — QueryEngine 是<strong>市中心</strong>（心脏），7 个子系统是各功能区。三条彩色高速公路连接所有区域：<strong style="color:#60a5fa">蓝色</strong> = 请求路径（你的话传到 AI），<strong style="color:#34d399">绿色</strong> = 执行路径（工具实际跑起来），<strong style="color:#fbbf24">黄色</strong> = 状态路径（结果更新到屏幕）。</span>
+    <span class="le">Think of Claude Code as a city — QueryEngine is the <strong>city center</strong> (heart), 7 subsystems are functional districts. Three highways connect everything: <strong style="color:#3b82f6">Blue</strong> = request path (your input to AI), <strong style="color:#22c55e">Green</strong> = execution path (tools actually running), <strong style="color:#eab308">Yellow</strong> = state path (results update on screen).</span>
+  </div>
+
+  <div class="chart-wrap">
+    <svg viewBox="0 0 1200 780" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="g4" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--svg-grid)" stroke-width="0.5"/>
+        </pattern>
+        <!-- Unified arrow marker (reusable) -->
+        <marker id="arrow" markerWidth="12" markerHeight="10" refX="10" refY="5" orient="auto" markerUnits="strokeWidth">
+          <path d="M0,0 L10,5 L0,10 L2,5 z" fill="context-stroke"/>
+        </marker>
+        <marker id="aReq" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+          <polygon points="0 0, 10 4, 0 8" fill="var(--flow-req)"/>
+        </marker>
+        <marker id="aExec" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+          <polygon points="0 0, 10 4, 0 8" fill="var(--flow-exec)"/>
+        </marker>
+        <marker id="aState" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+          <polygon points="0 0, 10 4, 0 8" fill="var(--flow-state)"/>
+        </marker>
+        <marker id="aRose" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+          <polygon points="0 0, 10 4, 0 8" fill="var(--rose-s)"/>
+        </marker>
+        <marker id="aViolet" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+          <polygon points="0 0, 10 4, 0 8" fill="var(--violet-s)"/>
+        </marker>
+        <marker id="aEmerald" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+          <polygon points="0 0, 10 4, 0 8" fill="var(--emerald-s)"/>
+        </marker>
+        <marker id="aTeal" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+          <polygon points="0 0, 10 4, 0 8" fill="var(--teal-s)"/>
+        </marker>
+        <marker id="aGray" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+          <polygon points="0 0, 10 4, 0 8" fill="var(--svg-ann)"/>
+        </marker>
+        <radialGradient id="gCenterQE" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="var(--cyan-s)" stop-opacity="0.4"/>
+          <stop offset="100%" stop-color="var(--cyan-s)" stop-opacity="0.06"/>
+        </radialGradient>
+        <filter id="glow4" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur stdDeviation="4" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+      </defs>
+
+      <rect width="1200" height="780" fill="var(--svg-bg)"/>
+      <rect width="1200" height="780" fill="url(#g4)"/>
+
+      <!-- ══ LAYER BANDS (subtle background guides) ══ -->
+      <text x="30" y="80" fill="var(--svg-ann)" font-size="11" font-weight="600" font-family="JetBrains Mono,monospace" opacity="0.6">
+        <tspan class="lz">① 入口层</tspan><tspan class="le">① Entry</tspan>
+      </text>
+      <text x="30" y="270" fill="var(--svg-ann)" font-size="11" font-weight="600" font-family="JetBrains Mono,monospace" opacity="0.6">
+        <tspan class="lz">② 核心层</tspan><tspan class="le">② Core</tspan>
+      </text>
+      <text x="30" y="470" fill="var(--svg-ann)" font-size="11" font-weight="600" font-family="JetBrains Mono,monospace" opacity="0.6">
+        <tspan class="lz">③ 工具层</tspan><tspan class="le">③ Tools</tspan>
+      </text>
+      <text x="30" y="670" fill="var(--svg-ann)" font-size="11" font-weight="600" font-family="JetBrains Mono,monospace" opacity="0.6">
+        <tspan class="lz">④ 外部接入</tspan><tspan class="le">④ External</tspan>
+      </text>
+      <line x1="20" y1="195" x2="1180" y2="195" stroke="var(--svg-grid)" stroke-width="1" stroke-dasharray="2,4" opacity="0.4"/>
+      <line x1="20" y1="400" x2="1180" y2="400" stroke="var(--svg-grid)" stroke-width="1" stroke-dasharray="2,4" opacity="0.4"/>
+      <line x1="20" y1="585" x2="1180" y2="585" stroke="var(--svg-grid)" stroke-width="1" stroke-dasharray="2,4" opacity="0.4"/>
+
+      <!-- ══ FLOW ARROWS (drawn first, behind nodes) ══ -->
+      <!-- ① Blue request path: User → Terminal UI → QueryEngine -->
+      <path d="M 600 105 L 600 135" fill="none" stroke="var(--flow-req)" stroke-width="3" opacity="0.85" marker-end="url(#aReq)"/>
+      <path d="M 600 220 L 600 295" fill="none" stroke="var(--flow-req)" stroke-width="3" opacity="0.85" marker-end="url(#aReq)"/>
+      <text x="610" y="175" fill="var(--flow-req)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">stdin → React</tspan><tspan class="le">stdin → React</tspan>
+      </text>
+      <text x="610" y="265" fill="var(--flow-req)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">parseArgs → REPL</tspan><tspan class="le">parseArgs → REPL</tspan>
+      </text>
+
+      <!-- QueryEngine → Anthropic API (fetchSSE) -->
+      <path d="M 720 340 C 900 340 1020 200 1060 120" fill="none" stroke="var(--flow-req)" stroke-width="3" opacity="0.85" marker-end="url(#aReq)"/>
+      <text x="950" y="215" fill="var(--flow-req)" font-size="11" font-weight="600" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">fetchSSE 流式调用</tspan><tspan class="le">fetchSSE stream</tspan>
+      </text>
+
+      <!-- Anthropic API → QueryEngine (response) -->
+      <path d="M 1060 135 C 1000 250 860 340 720 360" fill="none" stroke="var(--flow-state)" stroke-width="2.5" opacity="0.75" stroke-dasharray="6,3" marker-end="url(#aState)"/>
+      <text x="870" y="290" fill="var(--flow-state)" font-size="11" font-weight="600" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">SSE 返回 tool_use</tspan><tspan class="le">SSE tool_use</tspan>
+      </text>
+
+      <!-- ② Green execute path: QueryEngine → Agent → Tool Runtime -->
+      <path d="M 600 420 L 600 475" fill="none" stroke="var(--flow-exec)" stroke-width="3" opacity="0.85" marker-end="url(#aExec)"/>
+      <text x="610" y="450" fill="var(--flow-exec)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">调度</tspan><tspan class="le">dispatch</tspan>
+      </text>
+      <path d="M 720 510 L 880 510" fill="none" stroke="var(--flow-exec)" stroke-width="3" opacity="0.85" marker-end="url(#aExec)"/>
+      <text x="770" y="500" fill="var(--flow-exec)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">并发执行</tspan><tspan class="le">concurrent</tspan>
+      </text>
+
+      <!-- Permission gate (Security) between Agent and ToolRuntime -->
+      <path d="M 600 545 L 600 600 L 260 600 L 260 365" fill="none" stroke="var(--rose-s)" stroke-width="2" opacity="0.7" stroke-dasharray="5,3" marker-end="url(#aRose)"/>
+      <text x="340" y="615" fill="var(--rose-s)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">权限检查 · 9 步</tspan><tspan class="le">permission · 9-step</tspan>
+      </text>
+
+      <!-- ③ Yellow state path: Tool result → QueryEngine (result flows back) -->
+      <path d="M 880 545 C 800 560 740 480 720 440" fill="none" stroke="var(--flow-state)" stroke-width="2.5" opacity="0.8" stroke-dasharray="6,3" marker-end="url(#aState)"/>
+      <text x="770" y="565" fill="var(--flow-state)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">回传结果</tspan><tspan class="le">result back</tspan>
+      </text>
+
+      <!-- Tool Runtime → File System (exec) -->
+      <path d="M 900 575 L 900 612" fill="none" stroke="var(--flow-exec)" stroke-width="2.5" opacity="0.8" marker-end="url(#aExec)"/>
+      <text x="810" y="600" fill="var(--flow-exec)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">fs/exec</tspan><tspan class="le">fs/exec</tspan>
+      </text>
+
+      <!-- QueryEngine ↔ State persistence (messages history) -->
+      <path d="M 480 360 L 300 360" fill="none" stroke="var(--teal-s)" stroke-width="2" opacity="0.75" marker-end="url(#aTeal)"/>
+      <path d="M 300 380 L 480 380" fill="none" stroke="var(--teal-s)" stroke-width="2" opacity="0.75" stroke-dasharray="5,3" marker-end="url(#aTeal)"/>
+      <text x="330" y="355" fill="var(--teal-s)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">写消息历史</tspan><tspan class="le">persist msgs</tspan>
+      </text>
+      <text x="330" y="395" fill="var(--teal-s)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">会话恢复</tspan><tspan class="le">restore</tspan>
+      </text>
+
+      <!-- Tool Runtime → Extensions (MCP client calls) -->
+      <path d="M 960 545 C 1070 545 1090 580 1090 615" fill="none" stroke="var(--emerald-s)" stroke-width="2" opacity="0.75" marker-end="url(#aEmerald)"/>
+      <text x="990" y="580" fill="var(--emerald-s)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">MCP 调用</tspan><tspan class="le">MCP invoke</tspan>
+      </text>
+
+      <!-- Extensions → External file-system/services -->
+      <path d="M 1090 695 L 1090 720" fill="none" stroke="var(--emerald-s)" stroke-width="2" opacity="0.7" marker-end="url(#aEmerald)"/>
+
+      <!-- State output back to Terminal UI (yellow update) -->
+      <path d="M 480 345 C 360 345 280 290 340 215" fill="none" stroke="var(--flow-state)" stroke-width="2" opacity="0.7" stroke-dasharray="5,3" marker-end="url(#aState)"/>
+      <text x="215" y="280" fill="var(--flow-state)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">渲染更新</tspan><tspan class="le">render</tspan>
+      </text>
+
+      <!-- Agent → Extensions (hooks) -->
+      <path d="M 720 525 C 960 515 1010 560 1050 610" fill="none" stroke="var(--violet-s)" stroke-width="1.5" opacity="0.55" stroke-dasharray="4,4"/>
+
+      <!-- Telemetry tap (from QE) -->
+      <path d="M 600 395 L 600 670 L 150 670 L 150 695" fill="none" stroke="var(--amber-s)" stroke-width="1.5" opacity="0.6" stroke-dasharray="4,3" marker-end="url(#aGray)"/>
+
+      <!-- ══ LAYER ① ENTRY: User Terminal + CLI + REPL ══ -->
+      <!-- User Terminal (far left, entry point) -->
+      <rect x="100" y="60" width="170" height="50" rx="6" fill="var(--ext-fill)" stroke="var(--ext-s)" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <text x="185" y="82" fill="var(--svg-sub)" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">💻 用户终端</tspan><tspan class="le">💻 User Terminal</tspan>
+      </text>
+      <text x="185" y="99" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">stdin / tty</text>
+
+      <!-- Anthropic API (top right — external cloud) -->
+      <rect x="990" y="60" width="160" height="60" rx="6" fill="var(--ext-fill)" stroke="var(--ext-s)" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <text x="1070" y="82" fill="var(--svg-sub)" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">☁ Anthropic 云</tspan><tspan class="le">☁ Anthropic Cloud</tspan>
+      </text>
+      <text x="1070" y="99" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">Claude API · SSE</text>
+      <text x="1070" y="112" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">claude-opus-4-6</text>
+
+      <!-- SS1: 终端 UI / REPL (entry) — center -->
+      <rect x="490" y="50" width="220" height="80" rx="8" fill="var(--mask-fill)"/>
+      <rect x="490" y="50" width="220" height="80" rx="8" fill="var(--slate-f)" stroke="var(--slate-s)" stroke-width="2"/>
+      <text x="600" y="74" fill="var(--svg-text)" font-size="15" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">终端 UI · REPL</tspan><tspan class="le">Terminal UI · REPL</tspan>
+      </text>
+      <text x="600" y="93" fill="var(--slate-s)" font-size="11" text-anchor="middle" font-family="JetBrains Mono,monospace">SS1 · Ink / React · REPL.tsx</text>
+      <text x="600" y="110" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">parseArgs → runInteractive</tspan><tspan class="le">parseArgs → runInteractive</tspan>
+      </text>
+      <text x="600" y="124" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">人机交互门户</tspan><tspan class="le">Human-machine portal</tspan>
+      </text>
+
+      <!-- SS2: Prompt Factory (upper right of entry row) -->
+      <rect x="770" y="50" width="180" height="80" rx="8" fill="var(--mask-fill)"/>
+      <rect x="770" y="50" width="180" height="80" rx="8" fill="var(--violet-f)" stroke="var(--violet-s)" stroke-width="2"/>
+      <text x="860" y="74" fill="var(--svg-text)" font-size="14" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">提示词工厂</tspan><tspan class="le">Prompt Factory</tspan>
+      </text>
+      <text x="860" y="91" fill="var(--violet-t)" font-size="11" text-anchor="middle" font-family="JetBrains Mono,monospace">SS2 · System Prompt</text>
+      <text x="860" y="107" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">buildSystemPrompt()</tspan><tspan class="le">buildSystemPrompt()</tspan>
+      </text>
+      <text x="860" y="121" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">AI 行为蓝图</tspan><tspan class="le">AI behavior blueprint</tspan>
+      </text>
+
+      <!-- SS2 feeds prompts into QueryEngine (short diagonal arrow) -->
+      <path d="M 800 135 C 760 200 740 260 680 295" fill="none" stroke="var(--violet-s)" stroke-width="1.8" opacity="0.65" stroke-dasharray="4,3" marker-end="url(#aViolet)"/>
+      <text x="685" y="200" fill="var(--violet-s)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">注入 system</tspan><tspan class="le">inject system</tspan>
+      </text>
+
+      <!-- User Terminal → REPL entry line -->
+      <path d="M 270 85 L 485 85" fill="none" stroke="var(--flow-req)" stroke-width="2.5" opacity="0.8" marker-end="url(#aReq)"/>
+      <text x="340" y="78" fill="var(--flow-req)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">CLI 入口</tspan><tspan class="le">CLI entry</tspan>
+      </text>
+
+      <!-- ══ LAYER ② CORE: QueryEngine + Permission (Security) + State Persistence ══ -->
+
+      <!-- SS5: State Persistence (left core) -->
+      <rect x="100" y="300" width="200" height="90" rx="8" fill="var(--mask-fill)"/>
+      <rect x="100" y="300" width="200" height="90" rx="8" fill="var(--teal-f)" stroke="var(--teal-s)" stroke-width="2"/>
+      <text x="200" y="325" fill="var(--svg-text)" font-size="14" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">状态持久化</tspan><tspan class="le">State Persistence</tspan>
+      </text>
+      <text x="200" y="342" fill="var(--teal-s)" font-size="11" text-anchor="middle" font-family="JetBrains Mono,monospace">SS5 · sessionStorage</text>
+      <text x="200" y="359" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">messages[] · todos · cwd</tspan><tspan class="le">messages[] · todos · cwd</tspan>
+      </text>
+      <text x="200" y="375" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">记忆的存储库</tspan><tspan class="le">Memory repository</tspan>
+      </text>
+
+      <!-- CENTER: QueryEngine — the heart -->
+      <circle cx="600" cy="360" r="120" fill="var(--mask-fill)" filter="url(#glow4)"/>
+      <circle cx="600" cy="360" r="120" fill="url(#gCenterQE)" stroke="var(--cyan-s)" stroke-width="3"/>
+      <circle cx="600" cy="360" r="113" fill="none" stroke="var(--cyan-s)" stroke-width="1" opacity="0.35"/>
+      <text x="600" y="330" fill="var(--cyan-s)" font-size="20" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">QueryEngine</text>
+      <text x="600" y="353" fill="var(--svg-text)" font-size="14" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">queryLoop()</tspan><tspan class="le">queryLoop()</tspan>
+      </text>
+      <text x="600" y="372" fill="var(--svg-text)" font-size="12" font-weight="500" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">查询循环</tspan><tspan class="le">Query Loop</tspan>
+      </text>
+      <text x="600" y="391" fill="var(--svg-ann)" font-size="11" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">SSE · tool_use · 合并 · 递归</tspan><tspan class="le">SSE · tool_use · merge · loop</tspan>
+      </text>
+      <text x="600" y="408" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">系统心脏 ❤</tspan><tspan class="le">System Heart ❤</tspan>
+      </text>
+
+      <!-- SS6: Security (right of core, gates both API and tools) -->
+      <rect x="900" y="300" width="200" height="90" rx="8" fill="var(--mask-fill)"/>
+      <rect x="900" y="300" width="200" height="90" rx="8" fill="var(--rose-f)" stroke="var(--rose-s)" stroke-width="2"/>
+      <text x="1000" y="325" fill="var(--svg-text)" font-size="14" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">安全架构</tspan><tspan class="le">Security Layer</tspan>
+      </text>
+      <text x="1000" y="342" fill="var(--rose-s)" font-size="11" text-anchor="middle" font-family="JetBrains Mono,monospace">SS6 · 9-step guard</text>
+      <text x="1000" y="359" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Permission System</tspan><tspan class="le">Permission System</tspan>
+      </text>
+      <text x="1000" y="375" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">信任的守护者</tspan><tspan class="le">Trust guardian</tspan>
+      </text>
+
+      <!-- QE ↔ Security (bidirectional gating) -->
+      <path d="M 720 345 L 900 345" fill="none" stroke="var(--rose-s)" stroke-width="2" opacity="0.8" marker-end="url(#aRose)"/>
+      <path d="M 900 375 L 720 375" fill="none" stroke="var(--rose-s)" stroke-width="2" opacity="0.8" stroke-dasharray="5,3" marker-end="url(#aRose)"/>
+      <text x="770" y="338" fill="var(--rose-s)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">检查工具调用</tspan><tspan class="le">check tool call</tspan>
+      </text>
+      <text x="770" y="393" fill="var(--rose-s)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">allow / deny</tspan><tspan class="le">allow / deny</tspan>
+      </text>
+
+      <!-- ══ LAYER ③ TOOLS: Agent + Tool Runtime ══ -->
+
+      <!-- SS4: Agent Orchestration (left tool layer, below QE) -->
+      <rect x="490" y="475" width="220" height="80" rx="8" fill="var(--mask-fill)"/>
+      <rect x="490" y="475" width="220" height="80" rx="8" fill="var(--violet-f)" stroke="var(--violet-s)" stroke-width="2"/>
+      <text x="600" y="500" fill="var(--svg-text)" font-size="14" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Agent 编排</tspan><tspan class="le">Agent Orchestration</tspan>
+      </text>
+      <text x="600" y="517" fill="var(--violet-s)" font-size="11" text-anchor="middle" font-family="JetBrains Mono,monospace">SS4 · ToolExecutor</text>
+      <text x="600" y="534" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">并发调度 · 子 Agent</tspan><tspan class="le">concurrent dispatch · sub-agent</tspan>
+      </text>
+      <text x="600" y="548" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">自主决策大脑</tspan><tspan class="le">Autonomous brain</tspan>
+      </text>
+
+      <!-- SS3: Tool Runtime (right tool layer) -->
+      <rect x="880" y="475" width="220" height="100" rx="8" fill="var(--mask-fill)"/>
+      <rect x="880" y="475" width="220" height="100" rx="8" fill="var(--cyan-f)" stroke="var(--cyan-s)" stroke-width="2"/>
+      <text x="990" y="500" fill="var(--svg-text)" font-size="14" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">工具运行时</tspan><tspan class="le">Tool Runtime</tspan>
+      </text>
+      <text x="990" y="517" fill="var(--cyan-s)" font-size="11" text-anchor="middle" font-family="JetBrains Mono,monospace">SS3 · 40 tools</text>
+      <!-- Mini tool chips inside runtime -->
+      <rect x="895" y="527" width="58" height="18" rx="3" fill="var(--cyan-s)" opacity="0.18" stroke="var(--cyan-s)" stroke-width="0.8"/>
+      <text x="924" y="540" fill="var(--cyan-s)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">Bash</text>
+      <rect x="957" y="527" width="58" height="18" rx="3" fill="var(--cyan-s)" opacity="0.18" stroke="var(--cyan-s)" stroke-width="0.8"/>
+      <text x="986" y="540" fill="var(--cyan-s)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">Read</text>
+      <rect x="1019" y="527" width="58" height="18" rx="3" fill="var(--cyan-s)" opacity="0.18" stroke="var(--cyan-s)" stroke-width="0.8"/>
+      <text x="1048" y="540" fill="var(--cyan-s)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">Edit</text>
+      <rect x="895" y="549" width="58" height="18" rx="3" fill="var(--cyan-s)" opacity="0.18" stroke="var(--cyan-s)" stroke-width="0.8"/>
+      <text x="924" y="562" fill="var(--cyan-s)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">Grep</text>
+      <rect x="957" y="549" width="58" height="18" rx="3" fill="var(--cyan-s)" opacity="0.18" stroke="var(--cyan-s)" stroke-width="0.8"/>
+      <text x="986" y="562" fill="var(--cyan-s)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">Task</text>
+      <rect x="1019" y="549" width="58" height="18" rx="3" fill="var(--cyan-s)" opacity="0.18" stroke="var(--cyan-s)" stroke-width="0.8"/>
+      <text x="1048" y="562" fill="var(--cyan-s)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">...</text>
+
+      <!-- ══ LAYER ④ EXTERNAL: File System + MCP + Telemetry ══ -->
+
+      <!-- Telemetry (far left external) -->
+      <rect x="80" y="695" width="180" height="60" rx="6" fill="var(--ext-fill)" stroke="var(--amber-s)" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <text x="170" y="717" fill="var(--svg-sub)" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">📊 遥测 Telemetry</tspan><tspan class="le">📊 Telemetry</tspan>
+      </text>
+      <text x="170" y="734" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">OTel exporter</text>
+      <text x="170" y="748" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">指标 · 追踪 · 日志</tspan><tspan class="le">metrics · traces · logs</tspan>
+      </text>
+
+      <!-- File System (below Tool Runtime, bottom external) -->
+      <rect x="820" y="615" width="160" height="60" rx="6" fill="var(--ext-fill)" stroke="var(--ext-s)" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <text x="900" y="637" fill="var(--svg-sub)" font-size="12" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">📁 文件系统 / Shell</tspan><tspan class="le">📁 File System / Shell</tspan>
+      </text>
+      <text x="900" y="653" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">OS fs · child_process</text>
+      <text x="900" y="667" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Read/Write/Bash 落地</tspan><tspan class="le">Read/Write/Bash</tspan>
+      </text>
+
+      <!-- SS7: Extensions — MCP + Hooks (right external layer) -->
+      <rect x="1000" y="615" width="180" height="80" rx="8" fill="var(--mask-fill)"/>
+      <rect x="1000" y="615" width="180" height="80" rx="8" fill="var(--emerald-f)" stroke="var(--emerald-s)" stroke-width="2"/>
+      <text x="1090" y="640" fill="var(--svg-text)" font-size="14" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">扩展生态</tspan><tspan class="le">Extensions</tspan>
+      </text>
+      <text x="1090" y="657" fill="var(--emerald-s)" font-size="11" text-anchor="middle" font-family="JetBrains Mono,monospace">SS7 · MCP Client + Hooks</text>
+      <text x="1090" y="673" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">外部 MCP Server</tspan><tspan class="le">External MCP servers</tspan>
+      </text>
+      <text x="1090" y="687" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">能力的无限延伸</tspan><tspan class="le">Infinite extension</tspan>
+      </text>
+
+      <!-- Ext MCP Server box (below Extensions) -->
+      <rect x="1020" y="720" width="140" height="40" rx="6" fill="var(--ext-fill)" stroke="var(--emerald-s)" stroke-width="1.2" stroke-dasharray="4,3"/>
+      <text x="1090" y="738" fill="var(--svg-sub)" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">☁ 外部 MCP</tspan><tspan class="le">☁ External MCP</tspan>
+      </text>
+      <text x="1090" y="752" fill="var(--svg-ann)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">stdio · SSE · HTTP</text>
+
+      <!-- ══ LEGEND: Flow paths ══ -->
+      <rect x="330" y="695" width="510" height="60" rx="6" fill="var(--bg-card)" stroke="var(--border)" stroke-width="1"/>
+      <text x="348" y="713" fill="var(--svg-sub)" font-size="11" font-weight="600" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">数据流图例</tspan><tspan class="le">Data Flow Legend</tspan>
+      </text>
+      <!-- Request -->
+      <line x1="348" y1="730" x2="388" y2="730" stroke="var(--flow-req)" stroke-width="3" marker-end="url(#aReq)"/>
+      <text x="395" y="734" fill="var(--flow-req)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">① 请求</tspan><tspan class="le">① Request</tspan>
+      </text>
+      <!-- Execute -->
+      <line x1="480" y1="730" x2="520" y2="730" stroke="var(--flow-exec)" stroke-width="3" marker-end="url(#aExec)"/>
+      <text x="527" y="734" fill="var(--flow-exec)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">② 执行</tspan><tspan class="le">② Execute</tspan>
+      </text>
+      <!-- State -->
+      <line x1="600" y1="730" x2="640" y2="730" stroke="var(--flow-state)" stroke-width="3" stroke-dasharray="5,3" marker-end="url(#aState)"/>
+      <text x="647" y="734" fill="var(--flow-state)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">③ 状态/回传</tspan><tspan class="le">③ State</tspan>
+      </text>
+      <!-- Security -->
+      <line x1="348" y1="747" x2="388" y2="747" stroke="var(--rose-s)" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#aRose)"/>
+      <text x="395" y="751" fill="var(--rose-s)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">权限门</tspan><tspan class="le">Permission</tspan>
+      </text>
+      <!-- Persist -->
+      <line x1="480" y1="747" x2="520" y2="747" stroke="var(--teal-s)" stroke-width="2" marker-end="url(#aTeal)"/>
+      <text x="527" y="751" fill="var(--teal-s)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">持久化</tspan><tspan class="le">Persist</tspan>
+      </text>
+      <!-- Extension -->
+      <line x1="600" y1="747" x2="640" y2="747" stroke="var(--emerald-s)" stroke-width="2" marker-end="url(#aEmerald)"/>
+      <text x="647" y="751" fill="var(--emerald-s)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">扩展调用</tspan><tspan class="le">Extension</tspan>
+      </text>
+    </svg>
+  </div>
+
+  <div class="footer">
+    VIS-1-004 · <span class="lz">系统全景架构图</span><span class="le">System Overview Architecture</span>
+    · Claude Code 2.1.88 · 8 Subsystems · QueryEngine Core
+    · v2 2026-04-15
+  </div>
+</div>
+
+<script>
+(function(){
+  function setTheme(t){try{localStorage.setItem('vtheme',t);}catch(e){}
+    document.body.setAttribute('data-theme',t);
+    document.querySelectorAll('.controls .cb').forEach(b=>{
+      b.classList.toggle('active',b.getAttribute('onclick').includes("'"+t+"'"));
+    });
+  }
+  function toggleLang(){
+    const cur=document.documentElement.getAttribute('lang')||'zh';
+    document.documentElement.setAttribute('lang',cur==='zh'?'en':'zh');
+  }
+  // cc-restore-on-load
+  try{
+    var _t=localStorage.getItem('vtheme');
+    if(_t==='dark'||_t==='warm'||_t==='light')setTheme(_t);
+    var _l=localStorage.getItem('vlang');
+    if(_l==='en'&&document.documentElement.lang!=='en')toggleLang();
+  }catch(e){}
+  window.setTheme=setTheme;
+  window.toggleLang=toggleLang;
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

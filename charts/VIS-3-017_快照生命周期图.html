@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-3-017 | 快照生命周期图</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+/* Defaults so data-theme="" or no attribute resolves correctly */
+[data-theme="dark"]{--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono','SF Mono',Consolas,monospace;min-height:100vh;padding:60px 24px 48px}
+
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:100}
+.ctrl button{font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:background .15s}
+.ctrl button:hover{background:var(--subtle)}
+
+.header{text-align:center;margin-bottom:32px}
+.header .badge{display:inline-block;font-size:11px;padding:3px 10px;background:var(--card);border:1px solid var(--border);border-radius:4px;color:var(--muted);margin-bottom:10px;letter-spacing:.05em}
+.header h1{font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px}
+.header p{font-size:13px;color:var(--muted)}
+
+.svg-wrap{width:100%;max-width:960px;margin:0 auto 32px;border:1px solid var(--border);border-radius:12px;background:var(--panel);overflow:hidden}
+.svg-wrap svg{width:100%;height:auto;display:block}
+
+.stats-row{display:flex;gap:12px;max-width:960px;margin:0 auto 24px;flex-wrap:wrap}
+.stat-card{flex:1;min-width:160px;padding:14px 18px;border-radius:10px;border:1px solid var(--border);background:var(--card);text-align:center}
+.stat-card .num{font-size:20px;font-weight:700;margin-bottom:4px}
+.stat-card .label{font-size:11px;color:var(--muted);line-height:1.4}
+.stat-card.cyan .num{color:var(--cyan)}
+.stat-card.emerald .num{color:var(--emerald)}
+.stat-card.rose .num{color:var(--rose)}
+
+.cards{display:flex;gap:16px;max-width:960px;margin:0 auto 24px;flex-wrap:wrap}
+.card{flex:1;min-width:200px;padding:16px 20px;border-radius:10px;border:1px solid var(--border);background:var(--card)}
+.card .label{font-size:10px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:.5px}
+.card .title{font-size:14px;font-weight:600;margin-bottom:6px}
+.card .desc{font-size:11px;color:var(--muted);line-height:1.6}
+.card.cyan{border-color:rgba(34,211,238,.3);background:rgba(34,211,238,.05)}
+.card.cyan .title{color:var(--cyan)}
+.card.emerald{border-color:rgba(16,185,129,.3);background:rgba(16,185,129,.05)}
+.card.emerald .title{color:var(--emerald)}
+.card.amber{border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.05)}
+.card.amber .title{color:var(--amber)}
+.card.rose{border-color:rgba(244,63,94,.3);background:rgba(244,63,94,.05)}
+.card.rose .title{color:var(--rose)}
+
+.footer{max-width:960px;margin:0 auto;font-size:11px;color:var(--muted);display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;padding-top:16px;border-top:1px solid var(--border)}[data-lang="en"] .lz{display:none}
+[data-lang="en"] .le{display:inline}
+</style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="cycleTheme()">Theme</button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<div class="header">
+  <div class="badge">VIS-3-017</div>
+  <h1>
+    <span class="lz">快照生命周期图</span>
+    <span class="le">Snapshot Lifecycle Diagram</span>
+  </h1>
+  <p>
+    <span class="lz">文件编辑快照系统的 4 阶段完整生命周期 · 可回退 · 零数据丢失</span>
+    <span class="le">4-phase lifecycle of the file edit snapshot system · reversible · zero data loss</span>
+  </p>
+</div>
+
+<div class="svg-wrap">
+<svg viewBox="0 0 920 480" xmlns="http://www.w3.org/2000/svg" style="font-family:'JetBrains Mono',monospace">
+<defs>
+  <!-- Arrow markers -->
+  <marker id="arr-cyan" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+    <path d="M0,0 L0,7 L9,3.5 z" fill="#22d3ee"/>
+  </marker>
+  <marker id="arr-emerald" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+    <path d="M0,0 L0,7 L9,3.5 z" fill="#10b981"/>
+  </marker>
+  <marker id="arr-amber" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+    <path d="M0,0 L0,7 L9,3.5 z" fill="#f59e0b"/>
+  </marker>
+  <marker id="arr-rose" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+    <path d="M0,0 L0,7 L9,3.5 z" fill="#f43f5e"/>
+  </marker>
+  <marker id="arr-muted" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+    <path d="M0,0 L0,7 L9,3.5 z" fill="#475569"/>
+  </marker>
+
+  <!-- Glow filters -->
+  <filter id="glow-cyan" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="4" result="blur"/>
+    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="glow-emerald" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="4" result="blur"/>
+    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="glow-amber" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="4" result="blur"/>
+    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="glow-rose" x="-40%" y="-40%" width="180%" height="180%">
+    <feGaussianBlur stdDeviation="4" result="blur"/>
+    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+
+  <!-- Background dot pattern -->
+  <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+    <circle cx="12" cy="12" r="0.8" fill="#1e293b" opacity="0.8"/>
+  </pattern>
+
+  <!-- Traveling token animation -->
+  <style>
+    @keyframes token-travel {
+      0%   { transform: translate(136px, 155px); opacity: 0; }
+      4%   { opacity: 1; }
+      20%  { transform: translate(290px, 155px); opacity: 1; }
+      24%  { transform: translate(290px, 155px); opacity: 0; }
+      25%  { transform: translate(378px, 155px); opacity: 0; }
+      29%  { opacity: 1; }
+      45%  { transform: translate(530px, 155px); opacity: 1; }
+      49%  { transform: translate(530px, 155px); opacity: 0; }
+      50%  { transform: translate(620px, 155px); opacity: 0; }
+      54%  { opacity: 1; }
+      70%  { transform: translate(776px, 155px); opacity: 1; }
+      74%  { transform: translate(776px, 155px); opacity: 0; }
+      /* rewind arc back to phase 1 */
+      75%  { transform: translate(776px, 350px); opacity: 0; }
+      79%  { opacity: 1; }
+      95%  { transform: translate(136px, 350px); opacity: 1; }
+      99%  { transform: translate(136px, 155px); opacity: 0.5; }
+      100% { transform: translate(136px, 155px); opacity: 0; }
+    }
+    .token { animation: token-travel 5s ease-in-out infinite; }
+    @keyframes pulse-ring {
+      0%   { opacity: 0.6; r: 6px; }
+      100% { opacity: 0;   r: 16px; }
+    }
+    .pulse-cyan { animation: pulse-ring 2s ease-out infinite; }
+    .pulse-emerald { animation: pulse-ring 2s ease-out infinite 0.5s; }
+    .pulse-amber { animation: pulse-ring 2s ease-out infinite 1s; }
+    .pulse-rose { animation: pulse-ring 2s ease-out infinite 1.5s; }
+  </style>
+</defs>
+
+<!-- ═══════════════════════════════════════════════════════
+     BACKGROUND
+════════════════════════════════════════════════════════ -->
+<rect width="920" height="480" fill="#0f172a"/>
+<rect width="920" height="480" fill="url(#dots)"/>
+
+<!-- Title bar -->
+<text x="460" y="30" text-anchor="middle" font-size="13" font-weight="700" fill="#f1f5f9" letter-spacing="1">
+  <tspan class="lz">文件编辑快照系统 · 4 阶段生命周期</tspan>
+  <tspan class="le">File Edit Snapshot System · 4-Phase Lifecycle</tspan>
+</text>
+
+<!-- ═══════════════════════════════════════════════════════
+     HORIZONTAL CONNECTING ARROWS (drawn first, behind cards)
+════════════════════════════════════════════════════════ -->
+
+<!-- Phase 1 → Phase 2 -->
+<line x1="302" y1="155" x2="370" y2="155" stroke="#22d3ee" stroke-width="1.8" stroke-dasharray="4,3" marker-end="url(#arr-cyan)" opacity="0.7"/>
+
+<!-- Phase 2 → Phase 3 -->
+<line x1="542" y1="155" x2="612" y2="155" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="4,3" marker-end="url(#arr-amber)" opacity="0.7"/>
+
+<!-- Phase 3 → Phase 4 -->
+<!-- We'll do a downward layout for phase 4 in row 2 or keep horizontal — using a vertical drop arrow -->
+<!-- Actually all 4 phases are in horizontal flow: phase 3 → phase 4 -->
+<line x1="782" y1="155" x2="852" y2="155" stroke="#f43f5e" stroke-width="1.8" stroke-dasharray="4,3" opacity="0"/>
+<!-- Phase 3 ends at x=780, phase 4 starts below — we use 2x2 grid layout instead -->
+<!-- Let me re-position: 2x2 grid with phases 1,2 top row and 3,4 bottom row -->
+
+<!-- ═══════════════════════════════════════════════════════
+     2×2 LAYOUT PLAN:
+     Phase 1: x=30   y=55  w=200 h=160
+     Phase 2: x=258  y=55  w=200 h=160
+     Phase 3: x=30   y=270 w=200 h=160
+     Phase 4: x=258  y=270 w=200 h=160
+     Center arrows between them
+     Right side: circular rewind arc
+════════════════════════════════════════════════════════ -->
+
+<!-- ─── CONNECTOR LINES (all drawn before card rects) ─── -->
+
+<!-- Phase 1 → Phase 2 (right) -->
+<line x1="232" y1="135" x2="256" y2="135" stroke="#10b981" stroke-width="2" marker-end="url(#arr-emerald)" opacity="0.8"/>
+
+<!-- Phase 2 → Phase 4 (down) -->
+<line x1="358" y1="217" x2="358" y2="268" stroke="#f59e0b" stroke-width="2" marker-end="url(#arr-amber)" opacity="0.8"/>
+
+<!-- Phase 4 → Phase 3 (left) -->
+<line x1="256" y1="350" x2="232" y2="350" stroke="#f43f5e" stroke-width="2" marker-end="url(#arr-rose)" opacity="0.8"/>
+
+<!-- Phase 3 → Phase 1 (up, rewind loop) -->
+<line x1="130" y1="268" x2="130" y2="217" stroke="#22d3ee" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arr-cyan)" opacity="0.7"/>
+
+<!-- ─── LARGE CIRCULAR REWIND ARC (right side) ─── -->
+<!-- Phase 4 rewind → back to Phase 1, arc on right side of diagram -->
+<path d="M 460,350 C 560,350 580,140 460,135"
+      fill="none" stroke="#f43f5e" stroke-width="1.5" stroke-dasharray="6,4" opacity="0.5" marker-end="url(#arr-rose)"/>
+
+<!-- Label on rewind arc -->
+<text x="578" y="252" text-anchor="middle" font-size="10" fill="#f43f5e" opacity="0.85">
+  <tspan class="lz">回退循环</tspan>
+  <tspan class="le">rewind loop</tspan>
+</text>
+
+<!-- ═══════════════════════════════════════════════════════
+     PHASE 1 — trackEdit 编辑追踪  (cyan, top-left)
+     x=30 y=55 w=200 h=160
+════════════════════════════════════════════════════════ -->
+<!-- Card background -->
+<rect x="30" y="55" width="200" height="160" rx="10" fill="rgba(34,211,238,0.07)" stroke="#22d3ee" stroke-width="1.8"/>
+<!-- Header strip -->
+<rect x="30" y="55" width="200" height="32" rx="10" fill="rgba(34,211,238,0.22)"/>
+<rect x="30" y="75" width="200" height="12" fill="rgba(34,211,238,0.22)"/>
+
+<!-- Phase badge -->
+<circle cx="50" cy="71" r="10" fill="#22d3ee"/>
+<text x="50" y="75" text-anchor="middle" font-size="10" font-weight="700" fill="#0f172a">1</text>
+
+<!-- Phase title -->
+<text x="140" y="68" text-anchor="middle" font-size="12" font-weight="700" fill="#22d3ee">trackEdit</text>
+<text x="140" y="82" text-anchor="middle" font-size="10" fill="#67e8f9">
+  <tspan class="lz">编辑追踪</tspan>
+  <tspan class="le">Edit Tracking</tspan>
+</text>
+
+<!-- Pulse ring on badge -->
+<circle class="pulse-cyan" cx="50" cy="71" r="10" fill="none" stroke="#22d3ee" stroke-width="1.5"/>
+
+<!-- Content lines -->
+<text x="44" y="107" font-size="10" fill="#a5f3fc">
+  <tspan>· </tspan>
+  <tspan class="lz">实时监控文件系统变更</tspan>
+  <tspan class="le">real-time FS monitoring</tspan>
+</text>
+<text x="44" y="122" font-size="10" fill="#a5f3fc">
+  <tspan>· </tspan><tspan fill="#22d3ee">path</tspan><tspan> · </tspan><tspan fill="#22d3ee">timestamp</tspan>
+</text>
+<text x="44" y="137" font-size="10" fill="#a5f3fc">
+  <tspan>· </tspan><tspan fill="#22d3ee">diff</tspan>
+  <tspan class="lz"> 内容捕获</tspan>
+  <tspan class="le"> content capture</tspan>
+</text>
+<!-- Trigger label -->
+<rect x="44" y="148" width="170" height="16" rx="4" fill="rgba(34,211,238,0.12)" stroke="rgba(34,211,238,0.3)" stroke-width="0.8"/>
+<text x="50" y="160" font-size="10" fill="#67e8f9">
+  <tspan class="lz">触发: Edit / Write / NotebookEdit</tspan>
+  <tspan class="le">trigger: Edit / Write / Notebook</tspan>
+</text>
+<!-- Mini code snippet -->
+<rect x="44" y="170" width="170" height="34" rx="4" fill="rgba(15,23,42,0.6)" stroke="rgba(34,211,238,0.2)" stroke-width="0.8"/>
+<text x="50" y="183" font-size="10" fill="#67e8f9" font-family="'JetBrains Mono',monospace">trackEdit(path, diff)</text>
+<text x="50" y="196" font-size="10" fill="#475569" font-family="'JetBrains Mono',monospace">→ EditRecord&#123;&#125;</text>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     PHASE 2 — makeSnapshot 制作快照  (emerald, top-right)
+     x=258 y=55 w=200 h=160
+════════════════════════════════════════════════════════ -->
+<rect x="258" y="55" width="200" height="160" rx="10" fill="rgba(16,185,129,0.07)" stroke="#10b981" stroke-width="1.8"/>
+<rect x="258" y="55" width="200" height="32" rx="10" fill="rgba(16,185,129,0.22)"/>
+<rect x="258" y="75" width="200" height="12" fill="rgba(16,185,129,0.22)"/>
+
+<circle cx="278" cy="71" r="10" fill="#10b981"/>
+<text x="278" y="75" text-anchor="middle" font-size="10" font-weight="700" fill="#0f172a">2</text>
+<circle class="pulse-emerald" cx="278" cy="71" r="10" fill="none" stroke="#10b981" stroke-width="1.5"/>
+
+<text x="368" y="68" text-anchor="middle" font-size="12" font-weight="700" fill="#10b981">makeSnapshot</text>
+<text x="368" y="82" text-anchor="middle" font-size="10" fill="#6ee7b7">
+  <tspan class="lz">制作快照</tspan>
+  <tspan class="le">Create Snapshot</tspan>
+</text>
+
+<text x="272" y="107" font-size="10" fill="#a7f3d0">
+  <tspan>· </tspan>
+  <tspan class="lz">捕获编辑前后完整状态</tspan>
+  <tspan class="le">capture full before+after</tspan>
+</text>
+<text x="272" y="122" font-size="10" fill="#a7f3d0">
+  <tspan>· </tspan><tspan fill="#10b981">before_content</tspan>
+</text>
+<text x="272" y="137" font-size="10" fill="#a7f3d0">
+  <tspan>· </tspan><tspan fill="#10b981">after_content</tspan>
+  <tspan class="lz"> + 时间戳</tspan>
+  <tspan class="le"> + timestamp</tspan>
+</text>
+<rect x="272" y="148" width="170" height="16" rx="4" fill="rgba(16,185,129,0.12)" stroke="rgba(16,185,129,0.3)" stroke-width="0.8"/>
+<text x="278" y="160" font-size="10" fill="#6ee7b7">
+  <tspan class="lz">创建可逆检查点</tspan>
+  <tspan class="le">creates reversible checkpoint</tspan>
+</text>
+<rect x="272" y="170" width="170" height="34" rx="4" fill="rgba(15,23,42,0.6)" stroke="rgba(16,185,129,0.2)" stroke-width="0.8"/>
+<text x="278" y="183" font-size="10" fill="#6ee7b7" font-family="'JetBrains Mono',monospace">Snapshot&#123;before,after&#125;</text>
+<text x="278" y="196" font-size="10" fill="#475569" font-family="'JetBrains Mono',monospace">→ checkpointId</text>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     PHASE 3 — getDiff 差异提取  (amber, bottom-left)
+     x=30 y=270 w=200 h=160
+════════════════════════════════════════════════════════ -->
+<rect x="30" y="270" width="200" height="160" rx="10" fill="rgba(245,158,11,0.07)" stroke="#f59e0b" stroke-width="1.8"/>
+<rect x="30" y="270" width="200" height="32" rx="10" fill="rgba(245,158,11,0.22)"/>
+<rect x="30" y="290" width="200" height="12" fill="rgba(245,158,11,0.22)"/>
+
+<circle cx="50" cy="286" r="10" fill="#f59e0b"/>
+<text x="50" y="290" text-anchor="middle" font-size="10" font-weight="700" fill="#0f172a">3</text>
+<circle class="pulse-amber" cx="50" cy="286" r="10" fill="none" stroke="#f59e0b" stroke-width="1.5"/>
+
+<text x="140" y="283" text-anchor="middle" font-size="12" font-weight="700" fill="#f59e0b">getDiff</text>
+<text x="140" y="297" text-anchor="middle" font-size="10" fill="#fcd34d">
+  <tspan class="lz">差异提取</tspan>
+  <tspan class="le">Diff Extraction</tspan>
+</text>
+
+<text x="44" y="322" font-size="10" fill="#fef3c7">
+  <tspan>· </tspan>
+  <tspan class="lz">计算快照间统一差异集</tspan>
+  <tspan class="le">compute unified diff set</tspan>
+</text>
+<text x="44" y="337" font-size="10" fill="#fef3c7">
+  <tspan>· </tspan>
+  <tspan class="lz">输出逐行变更集</tspan>
+  <tspan class="le">output line-by-line changeset</tspan>
+</text>
+<text x="44" y="352" font-size="10" fill="#fef3c7">
+  <tspan>· </tspan>
+  <tspan class="lz">用于审查 / 回退准备</tspan>
+  <tspan class="le">for review / undo prep</tspan>
+</text>
+<rect x="44" y="363" width="170" height="16" rx="4" fill="rgba(245,158,11,0.12)" stroke="rgba(245,158,11,0.3)" stroke-width="0.8"/>
+<text x="50" y="375" font-size="10" fill="#fcd34d">
+  <tspan class="lz">输出: unified diff 格式</tspan>
+  <tspan class="le">output: unified diff format</tspan>
+</text>
+<rect x="44" y="385" width="170" height="34" rx="4" fill="rgba(15,23,42,0.6)" stroke="rgba(245,158,11,0.2)" stroke-width="0.8"/>
+<text x="50" y="398" font-size="10" fill="#fcd34d" font-family="'JetBrains Mono',monospace">getDiff(snap_a, snap_b)</text>
+<text x="50" y="411" font-size="10" fill="#475569" font-family="'JetBrains Mono',monospace">→ UnifiedDiff[]</text>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     PHASE 4 — rewind 回退  (rose, bottom-right)
+     x=258 y=270 w=200 h=160
+════════════════════════════════════════════════════════ -->
+<rect x="258" y="270" width="200" height="160" rx="10" fill="rgba(244,63,94,0.07)" stroke="#f43f5e" stroke-width="1.8"/>
+<rect x="258" y="270" width="200" height="32" rx="10" fill="rgba(244,63,94,0.22)"/>
+<rect x="258" y="290" width="200" height="12" fill="rgba(244,63,94,0.22)"/>
+
+<circle cx="278" cy="286" r="10" fill="#f43f5e"/>
+<text x="278" y="290" text-anchor="middle" font-size="10" font-weight="700" fill="#ffffff">4</text>
+<circle class="pulse-rose" cx="278" cy="286" r="10" fill="none" stroke="#f43f5e" stroke-width="1.5"/>
+
+<text x="368" y="283" text-anchor="middle" font-size="12" font-weight="700" fill="#f43f5e">rewind</text>
+<text x="368" y="297" text-anchor="middle" font-size="10" fill="#fda4af">
+  <tspan class="lz">回退</tspan>
+  <tspan class="le">Rewind</tspan>
+</text>
+
+<text x="272" y="322" font-size="10" fill="#ffe4e6">
+  <tspan>· </tspan>
+  <tspan class="lz">还原文件至前序快照状态</tspan>
+  <tspan class="le">restore file to prev snapshot</tspan>
+</text>
+<text x="272" y="337" font-size="10" fill="#ffe4e6">
+  <tspan>· </tspan>
+  <tspan class="lz">触发: 用户撤销 / 错误恢复</tspan>
+  <tspan class="le">trigger: undo request / error</tspan>
+</text>
+<text x="272" y="352" font-size="10" fill="#ffe4e6">
+  <tspan>· </tspan>
+  <tspan class="lz">返回: 还原文件 + 状态码</tspan>
+  <tspan class="le">returns: file + status code</tspan>
+</text>
+<rect x="272" y="363" width="170" height="16" rx="4" fill="rgba(244,63,94,0.12)" stroke="rgba(244,63,94,0.3)" stroke-width="0.8"/>
+<text x="278" y="375" font-size="10" fill="#fda4af">
+  <tspan class="lz">完成后重新进入 trackEdit</tspan>
+  <tspan class="le">re-enters trackEdit after done</tspan>
+</text>
+<rect x="272" y="385" width="170" height="34" rx="4" fill="rgba(15,23,42,0.6)" stroke="rgba(244,63,94,0.2)" stroke-width="0.8"/>
+<text x="278" y="398" font-size="10" fill="#fda4af" font-family="'JetBrains Mono',monospace">rewind(checkpointId)</text>
+<text x="278" y="411" font-size="10" fill="#475569" font-family="'JetBrains Mono',monospace">→ &#123;ok, restoredFile&#125;</text>
+
+
+<!-- ═══════════════════════════════════════════════════════
+     RIGHT PANEL — System Overview + Stats
+     x=490 y=55
+════════════════════════════════════════════════════════ -->
+<!-- Panel border -->
+<rect x="488" y="55" width="408" height="375" rx="10" fill="rgba(15,23,42,0.5)" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+<!-- Panel title -->
+<text x="692" y="82" text-anchor="middle" font-size="11" font-weight="700" fill="#94a3b8" letter-spacing="1">
+  <tspan class="lz">系统全览</tspan>
+  <tspan class="le">SYSTEM OVERVIEW</tspan>
+</text>
+
+<!-- ── Flow diagram inside right panel ── -->
+<!-- Miniature vertical flow -->
+<circle cx="530" cy="115" r="8" fill="rgba(34,211,238,0.2)" stroke="#22d3ee" stroke-width="1.5"/>
+<text x="530" y="119" text-anchor="middle" font-size="10" font-weight="700" fill="#22d3ee">1</text>
+<text x="548" y="114" font-size="11" font-weight="600" fill="#22d3ee">trackEdit</text>
+<text x="548" y="127" font-size="10" fill="#94a3b8">
+  <tspan class="lz">监控 → 捕获路径/时间戳/diff</tspan>
+  <tspan class="le">monitor → capture path/ts/diff</tspan>
+</text>
+<line x1="530" y1="124" x2="530" y2="148" stroke="#475569" stroke-width="1" stroke-dasharray="3,2"/>
+
+<circle cx="530" cy="158" r="8" fill="rgba(16,185,129,0.2)" stroke="#10b981" stroke-width="1.5"/>
+<text x="530" y="162" text-anchor="middle" font-size="10" font-weight="700" fill="#10b981">2</text>
+<text x="548" y="157" font-size="11" font-weight="600" fill="#10b981">makeSnapshot</text>
+<text x="548" y="170" font-size="10" fill="#94a3b8">
+  <tspan class="lz">存储 before/after + 检查点 ID</tspan>
+  <tspan class="le">store before/after + checkpoint ID</tspan>
+</text>
+<line x1="530" y1="167" x2="530" y2="191" stroke="#475569" stroke-width="1" stroke-dasharray="3,2"/>
+
+<circle cx="530" cy="201" r="8" fill="rgba(245,158,11,0.2)" stroke="#f59e0b" stroke-width="1.5"/>
+<text x="530" y="205" text-anchor="middle" font-size="10" font-weight="700" fill="#f59e0b">3</text>
+<text x="548" y="200" font-size="11" font-weight="600" fill="#f59e0b">getDiff</text>
+<text x="548" y="213" font-size="10" fill="#94a3b8">
+  <tspan class="lz">提取统一 diff · 用于审查/准备</tspan>
+  <tspan class="le">extract unified diff · review/prep</tspan>
+</text>
+<line x1="530" y1="210" x2="530" y2="234" stroke="#475569" stroke-width="1" stroke-dasharray="3,2"/>
+
+<circle cx="530" cy="244" r="8" fill="rgba(244,63,94,0.2)" stroke="#f43f5e" stroke-width="1.5"/>
+<text x="530" y="248" text-anchor="middle" font-size="10" font-weight="700" fill="#f43f5e">4</text>
+<text x="548" y="243" font-size="11" font-weight="600" fill="#f43f5e">rewind</text>
+<text x="548" y="256" font-size="10" fill="#94a3b8">
+  <tspan class="lz">还原 → 返回状态码 → 循环</tspan>
+  <tspan class="le">restore → return status → loop</tspan>
+</text>
+
+<!-- Rewind-back arrow in panel -->
+<path d="M 522,252 C 502,265 502,105 520,107" fill="none" stroke="#f43f5e" stroke-width="1.2" stroke-dasharray="4,3" marker-end="url(#arr-rose)" opacity="0.6"/>
+
+<!-- Divider -->
+<line x1="508" y1="278" x2="880" y2="278" stroke="rgba(255,255,255,0.06)" stroke-width="1"/>
+
+<!-- ── Stats section ── -->
+<text x="692" y="302" text-anchor="middle" font-size="11" font-weight="700" fill="#94a3b8" letter-spacing="1">
+  <tspan class="lz">系统指标</tspan>
+  <tspan class="le">METRICS</tspan>
+</text>
+
+<!-- Stat 1 -->
+<rect x="508" y="314" width="116" height="68" rx="8" fill="rgba(34,211,238,0.07)" stroke="rgba(34,211,238,0.2)" stroke-width="1"/>
+<text x="566" y="340" text-anchor="middle" font-size="22" font-weight="700" fill="#22d3ee">4</text>
+<text x="566" y="355" text-anchor="middle" font-size="10" fill="#94a3b8">
+  <tspan class="lz">生命周期阶段</tspan>
+  <tspan class="le">lifecycle phases</tspan>
+</text>
+<text x="566" y="368" text-anchor="middle" font-size="10" fill="#475569">phases</text>
+
+<!-- Stat 2 -->
+<rect x="636" y="314" width="116" height="68" rx="8" fill="rgba(16,185,129,0.07)" stroke="rgba(16,185,129,0.2)" stroke-width="1"/>
+<text x="694" y="340" text-anchor="middle" font-size="22" font-weight="700" fill="#10b981">∞</text>
+<text x="694" y="355" text-anchor="middle" font-size="10" fill="#94a3b8">
+  <tspan class="lz">可回退任意步骤</tspan>
+  <tspan class="le">rewind any step</tspan>
+</text>
+<text x="694" y="368" text-anchor="middle" font-size="10" fill="#475569">reversible</text>
+
+<!-- Stat 3 -->
+<rect x="764" y="314" width="116" height="68" rx="8" fill="rgba(244,63,94,0.07)" stroke="rgba(244,63,94,0.2)" stroke-width="1"/>
+<text x="822" y="340" text-anchor="middle" font-size="22" font-weight="700" fill="#f43f5e">0</text>
+<text x="822" y="355" text-anchor="middle" font-size="10" fill="#94a3b8">
+  <tspan class="lz">数据丢失保证</tspan>
+  <tspan class="le">data loss guarantee</tspan>
+</text>
+<text x="822" y="368" text-anchor="middle" font-size="10" fill="#475569">zero loss</text>
+
+<!-- ── Data model ── -->
+<text x="692" y="402" text-anchor="middle" font-size="11" font-weight="700" fill="#94a3b8" letter-spacing="1">
+  <tspan class="lz">快照数据结构</tspan>
+  <tspan class="le">SNAPSHOT DATA MODEL</tspan>
+</text>
+<rect x="508" y="410" width="372" height="14" rx="0" fill="rgba(15,23,42,0)"/>
+<text x="516" y="422" font-size="10" fill="#22d3ee" font-family="'JetBrains Mono',monospace">Snapshot &#123;</text>
+<text x="530" y="435" font-size="10" fill="#6ee7b7" font-family="'JetBrains Mono',monospace">before_content: string</text>
+<text x="530" y="448" font-size="10" fill="#fcd34d" font-family="'JetBrains Mono',monospace">after_content:  string</text>
+<text x="530" y="461" font-size="10" fill="#fda4af" font-family="'JetBrains Mono',monospace">timestamp:      number</text>
+<text x="516" y="474" font-size="10" fill="#22d3ee" font-family="'JetBrains Mono',monospace">&#125;</text>
+
+<!-- ═══════════════════════════════════════════════════════
+     ARROW LABELS on the 2×2 connector lines
+════════════════════════════════════════════════════════ -->
+<!-- Label: Phase1 → Phase2 (right arrow at y=135, x≈244) -->
+<text x="244" y="126" text-anchor="middle" font-size="10" fill="#10b981" opacity="0.9">
+  <tspan class="lz">快照</tspan>
+  <tspan class="le">snap</tspan>
+</text>
+
+<!-- Label: Phase2 → Phase4 (down arrow at x=358) -->
+<text x="380" y="248" text-anchor="start" font-size="10" fill="#f59e0b" opacity="0.9">
+  <tspan class="lz">diff</tspan>
+</text>
+
+<!-- Label: Phase4 → Phase3 (left arrow at y=350) -->
+<text x="244" y="343" text-anchor="middle" font-size="10" fill="#f43f5e" opacity="0.9">
+  <tspan class="lz">回退</tspan>
+  <tspan class="le">undo</tspan>
+</text>
+
+<!-- Label: Phase3 → Phase1 (up arrow at x=130) -->
+<text x="108" y="248" text-anchor="middle" font-size="10" fill="#22d3ee" opacity="0.9">
+  <tspan class="lz">循环</tspan>
+  <tspan class="le">loop</tspan>
+</text>
+
+<!-- ═══════════════════════════════════════════════════════
+     TRAVELING TOKEN ANIMATION
+════════════════════════════════════════════════════════ -->
+<g class="token">
+  <circle r="5" fill="#f1f5f9" opacity="0.9"/>
+  <circle r="9" fill="none" stroke="#f1f5f9" stroke-width="1" opacity="0.3"/>
+</g>
+
+<!-- ═══════════════════════════════════════════════════════
+     BOTTOM LABEL ROW
+════════════════════════════════════════════════════════ -->
+<text x="460" y="460" text-anchor="middle" font-size="10" fill="#475569">
+  <tspan class="lz">生命周期: trackEdit → makeSnapshot → getDiff → rewind → trackEdit …</tspan>
+  <tspan class="le">lifecycle: trackEdit → makeSnapshot → getDiff → rewind → trackEdit …</tspan>
+</text>
+
+</svg>
+</div>
+
+<!-- Stats row (HTML cards below SVG) -->
+<div class="stats-row">
+  <div class="stat-card cyan">
+    <div class="num">4</div>
+    <div class="label">
+      <span class="lz">生命周期阶段</span>
+      <span class="le">Lifecycle Phases</span>
+    </div>
+  </div>
+  <div class="stat-card emerald">
+    <div class="num" style="font-size:18px">∞</div>
+    <div class="label">
+      <span class="lz">可回退任意步骤</span>
+      <span class="le">Rewind Any Step</span>
+    </div>
+  </div>
+  <div class="stat-card rose">
+    <div class="num">0</div>
+    <div class="label">
+      <span class="lz">零数据丢失保证</span>
+      <span class="le">Zero Data Loss</span>
+    </div>
+  </div>
+</div>
+
+<!-- Info cards row -->
+<div class="cards">
+  <div class="card cyan">
+    <div class="label">Phase 1 · Phase 2</div>
+    <div class="title">
+      <span class="lz">追踪 + 快照</span>
+      <span class="le">Track + Snapshot</span>
+    </div>
+    <div class="desc">
+      <span class="lz">每次 Edit/Write/NotebookEdit 工具调用均触发 trackEdit，随即由 makeSnapshot 捕获编辑前后的完整文件内容，形成可寻址的检查点。</span>
+      <span class="le">Every Edit/Write/NotebookEdit tool call triggers trackEdit, which makeSnapshot follows immediately to capture full before/after file content as an addressable checkpoint.</span>
+    </div>
+  </div>
+  <div class="card amber">
+    <div class="label">Phase 3</div>
+    <div class="title">
+      <span class="lz">差异计算</span>
+      <span class="le">Diff Extraction</span>
+    </div>
+    <div class="desc">
+      <span class="lz">getDiff 在任意两个快照之间计算统一格式差异，输出逐行变更集，供用户审查或为回退操作做准备。不修改文件，只读取快照。</span>
+      <span class="le">getDiff computes a unified diff between any two snapshots, producing a line-by-line changeset for review or undo preparation. Read-only — does not modify files.</span>
+    </div>
+  </div>
+  <div class="card rose">
+    <div class="label">Phase 4</div>
+    <div class="title">
+      <span class="lz">回退 + 循环</span>
+      <span class="le">Rewind + Loop</span>
+    </div>
+    <div class="desc">
+      <span class="lz">rewind 将文件还原到指定检查点，返回还原后的文件内容与成功/失败状态码。完成后系统重新进入 trackEdit 阶段，形成闭合生命周期。</span>
+      <span class="le">rewind restores the file to a specified checkpoint, returning the restored content and a success/failure status. The system then re-enters trackEdit, forming a closed lifecycle.</span>
+    </div>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <span>VIS-3-017 · <span class="lz">快照生命周期图</span><span class="le">Snapshot Lifecycle</span></span>
+  <span><span class="lz">Claude Code 白皮书 · CC 2.1.88 源码研究</span><span class="le">Claude Code Whitepaper · CC 2.1.88 Source Study</span></span>
+  <span>2026-04-15</span>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-theme',t);
+  document.documentElement.setAttribute('data-lang',l);
+  function applyLang(){
+    document.documentElement.setAttribute('data-lang', l);
+  };
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);document.documentElement.setAttribute('data-lang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

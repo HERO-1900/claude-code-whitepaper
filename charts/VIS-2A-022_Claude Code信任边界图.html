@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIS-2A-022 Claude Code 信任边界图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    :root{
+      --bg:#020617;--panel:#0f172a;--card:#0f172a;--border:#1e293b;
+      --text:#e2e8f0;--muted:#64748b;--subtle:#334155;
+      --amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;
+      --emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#f97316;
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3;--panel:#ffffff;--card:#faf9f7;--border:#e2d9cc;
+      --text:#1c1917;--muted:#78716c;--subtle:#d6ccc2;
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--panel:#f8fafc;--card:#f8fafc;--border:#e2e8f0;
+      --text:#0f172a;--muted:#64748b;--subtle:#cbd5e1;
+    }*{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      background:var(--bg);
+      color:var(--text);
+      font-family:'JetBrains Mono',monospace;
+      min-height:100vh;
+      padding:24px 20px 40px;
+    }
+
+    /* Fixed controls */
+    .ctrl{
+      position:fixed;top:16px;right:16px;
+      display:flex;gap:8px;z-index:100;
+    }
+    .ctrl button{
+      background:var(--panel);border:1px solid var(--border);
+      color:var(--text);padding:6px 14px;border-radius:6px;
+      font-family:'JetBrains Mono',monospace;font-size:11px;
+      cursor:pointer;transition:border-color .2s,background .2s;
+    }
+    .ctrl button:hover{border-color:var(--cyan);background:var(--subtle);}
+
+    /* Header */
+    .header{
+      text-align:center;margin-bottom:28px;padding-top:4px;
+    }
+    .header .vis-id{
+      font-size:11px;color:var(--muted);letter-spacing:0.1em;
+      text-transform:uppercase;margin-bottom:6px;
+    }
+    .header h1{
+      font-size:22px;font-weight:700;color:var(--text);
+      line-height:1.3;margin-bottom:4px;
+    }
+    .header .subtitle{
+      font-size:12px;color:var(--muted);
+    }
+
+    /* SVG container */
+    .svg-wrap{
+      width:100%;max-width:980px;margin:0 auto 28px;
+      background:var(--panel);border:1px solid var(--border);
+      border-radius:12px;overflow:hidden;
+    }
+    .svg-wrap svg{width:100%;height:auto;display:block;}
+
+    /* Summary cards */
+    .cards{
+      display:grid;grid-template-columns:repeat(3,1fr);gap:16px;
+      max-width:980px;margin:0 auto;
+    }
+    @media(max-width:680px){.cards{grid-template-columns:1fr;}}
+    .card{
+      background:var(--panel);border:1px solid var(--border);
+      border-radius:10px;padding:18px 20px;
+    }
+    .card-title{
+      font-size:13px;font-weight:700;color:var(--text);
+      margin-bottom:6px;display:flex;align-items:center;gap:8px;
+    }
+    .card-dot{
+      width:8px;height:8px;border-radius:50%;flex-shrink:0;
+    }
+    .card-desc{
+      font-size:11px;color:var(--muted);line-height:1.6;
+    }
+
+    /* Adaptive SVG text colors */
+    [data-theme="light"] .svg-label-main,
+    [data-theme="warm"]  .svg-label-main  { fill: #1c1917 !important; }
+    [data-theme="light"] .svg-label-sub,
+    [data-theme="warm"]  .svg-label-sub   { fill: #44403c !important; }
+    [data-theme="light"] .svg-muted,
+    [data-theme="warm"]  .svg-muted       { fill: #78716c !important; }
+    [data-theme="light"] .svg-panel,
+    [data-theme="warm"]  .svg-panel       { fill: #ffffff !important; }
+    [data-theme="light"] .svg-border,
+    [data-theme="warm"]  .svg-border      { stroke: #e2d9cc !important; }
+  </style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="window.cycleTheme()">Theme</button>
+  <button onclick="window.toggleLang()">EN/中</button>
+</div>
+
+<div class="header">
+  <div class="vis-id">VIS-2A-022</div>
+  <h1>
+    <span class="lz">Claude Code 信任边界图</span>
+    <span class="le">Claude Code Trust Boundary Diagram</span>
+  </h1>
+  <div class="subtitle">
+    <span class="lz">6层信任层级 · 从系统核心到零信任</span>
+    <span class="le">6-Level Trust Hierarchy · From System Core to Zero Trust</span>
+  </div>
+</div>
+
+<div class="svg-wrap">
+<svg viewBox="0 0 960 680" xmlns="http://www.w3.org/2000/svg" aria-label="Claude Code Trust Boundary Pyramid">
+  <defs>
+    <!-- Trust meter gradient: top=white/trusted, bottom=rose/untrusted -->
+    <linearGradient id="trustGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="20%"  stop-color="#22d3ee" stop-opacity="0.8"/>
+      <stop offset="40%"  stop-color="#34d399" stop-opacity="0.8"/>
+      <stop offset="60%"  stop-color="#fbbf24" stop-opacity="0.8"/>
+      <stop offset="80%"  stop-color="#f97316" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#fb7185" stop-opacity="0.9"/>
+    </linearGradient>
+
+    <!-- Subtle glow filters -->
+    <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="3" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="glow-rose" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+
+    <!-- Card bg pattern -->
+    <pattern id="dots" width="12" height="12" patternUnits="userSpaceOnUse">
+      <circle cx="2" cy="2" r="0.8" fill="#334155" fill-opacity="0.4"/>
+    </pattern>
+  </defs>
+
+  <!-- ── Background ── -->
+  <rect width="960" height="680" fill="#020617" class="svg-panel" rx="12"/>
+  <rect width="960" height="680" fill="url(#dots)" rx="12" opacity="0.5"/>
+
+  <!-- ════════════════════════════════════
+       PYRAMID  (cx=480)
+       L1 y=80-148   hw top=80  bot=120
+       L2 y=152-220  hw top=120 bot=170
+       L3 y=224-292  hw top=170 bot=230
+       L4 y=296-364  hw top=230 bot=295
+       L5 y=368-436  hw top=295 bot=360
+       L6 y=440-520  hw top=360 bot=440
+  ═════════════════════════════════════ -->
+
+  <!-- L1 – System Core (white) -->
+  <polygon points="400,80 560,80 600,148 360,148"
+           fill="rgba(255,255,255,0.12)" stroke="rgba(255,255,255,0.7)" stroke-width="1.5"/>
+  <!-- L1 badge background -->
+  <rect x="406" y="96" width="148" height="40" rx="5"
+        fill="rgba(255,255,255,0.08)" stroke="rgba(255,255,255,0.2)" stroke-width="1"/>
+  <!-- L1 level number -->
+  <text x="368" y="118" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(255,255,255,0.5)" font-weight="500">L1</text>
+  <!-- L1 label -->
+  <text x="480" y="110" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="13" font-weight="700" fill="#ffffff">
+    <tspan class="lz">系统核心</tspan><tspan class="le">System Core</tspan>
+  </text>
+  <text x="480" y="126" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(255,255,255,0.65)">
+    <tspan class="lz">System Core</tspan><tspan class="le">Fully Trusted</tspan>
+  </text>
+  <!-- L1 trust badge -->
+  <rect x="556" y="100" width="64" height="18" rx="4"
+        fill="rgba(255,255,255,0.18)" stroke="rgba(255,255,255,0.4)" stroke-width="1"/>
+  <text x="588" y="113" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#ffffff" font-weight="600">
+    <tspan class="lz">完全可信</tspan><tspan class="le">Full Trust</tspan>
+  </text>
+
+  <!-- Boundary dashed line y=150 -->
+  <line x1="355" y1="150" x2="605" y2="150" stroke="rgba(255,255,255,0.15)" stroke-width="1" stroke-dasharray="4,4"/>
+
+  <!-- L2 – High Trust (cyan) -->
+  <polygon points="360,152 600,152 650,220 310,220"
+           fill="rgba(34,211,238,0.15)" stroke="#22d3ee" stroke-width="1.5"/>
+  <text x="368" y="183" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(34,211,238,0.55)" font-weight="500">L2</text>
+  <text x="480" y="178" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="13" font-weight="700" fill="#22d3ee">
+    <tspan class="lz">高信任层</tspan><tspan class="le">High Trust</tspan>
+  </text>
+  <text x="480" y="194" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(34,211,238,0.7)">
+    <tspan class="lz">High Trust · 开发者输入</tspan><tspan class="le">High Trust · Developer Input</tspan>
+  </text>
+  <rect x="600" y="174" width="64" height="18" rx="4"
+        fill="rgba(34,211,238,0.18)" stroke="#22d3ee" stroke-width="1"/>
+  <text x="632" y="187" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#22d3ee" font-weight="600">
+    <tspan class="lz">开发者</tspan><tspan class="le">Developer</tspan>
+  </text>
+
+  <!-- Boundary dashed line y=222 -->
+  <line x1="305" y1="222" x2="655" y2="222" stroke="rgba(34,211,238,0.2)" stroke-width="1" stroke-dasharray="4,4"/>
+
+  <!-- L3 – Medium Trust (emerald) -->
+  <polygon points="310,224 650,224 710,292 250,292"
+           fill="rgba(52,211,153,0.12)" stroke="#34d399" stroke-width="1.5"/>
+  <text x="318" y="255" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(52,211,153,0.55)" font-weight="500">L3</text>
+  <text x="480" y="250" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="13" font-weight="700" fill="#34d399">
+    <tspan class="lz">中信任层</tspan><tspan class="le">Medium Trust</tspan>
+  </text>
+  <text x="480" y="266" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(52,211,153,0.7)">
+    <tspan class="lz">Medium Trust · 用户指令</tspan><tspan class="le">Medium Trust · User Instructions</tspan>
+  </text>
+  <rect x="658" y="246" width="60" height="18" rx="4"
+        fill="rgba(52,211,153,0.18)" stroke="#34d399" stroke-width="1"/>
+  <text x="688" y="259" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#34d399" font-weight="600">
+    <tspan class="lz">用户</tspan><tspan class="le">User</tspan>
+  </text>
+
+  <!-- Boundary dashed line y=294 -->
+  <line x1="245" y1="294" x2="715" y2="294" stroke="rgba(52,211,153,0.2)" stroke-width="1" stroke-dasharray="4,4"/>
+
+  <!-- L4 – Low Trust (amber) -->
+  <polygon points="250,296 710,296 775,364 185,364"
+           fill="rgba(251,191,36,0.12)" stroke="#fbbf24" stroke-width="1.5"/>
+  <text x="258" y="327" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(251,191,36,0.55)" font-weight="500">L4</text>
+  <text x="480" y="322" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="13" font-weight="700" fill="#fbbf24">
+    <tspan class="lz">低信任层</tspan><tspan class="le">Low Trust</tspan>
+  </text>
+  <text x="480" y="338" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(251,191,36,0.7)">
+    <tspan class="lz">Low Trust · 工具输出</tspan><tspan class="le">Low Trust · Tool Output</tspan>
+  </text>
+  <rect x="724" y="318" width="60" height="18" rx="4"
+        fill="rgba(251,191,36,0.18)" stroke="#fbbf24" stroke-width="1"/>
+  <text x="754" y="331" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#fbbf24" font-weight="600">
+    <tspan class="lz">工具</tspan><tspan class="le">Tool</tspan>
+  </text>
+
+  <!-- Boundary dashed line y=366 -->
+  <line x1="180" y1="366" x2="780" y2="366" stroke="rgba(251,191,36,0.2)" stroke-width="1" stroke-dasharray="4,4"/>
+
+  <!-- L5 – Untrusted (orange) -->
+  <polygon points="185,368 775,368 840,436 120,436"
+           fill="rgba(249,115,22,0.12)" stroke="#f97316" stroke-width="1.5"/>
+  <text x="193" y="399" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(249,115,22,0.55)" font-weight="500">L5</text>
+  <text x="480" y="394" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="13" font-weight="700" fill="#f97316">
+    <tspan class="lz">未信任</tspan><tspan class="le">Untrusted</tspan>
+  </text>
+  <text x="480" y="410" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(249,115,22,0.7)">
+    <tspan class="lz">Untrusted · 外部数据</tspan><tspan class="le">Untrusted · External Data</tspan>
+  </text>
+  <rect x="790" y="390" width="62" height="18" rx="4"
+        fill="rgba(249,115,22,0.18)" stroke="#f97316" stroke-width="1"/>
+  <text x="821" y="403" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#f97316" font-weight="600">
+    <tspan class="lz">外部</tspan><tspan class="le">External</tspan>
+  </text>
+
+  <!-- Boundary dashed line y=438 -->
+  <line x1="115" y1="438" x2="845" y2="438" stroke="rgba(249,115,22,0.2)" stroke-width="1" stroke-dasharray="4,4"/>
+
+  <!-- L6 – Zero Trust (rose) -->
+  <polygon points="120,440 840,440 920,520 40,520"
+           fill="rgba(251,113,133,0.12)" stroke="#fb7185" stroke-width="1.5" filter="url(#glow-rose)"/>
+  <text x="128" y="477" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(251,113,133,0.55)" font-weight="500">L6</text>
+  <text x="480" y="472" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="13" font-weight="700" fill="#fb7185">
+    <tspan class="lz">零信任</tspan><tspan class="le">Zero Trust</tspan>
+  </text>
+  <text x="480" y="488" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(251,113,133,0.7)">
+    <tspan class="lz">Zero Trust · 潜在恶意内容</tspan><tspan class="le">Zero Trust · Potentially Malicious</tspan>
+  </text>
+  <rect x="870" y="468" width="62" height="18" rx="4"
+        fill="rgba(251,113,133,0.18)" stroke="#fb7185" stroke-width="1"/>
+  <text x="901" y="481" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="#fb7185" font-weight="600">
+    <tspan class="lz">阻断</tspan><tspan class="le">Block</tspan>
+  </text>
+
+  <!-- ════════════════════════════════════
+       TRUST METER  (right side)
+       x=870-900, y=80-520
+  ═════════════════════════════════════ -->
+  <!-- Trust meter moved to far right column, compact -->
+  <!-- Actually we have badges per level above, and we'll add a side note area -->
+
+  <!-- ════════════════════════════════════
+       ANNOTATION PANEL (left side)
+       Concise description per level
+  ═════════════════════════════════════ -->
+
+  <!-- L1 annotation -->
+  <line x1="355" y1="114" x2="292" y2="114" stroke="rgba(255,255,255,0.25)" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="288" y="111" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(255,255,255,0.55)">
+    <tspan class="lz">系统提示词·宪法规则</tspan><tspan class="le">System prompt · constitutional rules</tspan>
+  </text>
+
+  <!-- L2 annotation -->
+  <line x1="308" y1="186" x2="254" y2="186" stroke="rgba(34,211,238,0.3)" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="250" y="183" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(34,211,238,0.65)">
+    <tspan class="lz">CLI命令·Claude Code自身</tspan><tspan class="le">CLI commands · Claude Code itself</tspan>
+  </text>
+
+  <!-- L3 annotation -->
+  <line x1="248" y1="258" x2="194" y2="258" stroke="rgba(52,211,153,0.3)" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="190" y="255" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(52,211,153,0.65)">
+    <tspan class="lz">用户消息·CLAUDE.md</tspan><tspan class="le">User messages · CLAUDE.md</tspan>
+  </text>
+
+  <!-- L4 annotation -->
+  <line x1="183" y1="330" x2="140" y2="330" stroke="rgba(251,191,36,0.3)" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="136" y="327" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(251,191,36,0.65)">
+    <tspan class="lz">工具结果·文件内容读取</tspan><tspan class="le">Tool results · file content read</tspan>
+  </text>
+
+  <!-- L5 annotation -->
+  <line x1="118" y1="402" x2="78" y2="402" stroke="rgba(249,115,22,0.3)" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="74" y="399" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(249,115,22,0.65)">
+    <tspan class="lz">Web抓取·外部API响应</tspan><tspan class="le">Web fetch · external API responses</tspan>
+  </text>
+
+  <!-- L6 annotation -->
+  <line x1="38" y1="476" x2="10" y2="476" stroke="rgba(251,113,133,0.3)" stroke-width="1" stroke-dasharray="3,3"/>
+  <text x="6" y="473" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(251,113,133,0.65)" display="none">
+    <tspan class="lz">Prompt注入·恶意内容</tspan><tspan class="le">Prompt injection · malicious content</tspan>
+  </text>
+
+  <!-- ════════════════════════════════════
+       PROMPT INJECTION WARNING BOX
+       Bottom-center, below L6
+  ═════════════════════════════════════ -->
+  <rect x="320" y="530" width="320" height="54" rx="6"
+        fill="rgba(251,113,133,0.08)" stroke="#fb7185" stroke-width="1.5" stroke-dasharray="5,3"/>
+  <!-- Arrow pointing up to L5/L6 boundary -->
+  <line x1="480" y1="530" x2="480" y2="524" stroke="#fb7185" stroke-width="1.5"/>
+  <polygon points="476,525 484,525 480,518" fill="#fb7185"/>
+
+  <text x="480" y="549" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" font-weight="700" fill="#fb7185">
+    ⚠ <tspan class="lz">Prompt Injection 风险区</tspan><tspan class="le">Prompt Injection Risk Zone</tspan>
+  </text>
+  <text x="480" y="566" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(251,113,133,0.7)">
+    <tspan class="lz">L5/L6 层输入需额外安全检查</tspan><tspan class="le">L5/L6 inputs require extra security checks</tspan>
+  </text>
+
+  <!-- ════════════════════════════════════
+       TRUST DIRECTION ARROW (left edge)
+  ═════════════════════════════════════ -->
+  <!-- Vertical trust bar: compact version as a gradient bar -->
+  <defs>
+    <linearGradient id="sideBar" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%"   stop-color="#ffffff" stop-opacity="0.9"/>
+      <stop offset="33%"  stop-color="#22d3ee" stop-opacity="0.8"/>
+      <stop offset="55%"  stop-color="#34d399" stop-opacity="0.7"/>
+      <stop offset="72%"  stop-color="#fbbf24" stop-opacity="0.8"/>
+      <stop offset="87%"  stop-color="#f97316" stop-opacity="0.8"/>
+      <stop offset="100%" stop-color="#fb7185" stop-opacity="0.9"/>
+    </linearGradient>
+  </defs>
+  <!-- Right side trust meter -->
+  <rect x="928" y="80" width="14" height="440" rx="7"
+        fill="url(#sideBar)" opacity="0.85"/>
+  <!-- Up arrow at top -->
+  <polygon points="928,76 942,76 935,65" fill="rgba(255,255,255,0.6)"/>
+  <!-- Labels -->
+  <text x="935" y="58" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(255,255,255,0.7)" font-weight="600">
+    <tspan class="lz">信任度</tspan><tspan class="le">Trust</tspan>
+  </text>
+  <text x="935" y="48" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(255,255,255,0.45)">
+    ▲ HIGH
+  </text>
+  <text x="935" y="535" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(251,113,133,0.65)">
+    ▼ LOW
+  </text>
+
+  <!-- ════════════════════════════════════
+       TITLE / CAPTION (top-left)
+  ═════════════════════════════════════ -->
+  <text x="24" y="40" font-family="JetBrains Mono,monospace" font-size="11" fill="rgba(100,116,139,0.8)" font-weight="500">
+    VIS-2A-022
+  </text>
+  <text x="24" y="56" font-family="JetBrains Mono,monospace" font-size="14" fill="#e2e8f0" font-weight="700">
+    <tspan class="lz">Claude Code 信任边界图</tspan><tspan class="le">Claude Code Trust Boundary</tspan>
+  </text>
+
+  <!-- Legend row at top-right -->
+  <text x="900" y="40" text-anchor="end" font-family="JetBrains Mono,monospace" font-size="10" fill="rgba(100,116,139,0.7)">
+    <tspan class="lz">输入来源 → 信任等级分类</tspan><tspan class="le">Input Source → Trust Classification</tspan>
+  </text>
+
+</svg>
+</div>
+
+<!-- Summary cards -->
+<div class="cards">
+  <div class="card">
+    <div class="card-title">
+      <div class="card-dot" style="background:#22d3ee"></div>
+      <span class="lz">6层信任分级</span><span class="le">6-Level Trust Classification</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">从系统核心（完全可信）到零信任（潜在恶意），构建完整的输入来源信任谱系。每一层对应不同的验证力度和执行权限。</span>
+      <span class="le">From System Core (fully trusted) to Zero Trust (potentially malicious), establishing a complete input source trust spectrum with varying verification and execution privileges.</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">
+      <div class="card-dot" style="background:#fbbf24"></div>
+      <span class="lz">最小权限原则</span><span class="le">Principle of Least Privilege</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">低信任来源（L4–L6）的指令经严格过滤后才能执行。工具输出、外部数据等不直接获得执行权限，必须经过信任校验。</span>
+      <span class="le">Instructions from low-trust sources (L4–L6) undergo strict filtering before execution. Tool outputs and external data cannot directly obtain execution privileges without trust validation.</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">
+      <div class="card-dot" style="background:#fb7185"></div>
+      <span class="lz">Prompt 注入防御</span><span class="le">Prompt Injection Defense</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">L5/L6层输入（外部网页、API响应、恶意注入）受到额外安全检查，防止攻击者通过可控内容篡改模型行为。</span>
+      <span class="le">L5/L6 layer inputs (external web pages, API responses, malicious injections) undergo additional security checks to prevent attackers from hijacking model behavior via controlled content.</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  window.cycleTheme=function(){
+    var themes=['dark','warm','light'];
+    var i=(themes.indexOf(document.documentElement.getAttribute('data-theme'))+1)%3;
+    t=themes[i];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);
+  };
+  window.toggleLang=function(){var cur=document.documentElement.getAttribute('data-lang')||'zh';var next=cur==='en'?'zh':'en';document.documentElement.setAttribute('data-lang',next);localStorage.setItem('vlang',next);};
+  var _sl=localStorage.getItem('vlang');if(_sl){document.documentElement.setAttribute('data-lang',_sl);}})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

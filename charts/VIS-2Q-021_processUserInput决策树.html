@@ -1,0 +1,429 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>processUserInput 决策树 · VIS-2Q-021</title>
+<style>
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+*{margin:0;padding:0;box-sizing:border-box;}
+html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;-webkit-font-smoothing:antialiased;}
+body{min-height:100vh;padding:24px;display:flex;flex-direction:column;align-items:center;gap:16px;}
+.toolbar{width:100%;max-width:960px;display:flex;justify-content:space-between;align-items:center;gap:12px;}
+.title-block{display:flex;flex-direction:column;gap:4px;}
+.title{font-size:20px;font-weight:700;letter-spacing:-0.01em;}
+.subtitle{font-size:12px;color:var(--muted);}
+.ctrls{display:flex;gap:8px;}
+.btn{background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:8px;padding:8px 14px;font-size:12px;font-weight:500;cursor:pointer;transition:transform .15s,background .15s;}
+.btn:hover{transform:translateY(-1px);background:var(--subtle);}
+.card{width:100%;max-width:960px;background:var(--panel);border:1px solid var(--border);border-radius:16px;padding:24px;box-shadow:0 4px 24px rgba(0,0,0,.08);}
+.viz{width:100%;display:block;}
+.stats-row{width:100%;max-width:960px;display:grid;grid-template-columns:repeat(3,1fr);gap:12px;}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:14px 16px;text-align:center;}
+.stat-v{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.01em;}
+.stat-l{font-size:11px;color:var(--muted);margin-top:4px;}
+.legend{width:100%;max-width:960px;display:flex;flex-wrap:wrap;gap:10px 18px;justify-content:center;padding-top:4px;}
+.leg{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);}
+.leg-sw{width:10px;height:10px;border-radius:3px;}
+.footer{font-size:10px;color:var(--muted);margin-top:6px;opacity:.7;}
+/* SVG typography */
+.svg-title{font-weight:600;}
+.diamond-lbl{font-family:ui-monospace,SFMono-Regular,Menospace,monospace;}
+.branch-yes{fill:var(--emerald);font-weight:600;}
+.branch-no{fill:var(--amber);font-weight:600;}
+.leaf-ttl{font-weight:600;}
+.leaf-desc{fill:var(--muted);}
+</style>
+</head>
+<body>
+
+<div class="toolbar">
+  <div class="title-block">
+    <div class="title">
+      <span class="lz">processUserInput 决策树</span>
+      <span class="le" style="display:none;">processUserInput Decision Tree</span>
+    </div>
+    <div class="subtitle">
+      <span class="lz">VIS-2Q-021 · 输入路由 4 层二叉判定 · 6 类叶子动作</span>
+      <span class="le" style="display:none;">VIS-2Q-021 · Input routing, 4-layer binary tree · 6 leaf actions</span>
+    </div>
+  </div>
+  <div class="ctrls">
+    <button class="btn" onclick="cycleTheme()">
+      <span class="lz">主题</span><span class="le" style="display:none;">Theme</span>
+    </button>
+    <button class="btn" onclick="toggleLang()">
+      <span class="lz">EN</span><span class="le" style="display:none;">中文</span>
+    </button>
+  </div>
+</div>
+
+<div class="card">
+  <svg class="viz" viewBox="0 0 920 580" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="processUserInput decision tree">
+    <defs>
+      <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+        <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/>
+      </marker>
+      <filter id="soft" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="2" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+
+    <!-- Root node -->
+    <g transform="translate(460,36)">
+      <rect x="-140" y="-20" width="280" height="40" rx="12" ry="12"
+            fill="var(--card)" stroke="var(--slate)" stroke-width="1.5"/>
+      <text x="0" y="-2" text-anchor="middle" fill="var(--text)" font-size="13" class="svg-title diamond-lbl">processUserInput(text)</text>
+      <text x="0" y="13" text-anchor="middle" fill="var(--muted)" font-size="10">
+        <tspan class="lz">入口函数 · 路由分发</tspan>
+        <tspan class="le" style="display:none;">Entry point · router</tspan>
+      </text>
+    </g>
+
+    <!-- Edge Root -> D1 -->
+    <path d="M460,60 L460,96" stroke="var(--muted)" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+
+    <!-- D1 Diamond: Starts with / ? -->
+    <g transform="translate(460,130)">
+      <polygon points="0,-34 110,0 0,34 -110,0"
+               fill="var(--card)" stroke="var(--slate)" stroke-width="1.5"/>
+      <text x="0" y="-4" text-anchor="middle" fill="var(--text)" font-size="12" class="diamond-lbl">text.startsWith("/") ?</text>
+      <text x="0" y="11" text-anchor="middle" fill="var(--muted)" font-size="10">
+        <tspan class="lz">是否以 / 开头</tspan>
+        <tspan class="le" style="display:none;">slash prefix?</tspan>
+      </text>
+    </g>
+
+    <!-- D1 YES -> D2 (left path) -->
+    <path d="M350,130 L220,130 L220,196" stroke="var(--emerald)" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+    <text x="310" y="122" font-size="11" class="branch-yes">YES</text>
+    <!-- D1 NO -> D3 (right path) -->
+    <path d="M570,130 L700,130 L700,196" stroke="var(--amber)" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+    <text x="585" y="122" font-size="11" class="branch-no">NO</text>
+
+    <!-- D2 Diamond: Starts with /_ ? -->
+    <g transform="translate(220,230)">
+      <polygon points="0,-34 110,0 0,34 -110,0"
+               fill="var(--card)" stroke="var(--slate)" stroke-width="1.5"/>
+      <text x="0" y="-4" text-anchor="middle" fill="var(--text)" font-size="12" class="diamond-lbl">text.startsWith("/_") ?</text>
+      <text x="0" y="11" text-anchor="middle" fill="var(--muted)" font-size="10">
+        <tspan class="lz">内部命令标记</tspan>
+        <tspan class="le" style="display:none;">internal marker?</tspan>
+      </text>
+    </g>
+
+    <!-- D2 YES -> Leaf1 Internal Command -->
+    <path d="M180,258 L120,258 L120,332" stroke="var(--emerald)" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+    <text x="130" y="250" font-size="11" class="branch-yes">YES</text>
+    <!-- D2 NO -> Leaf2 User Command -->
+    <path d="M260,258 L310,258 L310,332" stroke="var(--amber)" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+    <text x="265" y="250" font-size="11" class="branch-no">NO</text>
+
+    <!-- D3 Diamond: Contains @ ? -->
+    <g transform="translate(700,230)">
+      <polygon points="0,-34 110,0 0,34 -110,0"
+               fill="var(--card)" stroke="var(--slate)" stroke-width="1.5"/>
+      <text x="0" y="-4" text-anchor="middle" fill="var(--text)" font-size="12" class="diamond-lbl">contains "@path" ?</text>
+      <text x="0" y="11" text-anchor="middle" fill="var(--muted)" font-size="10">
+        <tspan class="lz">文件引用 @</tspan>
+        <tspan class="le" style="display:none;">file ref @</tspan>
+      </text>
+    </g>
+
+    <!-- D3 YES -> Leaf3 File Reference -->
+    <path d="M660,258 L510,258 L510,332" stroke="var(--emerald)" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+    <text x="575" y="250" font-size="11" class="branch-yes">YES</text>
+    <!-- D3 NO -> D4 -->
+    <path d="M740,258 L820,258 L820,320" stroke="var(--amber)" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+    <text x="745" y="250" font-size="11" class="branch-no">NO</text>
+
+    <!-- D4 Diamond: Starts with ! ? -->
+    <g transform="translate(820,354)">
+      <polygon points="0,-32 90,0 0,32 -90,0"
+               fill="var(--card)" stroke="var(--slate)" stroke-width="1.5"/>
+      <text x="0" y="-4" text-anchor="middle" fill="var(--text)" font-size="12" class="diamond-lbl">startsWith("!") ?</text>
+      <text x="0" y="11" text-anchor="middle" fill="var(--muted)" font-size="10">
+        <tspan class="lz">Shell 前缀</tspan>
+        <tspan class="le" style="display:none;">shell prefix</tspan>
+      </text>
+    </g>
+
+    <!-- D4 YES -> Leaf4 Shell Command (down-left) -->
+    <path d="M780,378 L700,378 L700,402" stroke="var(--emerald)" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+    <text x="720" y="372" font-size="11" class="branch-yes">YES</text>
+    <!-- D4 NO -> D5 (down-right) -->
+    <path d="M860,378 L860,420" stroke="var(--amber)" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+    <text x="865" y="402" font-size="11" class="branch-no">NO</text>
+
+    <!-- D5 Diamond: Contains URL ? -->
+    <g transform="translate(860,454)">
+      <polygon points="0,-30 82,0 0,30 -82,0"
+               fill="var(--card)" stroke="var(--slate)" stroke-width="1.5"/>
+      <text x="0" y="-3" text-anchor="middle" fill="var(--text)" font-size="11" class="diamond-lbl">/https?:\//.test ?</text>
+      <text x="0" y="11" text-anchor="middle" fill="var(--muted)" font-size="10">
+        <tspan class="lz">含 URL</tspan>
+        <tspan class="le" style="display:none;">has URL</tspan>
+      </text>
+    </g>
+
+    <!-- D5 YES -> Leaf5 URL Handler (up-left) -->
+    <path d="M810,440 L810,505 L870,505" stroke="var(--emerald)" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+    <text x="785" y="480" font-size="11" class="branch-yes">YES</text>
+    <!-- D5 NO -> Leaf6 Natural Language (default) -->
+    <path d="M780,454 L720,454 L720,505" stroke="var(--amber)" stroke-width="1.5" fill="none" marker-end="url(#arr)"/>
+    <text x="735" y="446" font-size="11" class="branch-no">NO · default</text>
+
+    <!-- ========== LEAF NODES ========== -->
+    <!-- Leaf 1: Internal Command (violet) -->
+    <g transform="translate(120,360)">
+      <rect x="-72" y="0" width="144" height="54" rx="10" ry="10"
+            fill="var(--violet)" fill-opacity="0.12" stroke="var(--violet)" stroke-width="1.5"/>
+      <circle cx="-54" cy="16" r="4" fill="var(--violet)"/>
+      <text x="-44" y="19" fill="var(--text)" font-size="11" class="leaf-ttl">
+        <tspan class="lz">内部命令</tspan>
+        <tspan class="le" style="display:none;">Internal Cmd</tspan>
+      </text>
+      <text x="0" y="36" text-anchor="middle" fill="var(--muted)" font-size="10" class="leaf-desc">
+        <tspan class="lz">隐藏处理器</tspan>
+        <tspan class="le" style="display:none;">hidden handler</tspan>
+      </text>
+      <text x="0" y="48" text-anchor="middle" fill="var(--violet)" font-size="10" class="diamond-lbl">execInternal()</text>
+    </g>
+
+    <!-- Leaf 2: User Command (cyan) -->
+    <g transform="translate(310,360)">
+      <rect x="-72" y="0" width="144" height="54" rx="10" ry="10"
+            fill="var(--cyan)" fill-opacity="0.12" stroke="var(--cyan)" stroke-width="1.5"/>
+      <circle cx="-54" cy="16" r="4" fill="var(--cyan)"/>
+      <text x="-44" y="19" fill="var(--text)" font-size="11" class="leaf-ttl">
+        <tspan class="lz">用户命令</tspan>
+        <tspan class="le" style="display:none;">User Cmd</tspan>
+      </text>
+      <text x="0" y="36" text-anchor="middle" fill="var(--muted)" font-size="10" class="leaf-desc">
+        <tspan class="lz">命令注册表查表</tspan>
+        <tspan class="le" style="display:none;">lookup registry</tspan>
+      </text>
+      <text x="0" y="48" text-anchor="middle" fill="var(--cyan)" font-size="10" class="diamond-lbl">cmdRegistry.get()</text>
+    </g>
+
+    <!-- Leaf 3: File Reference (amber) -->
+    <g transform="translate(510,360)">
+      <rect x="-72" y="0" width="144" height="54" rx="10" ry="10"
+            fill="var(--amber)" fill-opacity="0.12" stroke="var(--amber)" stroke-width="1.5"/>
+      <circle cx="-54" cy="16" r="4" fill="var(--amber)"/>
+      <text x="-44" y="19" fill="var(--text)" font-size="11" class="leaf-ttl">
+        <tspan class="lz">文件引用</tspan>
+        <tspan class="le" style="display:none;">File Ref</tspan>
+      </text>
+      <text x="0" y="36" text-anchor="middle" fill="var(--muted)" font-size="10" class="leaf-desc">
+        <tspan class="lz">解析 @path 并附件</tspan>
+        <tspan class="le" style="display:none;">parse @path, attach</tspan>
+      </text>
+      <text x="0" y="48" text-anchor="middle" fill="var(--amber)" font-size="10" class="diamond-lbl">attachFile(path)</text>
+    </g>
+
+    <!-- Leaf 4: Shell Command (orange) -->
+    <g transform="translate(700,430)">
+      <rect x="-72" y="0" width="144" height="54" rx="10" ry="10"
+            fill="var(--orange)" fill-opacity="0.12" stroke="var(--orange)" stroke-width="1.5"/>
+      <circle cx="-54" cy="16" r="4" fill="var(--orange)"/>
+      <text x="-44" y="19" fill="var(--text)" font-size="11" class="leaf-ttl">
+        <tspan class="lz">Shell 命令</tspan>
+        <tspan class="le" style="display:none;">Shell Cmd</tspan>
+      </text>
+      <text x="0" y="36" text-anchor="middle" fill="var(--muted)" font-size="10" class="leaf-desc">
+        <tspan class="lz">通过 Bash 工具执行</tspan>
+        <tspan class="le" style="display:none;">exec via Bash tool</tspan>
+      </text>
+      <text x="0" y="48" text-anchor="middle" fill="var(--orange)" font-size="10" class="diamond-lbl">bashTool.exec()</text>
+    </g>
+
+    <!-- Leaf 5: URL Handler (emerald) -->
+    <g transform="translate(870,500)">
+      <rect x="-56" y="0" width="112" height="54" rx="10" ry="10"
+            fill="var(--emerald)" fill-opacity="0.12" stroke="var(--emerald)" stroke-width="1.5"/>
+      <circle cx="-42" cy="16" r="4" fill="var(--emerald)"/>
+      <text x="-32" y="19" fill="var(--text)" font-size="11" class="leaf-ttl">
+        <tspan class="lz">URL 处理</tspan>
+        <tspan class="le" style="display:none;">URL</tspan>
+      </text>
+      <text x="0" y="36" text-anchor="middle" fill="var(--muted)" font-size="10" class="leaf-desc">
+        <tspan class="lz">抓取并附内容</tspan>
+        <tspan class="le" style="display:none;">fetch &amp; attach</tspan>
+      </text>
+      <text x="0" y="48" text-anchor="middle" fill="var(--emerald)" font-size="10" class="diamond-lbl">fetch(url)</text>
+    </g>
+
+    <!-- Leaf 6: Natural Language (rose) - DEFAULT -->
+    <g transform="translate(720,500)">
+      <rect x="-80" y="0" width="160" height="58" rx="10" ry="10"
+            fill="var(--rose)" fill-opacity="0.14" stroke="var(--rose)" stroke-width="2"/>
+      <circle cx="-62" cy="16" r="4" fill="var(--rose)"/>
+      <text x="-52" y="19" fill="var(--text)" font-size="11" class="leaf-ttl">
+        <tspan class="lz">自然语言 (默认)</tspan>
+        <tspan class="le" style="display:none;">Natural Lang (default)</tspan>
+      </text>
+      <text x="0" y="36" text-anchor="middle" fill="var(--muted)" font-size="10" class="leaf-desc">
+        <tspan class="lz">原样送 LLM</tspan>
+        <tspan class="le" style="display:none;">send to LLM as-is</tspan>
+      </text>
+      <text x="0" y="50" text-anchor="middle" fill="var(--rose)" font-size="10" class="diamond-lbl">llm.send(text)</text>
+    </g>
+
+    <!-- Side annotation: depth layers -->
+    <g opacity="0.55">
+      <line x1="30" y1="36" x2="30" y2="510" stroke="var(--subtle)" stroke-width="1" stroke-dasharray="3,3"/>
+      <text x="40" y="40" fill="var(--muted)" font-size="10">L0</text>
+      <text x="40" y="134" fill="var(--muted)" font-size="10">L1</text>
+      <text x="40" y="234" fill="var(--muted)" font-size="10">L2</text>
+      <text x="40" y="358" fill="var(--muted)" font-size="10">L3</text>
+      <text x="40" y="468" fill="var(--muted)" font-size="10">L4</text>
+    </g>
+
+  </svg>
+</div>
+
+<div class="stats-row">
+  <div class="stat">
+    <div class="stat-v">6</div>
+    <div class="stat-l">
+      <span class="lz">输入类型</span>
+      <span class="le" style="display:none;">Input Types</span>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-v">4</div>
+    <div class="stat-l">
+      <span class="lz">层决策</span>
+      <span class="le" style="display:none;">Decision Layers</span>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-v">NL</div>
+    <div class="stat-l">
+      <span class="lz">默认路径</span>
+      <span class="le" style="display:none;">Default Path</span>
+    </div>
+  </div>
+</div>
+
+<div class="legend">
+  <div class="leg"><span class="leg-sw" style="background:var(--violet);"></span>
+    <span class="lz">内部命令</span><span class="le" style="display:none;">Internal Cmd</span>
+  </div>
+  <div class="leg"><span class="leg-sw" style="background:var(--cyan);"></span>
+    <span class="lz">用户命令</span><span class="le" style="display:none;">User Cmd</span>
+  </div>
+  <div class="leg"><span class="leg-sw" style="background:var(--amber);"></span>
+    <span class="lz">文件引用</span><span class="le" style="display:none;">File Ref</span>
+  </div>
+  <div class="leg"><span class="leg-sw" style="background:var(--orange);"></span>
+    <span class="lz">Shell 命令</span><span class="le" style="display:none;">Shell Cmd</span>
+  </div>
+  <div class="leg"><span class="leg-sw" style="background:var(--emerald);"></span>
+    <span class="lz">URL 处理</span><span class="le" style="display:none;">URL Handler</span>
+  </div>
+  <div class="leg"><span class="leg-sw" style="background:var(--rose);"></span>
+    <span class="lz">自然语言 · 默认</span><span class="le" style="display:none;">Natural Lang · default</span>
+  </div>
+</div>
+
+<div class="footer">
+  <span class="lz">Claude Code 2.1.88 · 源码路由逻辑推演 · v2</span>
+  <span class="le" style="display:none;">Claude Code 2.1.88 · routing logic reconstructed · v2</span>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

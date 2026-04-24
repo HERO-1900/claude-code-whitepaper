@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<!--
+  VIS-0-001 · Claude Code 系统架构图 · Hero Architecture
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · 系统架构图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root,[data-theme="dark"]{
+      --bg:#020617;--bg-card:rgba(15,23,42,0.5);--border:#1e293b;
+      --text:#f8fafc;--muted:#94a3b8;--subtle:#64748b;--footer-c:#475569;--pulse:#22d3ee;
+      --svg-bg:#020617;--svg-mask:#0f172a;--svg-grid:#1e293b;
+      --slate-f:rgba(30,41,59,0.6);   --slate-s:#94a3b8;
+      --emerald-f:rgba(6,78,59,0.4);  --emerald-s:#34d399; --emerald-t:#34d399;
+      --rose-f:rgba(136,19,55,0.4);   --rose-s:#fb7185;    --rose-t:#fda4af;
+      --amber-f:rgba(120,53,15,0.4);  --amber-s:#fbbf24;   --amber-t:#fcd34d;
+      --cyan-f:rgba(8,51,68,0.4);     --cyan-s:#22d3ee;    --cyan-t:#67e8f9;
+      --violet-f:rgba(76,29,149,0.4); --violet-s:#a78bfa;  --violet-t:#c4b5fd;
+      --orange-f:rgba(154,52,18,0.4); --orange-s:#fb923c;  --orange-t:#fdba74;
+      --dim-f:rgba(30,41,59,0.35);    --dim-s:#64748b;
+      --svg-text:#f8fafc;--svg-sub:#94a3b8;--svg-tiny:#64748b;
+      --arr-pipe:#22d3ee;--arr-api:#fbbf24;--arr-loop:#fb923c;--arr-aux:#475569;
+      --ann:#f59e0b;--ann-bg:rgba(120,53,18,0.12);
+      --btn-bg:rgba(15,23,42,0.85);--btn-active:#22d3ee;
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3;--bg-card:rgba(255,255,255,0.85);--border:#e8e0d4;
+      --text:#1a1412;--muted:#6b5a4e;--subtle:#9c8878;--footer-c:#b5a99a;--pulse:#0891b2;
+      --svg-bg:#faf7f2;--svg-mask:#faf7f2;--svg-grid:#ddd4c4;
+      --slate-f:rgba(100,116,139,0.1); --slate-s:#78716c;
+      --emerald-f:rgba(6,78,59,0.13);  --emerald-s:#059669; --emerald-t:#047857;
+      --rose-f:rgba(136,19,55,0.1);    --rose-s:#e11d48;    --rose-t:#be123c;
+      --amber-f:rgba(180,83,9,0.12);   --amber-s:#d97706;   --amber-t:#b45309;
+      --cyan-f:rgba(8,51,68,0.1);      --cyan-s:#0891b2;    --cyan-t:#0e7490;
+      --violet-f:rgba(76,29,149,0.1);  --violet-s:#7c3aed;  --violet-t:#6d28d9;
+      --orange-f:rgba(154,52,18,0.1);  --orange-s:#ea580c;  --orange-t:#c2410c;
+      --svg-text:#1a1412;--svg-sub:#6b5a4e;--svg-tiny:#9c8878;
+      --arr-pipe:#0891b2;--arr-api:#d97706;--arr-loop:#ea580c;--arr-aux:#9c8878;
+      --ann:#b45309;--ann-bg:rgba(180,83,9,0.09);
+      --btn-bg:rgba(255,255,255,0.9);--btn-active:#0891b2;
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--bg-card:rgba(248,250,252,0.95);--border:#e2e8f0;
+      --text:#0f172a;--muted:#475569;--subtle:#94a3b8;--footer-c:#94a3b8;--pulse:#0ea5e9;
+      --svg-bg:#f8fafc;--svg-mask:#f1f5f9;--svg-grid:#e2e8f0;
+      --slate-f:rgba(100,116,139,0.08); --slate-s:#94a3b8;
+      --emerald-f:rgba(16,185,129,0.1); --emerald-s:#10b981; --emerald-t:#059669;
+      --rose-f:rgba(244,63,94,0.1);     --rose-s:#f43f5e;    --rose-t:#e11d48;
+      --amber-f:rgba(245,158,11,0.1);   --amber-s:#f59e0b;   --amber-t:#d97706;
+      --cyan-f:rgba(6,182,212,0.1);     --cyan-s:#06b6d4;    --cyan-t:#0891b2;
+      --violet-f:rgba(139,92,246,0.1);  --violet-s:#8b5cf6;  --violet-t:#7c3aed;
+      --orange-f:rgba(249,115,22,0.1);  --orange-s:#f97316;  --orange-t:#ea580c;
+      --svg-text:#0f172a;--svg-sub:#475569;--svg-tiny:#94a3b8;
+      --arr-pipe:#06b6d4;--arr-api:#f59e0b;--arr-loop:#f97316;--arr-aux:#94a3b8;
+      --ann:#d97706;--ann-bg:rgba(217,119,6,0.07);
+      --btn-bg:rgba(248,250,252,0.95);--btn-active:#0ea5e9;
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:2rem;transition:background .25s,color .25s;}
+    .container{max-width:1100px;margin:0 auto;}
+
+    /* Controls */
+    .controls{position:fixed;top:1rem;right:1rem;display:flex;gap:5px;z-index:100;
+      background:var(--btn-bg);border:1px solid var(--border);border-radius:10px;
+      padding:5px 7px;backdrop-filter:blur(8px);transition:background .25s,border-color .25s;}
+    .cb{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;padding:4px 9px;
+      border-radius:5px;border:1px solid transparent;background:transparent;color:var(--muted);
+      cursor:pointer;transition:all .15s;}
+    .cb:hover{color:var(--text);border-color:var(--border);}
+    .cb.active{border-color:var(--btn-active);color:var(--text);}
+    .cdiv{width:1px;background:var(--border);margin:2px;}
+
+    /* Header */
+    .header{margin-bottom:1.5rem;}
+    .header-row{display:flex;align-items:center;gap:.875rem;margin-bottom:.375rem;}
+    .pulse-dot{width:11px;height:11px;background:var(--pulse);border-radius:50%;flex-shrink:0;animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.9);}}
+    h1{font-size:1.3rem;font-weight:700;letter-spacing:-.02em;}
+    .subtitle{color:var(--muted);font-size:.78rem;margin-left:1.875rem;}
+
+    /* Diagram */
+    .diagram-container{background:var(--bg-card);border:1px solid var(--border);border-radius:1rem;padding:1.5rem;overflow-x:auto;transition:background .25s,border-color .25s;}
+    svg{width:100%;min-width:920px;display:block;}
+
+    /* Cards */
+    .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(270px,1fr));gap:1rem;margin-top:1.5rem;}
+    .card{background:var(--bg-card);border:1px solid var(--border);border-radius:.75rem;padding:1.25rem;transition:background .25s,border-color .25s;}
+    .card-header{display:flex;align-items:center;gap:.5rem;margin-bottom:.75rem;}
+    .cd{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .cd-cyan{background:#22d3ee;} .cd-amber{background:#fbbf24;} .cd-violet{background:#a78bfa;}
+    .card h3{font-size:.875rem;font-weight:600;color:var(--text);}
+    .card ul{list-style:none;color:var(--muted);font-size:.73rem;line-height:1.65;}
+    .card li{margin-bottom:.3rem;}
+    .card code{font-size:.68rem;background:rgba(128,128,128,.15);padding:1px 4px;border-radius:3px;}
+    .footer{text-align:center;margin-top:1.5rem;color:var(--footer-c);font-size:.71rem;}
+
+    /* i18n */
+    .zh{display:inline;}.en{display:none;}
+    [lang="en"] .zh{display:none;}[lang="en"] .en{display:inline;}
+    ul.en,li.en{display:none;}ul.zh,li.zh{display:block;}
+    [lang="en"] ul.zh,[lang="en"] li.zh{display:none;}
+    [lang="en"] ul.en,[lang="en"] li.en{display:block;}
+  </style>
+</head>
+<body>
+
+<div class="controls">
+  <button class="cb active" id="btn-dark"  onclick="setTheme('dark')"><span class="lz">深色</span><span class="le">Dark</span></button>
+  <button class="cb"        id="btn-warm"  onclick="setTheme('warm')"><span class="lz">暖色</span><span class="le">Warm</span></button>
+  <button class="cb"        id="btn-light" onclick="setTheme('light')"><span class="lz">浅色</span><span class="le">Light</span></button>
+  <div class="cdiv"></div>
+  <button class="cb"        id="btn-lang"  onclick="toggleLang()">中 / EN</button>
+</div>
+
+<div class="container">
+  <div class="header">
+    <div class="header-row">
+      <div class="pulse-dot"></div>
+      <h1><span class="zh">Claude Code · 系统架构全景图</span><span class="en">Claude Code · System Architecture</span></h1>
+    </div>
+    <p class="subtitle">
+      <span class="zh">9节点主链路 + 6子系统 · 从终端输入到最终输出的完整闭环</span>
+      <span class="en">9-node pipeline + 6 subsystems · Complete loop from terminal to output</span>
+    </p>
+  </div>
+
+  <div class="diagram-container">
+    <svg viewBox="0 0 1000 560" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Markers — all via CSS var -->
+        <marker id="mp" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+          <polygon points="0 0,9 3.5,0 7" style="fill:var(--arr-pipe)"/>
+        </marker>
+        <marker id="ma" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+          <polygon points="0 0,9 3.5,0 7" style="fill:var(--arr-api)"/>
+        </marker>
+        <marker id="ml" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto">
+          <polygon points="0 0,9 3.5,0 7" style="fill:var(--arr-loop)"/>
+        </marker>
+        <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" style="stroke:var(--svg-grid)" stroke-width="0.5"/>
+        </pattern>
+      </defs>
+
+      <!-- ① Background -->
+      <rect width="1000" height="560" style="fill:var(--svg-bg)"/>
+      <rect width="1000" height="560" fill="url(#grid)" opacity="0.45"/>
+
+      <!-- ② Arrows FIRST (behind everything) ─────────────────── -->
+
+      <!-- Row 1 pipeline arrows (→) -->
+      <line x1="128" y1="102" x2="140" y2="102" style="stroke:var(--arr-pipe)" stroke-width="2" marker-end="url(#mp)"/>
+      <line x1="260" y1="102" x2="272" y2="102" style="stroke:var(--arr-pipe)" stroke-width="2" marker-end="url(#mp)"/>
+      <line x1="400" y1="102" x2="412" y2="102" style="stroke:var(--arr-pipe)" stroke-width="2" marker-end="url(#mp)"/>
+      <line x1="555" y1="102" x2="567" y2="102" style="stroke:var(--arr-pipe)" stroke-width="2" marker-end="url(#mp)"/>
+
+      <!-- N5 → N6 right-turn connector (amber API flow) -->
+      <polyline points="730,102 760,102 760,258 718,258"
+                fill="none" style="stroke:var(--arr-api)" stroke-width="2" marker-end="url(#ma)"/>
+
+      <!-- Row 2 arrows (← going right-to-left) -->
+      <line x1="568" y1="258" x2="560" y2="258" style="stroke:var(--arr-api)" stroke-width="2" marker-end="url(#ma)"/>
+      <line x1="408" y1="258" x2="400" y2="258" style="stroke:var(--arr-api)" stroke-width="2" marker-end="url(#ma)"/>
+      <line x1="250" y1="258" x2="242" y2="258" style="stroke:var(--arr-api)" stroke-width="2" marker-end="url(#ma)"/>
+
+      <!-- Loop back: N8 → N5 (dashed orange, tool_result) -->
+      <path d="M 326,228 C 326,175 648,175 648,132"
+            fill="none" style="stroke:var(--arr-loop)" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#ml)"/>
+
+      <!-- Subsystem dashed connections (gray, no arrowhead) -->
+      <line x1="80"  y1="382" x2="334" y2="132" style="stroke:var(--arr-aux)" stroke-width="1.2" stroke-dasharray="5,4" opacity="0.6"/>
+      <line x1="224" y1="382" x2="648" y2="132" style="stroke:var(--arr-aux)" stroke-width="1.2" stroke-dasharray="5,4" opacity="0.6"/>
+      <line x1="374" y1="382" x2="326" y2="288" style="stroke:var(--arr-aux)" stroke-width="1.2" stroke-dasharray="5,4" opacity="0.6"/>
+      <line x1="528" y1="382" x2="630" y2="132" style="stroke:var(--arr-aux)" stroke-width="1.2" stroke-dasharray="5,4" opacity="0.6"/>
+      <line x1="671" y1="382" x2="370" y2="288" style="stroke:var(--arr-aux)" stroke-width="1.2" stroke-dasharray="5,4" opacity="0.6"/>
+      <line x1="818" y1="382" x2="482" y2="132" style="stroke:var(--arr-aux)" stroke-width="1.2" stroke-dasharray="5,4" opacity="0.6"/>
+
+      <!-- ③ Arrow labels (bg rects first) -->
+      <!-- "input" on A1 -->
+      <rect x="127" y="90" width="35" height="13" rx="2" style="fill:var(--svg-bg)" opacity="0.85"/>
+      <text x="145" y="100" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--arr-pipe)">input</text>
+
+      <!-- "tool_result" on loop arrow -->
+      <rect x="435" y="188" width="76" height="13" rx="2" style="fill:var(--svg-bg)" opacity="0.85"/>
+      <text x="473" y="198" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--arr-loop)" class="lz">tool_result 回环</text>
+      <text x="473" y="198" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--arr-loop);display:none" class="le">tool_result loop</text>
+
+      <!-- ④ Masks — cover arrows that would show through nodes -->
+      <!-- Row 1 -->
+      <rect x="9"   y="71" width="120" height="62" rx="6" style="fill:var(--svg-mask)"/>
+      <rect x="141" y="71" width="120" height="62" rx="6" style="fill:var(--svg-mask)"/>
+      <rect x="273" y="71" width="130" height="62" rx="6" style="fill:var(--svg-mask)"/>
+      <rect x="413" y="71" width="144" height="62" rx="6" style="fill:var(--svg-mask)"/>
+      <rect x="569" y="71" width="162" height="62" rx="6" style="fill:var(--svg-mask)"/>
+      <!-- Row 2 -->
+      <rect x="569" y="227" width="150" height="62" rx="6" style="fill:var(--svg-mask)"/>
+      <rect x="411" y="227" width="148" height="62" rx="6" style="fill:var(--svg-mask)"/>
+      <rect x="253" y="227" width="148" height="62" rx="6" style="fill:var(--svg-mask)"/>
+      <rect x="91"  y="227" width="148" height="62" rx="6" style="fill:var(--svg-mask)"/>
+      <!-- Subsystems -->
+      <rect x="9"   y="381" width="142" height="57" rx="6" style="fill:var(--svg-mask)"/>
+      <rect x="159" y="381" width="132" height="57" rx="6" style="fill:var(--svg-mask)"/>
+      <rect x="299" y="381" width="152" height="57" rx="6" style="fill:var(--svg-mask)"/>
+      <rect x="459" y="381" width="140" height="57" rx="6" style="fill:var(--svg-mask)"/>
+      <rect x="607" y="381" width="130" height="57" rx="6" style="fill:var(--svg-mask)"/>
+      <rect x="745" y="381" width="148" height="57" rx="6" style="fill:var(--svg-mask)"/>
+
+      <!-- ⑤ Styled nodes ─────────────────────────────────────── -->
+      <!-- Row 1 -->
+      <rect x="10"  y="72" width="118" height="60" rx="6" style="fill:var(--slate-f);stroke:var(--slate-s)"   stroke-width="1.5"/>
+      <rect x="142" y="72" width="118" height="60" rx="6" style="fill:var(--emerald-f);stroke:var(--emerald-s)" stroke-width="1.5"/>
+      <rect x="274" y="72" width="128" height="60" rx="6" style="fill:var(--rose-f);stroke:var(--rose-s)"     stroke-width="1.5"/>
+      <rect x="414" y="72" width="142" height="60" rx="6" style="fill:var(--emerald-f);stroke:var(--emerald-s)" stroke-width="1.5"/>
+      <rect x="570" y="72" width="160" height="60" rx="6" style="fill:var(--cyan-f);stroke:var(--cyan-s)"     stroke-width="2"/>
+      <!-- Row 2 -->
+      <rect x="570" y="228" width="148" height="60" rx="6" style="fill:var(--amber-f);stroke:var(--amber-s)"  stroke-width="1.5"/>
+      <rect x="412" y="228" width="146" height="60" rx="6" style="fill:var(--emerald-f);stroke:var(--emerald-s)" stroke-width="1.5"/>
+      <rect x="254" y="228" width="146" height="60" rx="6" style="fill:var(--amber-f);stroke:var(--amber-s)"  stroke-width="1.5"/>
+      <rect x="92"  y="228" width="146" height="60" rx="6" style="fill:var(--cyan-f);stroke:var(--cyan-s)"    stroke-width="1.5"/>
+      <!-- Subsystems -->
+      <rect x="10"  y="382" width="140" height="55" rx="6" style="fill:var(--rose-f);stroke:var(--rose-s)"    stroke-width="1.5"/>
+      <rect x="160" y="382" width="130" height="55" rx="6" style="fill:var(--violet-f);stroke:var(--violet-s)" stroke-width="1.5"/>
+      <rect x="300" y="382" width="150" height="55" rx="6" style="fill:var(--amber-f);stroke:var(--amber-s)"  stroke-width="1.5"/>
+      <rect x="460" y="382" width="138" height="55" rx="6" style="fill:var(--orange-f);stroke:var(--orange-s)" stroke-width="1.5"/>
+      <rect x="608" y="382" width="128" height="55" rx="6" style="fill:var(--rose-f);stroke:var(--rose-s)"    stroke-width="1.5"/>
+      <rect x="746" y="382" width="146" height="55" rx="6" style="fill:var(--violet-f);stroke:var(--violet-s)" stroke-width="1.5"/>
+
+      <!-- ⑥ Text labels (技术英文永远显示，中文追加翻译) ─────── -->
+      <!-- Header label (diagram title inside SVG) -->
+      <text x="500" y="36" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="15" font-weight="700" style="fill:var(--svg-text)" class="lz">Claude Code 系统架构图</text>
+      <text x="500" y="36" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="15" font-weight="700" style="fill:var(--svg-text);display:none" class="le">Claude Code System Architecture</text>
+      <text x="500" y="52" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-sub)" class="lz">主链路 9 节点 · 支撑子系统 6 个</text>
+      <text x="500" y="52" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-sub);display:none" class="le">9 pipeline nodes · 6 subsystems</text>
+
+      <!-- N1: Terminal REPL -->
+      <text x="69" y="96" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" style="fill:var(--svg-text)">Terminal REPL</text>
+      <text x="69" y="111" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-sub)" class="lz">终端交互层</text>
+      <text x="69" y="111" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-sub);display:none" class="le">terminal layer</text>
+      <text x="69" y="124" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-tiny)">REPL / CLI</text>
+
+      <!-- N2: CLI Parser -->
+      <text x="201" y="96" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" style="fill:var(--svg-text)">CLI Parser</text>
+      <text x="201" y="111" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--emerald-t)" class="lz">命令解析器</text>
+      <text x="201" y="111" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--emerald-t);display:none" class="le">cmd parser</text>
+      <text x="201" y="124" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-tiny)">yargs / flags</text>
+
+      <!-- N3: Permission Gate -->
+      <text x="338" y="96" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" style="fill:var(--svg-text)">Permission Gate</text>
+      <text x="338" y="111" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--rose-t)" class="lz">权限网关</text>
+      <text x="338" y="124" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-tiny)">allow / ask / deny</text>
+
+      <!-- N4: Prompt Builder -->
+      <text x="485" y="96" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" style="fill:var(--svg-text)">Prompt Builder</text>
+      <text x="485" y="111" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--emerald-t)" class="lz">Prompt 构建器</text>
+      <text x="485" y="124" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-tiny)">context + history</text>
+
+      <!-- N5: Agent Query Loop (CORE — stroke-width=2, larger) -->
+      <text x="650" y="96" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" font-weight="700" style="fill:var(--svg-text)">Agent Query Loop</text>
+      <text x="650" y="112" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--cyan-t)" class="lz">核心推理循环</text>
+      <text x="650" y="112" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--cyan-t);display:none" class="le">core reasoning loop</text>
+      <text x="650" y="125" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-tiny)">query.ts · Core Loop</text>
+
+      <!-- N6: API Client -->
+      <text x="644" y="252" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" style="fill:var(--svg-text)">API Client</text>
+      <text x="644" y="267" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--amber-t)" class="lz">Anthropic API 客户端</text>
+      <text x="644" y="267" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--amber-t);display:none" class="le">Anthropic API client</text>
+      <text x="644" y="280" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-tiny)">claude-3 / streaming</text>
+
+      <!-- N7: Response Parser -->
+      <text x="485" y="252" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" style="fill:var(--svg-text)">Response Parser</text>
+      <text x="485" y="267" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--emerald-t)" class="lz">响应解析器</text>
+      <text x="485" y="267" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--emerald-t);display:none" class="le">response parser</text>
+      <text x="485" y="280" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-tiny)">tool_use / text</text>
+
+      <!-- N8: Tool Dispatcher -->
+      <text x="327" y="252" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" style="fill:var(--svg-text)">Tool Dispatcher</text>
+      <text x="327" y="267" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--amber-t)" class="lz">工具调度器</text>
+      <text x="327" y="267" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--amber-t);display:none" class="le">tool dispatcher</text>
+      <text x="327" y="280" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-tiny)">43 tools · harness</text>
+
+      <!-- N9: Renderer -->
+      <text x="165" y="252" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" font-weight="600" style="fill:var(--svg-text)">Renderer</text>
+      <text x="165" y="267" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--cyan-t)" class="lz">渲染输出</text>
+      <text x="165" y="267" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--cyan-t);display:none" class="le">render output</text>
+      <text x="165" y="280" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-tiny)">ink / terminal</text>
+
+      <!-- Subsystems separator label -->
+      <text x="8" y="374" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" style="fill:var(--svg-tiny)" class="lz">── 支撑子系统 ──</text>
+      <text x="8" y="374" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" style="fill:var(--svg-tiny);display:none" class="le">── Subsystems ──</text>
+
+      <!-- S1: Permission System -->
+      <text x="80"  y="404" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" style="fill:var(--svg-text)">Permission</text>
+      <text x="80"  y="417" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--rose-t)" class="lz">权限系统</text>
+      <text x="80"  y="430" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-tiny)">System</text>
+
+      <!-- S2: Settings -->
+      <text x="225" y="404" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" style="fill:var(--svg-text)">Settings</text>
+      <text x="225" y="417" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--violet-t)" class="lz">配置系统</text>
+      <text x="225" y="430" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-tiny)">~/.claude/</text>
+
+      <!-- S3: MCP Protocol -->
+      <text x="375" y="404" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" style="fill:var(--svg-text)">MCP Protocol</text>
+      <text x="375" y="417" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--amber-t)" class="lz">协议层</text>
+      <text x="375" y="430" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-tiny)">stdio / SSE</text>
+
+      <!-- S4: Hooks Engine -->
+      <text x="529" y="404" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" style="fill:var(--svg-text)">Hooks Engine</text>
+      <text x="529" y="417" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--orange-t)" class="lz">钩子引擎</text>
+      <text x="529" y="430" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-tiny)">pre / post hook</text>
+
+      <!-- S5: Sandbox -->
+      <text x="672" y="404" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" style="fill:var(--svg-text)">Sandbox</text>
+      <text x="672" y="417" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--rose-t)" class="lz">沙箱隔离</text>
+      <text x="672" y="430" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-tiny)">macOS / docker</text>
+
+      <!-- S6: Context Manager -->
+      <text x="819" y="404" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" style="fill:var(--svg-text)">Context</text>
+      <text x="819" y="417" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--violet-t)" class="lz">上下文管理</text>
+      <text x="819" y="430" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-tiny)">window / compaction</text>
+
+      <!-- ⑦ Legend -->
+      <text x="902" y="465" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" style="fill:var(--svg-sub)" class="lz">图例</text>
+      <text x="902" y="465" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" style="fill:var(--svg-sub);display:none" class="le">Legend</text>
+      <line x1="858" y1="480" x2="876" y2="480" style="stroke:var(--arr-pipe)" stroke-width="2" marker-end="url(#mp)"/>
+      <text x="882" y="484" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-sub)" class="lz">推理链路</text>
+      <text x="882" y="484" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-sub);display:none" class="le">pipeline</text>
+      <line x1="858" y1="496" x2="876" y2="496" style="stroke:var(--arr-api)" stroke-width="2" marker-end="url(#ma)"/>
+      <text x="882" y="500" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-sub)" class="lz">API 流</text>
+      <text x="882" y="500" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-sub);display:none" class="le">API flow</text>
+      <line x1="858" y1="512" x2="876" y2="512" style="stroke:var(--arr-loop)" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#ml)"/>
+      <text x="882" y="516" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-sub)" class="lz">工具回环</text>
+      <text x="882" y="516" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-sub);display:none" class="le">tool loop</text>
+      <line x1="858" y1="528" x2="876" y2="528" style="stroke:var(--arr-aux)" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.7"/>
+      <text x="882" y="532" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-sub)" class="lz">子系统连接</text>
+      <text x="882" y="532" font-family="JetBrains Mono,monospace" font-size="10" style="fill:var(--svg-sub);display:none" class="le">subsystem link</text>
+
+    </svg>
+  </div>
+
+  <!-- Cards -->
+  <div class="cards">
+    <div class="card">
+      <div class="card-header"><div class="cd cd-cyan"></div>
+        <h3><span class="zh">主链路 · 9 节点</span><span class="en">Pipeline · 9 Nodes</span></h3>
+      </div>
+      <ul class="zh">
+        <li>• Terminal REPL → CLI Parser（命令解析）</li>
+        <li>• Permission Gate（auto/ask/deny 三路）</li>
+        <li>• Prompt Builder → <strong>Agent Query Loop</strong>（核心）</li>
+        <li>• API Client → Response Parser</li>
+        <li>• Tool Dispatcher → Renderer（渲染结果）</li>
+      </ul>
+      <ul class="en">
+        <li>• Terminal REPL → CLI Parser (cmd parsing)</li>
+        <li>• Permission Gate (auto/ask/deny)</li>
+        <li>• Prompt Builder → <strong>Agent Query Loop</strong> (core)</li>
+        <li>• API Client → Response Parser</li>
+        <li>• Tool Dispatcher → Renderer (render output)</li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="cd cd-amber"></div>
+        <h3><span class="zh">Agent Loop 回环机制</span><span class="en">Agent Loop Cycle</span></h3>
+      </div>
+      <ul class="zh">
+        <li>• 模型返回 <code>tool_use</code> → 调度执行</li>
+        <li>• 执行结果作为 <code>tool_result</code> 送回核心</li>
+        <li>• 循环直到纯文本响应或 <code>MAX_TURNS</code></li>
+        <li>• 一轮可并发多工具调用</li>
+        <li>• 源码：<code>src/core/query.ts</code></li>
+      </ul>
+      <ul class="en">
+        <li>• Model returns <code>tool_use</code> → dispatch</li>
+        <li>• Result sent back as <code>tool_result</code></li>
+        <li>• Loop until text response or <code>MAX_TURNS</code></li>
+        <li>• Parallel tool calls within one turn</li>
+        <li>• Source: <code>src/core/query.ts</code></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-header"><div class="cd cd-violet"></div>
+        <h3><span class="zh">6 支撑子系统</span><span class="en">6 Subsystems</span></h3>
+      </div>
+      <ul class="zh">
+        <li>• <strong>Permission</strong>：工具访问控制</li>
+        <li>• <strong>Settings</strong>：多层配置（全局/项目/用户）</li>
+        <li>• <strong>MCP Protocol</strong>：扩展工具协议</li>
+        <li>• <strong>Hooks Engine</strong>：pre/post 事件钩子</li>
+        <li>• <strong>Sandbox</strong> + <strong>Context</strong>：安全 + 记忆</li>
+      </ul>
+      <ul class="en">
+        <li>• <strong>Permission</strong>: tool access control</li>
+        <li>• <strong>Settings</strong>: multi-layer config</li>
+        <li>• <strong>MCP Protocol</strong>: tool extension protocol</li>
+        <li>• <strong>Hooks Engine</strong>: pre/post event hooks</li>
+        <li>• <strong>Sandbox</strong> + <strong>Context</strong>: safety + memory</li>
+      </ul>
+    </div>
+  </div>
+
+  <p class="footer">
+    <span class="zh">Claude Code 2.1.88 · VIS-0-001 · 系统架构全景图 · 白皮书 v2</span>
+    <span class="en">Claude Code 2.1.88 · VIS-0-001 · System Architecture · Whitepaper v2</span>
+  </p>
+</div>
+
+<script>
+(function(){
+  'use strict';
+  function svgLocale(zh){
+    document.querySelectorAll('.lz').forEach(function(e){e.style.display=zh?'':'none';});
+    document.querySelectorAll('.le').forEach(function(e){e.style.display=zh?'none':'';});
+  }
+  var loc='zh';
+  function applyLocale(l){
+    loc=(l==='en')?'en':'zh';
+    document.documentElement.lang=loc;
+    svgLocale(loc==='zh');
+    var b=document.getElementById('btn-lang');
+    if(b) b.textContent=loc==='zh'?'中 / EN':'EN / 中';
+  }
+  function toggleLang(){
+    var n=loc==='zh'?'en':'zh';
+    localStorage.setItem('cc-locale',n);
+    applyLocale(n);
+  }
+  var theme='dark';
+  function applyTheme(t){
+    if(['dark','warm','light'].indexOf(t)<0) t='dark';
+    theme=t;
+    document.documentElement.setAttribute('data-theme',t);
+    ['dark','warm','light'].forEach(function(x){
+      var b=document.getElementById('btn-'+x);
+      if(b) b.classList.toggle('active',x===t);
+    });
+  }
+  function setTheme(t){localStorage.setItem('cc-theme',t);applyTheme(t);}
+  var p=new URLSearchParams(window.location.search);
+  applyLocale(p.get('lang')||localStorage.getItem('cc-locale')||'zh');
+  applyTheme(p.get('theme')||localStorage.getItem('cc-theme')||'dark');
+  window.addEventListener('storage',function(e){
+    if(e.key==='cc-locale') applyLocale(e.newValue||'zh');
+    if(e.key==='cc-theme')  applyTheme(e.newValue||'dark');
+  });
+  window.addEventListener('message',function(e){
+    if(!e.data||typeof e.data!=='object') return;
+    if(e.data.type==='cc-locale-change') applyLocale(e.data.locale||'zh');
+    if(e.data.type==='cc-theme-change')  applyTheme(e.data.theme||'dark');
+    if(e.data.ccLocale) applyLocale(e.data.ccLocale);
+    if(e.data.ccTheme)  applyTheme(e.data.ccTheme);
+  });
+  window.setTheme=setTheme;
+  window.toggleLang=toggleLang;
+  window.ccChart={setTheme:setTheme,applyLocale:applyLocale};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

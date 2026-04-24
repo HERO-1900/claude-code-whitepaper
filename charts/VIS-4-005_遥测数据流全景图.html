@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-4-005 | 遥测数据流全景图</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--panel:#0f172a;--card:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--subtle:#475569;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c;--svg-bg:#020617;--tier2-bg:#130c2a;--sentry-bg:#1a0a12;--statsig-bg:#0a1a12;--otlp-bg:#1a1200;--local-bg:#0e121a;--sampling-bg:#1e0a2e;--sentry-sep:#3d1120;--statsig-sep:#0d2a1c;--otlp-sep:#2a1e00;--local-sep:#1e2533}
+[data-theme="warm"]{--bg:#1c1410;--panel:#2a1f16;--card:#3d2d20;--border:#5c4a3a;--text:#f5e6d3;--muted:#c4a882;--subtle:#8b7355;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c;--svg-bg:#1c1410;--tier2-bg:#251a2a;--sentry-bg:#2a1a1c;--statsig-bg:#1a2a1c;--otlp-bg:#2a2210;--local-bg:#1e1a16;--sampling-bg:#2a1a2e;--sentry-sep:#4a2a30;--statsig-sep:#2a4a30;--otlp-sep:#4a3a10;--local-sep:#3a3530}
+[data-theme="light"]{--bg:#f8fafc;--panel:#f1f5f9;--card:#e2e8f0;--border:#cbd5e1;--text:#0f172a;--muted:#475569;--subtle:#94a3b8;--amber:#d97706;--cyan:#0891b2;--violet:#7c3aed;--emerald:#059669;--rose:#e11d48;--slate:#475569;--orange:#ea580c;--svg-bg:#f8fafc;--tier2-bg:#ede9fe;--sentry-bg:#ffe4e6;--statsig-bg:#d1fae5;--otlp-bg:#fef3c7;--local-bg:#e2e8f0;--sampling-bg:#ede9fe;--sentry-sep:#fecdd3;--statsig-sep:#a7f3d0;--otlp-sep:#fde68a;--local-sep:#cbd5e1}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:20px}
+
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:100}
+.ctrl button{font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:background 0.2s}
+.ctrl button:hover{background:var(--border)}
+
+.page-header{text-align:center;padding:20px 0 10px;margin-bottom:4px}
+.page-title{font-size:22px;font-weight:700;color:var(--text);letter-spacing:-0.5px}
+.page-subtitle{font-size:12px;color:var(--muted);margin-top:6px;letter-spacing:0.5px}
+.vis-id{font-size:11px;color:var(--subtle);margin-top:4px}
+
+.svg-container{width:100%;max-width:980px;margin:0 auto;display:block}
+.main-svg{width:100%;height:auto;display:block}
+
+/* SVG theme-aware classes */
+.svg-bg{fill:var(--svg-bg)}
+.grid-line{stroke:var(--muted)}
+.panel-fill{fill:var(--panel)}
+.card-fill{fill:var(--card)}
+.border-stroke{stroke:var(--border)}
+.text-primary{fill:var(--text)}
+.text-muted{fill:var(--muted)}
+.text-subtle{fill:var(--subtle)}
+.label-bg{fill:var(--svg-bg)}
+.tier2-fill{fill:var(--tier2-bg)}
+.sentry-fill{fill:var(--sentry-bg)}
+.statsig-fill{fill:var(--statsig-bg)}
+.otlp-fill{fill:var(--otlp-bg)}
+.local-fill{fill:var(--local-bg)}
+.sampling-fill{fill:var(--sampling-bg)}
+.sentry-sep-stroke{stroke:var(--sentry-sep)}
+.statsig-sep-stroke{stroke:var(--statsig-sep)}
+.otlp-sep-stroke{stroke:var(--otlp-sep)}
+.local-sep-stroke{stroke:var(--local-sep)}
+.divider{stroke:var(--border)}
+
+/* Theme-aware arrow colors */
+.stroke-cyan{stroke:var(--cyan)}
+.stroke-violet{stroke:var(--violet)}
+.stroke-amber{stroke:var(--amber)}
+.stroke-rose{stroke:var(--rose)}
+.stroke-emerald{stroke:var(--emerald)}
+.stroke-slate{stroke:var(--slate)}
+.fill-cyan{fill:var(--cyan)}
+.fill-violet{fill:var(--violet)}
+.fill-amber{fill:var(--amber)}
+.fill-rose{fill:var(--rose)}
+.fill-emerald{fill:var(--emerald)}
+.fill-slate{fill:var(--slate)}
+
+/* Summary cards */
+.cards-row{display:flex;gap:16px;max-width:980px;margin:20px auto 0;flex-wrap:wrap}
+.card{flex:1;min-width:240px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
+.card-icon{font-size:20px;margin-bottom:8px}
+.card-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:6px}
+.card-desc{font-size:11px;color:var(--muted);line-height:1.6}
+
+.privacy-bar{max-width:980px;margin:16px auto 0;background:rgba(251,191,36,0.08);border:1px solid rgba(251,191,36,0.35);border-radius:8px;padding:12px 18px;font-size:12px;color:var(--amber);text-align:center;letter-spacing:0.3px}[data-lang="en"] .lz{display:none}
+[data-lang="en"] .le{display:inline}
+</style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="cycleTheme()">Theme</button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<div class="page-header">
+  <div class="page-title">
+    <span class="lz">遥测数据流全景图</span>
+    <span class="le">Telemetry Data Flow Panorama</span>
+  </div>
+  <div class="page-subtitle">
+    <span class="lz">Claude Code 完整遥测架构 · 三层数据流 · 四大导出目标</span>
+    <span class="le">Claude Code Telemetry Architecture · 3-Tier Data Flow · 4 Export Destinations</span>
+  </div>
+  <div class="vis-id">VIS-4-005</div>
+</div>
+
+<div class="svg-container">
+<svg class="main-svg" viewBox="0 0 960 520" xmlns="http://www.w3.org/2000/svg" aria-label="遥测数据流全景图">
+  <defs>
+    <!-- Arrow markers: polygon fill uses CSS var() so it adapts per-theme -->
+    <marker id="arrow-cyan" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" class="fill-cyan"/>
+    </marker>
+    <marker id="arrow-violet" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" class="fill-violet"/>
+    </marker>
+    <marker id="arrow-rose" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" class="fill-rose"/>
+    </marker>
+    <marker id="arrow-emerald" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" class="fill-emerald"/>
+    </marker>
+    <marker id="arrow-amber" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" class="fill-amber"/>
+    </marker>
+    <marker id="arrow-slate" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" class="fill-slate"/>
+    </marker>
+  </defs>
+
+  <!-- ============================================================
+       BACKGROUND — theme-aware
+  ============================================================ -->
+  <rect width="960" height="520" class="svg-bg" rx="12"/>
+
+  <!-- subtle grid lines (theme-aware) -->
+  <g opacity="0.08" class="grid-line" stroke-width="0.5">
+    <line x1="80"  y1="10" x2="80"  y2="510"/>
+    <line x1="160" y1="10" x2="160" y2="510"/>
+    <line x1="240" y1="10" x2="240" y2="510"/>
+    <line x1="320" y1="10" x2="320" y2="510"/>
+    <line x1="400" y1="10" x2="400" y2="510"/>
+    <line x1="480" y1="10" x2="480" y2="510"/>
+    <line x1="560" y1="10" x2="560" y2="510"/>
+    <line x1="640" y1="10" x2="640" y2="510"/>
+    <line x1="720" y1="10" x2="720" y2="510"/>
+    <line x1="800" y1="10" x2="800" y2="510"/>
+    <line x1="880" y1="10" x2="880" y2="510"/>
+    <line x1="10" y1="100" x2="950" y2="100"/>
+    <line x1="10" y1="200" x2="950" y2="200"/>
+    <line x1="10" y1="300" x2="950" y2="300"/>
+    <line x1="10" y1="400" x2="950" y2="400"/>
+  </g>
+
+  <!-- ============================================================
+       TIER LABELS (left side) — vertically rotated, centered in their rects
+       Tier 1: rect y=38 h=96 → center y=86
+       Tier 2: rect y=148 h=120 → center y=208
+       Tier 3: rect y=282 h=140 → center y=352
+  ============================================================ -->
+  <!-- Tier 1 label -->
+  <rect x="10" y="38" width="46" height="96" rx="5" class="panel-fill border-stroke" stroke-width="1"/>
+  <g transform="rotate(-90 33 86)">
+    <text x="33" y="82" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" class="fill-cyan">TIER 1</text>
+    <text x="33" y="94" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">SOURCES</text>
+  </g>
+
+  <!-- Tier 2 label -->
+  <rect x="10" y="148" width="46" height="120" rx="5" class="panel-fill border-stroke" stroke-width="1"/>
+  <g transform="rotate(-90 33 208)">
+    <text x="33" y="204" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" class="fill-violet">TIER 2</text>
+    <text x="33" y="216" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">OTEL</text>
+  </g>
+
+  <!-- Tier 3 label -->
+  <rect x="10" y="282" width="46" height="140" rx="5" class="panel-fill border-stroke" stroke-width="1"/>
+  <g transform="rotate(-90 33 352)">
+    <text x="33" y="348" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" class="fill-amber">TIER 3</text>
+    <text x="33" y="360" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">EXPORT</text>
+  </g>
+
+  <!-- ============================================================
+       TIER 1 — SOURCE BOXES (y=38 to y=134, 4 boxes)
+  ============================================================ -->
+
+  <!-- Tool calls box -->
+  <rect x="68" y="38" width="140" height="96" rx="8" class="panel-fill stroke-cyan" stroke-width="1.5" opacity="0.95"/>
+  <rect x="68" y="38" width="140" height="5" rx="4" class="fill-cyan" opacity="0.6"/>
+  <text x="82" y="72" font-size="22" class="fill-cyan" opacity="0.9">⚙️</text>
+  <text x="138" y="68" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" class="fill-cyan">
+    <tspan class="lz">工具调用</tspan><tspan class="le">Tool calls</tspan>
+  </text>
+  <text x="138" y="82" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">PreToolUse</text>
+  <text x="138" y="95" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">PostToolUse</text>
+  <text x="138" y="108" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">
+    <tspan class="lz">事件触发</tspan><tspan class="le">Event hook</tspan>
+  </text>
+  <text x="138" y="121" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">
+    <tspan class="lz">Span注入</tspan><tspan class="le">Span inject</tspan>
+  </text>
+
+  <!-- API calls box -->
+  <rect x="236" y="38" width="140" height="96" rx="8" class="panel-fill stroke-cyan" stroke-width="1.5" opacity="0.95"/>
+  <rect x="236" y="38" width="140" height="5" rx="4" class="fill-cyan" opacity="0.6"/>
+  <text x="250" y="72" font-size="22" class="fill-cyan" opacity="0.9">🌐</text>
+  <text x="306" y="68" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" class="fill-cyan">
+    <tspan class="lz">API 请求</tspan><tspan class="le">API calls</tspan>
+  </text>
+  <text x="306" y="82" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    <tspan class="lz">请求元数据</tspan><tspan class="le">request meta</tspan>
+  </text>
+  <text x="306" y="95" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    <tspan class="lz">响应状态</tspan><tspan class="le">response status</tspan>
+  </text>
+  <text x="306" y="108" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">latency · tokens</text>
+  <text x="306" y="121" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">model · status</text>
+
+  <!-- User actions box -->
+  <rect x="404" y="38" width="140" height="96" rx="8" class="panel-fill stroke-cyan" stroke-width="1.5" opacity="0.95"/>
+  <rect x="404" y="38" width="140" height="5" rx="4" class="fill-cyan" opacity="0.6"/>
+  <text x="418" y="72" font-size="22" class="fill-cyan" opacity="0.9">👤</text>
+  <text x="474" y="68" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" class="fill-cyan">
+    <tspan class="lz">用户交互</tspan><tspan class="le">User actions</tspan>
+  </text>
+  <text x="474" y="82" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    <tspan class="lz">会话开始/结束</tspan><tspan class="le">session start/end</tspan>
+  </text>
+  <text x="474" y="95" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    <tspan class="lz">用户提示词</tspan><tspan class="le">user prompts</tspan>
+  </text>
+  <text x="474" y="108" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">
+    <tspan class="lz">交互事件</tspan><tspan class="le">interactions</tspan>
+  </text>
+  <text x="474" y="121" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">session ID</text>
+
+  <!-- Errors box -->
+  <rect x="572" y="38" width="140" height="96" rx="8" class="panel-fill stroke-cyan" stroke-width="1.5" opacity="0.95"/>
+  <rect x="572" y="38" width="140" height="5" rx="4" class="fill-cyan" opacity="0.6"/>
+  <text x="586" y="72" font-size="22" class="fill-cyan" opacity="0.9">⚠️</text>
+  <text x="642" y="68" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" class="fill-cyan">
+    <tspan class="lz">异常捕获</tspan><tspan class="le">Errors</tspan>
+  </text>
+  <text x="642" y="82" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    <tspan class="lz">未处理异常</tspan><tspan class="le">unhandled errors</tspan>
+  </text>
+  <text x="642" y="95" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    <tspan class="lz">崩溃报告</tspan><tspan class="le">crash reports</tspan>
+  </text>
+  <text x="642" y="108" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">stack traces</text>
+  <text x="642" y="121" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">error context</text>
+
+  <!-- ============================================================
+       CONVERGENCE ARROWS — Tier 1 → Tier 2
+       Labels moved to y=142 inside the gap between tier 1 (bottom=134) and tier 2 (top=158)
+       Use theme-aware label backgrounds with card fill
+  ============================================================ -->
+  <!-- Tool calls → OTEL -->
+  <path d="M 138 134 C 138 145, 230 147, 250 158" class="stroke-cyan" stroke-width="1.5" fill="none" opacity="0.75" marker-end="url(#arrow-cyan)"/>
+  <!-- API calls → OTEL -->
+  <path d="M 306 134 C 306 145, 330 147, 340 158" class="stroke-cyan" stroke-width="1.5" fill="none" opacity="0.75" marker-end="url(#arrow-cyan)"/>
+  <!-- User actions → OTEL -->
+  <path d="M 474 134 C 474 145, 500 147, 510 158" class="stroke-cyan" stroke-width="1.5" fill="none" opacity="0.75" marker-end="url(#arrow-cyan)"/>
+  <!-- Errors → OTEL -->
+  <path d="M 642 134 C 642 145, 630 147, 620 158" class="stroke-cyan" stroke-width="1.5" fill="none" opacity="0.75" marker-end="url(#arrow-cyan)"/>
+
+  <!-- ============================================================
+       TIER 2 — OTEL PROCESSING BOX
+  ============================================================ -->
+  <rect x="68" y="158" width="716" height="118" rx="10" class="tier2-fill stroke-violet" stroke-width="2" opacity="0.98"/>
+  <rect x="68" y="158" width="716" height="5" rx="4" class="fill-violet" opacity="0.7"/>
+
+  <text x="426" y="182" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="14" font-weight="700" class="fill-violet">OpenTelemetry Processor</text>
+
+  <text x="426" y="200" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    createSpan()  ·  Span hierarchy  ·  Sampling  ·  Attributes
+  </text>
+
+  <line x1="88" y1="210" x2="766" y2="210" class="divider" stroke-width="0.8"/>
+
+  <!-- Span tree visualization -->
+  <rect x="90" y="218" width="130" height="24" rx="5" class="card-fill stroke-violet" stroke-width="1.2"/>
+  <text x="155" y="234" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" class="fill-violet">Session Span</text>
+
+  <line x1="220" y1="230" x2="248" y2="230" class="stroke-violet" stroke-width="1.5" marker-end="url(#arrow-violet)"/>
+
+  <rect x="250" y="218" width="120" height="24" rx="5" class="card-fill stroke-violet" stroke-width="1.2"/>
+  <text x="310" y="234" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" class="fill-violet">Query Span</text>
+
+  <line x1="370" y1="230" x2="398" y2="230" class="stroke-violet" stroke-width="1.5" marker-end="url(#arrow-violet)"/>
+
+  <rect x="400" y="218" width="110" height="24" rx="5" class="card-fill stroke-violet" stroke-width="1.2"/>
+  <text x="455" y="234" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" class="fill-violet">Tool Span</text>
+
+  <line x1="510" y1="230" x2="538" y2="230" class="stroke-violet" stroke-width="1.5" marker-end="url(#arrow-violet)"/>
+
+  <rect x="540" y="218" width="120" height="24" rx="5" class="card-fill stroke-violet" stroke-width="1.2"/>
+  <text x="600" y="234" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" class="fill-violet">Subtool Span</text>
+
+  <!-- Attributes row -->
+  <rect x="90" y="250" width="640" height="20" rx="4" class="card-fill" opacity="0.7"/>
+  <text x="410" y="264" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">
+    duration_ms  ·  status_code  ·  tool_name  ·  model  ·  token_count  ·  error_type
+  </text>
+
+  <!-- Sampling badge -->
+  <rect x="690" y="220" width="88" height="42" rx="6" class="sampling-fill stroke-violet" stroke-width="1" stroke-dasharray="3,2"/>
+  <text x="734" y="236" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" class="fill-violet">Sampling</text>
+  <text x="734" y="250" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" class="fill-amber">100%</text>
+  <text x="734" y="261" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">default</text>
+
+  <!-- ============================================================
+       FAN-OUT ARROWS — Tier 2 → Tier 3
+  ============================================================ -->
+  <path d="M 220 276 C 220 290, 152 290, 152 296" class="stroke-rose" stroke-width="1.5" fill="none" opacity="0.8" marker-end="url(#arrow-rose)"/>
+  <path d="M 360 276 C 360 290, 342 290, 342 296" class="stroke-emerald" stroke-width="1.5" fill="none" opacity="0.8" marker-end="url(#arrow-emerald)"/>
+  <path d="M 510 276 C 510 290, 532 290, 532 296" class="stroke-amber" stroke-width="1.5" fill="none" opacity="0.8" marker-end="url(#arrow-amber)"/>
+  <path d="M 640 276 C 640 290, 711 290, 711 296" class="stroke-slate" stroke-width="1.5" fill="none" opacity="0.8" marker-end="url(#arrow-slate)"/>
+
+  <!-- ============================================================
+       TIER 3 — DESTINATION BOXES (y=296 to y=420)
+  ============================================================ -->
+
+  <!-- Sentry (rose) -->
+  <rect x="68" y="296" width="168" height="124" rx="8" class="sentry-fill stroke-rose" stroke-width="1.8" opacity="0.97"/>
+  <rect x="68" y="296" width="168" height="5" rx="4" class="fill-rose" opacity="0.8"/>
+  <rect x="78" y="310" width="44" height="18" rx="4" fill="rgba(251,113,133,0.15)" class="stroke-rose" stroke-width="0.8"/>
+  <text x="100" y="323" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" class="fill-rose">Sentry</text>
+  <text x="180" y="323" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" class="fill-rose">
+    <tspan class="lz">错误追踪</tspan><tspan class="le">Error Tracking</tspan>
+  </text>
+  <line x1="78" y1="334" x2="226" y2="334" class="sentry-sep-stroke" stroke-width="0.8"/>
+  <text x="152" y="349" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    <tspan class="lz">→ 未处理异常</tspan><tspan class="le">→ unhandled exceptions</tspan>
+  </text>
+  <text x="152" y="363" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    <tspan class="lz">→ 崩溃报告</tspan><tspan class="le">→ crash reports</tspan>
+  </text>
+  <text x="152" y="377" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    <tspan class="lz">→ 错误上下文</tspan><tspan class="le">→ error context</tspan>
+  </text>
+  <text x="152" y="394" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">DSN via env var</text>
+  <text x="152" y="408" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">
+    <tspan class="lz">实时告警</tspan><tspan class="le">real-time alerts</tspan>
+  </text>
+
+  <!-- Statsig (emerald) -->
+  <rect x="258" y="296" width="168" height="124" rx="8" class="statsig-fill stroke-emerald" stroke-width="1.8" opacity="0.97"/>
+  <rect x="258" y="296" width="168" height="5" rx="4" class="fill-emerald" opacity="0.8"/>
+  <rect x="268" y="310" width="46" height="18" rx="4" fill="rgba(52,211,153,0.12)" class="stroke-emerald" stroke-width="0.8"/>
+  <text x="291" y="323" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" class="fill-emerald">Statsig</text>
+  <text x="372" y="323" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" class="fill-emerald">
+    <tspan class="lz">特性开关</tspan><tspan class="le">Feature Flags</tspan>
+  </text>
+  <line x1="268" y1="334" x2="416" y2="334" class="statsig-sep-stroke" stroke-width="0.8"/>
+  <text x="342" y="349" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    <tspan class="lz">→ 特性标志检查</tspan><tspan class="le">→ flag checks</tspan>
+  </text>
+  <text x="342" y="363" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    <tspan class="lz">→ 使用指标</tspan><tspan class="le">→ usage metrics</tspan>
+  </text>
+  <text x="342" y="377" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    <tspan class="lz">→ A/B 测试数据</tspan><tspan class="le">→ A/B test data</tspan>
+  </text>
+  <text x="342" y="394" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">
+    <tspan class="lz">灰度发布</tspan><tspan class="le">gradual rollout</tspan>
+  </text>
+  <text x="342" y="408" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">feature gating</text>
+
+  <!-- OTLP (amber) -->
+  <rect x="448" y="296" width="168" height="124" rx="8" class="otlp-fill stroke-amber" stroke-width="1.8" opacity="0.97"/>
+  <rect x="448" y="296" width="168" height="5" rx="4" class="fill-amber" opacity="0.8"/>
+  <rect x="458" y="310" width="40" height="18" rx="4" fill="rgba(251,191,36,0.12)" class="stroke-amber" stroke-width="0.8"/>
+  <text x="478" y="323" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" class="fill-amber">OTLP</text>
+  <text x="560" y="323" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" class="fill-amber">
+    <tspan class="lz">自定义端点</tspan><tspan class="le">Custom Endpoint</tspan>
+  </text>
+  <line x1="458" y1="334" x2="606" y2="334" class="otlp-sep-stroke" stroke-width="0.8"/>
+  <text x="532" y="349" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    <tspan class="lz">→ 全量 Spans</tspan><tspan class="le">→ all spans</tspan>
+  </text>
+  <text x="532" y="363" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    <tspan class="lz">→ 指标数据</tspan><tspan class="le">→ metrics data</tspan>
+  </text>
+  <text x="532" y="377" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">Jaeger / Zipkin</text>
+  <text x="532" y="394" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">OTEL_EXPORTER_</text>
+  <text x="532" y="408" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">OTLP_ENDPOINT</text>
+
+  <!-- Local debug (slate) -->
+  <rect x="638" y="296" width="146" height="124" rx="8" class="local-fill stroke-slate" stroke-width="1.5" opacity="0.97"/>
+  <rect x="638" y="296" width="146" height="5" rx="4" class="fill-slate" opacity="0.7"/>
+  <rect x="648" y="310" width="40" height="18" rx="4" fill="rgba(148,163,184,0.1)" class="stroke-slate" stroke-width="0.8"/>
+  <text x="668" y="323" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" class="fill-slate">Local</text>
+  <text x="738" y="323" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10.5" font-weight="700" class="fill-slate">
+    <tspan class="lz">本地调试</tspan><tspan class="le">Local Debug</tspan>
+  </text>
+  <line x1="648" y1="334" x2="774" y2="334" class="local-sep-stroke" stroke-width="0.8"/>
+  <text x="711" y="349" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    <tspan class="lz">→ JSON 文件</tspan><tspan class="le">→ JSON file dump</tspan>
+  </text>
+  <text x="711" y="363" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    <tspan class="lz">→ Span 日志</tspan><tspan class="le">→ span logs</tspan>
+  </text>
+  <text x="711" y="377" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    <tspan class="lz">→ 可选开启</tspan><tspan class="le">→ optional enable</tspan>
+  </text>
+  <text x="711" y="394" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">
+    <tspan class="lz">开发调试用</tspan><tspan class="le">dev debug only</tspan>
+  </text>
+  <text x="711" y="408" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">local filesystem</text>
+
+  <!-- ============================================================
+       RIGHT SIDE ANNOTATION PANEL
+  ============================================================ -->
+  <rect x="800" y="38" width="148" height="382" rx="10" class="panel-fill border-stroke" stroke-width="1.2" opacity="0.95"/>
+  <text x="874" y="58" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="700" class="text-muted">
+    <tspan class="lz">关键事实</tspan><tspan class="le">Key Facts</tspan>
+  </text>
+  <line x1="812" y1="65" x2="936" y2="65" class="divider" stroke-width="0.8"/>
+
+  <!-- Fact 1: sampling -->
+  <rect x="812" y="74" width="124" height="56" rx="6" class="card-fill" opacity="0.7"/>
+  <text x="874" y="94" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="18" font-weight="700" class="fill-amber">100%</text>
+  <text x="874" y="108" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    <tspan class="lz">采样率 (默认)</tspan><tspan class="le">sampling rate</tspan>
+  </text>
+  <text x="874" y="122" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">configurable</text>
+
+  <!-- Fact 2: Sentry DSN -->
+  <rect x="812" y="138" width="124" height="52" rx="6" class="card-fill" opacity="0.7"/>
+  <text x="874" y="156" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" class="fill-rose">Sentry DSN</text>
+  <text x="874" y="170" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">via env var</text>
+  <text x="874" y="183" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">SENTRY_DSN</text>
+
+  <!-- Fact 3: OTLP -->
+  <rect x="812" y="198" width="124" height="52" rx="6" class="card-fill" opacity="0.7"/>
+  <text x="874" y="216" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" class="fill-amber">OTLP Endpoint</text>
+  <text x="874" y="230" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">Jaeger / Zipkin</text>
+  <text x="874" y="243" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">custom backend</text>
+
+  <!-- Fact 4: disable -->
+  <rect x="812" y="258" width="124" height="52" rx="6" fill="rgba(251,113,133,0.07)" stroke="rgba(251,113,133,0.35)" stroke-width="1"/>
+  <text x="874" y="276" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" class="fill-rose">
+    <tspan class="lz">可完全关闭</tspan><tspan class="le">Fully Disable</tspan>
+  </text>
+  <text x="874" y="290" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">CC_DISABLE_</text>
+  <text x="874" y="302" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">TELEMETRY=1</text>
+
+  <!-- Fact 5: span hierarchy -->
+  <rect x="812" y="318" width="124" height="90" rx="6" class="card-fill" opacity="0.7"/>
+  <text x="874" y="335" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" class="fill-violet">Span Hierarchy</text>
+  <text x="820" y="352" font-family="'JetBrains Mono',monospace" font-size="10" class="fill-violet">├ Session</text>
+  <text x="824" y="366" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">├─ Query</text>
+  <text x="828" y="380" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">├── Tool</text>
+  <text x="832" y="394" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">└─── Subtool</text>
+  <text x="874" y="406" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" class="text-subtle">nested context</text>
+
+  <!-- ============================================================
+       PRIVACY NOTE BAR (bottom of SVG)
+  ============================================================ -->
+  <rect x="68" y="432" width="716" height="34" rx="7" fill="rgba(251,191,36,0.08)" stroke="rgba(251,191,36,0.35)" stroke-width="1.2"/>
+  <text x="82" y="453" font-family="'JetBrains Mono',monospace" font-size="12" class="fill-amber">🔒</text>
+  <text x="102" y="448" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" class="fill-amber">
+    <tspan class="lz">用户隐私保护：CC_DISABLE_TELEMETRY=1 可完全禁用所有遥测数据上报</tspan>
+    <tspan class="le">Privacy: Set CC_DISABLE_TELEMETRY=1 to fully disable all telemetry reporting</tspan>
+  </text>
+  <text x="102" y="461" font-family="'JetBrains Mono',monospace" font-size="10" class="text-muted">
+    <tspan class="lz">遥测数据仅用于产品改进与错误修复，不包含对话内容</tspan>
+    <tspan class="le">Telemetry is used only for product improvement, no conversation content is collected</tspan>
+  </text>
+
+  <!-- ============================================================
+       FLOW LABELS on arrows — theme-aware label backgrounds
+       Positioned between Tier 1 bottom (y=134) and Tier 2 top (y=158)
+       Center y=146 for the pills
+  ============================================================ -->
+  <rect x="170" y="138" width="44" height="13" rx="3" class="label-bg stroke-cyan" stroke-width="0.6" opacity="0.95"/>
+  <text x="192" y="147" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" class="fill-cyan">events</text>
+  <rect x="332" y="138" width="40" height="13" rx="3" class="label-bg stroke-cyan" stroke-width="0.6" opacity="0.95"/>
+  <text x="352" y="147" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" class="fill-cyan">spans</text>
+  <rect x="496" y="138" width="44" height="13" rx="3" class="label-bg stroke-cyan" stroke-width="0.6" opacity="0.95"/>
+  <text x="518" y="147" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" class="fill-cyan">metrics</text>
+  <rect x="612" y="138" width="40" height="13" rx="3" class="label-bg stroke-cyan" stroke-width="0.6" opacity="0.95"/>
+  <text x="632" y="147" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" class="fill-cyan">errors</text>
+
+  <!-- ============================================================
+       DECORATIVE data flow dots — theme-aware via class
+       Positioned on arrow tips entering Tier 2 (not overlapping labels)
+  ============================================================ -->
+  <circle cx="250" cy="156" r="2" class="fill-cyan" opacity="0.85"/>
+  <circle cx="340" cy="156" r="2" class="fill-cyan" opacity="0.85"/>
+  <circle cx="510" cy="156" r="2" class="fill-cyan" opacity="0.85"/>
+  <circle cx="620" cy="156" r="2" class="fill-cyan" opacity="0.85"/>
+
+  <circle cx="220" cy="285" r="2" class="fill-rose" opacity="0.85"/>
+  <circle cx="360" cy="285" r="2" class="fill-emerald" opacity="0.85"/>
+  <circle cx="510" cy="285" r="2" class="fill-amber" opacity="0.85"/>
+  <circle cx="640" cy="285" r="2" class="fill-slate" opacity="0.85"/>
+
+</svg>
+</div>
+
+<!-- Summary Cards -->
+<div class="cards-row">
+  <div class="card" style="border-color:rgba(34,211,238,0.35);">
+    <div class="card-icon">🔭</div>
+    <div class="card-title" style="color:var(--cyan);">
+      <span class="lz">OpenTelemetry 框架</span>
+      <span class="le">OpenTelemetry Framework</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">行业标准的分布式追踪框架，可与 Jaeger、Zipkin、Datadog 等任意后端互操作。Claude Code 用 createSpan() 包装所有关键操作，形成完整的 Session → Query → Tool → Subtool 层级树。</span>
+      <span class="le">Industry-standard distributed tracing framework, interoperable with Jaeger, Zipkin, Datadog and any OTLP backend. Claude Code wraps all key operations with createSpan() forming a full Session → Query → Tool → Subtool hierarchy.</span>
+    </div>
+  </div>
+  <div class="card" style="border-color:rgba(251,113,133,0.35);">
+    <div class="card-icon">🚨</div>
+    <div class="card-title" style="color:var(--rose);">
+      <span class="lz">Sentry 错误追踪</span>
+      <span class="le">Sentry Error Tracking</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">实时捕获未处理异常与崩溃报告，帮助 Anthropic 快速定位并修复 Claude Code 中的 bug。DSN 通过环境变量配置，不包含用户对话内容。</span>
+      <span class="le">Real-time capture of unhandled exceptions and crash reports, helping Anthropic quickly locate and fix bugs in Claude Code. DSN is configured via environment variable; no conversation content is captured.</span>
+    </div>
+  </div>
+  <div class="card" style="border-color:rgba(52,211,153,0.35);">
+    <div class="card-icon">🧪</div>
+    <div class="card-title" style="color:var(--emerald);">
+      <span class="lz">Statsig 特性开关</span>
+      <span class="le">Statsig Feature Flags</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">功能灰度发布与 A/B 测试基础设施。Anthropic 通过 Statsig 控制新功能的渐进式推出，收集使用指标，并在不同用户群间进行实验性功能对比测试。</span>
+      <span class="le">Feature gradual rollout and A/B testing infrastructure. Anthropic uses Statsig to control progressive feature launches, collect usage metrics, and run experimental feature comparisons across user segments.</span>
+    </div>
+  </div>
+</div>
+
+<!-- Privacy Bar -->
+<div class="privacy-bar">
+  🔒
+  <span class="lz"><strong>隐私控制</strong>：设置环境变量 <code>CC_DISABLE_TELEMETRY=1</code> 可完全禁用遥测 · 遥测不包含对话内容 · 仅限产品改进与错误修复</span>
+  <span class="le"><strong>Privacy Control</strong>: Set <code>CC_DISABLE_TELEMETRY=1</code> to fully disable telemetry · No conversation content collected · Used only for product improvement &amp; bug fixes</span>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-theme',t);
+  document.documentElement.setAttribute('data-lang',l);
+  document.getElementById('langBtn').textContent=l==='zh'?'EN':'中';
+
+  // Apply initial lang visibility
+  document.querySelectorAll('svg .le, svg .lz').forEach(function(e){
+    var isZh = l === 'zh';
+    var showZh = e.classList.contains('lz');
+    var show = isZh ? showZh : !showZh;
+    e.style.display = show ? '' : 'none';
+    e.setAttribute('display', show ? 'inline' : 'none');
+  });
+
+  window.cycleTheme=function(){
+    var themes=['dark','warm','light'];
+    var cur=document.documentElement.getAttribute('data-theme')||'dark';
+    var next=themes[(themes.indexOf(cur)+1)%themes.length];
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('vtheme',next);
+  };
+
+  window.toggleLang=function(){
+    var cur=document.documentElement.getAttribute('data-lang')||'zh';
+    var next=cur==='zh'?'en':'zh';
+    document.documentElement.setAttribute('data-lang',next);
+    localStorage.setItem('vlang',next);
+    document.getElementById('langBtn').textContent=next==='zh'?'EN':'中';
+    document.querySelectorAll('svg .le, svg .lz').forEach(function(e){
+      var show=(next==='en')?e.classList.contains('le'):e.classList.contains('lz');
+      e.style.display=show?'':'none';
+      e.setAttribute('display',show?'inline':'none');
+    });
+  };
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

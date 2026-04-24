@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Deep Link 调用链图 · Deep Link Call Chain</title>
+<style>
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","Segoe UI","PingFang SC","Microsoft YaHei",sans-serif;min-height:100vh;}
+.wrap{max-width:1100px;margin:0 auto;padding:28px 24px 40px;}
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px;}
+.title-zh,.title-en{font-size:22px;font-weight:700;letter-spacing:.2px;}
+.subtitle{font-size:13px;color:var(--muted);margin-top:6px;line-height:1.55;}
+.controls{display:flex;gap:8px;flex-shrink:0;}
+.btn{background:var(--panel);border:1px solid var(--border);color:var(--text);padding:7px 13px;border-radius:8px;font-size:12px;cursor:pointer;font-family:inherit;transition:.2s;}
+.btn:hover{background:var(--subtle);}
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px;}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:16px;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+.stat-num{font-size:18px;font-weight:700;letter-spacing:.3px;}
+.stat-label{font-size:11px;color:var(--muted);margin-top:3px;}
+.foot{margin-top:14px;font-size:11px;color:var(--muted);text-align:center;}
+svg{display:block;width:100%;height:auto;}
+text{font-family:-apple-system,BlinkMacSystemFont,"SF Pro Display","PingFang SC",sans-serif;}
+.mono{font-family:"SF Mono",Menlo,Consolas,monospace;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <div class="title-zh lz">Deep Link 调用链图</div>
+      <div class="title-en le" style="display:none;">Deep Link Call Chain</div>
+      <div class="subtitle lz">从 claude:// URL 到动作执行 — 7 步权限化路由</div>
+      <div class="subtitle le" style="display:none;">From claude:// URL to action execution — 7-step permissioned routing</div>
+    </div>
+    <div class="controls">
+      <button class="btn" onclick="cycleTheme()"><span class="lz">主题</span><span class="le" style="display:none;">Theme</span></button>
+      <button class="btn" onclick="toggleLang()"><span class="lz">EN</span><span class="le" style="display:none;">中</span></button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <svg viewBox="0 0 920 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Deep Link Call Chain">
+      <defs>
+        <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--muted)"/>
+        </marker>
+        <marker id="arrow-ok" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#10b981"/>
+        </marker>
+        <marker id="arrow-deny" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M0,0 L10,5 L0,10 z" fill="#f43f5e"/>
+        </marker>
+      </defs>
+
+      <!-- ===== Top: URL parsed ===== -->
+      <g transform="translate(40,22)">
+        <text x="0" y="0" font-size="11" fill="var(--muted)" class="lz">输入 URL（Deep Link）</text>
+        <text x="0" y="0" font-size="11" fill="var(--muted)" class="le" display="none">Input URL (Deep Link)</text>
+
+        <rect x="0" y="10" width="840" height="46" rx="8" fill="var(--card)" stroke="var(--border)"/>
+        <text x="14" y="38" font-size="13" class="mono" fill="var(--text)">claude://edit/file.ts?line=42&amp;action=fix</text>
+
+        <!-- segments -->
+        <g font-size="10" class="mono">
+          <rect x="14" y="20" width="62" height="20" rx="4" fill="#22d3ee" opacity=".18" stroke="#22d3ee" stroke-opacity=".6"/>
+          <text x="45" y="34" text-anchor="middle" fill="#22d3ee">claude://</text>
+
+          <rect x="86" y="20" width="38" height="20" rx="4" fill="#8b5cf6" opacity=".18" stroke="#8b5cf6" stroke-opacity=".6"/>
+          <text x="105" y="34" text-anchor="middle" fill="#8b5cf6">edit</text>
+
+          <rect x="134" y="20" width="66" height="20" rx="4" fill="#f97316" opacity=".18" stroke="#f97316" stroke-opacity=".6"/>
+          <text x="167" y="34" text-anchor="middle" fill="#f97316">file.ts</text>
+
+          <rect x="210" y="20" width="150" height="20" rx="4" fill="#f59e0b" opacity=".18" stroke="#f59e0b" stroke-opacity=".6"/>
+          <text x="285" y="34" text-anchor="middle" fill="#f59e0b">line=42&amp;action=fix</text>
+        </g>
+
+        <!-- labels under segments -->
+        <g font-size="10" fill="var(--muted)">
+          <text x="45"  y="70" text-anchor="middle" class="lz">scheme</text>
+          <text x="45"  y="70" text-anchor="middle" class="le" display="none">scheme</text>
+          <text x="105" y="70" text-anchor="middle" class="lz">host</text>
+          <text x="105" y="70" text-anchor="middle" class="le" display="none">host</text>
+          <text x="167" y="70" text-anchor="middle" class="lz">path</text>
+          <text x="167" y="70" text-anchor="middle" class="le" display="none">path</text>
+          <text x="285" y="70" text-anchor="middle" class="lz">query 参数</text>
+          <text x="285" y="70" text-anchor="middle" class="le" display="none">query params</text>
+        </g>
+      </g>
+
+      <!-- ===== Chain backbone ===== -->
+      <!-- Y row for 4 top nodes -->
+      <!-- Node positions -->
+      <!-- 1: (40,130) cyan URL Input
+           2: (210,130) violet Parser
+           3: (380,130) amber Validator
+           4: (550,130) orange Dispatcher
+           5: (720,130) rose Permission
+           6-approve: (550, 320) emerald Handler
+           7: (210, 320) slate Result
+           6-deny: (720, 320) rose 403 -->
+
+      <!-- Connectors horizontal (1->2->3->4->5) -->
+      <g stroke="var(--muted)" stroke-width="1.5" fill="none" marker-end="url(#arrow)">
+        <path d="M190,170 L210,170"/>
+        <path d="M360,170 L380,170"/>
+        <path d="M530,170 L550,170"/>
+        <path d="M700,170 L720,170"/>
+      </g>
+
+      <!-- Approve path: 5 -> 6 (Handler) -->
+      <g stroke="#10b981" stroke-width="1.8" fill="none" marker-end="url(#arrow-ok)">
+        <path d="M760,238 L760,280 L640,280 L640,320"/>
+      </g>
+      <text x="772" y="258" font-size="10" fill="#10b981" class="lz">允许</text>
+      <text x="772" y="258" font-size="10" fill="#10b981" class="le" display="none">Approve</text>
+
+      <!-- Deny path: 5 -> 403 -->
+      <g stroke="#f43f5e" stroke-width="1.8" fill="none" marker-end="url(#arrow-deny)" stroke-dasharray="4 3">
+        <path d="M840,200 L870,200 L870,360 L840,360"/>
+      </g>
+      <text x="855" y="285" font-size="10" fill="#f43f5e" class="lz" text-anchor="middle">拒绝</text>
+      <text x="855" y="285" font-size="10" fill="#f43f5e" class="le" display="none" text-anchor="middle">Deny</text>
+
+      <!-- Handler -> Result -->
+      <g stroke="var(--muted)" stroke-width="1.5" fill="none" marker-end="url(#arrow)">
+        <path d="M550,360 L360,360"/>
+      </g>
+
+      <!-- ===== Node 1: URL Input ===== -->
+      <g transform="translate(40,130)">
+        <rect width="150" height="80" rx="10" fill="var(--card)" stroke="#22d3ee" stroke-opacity=".55"/>
+        <circle cx="22" cy="22" r="11" fill="#22d3ee" opacity=".18"/>
+        <text x="22" y="26" text-anchor="middle" font-size="11" fill="#22d3ee" font-weight="700">1</text>
+        <text x="40" y="26" font-size="12" fill="var(--text)" font-weight="600" class="lz">URL 输入</text>
+        <text x="40" y="26" font-size="12" fill="var(--text)" font-weight="600" class="le" display="none">URL Input</text>
+        <text x="10" y="52" font-size="10" fill="var(--muted)" class="lz">外部应用唤起</text>
+        <text x="10" y="52" font-size="10" fill="var(--muted)" class="le" display="none">External app invoke</text>
+        <text x="10" y="68" font-size="10" class="mono" fill="#22d3ee">claude://...</text>
+      </g>
+
+      <!-- ===== Node 2: Parser ===== -->
+      <g transform="translate(210,130)">
+        <rect width="150" height="80" rx="10" fill="var(--card)" stroke="#8b5cf6" stroke-opacity=".55"/>
+        <circle cx="22" cy="22" r="11" fill="#8b5cf6" opacity=".18"/>
+        <text x="22" y="26" text-anchor="middle" font-size="11" fill="#8b5cf6" font-weight="700">2</text>
+        <text x="40" y="26" font-size="12" fill="var(--text)" font-weight="600" class="lz">URL 解析器</text>
+        <text x="40" y="26" font-size="12" fill="var(--text)" font-weight="600" class="le" display="none">URL Parser</text>
+        <text x="10" y="52" font-size="10" fill="var(--muted)" class="lz">拆 scheme/host/path</text>
+        <text x="10" y="52" font-size="10" fill="var(--muted)" class="le" display="none">Split scheme/host/path</text>
+        <text x="10" y="68" font-size="10" class="mono" fill="#8b5cf6">URL.parse(input)</text>
+      </g>
+
+      <!-- ===== Node 3: Validator ===== -->
+      <g transform="translate(380,130)">
+        <rect width="150" height="80" rx="10" fill="var(--card)" stroke="#f59e0b" stroke-opacity=".55"/>
+        <circle cx="22" cy="22" r="11" fill="#f59e0b" opacity=".18"/>
+        <text x="22" y="26" text-anchor="middle" font-size="11" fill="#f59e0b" font-weight="700">3</text>
+        <text x="40" y="26" font-size="12" fill="var(--text)" font-weight="600" class="lz">协议校验</text>
+        <text x="40" y="26" font-size="12" fill="var(--text)" font-weight="600" class="le" display="none">Protocol Validator</text>
+        <text x="10" y="52" font-size="10" fill="var(--muted)" class="lz">scheme / 版本检查</text>
+        <text x="10" y="52" font-size="10" fill="var(--muted)" class="le" display="none">Scheme &amp; version check</text>
+        <text x="10" y="68" font-size="10" class="mono" fill="#f59e0b">scheme === 'claude'</text>
+      </g>
+
+      <!-- ===== Node 4: Dispatcher ===== -->
+      <g transform="translate(550,130)">
+        <rect width="150" height="80" rx="10" fill="var(--card)" stroke="#f97316" stroke-opacity=".55"/>
+        <circle cx="22" cy="22" r="11" fill="#f97316" opacity=".18"/>
+        <text x="22" y="26" text-anchor="middle" font-size="11" fill="#f97316" font-weight="700">4</text>
+        <text x="40" y="26" font-size="12" fill="var(--text)" font-weight="600" class="lz">动作分发</text>
+        <text x="40" y="26" font-size="12" fill="var(--text)" font-weight="600" class="le" display="none">Action Dispatcher</text>
+        <text x="10" y="52" font-size="10" fill="var(--muted)" class="lz">路由到 Handler</text>
+        <text x="10" y="52" font-size="10" fill="var(--muted)" class="le" display="none">Route to handler</text>
+        <text x="10" y="68" font-size="10" class="mono" fill="#f97316">handlers[host]</text>
+      </g>
+
+      <!-- ===== Node 5: Permission ===== -->
+      <g transform="translate(720,130)">
+        <rect width="150" height="80" rx="10" fill="var(--card)" stroke="#f43f5e" stroke-opacity=".55"/>
+        <circle cx="22" cy="22" r="11" fill="#f43f5e" opacity=".18"/>
+        <text x="22" y="26" text-anchor="middle" font-size="11" fill="#f43f5e" font-weight="700">5</text>
+        <text x="40" y="26" font-size="12" fill="var(--text)" font-weight="600" class="lz">权限检查</text>
+        <text x="40" y="26" font-size="12" fill="var(--text)" font-weight="600" class="le" display="none">Permission Check</text>
+        <text x="10" y="52" font-size="10" fill="var(--muted)" class="lz">ACL / 用户确认</text>
+        <text x="10" y="52" font-size="10" fill="var(--muted)" class="le" display="none">ACL / user prompt</text>
+        <text x="10" y="68" font-size="10" class="mono" fill="#f43f5e">canExecute(action)</text>
+      </g>
+
+      <!-- ===== Decision diamond label on node 5 ===== -->
+      <g transform="translate(755,218)">
+        <polygon points="0,0 18,10 0,20 -18,10" fill="var(--card)" stroke="#f43f5e" stroke-opacity=".6"/>
+        <text x="0" y="14" font-size="10" text-anchor="middle" fill="#f43f5e" font-weight="700">?</text>
+      </g>
+
+      <!-- ===== Node 6: Handler Execute ===== -->
+      <g transform="translate(550,320)">
+        <rect width="180" height="80" rx="10" fill="var(--card)" stroke="#10b981" stroke-opacity=".55"/>
+        <circle cx="22" cy="22" r="11" fill="#10b981" opacity=".18"/>
+        <text x="22" y="26" text-anchor="middle" font-size="11" fill="#10b981" font-weight="700">6</text>
+        <text x="40" y="26" font-size="12" fill="var(--text)" font-weight="600" class="lz">Handler 执行</text>
+        <text x="40" y="26" font-size="12" fill="var(--text)" font-weight="600" class="le" display="none">Handler Execute</text>
+        <text x="10" y="52" font-size="10" fill="var(--muted)" class="lz">打开文件 / 应用编辑</text>
+        <text x="10" y="52" font-size="10" fill="var(--muted)" class="le" display="none">Open file / apply edit</text>
+        <text x="10" y="68" font-size="10" class="mono" fill="#10b981">editHandler(file, line)</text>
+      </g>
+
+      <!-- ===== Node 7: Result ===== -->
+      <g transform="translate(210,320)">
+        <rect width="150" height="80" rx="10" fill="var(--card)" stroke="#64748b" stroke-opacity=".55"/>
+        <circle cx="22" cy="22" r="11" fill="#64748b" opacity=".22"/>
+        <text x="22" y="26" text-anchor="middle" font-size="11" fill="#94a3b8" font-weight="700">7</text>
+        <text x="40" y="26" font-size="12" fill="var(--text)" font-weight="600" class="lz">结果反馈</text>
+        <text x="40" y="26" font-size="12" fill="var(--text)" font-weight="600" class="le" display="none">Result Feedback</text>
+        <text x="10" y="52" font-size="10" fill="var(--muted)" class="lz">回调调用方应用</text>
+        <text x="10" y="52" font-size="10" fill="var(--muted)" class="le" display="none">Callback to caller app</text>
+        <text x="10" y="68" font-size="10" class="mono" fill="#94a3b8">{status:"ok",...}</text>
+      </g>
+
+      <!-- ===== 403 Deny branch ===== -->
+      <g transform="translate(720,320)">
+        <rect width="150" height="80" rx="10" fill="var(--card)" stroke="#f43f5e" stroke-opacity=".55" stroke-dasharray="4 3"/>
+        <circle cx="22" cy="22" r="11" fill="#f43f5e" opacity=".18"/>
+        <text x="22" y="26" text-anchor="middle" font-size="11" fill="#f43f5e" font-weight="700">!</text>
+        <text x="40" y="26" font-size="12" fill="var(--text)" font-weight="600" class="lz">403 拒绝</text>
+        <text x="40" y="26" font-size="12" fill="var(--text)" font-weight="600" class="le" display="none">403 Deny</text>
+        <text x="10" y="52" font-size="10" fill="var(--muted)" class="lz">权限被拒，直接返回</text>
+        <text x="10" y="52" font-size="10" fill="var(--muted)" class="le" display="none">Permission denied, return</text>
+        <text x="10" y="68" font-size="10" class="mono" fill="#f43f5e">{error:"forbidden"}</text>
+      </g>
+
+      <!-- ===== Legend row (bottom) ===== -->
+      <g transform="translate(40,430)">
+        <text x="0" y="0" font-size="11" fill="var(--muted)" class="lz">图例</text>
+        <text x="0" y="0" font-size="11" fill="var(--muted)" class="le" display="none">Legend</text>
+
+        <g transform="translate(40,-9)">
+          <line x1="0" y1="4" x2="24" y2="4" stroke="#10b981" stroke-width="1.8" marker-end="url(#arrow-ok)"/>
+          <text x="30" y="8" font-size="10" fill="var(--text)" class="lz">通过路径</text>
+          <text x="30" y="8" font-size="10" fill="var(--text)" class="le" display="none">Approve path</text>
+        </g>
+        <g transform="translate(150,-9)">
+          <line x1="0" y1="4" x2="24" y2="4" stroke="#f43f5e" stroke-width="1.8" stroke-dasharray="4 3" marker-end="url(#arrow-deny)"/>
+          <text x="30" y="8" font-size="10" fill="var(--text)" class="lz">拒绝路径</text>
+          <text x="30" y="8" font-size="10" fill="var(--text)" class="le" display="none">Deny path</text>
+        </g>
+        <g transform="translate(260,-9)">
+          <line x1="0" y1="4" x2="24" y2="4" stroke="var(--muted)" stroke-width="1.5" marker-end="url(#arrow)"/>
+          <text x="30" y="8" font-size="10" fill="var(--text)" class="lz">主调用链</text>
+          <text x="30" y="8" font-size="10" fill="var(--text)" class="le" display="none">Main chain</text>
+        </g>
+
+        <!-- Action types chip row -->
+        <text x="0" y="36" font-size="11" fill="var(--muted)" class="lz">可路由动作</text>
+        <text x="0" y="36" font-size="11" fill="var(--muted)" class="le" display="none">Routable actions</text>
+        <g font-size="10" class="mono">
+          <rect x="78" y="24" width="46" height="18" rx="4" fill="#f97316" opacity=".15" stroke="#f97316" stroke-opacity=".5"/>
+          <text x="101" y="37" text-anchor="middle" fill="#f97316">edit</text>
+
+          <rect x="132" y="24" width="46" height="18" rx="4" fill="#f97316" opacity=".15" stroke="#f97316" stroke-opacity=".5"/>
+          <text x="155" y="37" text-anchor="middle" fill="#f97316">open</text>
+
+          <rect x="186" y="24" width="46" height="18" rx="4" fill="#f97316" opacity=".15" stroke="#f97316" stroke-opacity=".5"/>
+          <text x="209" y="37" text-anchor="middle" fill="#f97316">run</text>
+
+          <rect x="240" y="24" width="58" height="18" rx="4" fill="#f97316" opacity=".15" stroke="#f97316" stroke-opacity=".5"/>
+          <text x="269" y="37" text-anchor="middle" fill="#f97316">search</text>
+
+          <rect x="306" y="24" width="62" height="18" rx="4" fill="#f97316" opacity=".15" stroke="#f97316" stroke-opacity=".5"/>
+          <text x="337" y="37" text-anchor="middle" fill="#f97316">config</text>
+
+          <rect x="376" y="24" width="34" height="18" rx="4" fill="#64748b" opacity=".22" stroke="#64748b" stroke-opacity=".5"/>
+          <text x="393" y="37" text-anchor="middle" fill="#94a3b8">...</text>
+        </g>
+      </g>
+
+      <!-- Caller app badge (origin) -->
+      <g transform="translate(40,490)">
+        <rect width="150" height="22" rx="6" fill="var(--card)" stroke="var(--border)"/>
+        <circle cx="12" cy="11" r="4" fill="#22d3ee"/>
+        <text x="22" y="15" font-size="10" fill="var(--muted)" class="lz">来源：浏览器 / 编辑器 / IM</text>
+        <text x="22" y="15" font-size="10" fill="var(--muted)" class="le" display="none">Caller: browser / editor / IM</text>
+      </g>
+
+      <!-- Result return badge -->
+      <g transform="translate(200,490)">
+        <rect width="170" height="22" rx="6" fill="var(--card)" stroke="var(--border)"/>
+        <circle cx="12" cy="11" r="4" fill="#64748b"/>
+        <text x="22" y="15" font-size="10" fill="var(--muted)" class="lz">回调：URL scheme 返回</text>
+        <text x="22" y="15" font-size="10" fill="var(--muted)" class="le" display="none">Callback: URL scheme return</text>
+      </g>
+    </svg>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="stat-num">7</div>
+        <div class="stat-label lz">步调用链（URL → 执行 → 回调）</div>
+        <div class="stat-label le" style="display:none;">Call chain steps (URL → Exec → CB)</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">URL Scheme</div>
+        <div class="stat-label lz">claude:// 协议唤起机制</div>
+        <div class="stat-label le" style="display:none;">claude:// protocol invoke</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num lz">权限化路由</div>
+        <div class="stat-num le" style="display:none;">Permissioned Routing</div>
+        <div class="stat-label lz">每个动作都过 ACL 网关</div>
+        <div class="stat-label le" style="display:none;">Every action gated by ACL</div>
+      </div>
+    </div>
+
+    <div class="foot">
+      <span class="lz">VIS-2Q-019 · Deep Link 调用链图 · Claude Code 源码研究</span>
+      <span class="le" style="display:none;">VIS-2Q-019 · Deep Link Call Chain · Claude Code Source Study</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

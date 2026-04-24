@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIS-2A-019 Agent专业化工具集矩阵</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    :root{--bg:#020617;--panel:#0f172a;--card:#0f172a;--border:#1e293b;--text:#e2e8f0;--muted:#64748b;--subtle:#334155;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#f97316}
+    [data-theme="warm"]{--bg:#f8f6f3;--panel:#ffffff;--card:#faf9f7;--border:#e2d9cc;--text:#1c1917;--muted:#78716c;--subtle:#d6ccc2}
+    [data-theme="light"]{--bg:#ffffff;--panel:#f8fafc;--card:#f8fafc;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--subtle:#cbd5e1}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;padding:20px 24px 32px}
+    .vis-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+    .vis-dot{width:10px;height:10px;border-radius:50%;background:var(--emerald);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+    .vis-title{font-size:17px;font-weight:700;color:var(--text);letter-spacing:.02em}
+    .vis-sub{font-size:11px;color:var(--muted);margin-left:4px}
+    .principle-bar{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--emerald);border-radius:8px;padding:10px 16px;margin-bottom:16px;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:10px}
+    .principle-bar span{color:var(--emerald);font-weight:600}
+    .matrix-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:16px;overflow-x:auto}
+    table{border-collapse:separate;border-spacing:0;width:100%;min-width:900px}
+    .cat-header{font-size: 10px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em;padding:4px 6px 8px;text-align:center;border-bottom:1px solid var(--border)}
+    .tool-th{font-size:10px;color:var(--muted);padding:8px 4px;text-align:center;font-weight:600;border-bottom:1px solid var(--border);white-space:nowrap}
+    .agent-td{font-size:11px;color:var(--text);padding:10px 14px;text-align:left;font-weight:600;border-right:1px solid var(--border);white-space:nowrap;min-width:160px}
+    .agent-desc{font-size: 10px;color:var(--muted);font-weight:400;display:block;margin-top:3px}
+    .omit-badge{display:inline-block;background:var(--violet);color:#fff;font-size: 10px;padding:1px 5px;border-radius:3px;margin-left:5px;font-weight:700}
+    .cell{text-align:center;padding:6px 4px;vertical-align:middle}
+    .cell-inner{width:28px;height:28px;margin:0 auto;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:12px;transition:transform .15s ease;cursor:default}
+    .cell-inner:hover{transform:scale(1.15)}
+    .av{background:rgba(52,211,153,.2);color:var(--emerald);border:1px solid rgba(52,211,153,.3)}
+    .av-gp{background:rgba(52,211,153,.3);color:var(--emerald);border:1px solid rgba(52,211,153,.5);font-weight:700}
+    .na{background:rgba(51,65,85,.3);color:var(--subtle);border:1px solid rgba(51,65,85,.2)}
+    .row-gp .agent-td{color:var(--emerald)}
+    .row-ex .agent-td{color:var(--cyan)}
+    .row-pl .agent-td{color:var(--amber)}
+    .row-sl .agent-td{color:var(--rose)}
+    .row-gu .agent-td{color:var(--violet)}
+    tr:not(:last-child) td{border-bottom:1px solid var(--border)}
+    .token-box{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--violet);border-radius:8px;padding:12px 16px;margin-bottom:16px;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:12px}
+    .token-icon{width:32px;height:32px;background:rgba(167,139,250,.15);border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+    .token-highlight{color:var(--violet);font-weight:700}
+    code{background:rgba(167,139,250,.1);color:var(--violet);padding:1px 5px;border-radius:3px;font-size:10px}
+    .cards{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:12px}
+    .card-hd{display:flex;align-items:center;gap:7px;margin-bottom:8px}
+    .card-dot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+    .card-hd h3{font-size:11px;font-weight:600;color:var(--text)}
+    .card-count{font-size:20px;font-weight:700;margin-bottom:6px}
+    .card-bar{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+    .card-fill{height:100%;border-radius:3px}
+    .vis-footer{font-size:10px;color:var(--muted);text-align:center;border-top:1px solid var(--border);padding-top:10px}
+    .ctrl{position:fixed;top:16px;right:16px;display:flex;gap:6px;z-index:999}
+    .ctrl button{background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 10px;border-radius:6px;cursor:pointer}
+    .ctrl button:hover{border-color:var(--emerald)}</style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="window.cycleTheme()">Theme</button>
+  <button onclick="window.toggleLang()">EN/中</button>
+</div>
+
+<div class="vis-header">
+  <div class="vis-dot"></div>
+  <div class="vis-title">
+    <span class="lz">Agent 专业化工具集矩阵</span>
+    <span class="le">Agent Specialization Tool Matrix</span>
+  </div>
+  <div class="vis-sub">VIS-2A-019 · <span class="lz">最小权限原则 · 5 类 Agent × 12 种工具</span><span class="le">Least Privilege Principle · 5 Agent Types × 12 Tools</span></div>
+</div>
+
+<div class="principle-bar">
+  <span>🛡️ <span class="lz">最小权限原则</span><span class="le">Least Privilege Principle</span></span>
+  <span class="lz" style="color:var(--muted)">每种 Agent 仅拥有其任务所需的最小工具集合 — 降低攻击面，防止权限滥用</span>
+  <span class="le" style="color:var(--muted)">Each agent type receives only the minimum tool set required for its task — reducing attack surface and preventing privilege abuse</span>
+</div>
+
+<div class="matrix-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th></th>
+        <th colspan="5" class="cat-header"><span class="lz">文件操作</span><span class="le">File Ops</span></th>
+        <th colspan="2" class="cat-header"><span class="lz">执行</span><span class="le">Execution</span></th>
+        <th colspan="2" class="cat-header">Agent</th>
+        <th colspan="3" class="cat-header"><span class="lz">扩展</span><span class="le">Extensions</span></th>
+      </tr>
+      <tr>
+        <th></th>
+        <th class="tool-th">Read</th>
+        <th class="tool-th">Edit</th>
+        <th class="tool-th">Write</th>
+        <th class="tool-th">Glob</th>
+        <th class="tool-th">Grep</th>
+        <th class="tool-th">Bash</th>
+        <th class="tool-th">Notebook</th>
+        <th class="tool-th">Agent</th>
+        <th class="tool-th">Skill</th>
+        <th class="tool-th">WebFetch</th>
+        <th class="tool-th">WebSearch</th>
+        <th class="tool-th">Todo</th>
+      </tr>
+    </thead>
+    <tbody>
+      <!-- general-purpose: all 12 -->
+      <tr class="row-gp">
+        <td class="agent-td">
+          general-purpose
+          <span class="agent-desc"><span class="lz">通用型 · 全部能力</span><span class="le">General · Full capability</span></span>
+        </td>
+        <td class="cell"><div class="cell-inner av-gp">✓</div></td>
+        <td class="cell"><div class="cell-inner av-gp">✓</div></td>
+        <td class="cell"><div class="cell-inner av-gp">✓</div></td>
+        <td class="cell"><div class="cell-inner av-gp">✓</div></td>
+        <td class="cell"><div class="cell-inner av-gp">✓</div></td>
+        <td class="cell"><div class="cell-inner av-gp">✓</div></td>
+        <td class="cell"><div class="cell-inner av-gp">✓</div></td>
+        <td class="cell"><div class="cell-inner av-gp">✓</div></td>
+        <td class="cell"><div class="cell-inner av-gp">✓</div></td>
+        <td class="cell"><div class="cell-inner av-gp">✓</div></td>
+        <td class="cell"><div class="cell-inner av-gp">✓</div></td>
+        <td class="cell"><div class="cell-inner av-gp">✓</div></td>
+      </tr>
+      <!-- Explore: Read Glob Grep WebFetch WebSearch = 5 -->
+      <tr class="row-ex">
+        <td class="agent-td">
+          Explore
+          <span class="agent-desc"><span class="lz">代码探索型</span><span class="le">Code Explorer</span><span class="omit-badge">omitClaudeMd</span></span>
+        </td>
+        <td class="cell"><div class="cell-inner av">✓</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner av">✓</div></td>
+        <td class="cell"><div class="cell-inner av">✓</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner av">✓</div></td>
+        <td class="cell"><div class="cell-inner av">✓</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+      </tr>
+      <!-- Plan: Read Glob Grep WebFetch = 4 -->
+      <tr class="row-pl">
+        <td class="agent-td">
+          Plan
+          <span class="agent-desc"><span class="lz">设计方案型 · 只读</span><span class="le">Architect · Read-only</span></span>
+        </td>
+        <td class="cell"><div class="cell-inner av">✓</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner av">✓</div></td>
+        <td class="cell"><div class="cell-inner av">✓</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner av">✓</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+      </tr>
+      <!-- statusline-setup: Read Edit = 2 -->
+      <tr class="row-sl">
+        <td class="agent-td">
+          statusline-setup
+          <span class="agent-desc"><span class="lz">状态栏配置型</span><span class="le">Statusline Config</span></span>
+        </td>
+        <td class="cell"><div class="cell-inner av">✓</div></td>
+        <td class="cell"><div class="cell-inner av">✓</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+      </tr>
+      <!-- claude-code-guide: Read Glob Grep WebFetch WebSearch = 5 -->
+      <tr class="row-gu">
+        <td class="agent-td">
+          claude-code-guide
+          <span class="agent-desc"><span class="lz">使用指导型</span><span class="le">Usage Guide</span></span>
+        </td>
+        <td class="cell"><div class="cell-inner av">✓</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner av">✓</div></td>
+        <td class="cell"><div class="cell-inner av">✓</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+        <td class="cell"><div class="cell-inner av">✓</div></td>
+        <td class="cell"><div class="cell-inner av">✓</div></td>
+        <td class="cell"><div class="cell-inner na">—</div></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="token-box">
+  <div class="token-icon">⚡</div>
+  <div>
+    <div style="color:var(--violet);font-weight:600;margin-bottom:3px;font-size:11px">
+      <span class="lz">Explore Agent Token 节省优化</span>
+      <span class="le">Explore Agent Token Optimization</span>
+    </div>
+    <div>
+      <span class="lz">通过 <code>omitClaudeMd=true</code> 排除 Claude Code 文档 + 精简工具集 → 每周节省 <span class="token-highlight">5–15 GTok</span> 模型 token 消耗</span>
+      <span class="le">Via <code>omitClaudeMd=true</code> excluding Claude Code docs + minimal tool set → saves <span class="token-highlight">5–15 GTok</span> model tokens per week</span>
+    </div>
+  </div>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-dot" style="background:var(--emerald)"></div>
+      <h3>general-purpose</h3>
+    </div>
+    <div class="card-count" style="color:var(--emerald)">12/12</div>
+    <div class="card-bar"><div class="card-fill" style="width:100%;background:var(--emerald)"></div></div>
+    <div style="font-size:10px;color:var(--muted);margin-top:6px">
+      <span class="lz">全部工具 · 无限制</span><span class="le">All tools · Unrestricted</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-dot" style="background:var(--cyan)"></div>
+      <h3>Explore</h3>
+    </div>
+    <div class="card-count" style="color:var(--cyan)">5/12</div>
+    <div class="card-bar"><div class="card-fill" style="width:41.7%;background:var(--cyan)"></div></div>
+    <div style="font-size:10px;color:var(--muted);margin-top:6px">
+      <span class="lz">只读 + 搜索</span><span class="le">Read-only + Search</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-dot" style="background:var(--amber)"></div>
+      <h3>Plan</h3>
+    </div>
+    <div class="card-count" style="color:var(--amber)">4/12</div>
+    <div class="card-bar"><div class="card-fill" style="width:33.3%;background:var(--amber)"></div></div>
+    <div style="font-size:10px;color:var(--muted);margin-top:6px">
+      <span class="lz">只读 · 无 Web 搜索</span><span class="le">Read-only · No web search</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-dot" style="background:var(--rose)"></div>
+      <h3>statusline-setup</h3>
+    </div>
+    <div class="card-count" style="color:var(--rose)">2/12</div>
+    <div class="card-bar"><div class="card-fill" style="width:16.7%;background:var(--rose)"></div></div>
+    <div style="font-size:10px;color:var(--muted);margin-top:6px">
+      <span class="lz">极简 · 仅配置操作</span><span class="le">Minimal · Config only</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-dot" style="background:var(--violet)"></div>
+      <h3>claude-code-guide</h3>
+    </div>
+    <div class="card-count" style="color:var(--violet)">5/12</div>
+    <div class="card-bar"><div class="card-fill" style="width:41.7%;background:var(--violet)"></div></div>
+    <div style="font-size:10px;color:var(--muted);margin-top:6px">
+      <span class="lz">只读 + 网络文档查询</span><span class="le">Read-only + Web docs</span>
+    </div>
+  </div>
+</div>
+
+<div class="vis-footer">
+  VIS-2A-019 · Claude Code 2.1.88 · <span class="lz">数据来源：CLAUDE.md Agent 工具定义</span><span class="le">Source: CLAUDE.md Agent tool definitions</span>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  window.cycleTheme=function(){
+    var themes=['dark','warm','light'];
+    var i=(themes.indexOf(document.documentElement.getAttribute('data-theme'))+1)%3;
+    t=themes[i];
+    document.documentElement.setAttribute('data-theme',t);
+    localStorage.setItem('vtheme',t);
+  };
+  window.toggleLang=function(){var cur=document.documentElement.getAttribute('data-lang')||'zh';var next=cur==='en'?'zh':'en';document.documentElement.setAttribute('data-lang',next);localStorage.setItem('vlang',next);};
+  var _sl=localStorage.getItem('vlang');if(_sl){document.documentElement.setAttribute('data-lang',_sl);}})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

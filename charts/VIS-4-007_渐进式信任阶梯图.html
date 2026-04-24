@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-4-007 | 渐进式信任阶梯图</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--panel:#0f172a;--card:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--subtle:#475569;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="warm"]{--bg:#1c1410;--panel:#2a1f16;--card:#3d2d20;--border:#5c4a3a;--text:#f5e6d3;--muted:#c4a882;--subtle:#8b7355;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="light"]{--bg:#f8fafc;--panel:#f1f5f9;--card:#e2e8f0;--border:#cbd5e1;--text:#0f172a;--muted:#475569;--subtle:#94a3b8;--amber:#d97706;--cyan:#0891b2;--violet:#7c3aed;--emerald:#059669;--rose:#e11d48;--slate:#475569;--orange:#ea580c}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'JetBrains Mono',monospace;
+  min-height:100vh;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:24px 16px 48px;
+}
+
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:100}
+.ctrl button{font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:background 0.15s}
+.ctrl button:hover{background:var(--border)}
+
+.header{text-align:center;margin-bottom:32px;max-width:900px}
+.vis-id{font-size:11px;color:var(--subtle);letter-spacing:0.12em;text-transform:uppercase;margin-bottom:8px}
+.title-zh{font-size:24px;font-weight:700;color:var(--text);margin-bottom:4px}
+.title-en{font-size:14px;color:var(--muted);margin-bottom:12px}
+.subtitle{font-size:12px;color:var(--subtle);line-height:1.6}
+
+.svg-wrapper{
+  width:100%;
+  max-width:960px;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  overflow:hidden;
+  margin-bottom:24px;
+}
+
+svg{display:block;width:100%;height:auto}
+
+.summary-cards{
+  display:flex;
+  gap:16px;
+  max-width:960px;
+  width:100%;
+  flex-wrap:wrap;
+}
+
+.card{
+  flex:1;
+  min-width:240px;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:16px 18px;
+}
+
+.card-dot{
+  width:10px;height:10px;
+  border-radius:50%;
+  display:inline-block;
+  margin-right:8px;
+  vertical-align:middle;
+}
+.card-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:6px}
+.card-body{font-size:11px;color:var(--muted);line-height:1.7}[data-lang="en"] .lz{display:none}
+[data-lang="en"] .le{display:inline}
+
+/* ─────────────────────────────────────────────────────────
+   THEME-ADAPTIVE SVG PALETTE
+   Each step carries a semantic class; CSS fills/strokes
+   switch with --theme variables so colors re-map correctly
+   in light mode (darker, more saturated variants).
+   ───────────────────────────────────────────────────────── */
+
+/* Step-level palette tokens (fallback = dark-theme hex) */
+:root,[data-theme="dark"]{
+  --step1:#60a5fa;--step1-soft:#93c5fd;--step1-bg:rgba(96,165,250,0.14);
+  --step2:#22d3ee;--step2-soft:#67e8f9;--step2-bg:rgba(34,211,238,0.14);
+  --step3:#34d399;--step3-soft:#6ee7b7;--step3-bg:rgba(52,211,153,0.14);
+  --step4:#fbbf24;--step4-soft:#fde68a;--step4-bg:rgba(251,191,36,0.14);
+  --step5:#fb923c;--step5-soft:#fdba74;--step5-bg:rgba(251,146,60,0.18);
+  --svg-bg:#0f172a;--svg-grid:#334155;--badge-ink:#020617;
+  --mode-pill-2:#164e63;--mode-pill-3:#064e3b;--mode-pill-4:#451a03;--mode-pill-5:#431407;
+  --callout-bg:#1e293b;--axis-line:#334155;--axis-tick:#475569;--axis-label:#64748b;
+  --symbol-ok:#34d399;--symbol-warn:#fbbf24;--symbol-deny:#fb7185;
+  --perm-muted:#94a3b8;--perm-dim:#475569;
+  --arrow-marker:#94a3b8;--growth-arrow:#fbbf24;
+}
+[data-theme="warm"]{
+  --step1:#60a5fa;--step1-soft:#93c5fd;--step1-bg:rgba(96,165,250,0.16);
+  --step2:#22d3ee;--step2-soft:#67e8f9;--step2-bg:rgba(34,211,238,0.16);
+  --step3:#34d399;--step3-soft:#6ee7b7;--step3-bg:rgba(52,211,153,0.16);
+  --step4:#fbbf24;--step4-soft:#fde68a;--step4-bg:rgba(251,191,36,0.16);
+  --step5:#fb923c;--step5-soft:#fdba74;--step5-bg:rgba(251,146,60,0.20);
+  --svg-bg:#2a1f16;--svg-grid:#5c4a3a;--badge-ink:#1c1410;
+  --mode-pill-2:rgba(34,211,238,0.18);--mode-pill-3:rgba(52,211,153,0.18);
+  --mode-pill-4:rgba(251,191,36,0.22);--mode-pill-5:rgba(251,146,60,0.25);
+  --callout-bg:#3d2d20;--axis-line:#5c4a3a;--axis-tick:#8b7355;--axis-label:#c4a882;
+  --symbol-ok:#34d399;--symbol-warn:#fbbf24;--symbol-deny:#fb7185;
+  --perm-muted:#c4a882;--perm-dim:#8b7355;
+  --arrow-marker:#c4a882;--growth-arrow:#fbbf24;
+}
+[data-theme="light"]{
+  --step1:#2563eb;--step1-soft:#1d4ed8;--step1-bg:rgba(37,99,235,0.12);
+  --step2:#0891b2;--step2-soft:#0e7490;--step2-bg:rgba(8,145,178,0.12);
+  --step3:#059669;--step3-soft:#047857;--step3-bg:rgba(5,150,105,0.12);
+  --step4:#d97706;--step4-soft:#b45309;--step4-bg:rgba(217,119,6,0.14);
+  --step5:#ea580c;--step5-soft:#c2410c;--step5-bg:rgba(234,88,12,0.16);
+  --svg-bg:#ffffff;--svg-grid:#cbd5e1;--badge-ink:#ffffff;
+  --mode-pill-2:rgba(8,145,178,0.15);--mode-pill-3:rgba(5,150,105,0.15);
+  --mode-pill-4:rgba(217,119,6,0.18);--mode-pill-5:rgba(234,88,12,0.22);
+  --callout-bg:#ffffff;--axis-line:#cbd5e1;--axis-tick:#94a3b8;--axis-label:#475569;
+  --symbol-ok:#059669;--symbol-warn:#d97706;--symbol-deny:#e11d48;
+  --perm-muted:#475569;--perm-dim:#94a3b8;
+  --arrow-marker:#475569;--growth-arrow:#d97706;
+}
+
+/* SVG fill / stroke helpers keyed to CSS vars */
+.svg-bg-fill{fill:var(--svg-bg)}
+.grid-stroke{stroke:var(--svg-grid)}
+
+.step1-pillar{fill:var(--svg-bg);stroke:var(--step1)}
+.step1-fill{fill:var(--step1-bg);stroke:none}
+.step1-tread{fill:var(--step1)}
+.step1-badge{fill:var(--step1)}
+.step1-name{fill:var(--step1-soft)}
+.step1-callout-bg{fill:var(--callout-bg);stroke:var(--step1)}
+.step1-callout-bar{fill:var(--step1)}
+.step1-callout-title{fill:var(--step1-soft)}
+
+.step2-pillar{fill:var(--svg-bg);stroke:var(--step2)}
+.step2-fill{fill:var(--step2-bg);stroke:none}
+.step2-tread{fill:var(--step2)}
+.step2-badge{fill:var(--step2)}
+.step2-name{fill:var(--step2-soft)}
+.step2-mode-pill{fill:var(--mode-pill-2)}
+.step2-mode-text{fill:var(--step2-soft)}
+.step2-callout-bg{fill:var(--callout-bg);stroke:var(--step2)}
+.step2-callout-bar{fill:var(--step2)}
+.step2-callout-title{fill:var(--step2-soft)}
+.step2-callout-code{fill:var(--step2)}
+
+.step3-pillar{fill:var(--svg-bg);stroke:var(--step3)}
+.step3-fill{fill:var(--step3-bg);stroke:none}
+.step3-tread{fill:var(--step3)}
+.step3-badge{fill:var(--step3)}
+.step3-name{fill:var(--step3-soft)}
+.step3-mode-pill{fill:var(--mode-pill-3)}
+.step3-mode-text{fill:var(--step3-soft)}
+.step3-callout-bg{fill:var(--callout-bg);stroke:var(--step3)}
+.step3-callout-bar{fill:var(--step3)}
+.step3-callout-title{fill:var(--step3-soft)}
+.step3-callout-code{fill:var(--step3)}
+
+.step4-pillar{fill:var(--svg-bg);stroke:var(--step4)}
+.step4-fill{fill:var(--step4-bg);stroke:none}
+.step4-tread{fill:var(--step4)}
+.step4-badge{fill:var(--step4)}
+.step4-name{fill:var(--step4-soft)}
+.step4-mode-pill{fill:var(--mode-pill-4)}
+.step4-mode-text{fill:var(--step4-soft)}
+.step4-callout-bg{fill:var(--callout-bg);stroke:var(--step4)}
+.step4-callout-bar{fill:var(--step4)}
+.step4-callout-title{fill:var(--step4-soft)}
+.step4-callout-code{fill:var(--step4)}
+
+.step5-pillar{fill:var(--svg-bg);stroke:var(--step5)}
+.step5-fill{fill:var(--step5-bg);stroke:none}
+.step5-tread{fill:var(--step5)}
+.step5-badge{fill:var(--step5)}
+.step5-name{fill:var(--step5-soft)}
+.step5-mode-pill{fill:var(--mode-pill-5)}
+.step5-mode-text{fill:var(--step5-soft)}
+.step5-callout-bg{fill:var(--callout-bg);stroke:var(--step5)}
+.step5-callout-bar{fill:var(--step5)}
+.step5-callout-title{fill:var(--step5-soft)}
+.step5-callout-code{fill:var(--step5)}
+
+.default-badge{fill:var(--step4)}
+.dev-only-badge{fill:var(--symbol-deny)}
+.badge-text{fill:var(--badge-ink)}
+
+.sym-ok{fill:var(--symbol-ok)}
+.sym-warn{fill:var(--symbol-warn)}
+.sym-deny{fill:var(--symbol-deny)}
+.perm-label{fill:var(--perm-muted)}
+.perm-dim{fill:var(--perm-dim)}
+
+.axis-line{stroke:var(--axis-line)}
+.axis-tick{stroke:var(--axis-tick)}
+.axis-label{fill:var(--axis-label)}
+
+.chart-title{fill:var(--text)}
+.chart-subtitle{fill:var(--axis-label)}
+
+.growth-arrow{stroke:var(--growth-arrow)}
+.growth-label{fill:var(--growth-arrow)}
+.y-axis-line{stroke:var(--axis-tick)}
+.y-axis-label{fill:var(--axis-label)}
+
+.callout-connector-1{stroke:var(--step1)}
+.callout-connector-2{stroke:var(--step2)}
+.callout-connector-3{stroke:var(--step3)}
+.callout-connector-4{stroke:var(--step4)}
+.callout-connector-5{stroke:var(--step5)}
+
+/* Arrow markers — re-color fills via CSS so they adapt */
+#arrowUp path{stroke:var(--arrow-marker)}
+#arrowRight path{stroke:var(--arrow-marker)}
+#arrowGold path{stroke:var(--growth-arrow)}
+</style>
+</head>
+<body>
+
+<!-- Controls -->
+<div class="ctrl">
+  <button onclick="cycleTheme()">Theme</button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="vis-id">VIS-4-007</div>
+  <div class="title-zh lz">渐进式信任阶梯图</div>
+  <div class="title-en">Progressive Trust Ladder</div>
+  <div class="subtitle">
+    <span class="lz">Claude Code 从零信任到完全自动化的五级权限阶梯 · 默认启动于 Level 2 · 随使用舒适度逐步解锁</span>
+    <span class="le">Claude Code's five-level permission ladder from zero trust to full automation · Starts at Level 2 by default · Unlocks progressively with comfort</span>
+  </div>
+</div>
+
+<!-- Main SVG -->
+<div class="svg-wrapper">
+<svg viewBox="0 0 960 580" xmlns="http://www.w3.org/2000/svg" aria-label="渐进式信任阶梯图">
+  <defs>
+    <!-- Grid pattern -->
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path class="grid-stroke" d="M 40 0 L 0 0 0 40" fill="none" stroke-width="0.4" opacity="0.4"/>
+    </pattern>
+
+    <!-- Step gradients -->
+    <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#3b82f6" stop-opacity="0.08"/>
+    </linearGradient>
+    <linearGradient id="grad2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#06b6d4" stop-opacity="0.08"/>
+    </linearGradient>
+    <linearGradient id="grad3" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#34d399" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity="0.08"/>
+    </linearGradient>
+    <linearGradient id="grad4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fbbf24" stop-opacity="0.22"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.08"/>
+    </linearGradient>
+    <linearGradient id="grad5" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#fb923c" stop-opacity="0.28"/>
+      <stop offset="100%" stop-color="#f97316" stop-opacity="0.10"/>
+    </linearGradient>
+
+    <!-- Arrow marker -->
+    <marker id="arrowUp" markerWidth="8" markerHeight="8" refX="4" refY="4" orient="auto">
+      <path d="M2,7 L4,1 L6,7" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrowRight" markerWidth="8" markerHeight="8" refX="6" refY="4" orient="auto">
+      <path d="M1,2 L7,4 L1,6" fill="none" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+    <marker id="arrowGold" markerWidth="10" markerHeight="10" refX="7" refY="5" orient="auto">
+      <path d="M2,2 L8,5 L2,8" fill="none" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </marker>
+  </defs>
+
+  <!-- Background -->
+  <rect class="svg-bg-fill" width="960" height="580"/>
+  <rect width="960" height="580" fill="url(#grid)"/>
+
+  <!-- ═══════════════════════════════════════════════════════
+       STAIRCASE STEPS — bottom-left to top-right
+       Step positions: x,y = top-left corner of pillar rect
+       Step 1: x=55,  y=405, h=135, w=130
+       Step 2: x=185, y=325, h=215, w=130
+       Step 3: x=315, y=245, h=295, w=130
+       Step 4: x=445, y=165, h=375, w=130
+       Step 5: x=575, y=85,  h=455, w=130
+  ═══════════════════════════════════════════════════════ -->
+
+  <!-- STEP 1 — Level 1 零信任 (blue) -->
+  <!-- Pillar background -->
+  <rect class="step1-pillar" x="55" y="405" width="130" height="135" rx="4" stroke-width="1" opacity="0.9"/>
+  <rect class="step1-fill" x="55" y="405" width="130" height="135" rx="4"/>
+  <!-- Top face (the tread) -->
+  <rect class="step1-tread" x="55" y="395" width="130" height="18" rx="3" opacity="0.85"/>
+  <!-- Level badge -->
+  <circle class="step1-badge" cx="75" cy="404" r="10"/>
+  <text class="badge-text" x="75" y="408" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700">1</text>
+  <!-- Level name -->
+  <text class="step1-name lz" x="120" y="424" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" font-weight="700">零信任</text>
+  <text class="step1-name le" x="120" y="424" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700">Zero Trust</text>
+  <!-- Permission indicators -->
+  <text class="sym-ok" x="68" y="447" font-family="JetBrains Mono,monospace" font-size="11">✓</text>
+  <text class="perm-label lz" x="82" y="447" font-family="JetBrains Mono,monospace" font-size="10">读取</text>
+  <text class="perm-label le" x="82" y="447" font-family="JetBrains Mono,monospace" font-size="10">Read</text>
+  <text class="sym-deny" x="68" y="465" font-family="JetBrains Mono,monospace" font-size="11">✗</text>
+  <text class="perm-label lz" x="82" y="465" font-family="JetBrains Mono,monospace" font-size="10">写入</text>
+  <text class="perm-label le" x="82" y="465" font-family="JetBrains Mono,monospace" font-size="10">Write</text>
+  <text class="sym-deny" x="68" y="483" font-family="JetBrains Mono,monospace" font-size="11">✗</text>
+  <text class="perm-label lz" x="82" y="483" font-family="JetBrains Mono,monospace" font-size="10">Bash</text>
+  <text class="perm-label le" x="82" y="483" font-family="JetBrains Mono,monospace" font-size="10">Bash</text>
+  <text class="sym-deny" x="68" y="501" font-family="JetBrains Mono,monospace" font-size="11">✗</text>
+  <text class="perm-label lz" x="82" y="501" font-family="JetBrains Mono,monospace" font-size="10">自动</text>
+  <text class="perm-label le" x="82" y="501" font-family="JetBrains Mono,monospace" font-size="10">Auto</text>
+  <!-- Mode label -->
+  <text class="perm-dim lz" x="120" y="527" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10">手动确认一切</text>
+  <text class="perm-dim le" x="120" y="527" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10">Confirm all</text>
+
+  <!-- STEP 2 — Level 2 基础信任 (cyan) + DEFAULT badge -->
+  <rect class="step2-pillar" x="185" y="325" width="130" height="215" rx="4" stroke-width="1" opacity="0.9"/>
+  <rect class="step2-fill" x="185" y="325" width="130" height="215" rx="4"/>
+  <rect class="step2-tread" x="185" y="315" width="130" height="18" rx="3" opacity="0.85"/>
+  <circle class="step2-badge" cx="205" cy="324" r="10"/>
+  <text class="badge-text" x="205" y="328" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700">2</text>
+  <!-- DEFAULT badge -->
+  <rect class="default-badge" x="223" y="316" width="65" height="14" rx="3"/>
+  <text class="badge-text" x="255" y="326" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700">DEFAULT</text>
+  <!-- Level name -->
+  <text class="step2-name lz" x="250" y="348" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" font-weight="700">基础信任</text>
+  <text class="step2-name le" x="250" y="348" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700">Basic Trust</text>
+  <!-- Permissions -->
+  <text class="sym-ok" x="198" y="371" font-family="JetBrains Mono,monospace" font-size="11">✓</text>
+  <text class="perm-label lz" x="212" y="371" font-family="JetBrains Mono,monospace" font-size="10">读取(自动)</text>
+  <text class="perm-label le" x="212" y="371" font-family="JetBrains Mono,monospace" font-size="10">Read(auto)</text>
+  <text class="sym-warn" x="198" y="389" font-family="JetBrains Mono,monospace" font-size="11">△</text>
+  <text class="perm-label lz" x="212" y="389" font-family="JetBrains Mono,monospace" font-size="10">写入(确认)</text>
+  <text class="perm-label le" x="212" y="389" font-family="JetBrains Mono,monospace" font-size="10">Write(confirm)</text>
+  <text class="sym-deny" x="198" y="407" font-family="JetBrains Mono,monospace" font-size="11">✗</text>
+  <text class="perm-label lz" x="212" y="407" font-family="JetBrains Mono,monospace" font-size="10">Bash(禁用)</text>
+  <text class="perm-label le" x="212" y="407" font-family="JetBrains Mono,monospace" font-size="10">Bash(off)</text>
+  <text class="sym-deny" x="198" y="425" font-family="JetBrains Mono,monospace" font-size="11">✗</text>
+  <text class="perm-label lz" x="212" y="425" font-family="JetBrains Mono,monospace" font-size="10">自动(无)</text>
+  <text class="perm-label le" x="212" y="425" font-family="JetBrains Mono,monospace" font-size="10">Auto(no)</text>
+  <!-- Mode -->
+  <rect class="step2-mode-pill" x="194" y="438" width="112" height="16" rx="3" opacity="0.7"/>
+  <text class="step2-mode-text" x="250" y="450" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10">default mode</text>
+  <text class="perm-dim lz" x="250" y="517" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10">安装后默认级别</text>
+  <text class="perm-dim le" x="250" y="517" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10">Out-of-box default</text>
+
+  <!-- STEP 3 — Level 3 中等信任 (emerald) -->
+  <rect class="step3-pillar" x="315" y="245" width="130" height="295" rx="4" stroke-width="1" opacity="0.9"/>
+  <rect class="step3-fill" x="315" y="245" width="130" height="295" rx="4"/>
+  <rect class="step3-tread" x="315" y="235" width="130" height="18" rx="3" opacity="0.85"/>
+  <circle class="step3-badge" cx="335" cy="244" r="10"/>
+  <text class="badge-text" x="335" y="248" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700">3</text>
+  <text class="step3-name lz" x="380" y="268" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" font-weight="700">中等信任</text>
+  <text class="step3-name le" x="380" y="268" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700">Medium Trust</text>
+  <!-- Permissions -->
+  <text class="sym-ok" x="328" y="291" font-family="JetBrains Mono,monospace" font-size="11">✓</text>
+  <text class="perm-label lz" x="342" y="291" font-family="JetBrains Mono,monospace" font-size="10">读取(自动)</text>
+  <text class="perm-label le" x="342" y="291" font-family="JetBrains Mono,monospace" font-size="10">Read(auto)</text>
+  <text class="sym-ok" x="328" y="309" font-family="JetBrains Mono,monospace" font-size="11">✓</text>
+  <text class="perm-label lz" x="342" y="309" font-family="JetBrains Mono,monospace" font-size="10">写入(自动)</text>
+  <text class="perm-label le" x="342" y="309" font-family="JetBrains Mono,monospace" font-size="10">Write(auto)</text>
+  <text class="sym-warn" x="328" y="327" font-family="JetBrains Mono,monospace" font-size="11">△</text>
+  <text class="perm-label lz" x="342" y="327" font-family="JetBrains Mono,monospace" font-size="10">Bash(受限)</text>
+  <text class="perm-label le" x="342" y="327" font-family="JetBrains Mono,monospace" font-size="10">Bash(limited)</text>
+  <text class="sym-warn" x="328" y="345" font-family="JetBrains Mono,monospace" font-size="11">△</text>
+  <text class="perm-label lz" x="342" y="345" font-family="JetBrains Mono,monospace" font-size="10">自动(部分)</text>
+  <text class="perm-label le" x="342" y="345" font-family="JetBrains Mono,monospace" font-size="10">Auto(partial)</text>
+  <!-- Mode -->
+  <rect class="step3-mode-pill" x="324" y="358" width="112" height="16" rx="3" opacity="0.7"/>
+  <text class="step3-mode-text lz" x="380" y="370" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10">自定义白名单</text>
+  <text class="step3-mode-text le" x="380" y="370" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10">allowlist mode</text>
+
+  <!-- STEP 4 — Level 4 高信任 (amber) -->
+  <rect class="step4-pillar" x="445" y="165" width="130" height="375" rx="4" stroke-width="1" opacity="0.9"/>
+  <rect class="step4-fill" x="445" y="165" width="130" height="375" rx="4"/>
+  <rect class="step4-tread" x="445" y="155" width="130" height="18" rx="3" opacity="0.85"/>
+  <circle class="step4-badge" cx="465" cy="164" r="10"/>
+  <text class="badge-text" x="465" y="168" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700">4</text>
+  <text class="step4-name lz" x="510" y="188" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" font-weight="700">高信任</text>
+  <text class="step4-name le" x="510" y="188" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700">High Trust</text>
+  <!-- Permissions -->
+  <text class="sym-ok" x="458" y="211" font-family="JetBrains Mono,monospace" font-size="11">✓</text>
+  <text class="perm-label lz" x="472" y="211" font-family="JetBrains Mono,monospace" font-size="10">读取(自动)</text>
+  <text class="perm-label le" x="472" y="211" font-family="JetBrains Mono,monospace" font-size="10">Read(auto)</text>
+  <text class="sym-ok" x="458" y="229" font-family="JetBrains Mono,monospace" font-size="11">✓</text>
+  <text class="perm-label lz" x="472" y="229" font-family="JetBrains Mono,monospace" font-size="10">写入(自动)</text>
+  <text class="perm-label le" x="472" y="229" font-family="JetBrains Mono,monospace" font-size="10">Write(auto)</text>
+  <text class="sym-ok" x="458" y="247" font-family="JetBrains Mono,monospace" font-size="11">✓</text>
+  <text class="perm-label lz" x="472" y="247" font-family="JetBrains Mono,monospace" font-size="10">Bash(监控)</text>
+  <text class="perm-label le" x="472" y="247" font-family="JetBrains Mono,monospace" font-size="10">Bash(monitored)</text>
+  <text class="sym-ok" x="458" y="265" font-family="JetBrains Mono,monospace" font-size="11">✓</text>
+  <text class="perm-label lz" x="472" y="265" font-family="JetBrains Mono,monospace" font-size="10">自动(多数)</text>
+  <text class="perm-label le" x="472" y="265" font-family="JetBrains Mono,monospace" font-size="10">Auto(mostly)</text>
+  <!-- Mode -->
+  <rect class="step4-mode-pill" x="454" y="278" width="112" height="16" rx="3" opacity="0.7"/>
+  <text class="step4-mode-text" x="510" y="290" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10">acceptEdits</text>
+
+  <!-- STEP 5 — Level 5 最高信任 (orange/gold) + DEV ONLY badge -->
+  <rect class="step5-pillar" x="575" y="85" width="130" height="455" rx="4" stroke-width="1.5" opacity="0.9"/>
+  <rect class="step5-fill" x="575" y="85" width="130" height="455" rx="4"/>
+  <rect class="step5-tread" x="575" y="75" width="130" height="18" rx="3" opacity="0.9"/>
+  <circle class="step5-badge" cx="595" cy="84" r="10"/>
+  <text class="badge-text" x="595" y="88" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700">5</text>
+  <!-- DEV ONLY badge -->
+  <rect class="dev-only-badge" x="611" y="76" width="72" height="14" rx="3" opacity="0.95"/>
+  <text class="badge-text" x="647" y="86" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700">⚠ DEV ONLY</text>
+  <!-- Level name -->
+  <text class="step5-name lz" x="640" y="110" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="12" font-weight="700">最高信任</text>
+  <text class="step5-name le" x="640" y="110" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700">Max Trust</text>
+  <!-- Permissions -->
+  <text class="sym-ok" x="588" y="133" font-family="JetBrains Mono,monospace" font-size="11">✓</text>
+  <text class="perm-label lz" x="602" y="133" font-family="JetBrains Mono,monospace" font-size="10">读取(自动)</text>
+  <text class="perm-label le" x="602" y="133" font-family="JetBrains Mono,monospace" font-size="10">Read(auto)</text>
+  <text class="sym-ok" x="588" y="151" font-family="JetBrains Mono,monospace" font-size="11">✓</text>
+  <text class="perm-label lz" x="602" y="151" font-family="JetBrains Mono,monospace" font-size="10">写入(自动)</text>
+  <text class="perm-label le" x="602" y="151" font-family="JetBrains Mono,monospace" font-size="10">Write(auto)</text>
+  <text class="sym-ok" x="588" y="169" font-family="JetBrains Mono,monospace" font-size="11">✓</text>
+  <text class="perm-label lz" x="602" y="169" font-family="JetBrains Mono,monospace" font-size="10">Bash(全部)</text>
+  <text class="perm-label le" x="602" y="169" font-family="JetBrains Mono,monospace" font-size="10">Bash(all)</text>
+  <text class="sym-ok" x="588" y="187" font-family="JetBrains Mono,monospace" font-size="11">✓</text>
+  <text class="perm-label lz" x="602" y="187" font-family="JetBrains Mono,monospace" font-size="10">自动(完全)</text>
+  <text class="perm-label le" x="602" y="187" font-family="JetBrains Mono,monospace" font-size="10">Auto(full)</text>
+  <!-- Mode box -->
+  <rect class="step5-mode-pill" x="584" y="200" width="112" height="30" rx="3" opacity="0.8"/>
+  <text class="step5-mode-text" x="640" y="213" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10">dangerouslySkip</text>
+  <text class="step5-mode-text" x="640" y="225" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10">Permissions</text>
+
+  <!-- ═══════════════════════════════════════════════════════
+       UPWARD GROWTH ARROW along left edge of staircase
+  ═══════════════════════════════════════════════════════ -->
+  <line class="y-axis-line" x1="32" y1="530" x2="32" y2="80" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrowUp)"/>
+  <!-- Y-axis label -->
+  <text class="y-axis-label lz" transform="translate(18,310) rotate(-90)" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10">信任级别</text>
+  <text class="y-axis-label le" transform="translate(18,310) rotate(-90)" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10">Trust Level</text>
+
+  <!-- Diagonal growth indicator arrow -->
+  <line class="growth-arrow" x1="80" y1="495" x2="590" y2="108" stroke-width="1.5" stroke-dasharray="6,4" marker-end="url(#arrowGold)" opacity="0.5"/>
+
+  <!-- Growth label along diagonal -->
+  <text class="growth-label lz" x="290" y="325" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" opacity="0.85" transform="rotate(-33,290,325)">→ 随使用增长</text>
+  <text class="growth-label le" x="290" y="325" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" opacity="0.85" transform="rotate(-33,290,325)">→ Grows with usage</text>
+
+  <!-- ═══════════════════════════════════════════════════════
+       RIGHT SIDE CALLOUT BOXES (5 levels)
+  ═══════════════════════════════════════════════════════ -->
+
+  <!-- Callout 1 — blue -->
+  <rect class="step1-callout-bg" x="730" y="418" width="210" height="56" rx="6" stroke-width="1" opacity="0.95"/>
+  <rect class="step1-callout-bar" x="730" y="418" width="5" height="56" rx="3"/>
+  <text class="step1-callout-title lz" x="745" y="434" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700">零信任 — 纯手动</text>
+  <text class="step1-callout-title le" x="745" y="434" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700">Zero Trust — Manual</text>
+  <text class="perm-label lz" x="745" y="450" font-family="JetBrains Mono,monospace" font-size="10">每次操作都需确认</text>
+  <text class="perm-label le" x="745" y="450" font-family="JetBrains Mono,monospace" font-size="10">Every action confirmed</text>
+  <text class="perm-dim lz" x="745" y="465" font-family="JetBrains Mono,monospace" font-size="10">适用：初次使用/高风险环境</text>
+  <text class="perm-dim le" x="745" y="465" font-family="JetBrains Mono,monospace" font-size="10">Use: first-time / high-risk env</text>
+
+  <!-- Callout 2 — cyan (DEFAULT) -->
+  <rect class="step2-callout-bg" x="730" y="338" width="210" height="66" rx="6" stroke-width="1.5" opacity="0.95"/>
+  <rect class="step2-callout-bar" x="730" y="338" width="5" height="66" rx="3"/>
+  <rect class="default-badge" x="905" y="341" width="32" height="13" rx="3"/>
+  <text class="badge-text" x="921" y="351" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700">DEF</text>
+  <text class="step2-callout-title lz" x="745" y="355" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700">基础信任 — 默认级别</text>
+  <text class="step2-callout-title le" x="745" y="355" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700">Basic Trust — Default</text>
+  <text class="perm-label lz" x="745" y="371" font-family="JetBrains Mono,monospace" font-size="10">读自动，写需确认，无Bash</text>
+  <text class="perm-label le" x="745" y="371" font-family="JetBrains Mono,monospace" font-size="10">Read auto, write confirm, no Bash</text>
+  <text class="perm-dim lz" x="745" y="387" font-family="JetBrains Mono,monospace" font-size="10">cmd: claude (无参数)</text>
+  <text class="perm-dim le" x="745" y="387" font-family="JetBrains Mono,monospace" font-size="10">cmd: claude (no flags)</text>
+  <text class="step2-callout-code lz" x="745" y="399" font-family="JetBrains Mono,monospace" font-size="10">permission: default</text>
+  <text class="step2-callout-code le" x="745" y="399" font-family="JetBrains Mono,monospace" font-size="10">permission: default</text>
+
+  <!-- Callout 3 — emerald -->
+  <rect class="step3-callout-bg" x="730" y="254" width="210" height="70" rx="6" stroke-width="1" opacity="0.95"/>
+  <rect class="step3-callout-bar" x="730" y="254" width="5" height="70" rx="3"/>
+  <text class="step3-callout-title lz" x="745" y="270" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700">中等信任 — 限制Bash</text>
+  <text class="step3-callout-title le" x="745" y="270" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700">Medium Trust — Ltd Bash</text>
+  <text class="perm-label lz" x="745" y="286" font-family="JetBrains Mono,monospace" font-size="10">文件操作自动，Bash白名单</text>
+  <text class="perm-label le" x="745" y="286" font-family="JetBrains Mono,monospace" font-size="10">File ops auto, Bash allowlist</text>
+  <text class="perm-dim lz" x="745" y="302" font-family="JetBrains Mono,monospace" font-size="10">settings: allowedTools 配置</text>
+  <text class="perm-dim le" x="745" y="302" font-family="JetBrains Mono,monospace" font-size="10">settings: allowedTools config</text>
+  <text class="step3-callout-code" x="745" y="318" font-family="JetBrains Mono,monospace" font-size="10">permission: allowlist</text>
+
+  <!-- Callout 4 — amber -->
+  <rect class="step4-callout-bg" x="730" y="172" width="210" height="70" rx="6" stroke-width="1" opacity="0.95"/>
+  <rect class="step4-callout-bar" x="730" y="172" width="5" height="70" rx="3"/>
+  <text class="step4-callout-title lz" x="745" y="188" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700">高信任 — 监控Bash</text>
+  <text class="step4-callout-title le" x="745" y="188" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700">High Trust — Monitored Bash</text>
+  <text class="perm-label lz" x="745" y="204" font-family="JetBrains Mono,monospace" font-size="10">多数操作自动，仅危险操作询问</text>
+  <text class="perm-label le" x="745" y="204" font-family="JetBrains Mono,monospace" font-size="10">Most auto, only dangerous asks</text>
+  <text class="perm-dim lz" x="745" y="220" font-family="JetBrains Mono,monospace" font-size="10">cmd: --acceptEdits</text>
+  <text class="perm-dim le" x="745" y="220" font-family="JetBrains Mono,monospace" font-size="10">cmd: --acceptEdits</text>
+  <text class="step4-callout-code" x="745" y="236" font-family="JetBrains Mono,monospace" font-size="10">permission: acceptEdits</text>
+
+  <!-- Callout 5 — orange/rose -->
+  <rect class="step5-callout-bg" x="730" y="92" width="210" height="70" rx="6" stroke-width="1.5" opacity="0.95"/>
+  <rect class="step5-callout-bar" x="730" y="92" width="5" height="70" rx="3"/>
+  <rect class="dev-only-badge" x="881" y="95" width="56" height="13" rx="3" opacity="0.9"/>
+  <text class="badge-text" x="909" y="105" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700">⚠ DEV ONLY</text>
+  <text class="step5-callout-title lz" x="745" y="110" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700">最高信任 — 全自动</text>
+  <text class="step5-callout-title le" x="745" y="110" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700">Max Trust — Full Auto</text>
+  <text class="perm-label lz" x="745" y="126" font-family="JetBrains Mono,monospace" font-size="10">零询问，用户承担全部责任</text>
+  <text class="perm-label le" x="745" y="126" font-family="JetBrains Mono,monospace" font-size="10">Zero prompts, user full responsibility</text>
+  <text class="sym-deny lz" x="745" y="142" font-family="JetBrains Mono,monospace" font-size="10">--dangerouslySkipPermissions</text>
+  <text class="sym-deny le" x="745" y="142" font-family="JetBrains Mono,monospace" font-size="10">--dangerouslySkipPermissions</text>
+  <text class="step5-callout-code lz" x="745" y="158" font-family="JetBrains Mono,monospace" font-size="10">仅限受控开发环境使用</text>
+  <text class="step5-callout-code le" x="745" y="158" font-family="JetBrains Mono,monospace" font-size="10">Controlled dev env only</text>
+
+  <!-- Connecting lines from steps to callouts -->
+  <!-- Step 1 → Callout 1 -->
+  <line class="callout-connector-1" x1="185" y1="471" x2="730" y2="446" stroke-width="0.6" stroke-dasharray="3,4" opacity="0.3"/>
+  <!-- Step 2 → Callout 2 -->
+  <line class="callout-connector-2" x1="315" y1="390" x2="730" y2="371" stroke-width="0.6" stroke-dasharray="3,4" opacity="0.3"/>
+  <!-- Step 3 → Callout 3 -->
+  <line class="callout-connector-3" x1="445" y1="310" x2="730" y2="289" stroke-width="0.6" stroke-dasharray="3,4" opacity="0.3"/>
+  <!-- Step 4 → Callout 4 -->
+  <line class="callout-connector-4" x1="575" y1="230" x2="730" y2="207" stroke-width="0.6" stroke-dasharray="3,4" opacity="0.3"/>
+  <!-- Step 5 → Callout 5 -->
+  <line class="callout-connector-5" x1="705" y1="152" x2="730" y2="127" stroke-width="0.6" stroke-dasharray="3,4" opacity="0.3"/>
+
+  <!-- ═══════════════════════════════════════════════════════
+       BOTTOM AXIS — horizontal usage bar
+  ═══════════════════════════════════════════════════════ -->
+  <line class="axis-line" x1="55" y1="545" x2="715" y2="545" stroke-width="1.5" marker-end="url(#arrowRight)"/>
+  <!-- Tick marks -->
+  <line class="axis-tick" x1="120" y1="541" x2="120" y2="549" stroke-width="1"/>
+  <line class="axis-tick" x1="250" y1="541" x2="250" y2="549" stroke-width="1"/>
+  <line class="axis-tick" x1="380" y1="541" x2="380" y2="549" stroke-width="1"/>
+  <line class="axis-tick" x1="510" y1="541" x2="510" y2="549" stroke-width="1"/>
+  <line class="axis-tick" x1="640" y1="541" x2="640" y2="549" stroke-width="1"/>
+  <!-- Axis label -->
+  <text class="axis-label lz" x="385" y="565" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10">使用舒适度 / 自动化需求 →</text>
+  <text class="axis-label le" x="385" y="565" text-anchor="middle" font-family="JetBrains Mono,monospace" font-size="10">Comfort with usage / Automation demand →</text>
+
+  <!-- ═══════════════════════════════════════════════════════
+       CHART TITLE (inside SVG)
+  ═══════════════════════════════════════════════════════ -->
+  <text class="chart-title lz" x="55" y="42" font-family="JetBrains Mono,monospace" font-size="15" font-weight="700">渐进式信任阶梯</text>
+  <text class="chart-title le" x="55" y="42" font-family="JetBrains Mono,monospace" font-size="15" font-weight="700">Progressive Trust Ladder</text>
+  <text class="chart-subtitle lz" x="55" y="60" font-family="JetBrains Mono,monospace" font-size="11">Claude Code 权限模型 · 5 个信任级别 · 默认 Level 2</text>
+  <text class="chart-subtitle le" x="55" y="60" font-family="JetBrains Mono,monospace" font-size="11">Claude Code Permission Model · 5 Trust Levels · Default: Level 2</text>
+
+  <!-- Legend for symbols -->
+  <text class="axis-label lz" x="730" y="510" font-family="JetBrains Mono,monospace" font-size="10">符号说明:</text>
+  <text class="axis-label le" x="730" y="510" font-family="JetBrains Mono,monospace" font-size="10">Legend:</text>
+  <text class="sym-ok" x="730" y="526" font-family="JetBrains Mono,monospace" font-size="11">✓</text>
+  <text class="perm-label lz" x="745" y="526" font-family="JetBrains Mono,monospace" font-size="10">自动允许</text>
+  <text class="perm-label le" x="745" y="526" font-family="JetBrains Mono,monospace" font-size="10">Auto allow</text>
+  <text class="sym-warn" x="800" y="526" font-family="JetBrains Mono,monospace" font-size="11">△</text>
+  <text class="perm-label lz" x="815" y="526" font-family="JetBrains Mono,monospace" font-size="10">需确认</text>
+  <text class="perm-label le" x="815" y="526" font-family="JetBrains Mono,monospace" font-size="10">Confirm</text>
+  <text class="sym-deny" x="860" y="526" font-family="JetBrains Mono,monospace" font-size="11">✗</text>
+  <text class="perm-label lz" x="875" y="526" font-family="JetBrains Mono,monospace" font-size="10">禁用</text>
+  <text class="perm-label le" x="875" y="526" font-family="JetBrains Mono,monospace" font-size="10">Denied</text>
+  <text class="perm-dim" x="730" y="545" font-family="JetBrains Mono,monospace" font-size="10">VIS-4-007 · CC 2.1.88</text>
+
+</svg>
+</div>
+
+<!-- Summary cards -->
+<div class="summary-cards">
+
+  <div class="card">
+    <div class="card-title">
+      <span class="card-dot" style="background:#22d3ee"></span>
+      <span class="lz">默认基础信任</span><span class="le" style="display:none">Default Basic Trust</span>
+    </div>
+    <div class="card-body">
+      <span class="lz">安装后默认 Level 2，读操作自动批准，写操作弹出确认，Bash 命令禁用。大多数用户的日常工作起点。</span>
+      <span class="le" style="display:none">Out of the box Level 2: reads auto-approved, writes prompt for confirmation, Bash disabled. Starting point for most users.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <span class="card-dot" style="background:#34d399"></span>
+      <span class="lz">渐进解锁</span><span class="le" style="display:none">Progressive Unlock</span>
+    </div>
+    <div class="card-body">
+      <span class="lz">随使用舒适度逐步放开权限。通过 --acceptEdits 升至 Level 4，通过 allowedTools 配置 Level 3，不需要一步到位。</span>
+      <span class="le" style="display:none">Unlock permissions as comfort grows. Use --acceptEdits for Level 4, configure allowedTools for Level 3. No need to jump all-in.</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">
+      <span class="card-dot" style="background:#fbbf24"></span>
+      <span class="lz">信任 ≠ 权限</span><span class="le" style="display:none">Trust ≠ Permission</span>
+    </div>
+    <div class="card-body">
+      <span class="lz">信任是用户的主观意愿，权限是技术控制手段，两者独立设置。高信任不等于无安全边界，Level 5 仍有日志和审计。</span>
+      <span class="le" style="display:none">Trust is user intent; permissions are technical controls — independently configured. High trust ≠ no safety. Level 5 still has audit logs.</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var t = localStorage.getItem('vtheme') || 'dark';
+  var l = localStorage.getItem('vlang') || 'zh';
+  document.documentElement.setAttribute('data-theme', t);
+  document.documentElement.setAttribute('data-lang', l);
+  document.getElementById('langBtn').textContent = l === 'zh' ? 'EN' : '中';
+
+  // Apply correct initial display for SVG bilingual elements
+  document.querySelectorAll('svg .le, svg .lz').forEach(function(e) {
+    var isEn = l === 'en';
+    var show = isEn ? e.classList.contains('le') : e.classList.contains('lz');
+    e.style.display = show ? '' : 'none';
+    e.setAttribute('display', show ? 'inline' : 'none');
+  });
+  // Apply for non-SVG elements (summary cards)
+  document.querySelectorAll('body .le, body .lz').forEach(function(e) {
+    if (e.closest('svg')) return;
+    var isEn = l === 'en';
+    var show = isEn ? e.classList.contains('le') : e.classList.contains('lz');
+    e.style.display = show ? '' : 'none';
+  });
+
+  window.cycleTheme = function() {
+    var themes = ['dark', 'warm', 'light'];
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = themes[(themes.indexOf(cur) + 1) % themes.length];
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('vtheme', next);
+  };
+
+  window.toggleLang = function() {
+    var cur = document.documentElement.getAttribute('data-lang') || 'zh';
+    var next = cur === 'zh' ? 'en' : 'zh';
+    document.documentElement.setAttribute('data-lang', next);
+    localStorage.setItem('vlang', next);
+    document.getElementById('langBtn').textContent = next === 'zh' ? 'EN' : '中';
+
+    // SVG bilingual elements
+    document.querySelectorAll('svg .le, svg .lz').forEach(function(e) {
+      var isEn = next === 'en';
+      var show = isEn ? e.classList.contains('le') : e.classList.contains('lz');
+      e.style.display = show ? '' : 'none';
+      e.setAttribute('display', show ? 'inline' : 'none');
+    });
+    // Non-SVG elements
+    document.querySelectorAll('.le, .lz').forEach(function(e) {
+      if (e.closest('svg')) return;
+      var isEn = next === 'en';
+      var show = isEn ? e.classList.contains('le') : e.classList.contains('lz');
+      e.style.display = show ? '' : 'none';
+    });
+  };
+})();
+</script>
+
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<!--
+  VIS-0-002B · CC源码全量统计仪表盘 · Source Stats Dashboard (Enhanced)
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  数据来源: cc-source-stats-report.md · 扫描日期: 2026-04-05
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · 源码全量统计仪表盘</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root,[data-theme="dark"]{
+      --bg:#020617;--bg-card:rgba(15,23,42,0.5);--border:#1e293b;
+      --text:#f8fafc;--muted:#94a3b8;--subtle:#64748b;--footer-c:#475569;--pulse:#22d3ee;
+      --svg-bg:#020617;--svg-grid:#1e293b;--mask-fill:#0f172a;
+      --emerald-f:rgba(6,78,59,0.45);  --emerald-s:#34d399; --emerald-t:#6ee7b7;
+      --amber-f:rgba(120,53,15,0.45);  --amber-s:#fbbf24;   --amber-t:#fcd34d;
+      --cyan-f:rgba(8,51,68,0.5);      --cyan-s:#22d3ee;    --cyan-t:#67e8f9;
+      --violet-f:rgba(76,29,149,0.45); --violet-s:#a78bfa;  --violet-t:#c4b5fd;
+      --orange-f:rgba(154,52,18,0.45); --orange-s:#fb923c;  --orange-t:#fdba74;
+      --rose-f:rgba(136,19,55,0.45);   --rose-s:#fb7185;    --rose-t:#fda4af;
+      --blue-s:#60a5fa;
+      --svg-text:#f8fafc;--svg-sub:#94a3b8;--svg-tiny:#64748b;
+      --bar-bg:rgba(30,41,59,0.6);
+      --btn-bg:rgba(15,23,42,0.85);--btn-active:#22d3ee;
+      --table-row-alt:rgba(15,23,42,0.4);
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3;--bg-card:rgba(255,255,255,0.85);--border:#e8e0d4;
+      --text:#1a1412;--muted:#6b5a4e;--subtle:#9c8878;--footer-c:#b5a99a;--pulse:#0891b2;
+      --svg-bg:#faf7f2;--svg-grid:#ddd4c4;--mask-fill:#faf7f2;
+      --emerald-f:rgba(6,78,59,0.12);  --emerald-s:#059669; --emerald-t:#047857;
+      --amber-f:rgba(180,83,9,0.12);   --amber-s:#d97706;   --amber-t:#b45309;
+      --cyan-f:rgba(8,51,68,0.1);      --cyan-s:#0891b2;    --cyan-t:#0e7490;
+      --violet-f:rgba(76,29,149,0.1);  --violet-s:#7c3aed;  --violet-t:#6d28d9;
+      --orange-f:rgba(154,52,18,0.1);  --orange-s:#ea580c;  --orange-t:#c2410c;
+      --rose-f:rgba(136,19,55,0.1);    --rose-s:#e11d48;    --rose-t:#be123c;
+      --blue-s:#2563eb;
+      --svg-text:#1a1412;--svg-sub:#6b5a4e;--svg-tiny:#9c8878;
+      --bar-bg:rgba(107,90,78,0.15);
+      --btn-bg:rgba(255,255,255,0.9);--btn-active:#0891b2;
+      --table-row-alt:rgba(230,220,205,0.5);
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--bg-card:rgba(248,250,252,0.95);--border:#e2e8f0;
+      --text:#0f172a;--muted:#475569;--subtle:#94a3b8;--footer-c:#94a3b8;--pulse:#0ea5e9;
+      --svg-bg:#f8fafc;--svg-grid:#e2e8f0;--mask-fill:#f1f5f9;
+      --emerald-f:rgba(16,185,129,0.1); --emerald-s:#10b981; --emerald-t:#059669;
+      --amber-f:rgba(245,158,11,0.1);   --amber-s:#f59e0b;   --amber-t:#d97706;
+      --cyan-f:rgba(6,182,212,0.1);     --cyan-s:#06b6d4;    --cyan-t:#0891b2;
+      --violet-f:rgba(139,92,246,0.1);  --violet-s:#8b5cf6;  --violet-t:#7c3aed;
+      --orange-f:rgba(249,115,22,0.1);  --orange-s:#f97316;  --orange-t:#ea580c;
+      --rose-f:rgba(244,63,94,0.1);     --rose-s:#f43f5e;    --rose-t:#e11d48;
+      --blue-s:#3b82f6;
+      --svg-text:#0f172a;--svg-sub:#475569;--svg-tiny:#94a3b8;
+      --bar-bg:rgba(148,163,184,0.2);
+      --btn-bg:rgba(248,250,252,0.95);--btn-active:#0ea5e9;
+      --table-row-alt:rgba(241,245,249,0.8);
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:2rem;transition:background .25s,color .25s;}
+    .container{max-width:1100px;margin:0 auto;}
+
+    .controls{position:fixed;top:1rem;right:1rem;display:flex;gap:5px;z-index:100;
+      background:var(--btn-bg);border:1px solid var(--border);border-radius:10px;
+      padding:5px 7px;backdrop-filter:blur(8px);}
+    .cb{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;padding:4px 9px;
+      border-radius:5px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+    .cb:hover{color:var(--text);border-color:var(--border);}
+    .cb.active{border-color:var(--btn-active);color:var(--text);}
+    .cdiv{width:1px;background:var(--border);margin:2px;}
+
+    .header{margin-bottom:1.5rem;}
+    .header-row{display:flex;align-items:center;gap:.875rem;margin-bottom:.375rem;}
+    .pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--pulse);animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
+    h1{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;}
+    .subtitle{font-size:.75rem;color:var(--muted);letter-spacing:.06em;}
+    html[lang="en"] .lz{display:none;}
+    html:not([lang="en"]) .le{display:none;}
+
+    /* KPI Strip */
+    .kpi-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:.875rem;margin-bottom:1.5rem;}
+    @media(max-width:800px){.kpi-strip{grid-template-columns:repeat(2,1fr);}}
+    .kpi-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;
+      padding:.875rem 1rem;text-align:center;}
+    .kpi-val{font-size:1.7rem;font-weight:700;line-height:1;}
+    .kpi-lbl{font-size:.68rem;color:var(--muted);margin-top:.25rem;}
+    .kpi-sub{font-size:.6rem;color:var(--subtle);margin-top:.15rem;}
+    .kpi-card.c-cyan .kpi-val{color:var(--cyan-s);}
+    .kpi-card.c-emerald .kpi-val{color:var(--emerald-s);}
+    .kpi-card.c-amber .kpi-val{color:var(--amber-s);}
+    .kpi-card.c-violet .kpi-val{color:var(--violet-s);}
+    .kpi-card.c-orange .kpi-val{color:var(--orange-s);}
+    .kpi-card.c-rose .kpi-val{color:var(--rose-s);}
+    .kpi-card.c-blue .kpi-val{color:var(--blue-s);}
+
+    /* Chart wrap */
+    .chart-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;}
+    .chart-wrap svg{display:block;width:100%;height:auto;}
+    .chart-title{font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:1rem;text-transform:uppercase;letter-spacing:.06em;border-left:3px solid var(--cyan-s);padding-left:.5rem;}
+
+    /* Two-col grid */
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1.5rem;}
+    @media(max-width:700px){.two-col{grid-template-columns:1fr;}}
+
+    /* Data table */
+    .dtable{width:100%;border-collapse:collapse;font-size:.72rem;}
+    .dtable th{text-align:left;padding:.4rem .6rem;color:var(--subtle);font-weight:500;
+      border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:.05em;font-size:.65rem;}
+    .dtable td{padding:.35rem .6rem;border-bottom:1px solid var(--border);color:var(--muted);}
+    .dtable td:first-child{color:var(--text);font-weight:500;}
+    .dtable .num{text-align:right;font-family:'JetBrains Mono',monospace;}
+    .dtable tr:nth-child(even) td{background:var(--table-row-alt);}
+
+    /* Discovery chips */
+    .chips{display:flex;flex-wrap:wrap;gap:.45rem;}
+    .chip{padding:.25rem .65rem;border-radius:12px;font-size:.68rem;border:1px solid;
+      font-family:'JetBrains Mono',monospace;}
+    .chip.cyan{color:var(--cyan-s);border-color:var(--cyan-s);background:var(--cyan-f);}
+    .chip.emerald{color:var(--emerald-s);border-color:var(--emerald-s);background:var(--emerald-f);}
+    .chip.amber{color:var(--amber-s);border-color:var(--amber-s);background:var(--amber-f);}
+    .chip.violet{color:var(--violet-s);border-color:var(--violet-s);background:var(--violet-f);}
+    .chip.orange{color:var(--orange-s);border-color:var(--orange-s);background:var(--orange-f);}
+    .chip.rose{color:var(--rose-s);border-color:var(--rose-s);background:var(--rose-f);}
+
+    /* Stat grid cards */
+    .stat-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.5rem;margin-bottom:1.5rem;}
+    @media(max-width:700px){.stat-grid{grid-template-columns:repeat(2,1fr);}}
+    .stat-cell{background:var(--bg-card);border:1px solid var(--border);border-radius:8px;
+      padding:.7rem;text-align:center;}
+    .stat-cell .sv{font-size:1.1rem;font-weight:700;line-height:1;margin-bottom:.2rem;}
+    .stat-cell .sl{font-size:.65rem;color:var(--subtle);}
+    .stat-cell.c-cyan .sv{color:var(--cyan-s);}
+    .stat-cell.c-emerald .sv{color:var(--emerald-s);}
+    .stat-cell.c-amber .sv{color:var(--amber-s);}
+    .stat-cell.c-violet .sv{color:var(--violet-s);}
+    .stat-cell.c-orange .sv{color:var(--orange-s);}
+    .stat-cell.c-rose .sv{color:var(--rose-s);}
+
+    .section-label{font-size:.75rem;font-weight:600;color:var(--muted);margin-bottom:.75rem;
+      text-transform:uppercase;letter-spacing:.06em;display:flex;align-items:center;gap:.5rem;}
+    .section-label::before{content:'';display:block;width:12px;height:2px;background:var(--cyan-s);border-radius:1px;}
+
+    .footer{text-align:center;font-size:.65rem;color:var(--footer-c);letter-spacing:.05em;
+      padding-top:.75rem;border-top:1px solid var(--border);}
+  </style>
+</head>
+<body data-theme="dark">
+<div class="controls">
+  <button class="cb active" onclick="setTheme('dark')"><span class="lz">暗</span><span class="le">Dark</span></button>
+  <button class="cb" onclick="setTheme('warm')"><span class="lz">暖</span><span class="le">Warm</span></button>
+  <button class="cb" onclick="setTheme('light')"><span class="lz">亮</span><span class="le">Light</span></button>
+  <div class="cdiv"></div>
+  <button class="cb" onclick="toggleLang()"><span class="lz">EN</span><span class="le">中</span></button>
+</div>
+
+<div class="container">
+  <div class="header">
+    <div class="header-row">
+      <div class="pulse-dot"></div>
+      <h1><span class="lz">CC 源码全量统计仪表盘</span><span class="le">CC Source Stats Dashboard</span></h1>
+    </div>
+    <div class="subtitle">
+      <span class="lz">VIS-0-002B · Claude Code 2.1.88 · src/ 穷举式全量扫描 · 扫描日期 2026-04-05</span>
+      <span class="le">VIS-0-002B · Claude Code 2.1.88 · Exhaustive scan of src/ · Date: 2026-04-05</span>
+    </div>
+  </div>
+
+  <!-- Row 1: 8 KPIs in 4 cols -->
+  <div class="kpi-strip">
+    <div class="kpi-card c-cyan">
+      <div class="kpi-val">512,695</div>
+      <div class="kpi-lbl"><span class="lz">总代码行数 (LOC)</span><span class="le">Total Lines of Code</span></div>
+      <div class="kpi-sub"><span class="lz">有效行 476,875</span><span class="le">Effective: 476,875</span></div>
+    </div>
+    <div class="kpi-card c-emerald">
+      <div class="kpi-val">1,902</div>
+      <div class="kpi-lbl"><span class="lz">源码文件数</span><span class="le">Source Files</span></div>
+      <div class="kpi-sub">.ts 1,332 + .tsx 552</div>
+    </div>
+    <div class="kpi-card c-violet">
+      <div class="kpi-val">40</div>
+      <div class="kpi-lbl"><span class="lz">AI 工具</span><span class="le">AI Tools</span></div>
+      <div class="kpi-sub"><span class="lz">含 36 个 prompt.ts</span><span class="le">incl. 36 prompt.ts</span></div>
+    </div>
+    <div class="kpi-card c-orange">
+      <div class="kpi-val">101</div>
+      <div class="kpi-lbl"><span class="lz">斜杠命令</span><span class="le">Slash Commands</span></div>
+      <div class="kpi-sub"><span class="lz">86 子目录 + 12 根命令</span><span class="le">86 sub + 12 root</span></div>
+    </div>
+    <div class="kpi-card c-rose">
+      <div class="kpi-val">621</div>
+      <div class="kpi-lbl"><span class="lz">安全相关文件</span><span class="le">Security Files</span></div>
+      <div class="kpi-sub"><span class="lz">占总量 32.7%</span><span class="le">32.7% of total</span></div>
+    </div>
+    <div class="kpi-card c-cyan">
+      <div class="kpi-val">5,718</div>
+      <div class="kpi-lbl"><span class="lz">MCP 引用</span><span class="le">MCP References</span></div>
+      <div class="kpi-sub"><span class="lz">横跨 422 个文件</span><span class="le">across 422 files</span></div>
+    </div>
+    <div class="kpi-card c-amber">
+      <div class="kpi-val">80</div>
+      <div class="kpi-lbl"><span class="lz">Prompt 文件</span><span class="le">Prompt Files</span></div>
+      <div class="kpi-sub"><span class="lz">537 文件含 prompt 代码</span><span class="le">537 files w/ prompt code</span></div>
+    </div>
+    <div class="kpi-card c-emerald">
+      <div class="kpi-val">394</div>
+      <div class="kpi-lbl"><span class="lz">React 组件</span><span class="le">React Components</span></div>
+      <div class="kpi-sub"><span class="lz">94 自定义 Hook</span><span class="le">94 Custom Hooks</span></div>
+    </div>
+  </div>
+
+  <!-- SVG Module Distribution Chart -->
+  <div class="chart-wrap">
+    <div class="chart-title">
+      <span class="lz">模块规模分布 — Top 15 子系统（按代码行数）</span>
+      <span class="le">Module Scale — Top 15 Subsystems by LOC</span>
+    </div>
+    <svg viewBox="0 0 960 420" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="gridB" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--svg-grid)" stroke-width="0.4"/>
+        </pattern>
+        <!-- LOC bar gradients -->
+        <linearGradient id="gBlue" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="var(--cyan-s)" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="var(--blue-s)" stop-opacity="0.5"/>
+        </linearGradient>
+        <linearGradient id="gGreen" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="var(--emerald-s)" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="var(--emerald-s)" stop-opacity="0.4"/>
+        </linearGradient>
+        <linearGradient id="gAmber" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="var(--amber-s)" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="var(--amber-s)" stop-opacity="0.4"/>
+        </linearGradient>
+        <linearGradient id="gViolet" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="var(--violet-s)" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="var(--violet-s)" stop-opacity="0.4"/>
+        </linearGradient>
+        <linearGradient id="gRose" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="var(--rose-s)" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="var(--rose-s)" stop-opacity="0.4"/>
+        </linearGradient>
+        <linearGradient id="gOrange" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="var(--orange-s)" stop-opacity="0.9"/>
+          <stop offset="100%" stop-color="var(--orange-s)" stop-opacity="0.4"/>
+        </linearGradient>
+      </defs>
+      <rect width="960" height="420" fill="var(--svg-bg)"/>
+      <rect width="960" height="420" fill="url(#gridB)"/>
+
+      <!-- Axis labels -->
+      <text x="148" y="15" fill="var(--svg-tiny)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">模块</tspan><tspan class="le">Module</tspan>
+      </text>
+      <text x="570" y="15" fill="var(--svg-tiny)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">代码行数 (LOC)  ← 180,472 最大值</tspan>
+        <tspan class="le">Lines of Code (LOC)  ← 180,472 max</tspan>
+      </text>
+      <text x="890" y="15" fill="var(--svg-tiny)" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">文件数</tspan><tspan class="le">Files</tspan>
+      </text>
+
+      <!-- Row separator line -->
+      <line x1="0" y1="20" x2="960" y2="20" stroke="var(--svg-grid)" stroke-width="0.5"/>
+
+      <!-- Module rows: y offset = 22 + i*26, height=16 -->
+      <!-- Row 0: utils  564 files  180472 LOC → LOC bar: 159 to 159+560=719 (560px max for 180472) -->
+      <!-- Bar range: x=159 to x=740, total width=581. scale=581/180472=0.00322 -->
+      <!-- utils: 180472/180472*581=581 -->
+      <rect x="0" y="22" width="960" height="25" fill="var(--bar-bg)"/>
+      <rect x="159" y="26" width="581" height="16" rx="3" fill="url(#gBlue)"/>
+      <rect x="760" y="26" width="150" height="16" rx="3" fill="rgba(96,165,250,0.2)" stroke="var(--blue-s)" stroke-width="0.5"/>
+      <!-- file bar: 564/564*150=150 -->
+      <rect x="760" y="26" width="150" height="16" rx="3" fill="rgba(96,165,250,0.4)"/>
+      <text x="150" y="37" fill="var(--svg-text)" font-size="10" font-weight="600" text-anchor="end" font-family="JetBrains Mono,monospace">utils</text>
+      <text x="745" y="37" fill="var(--svg-sub)" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">180,472</text>
+      <text x="955" y="37" fill="var(--svg-sub)" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">564</text>
+
+      <!-- Row 1: components  389 files  81546 LOC → 81546/180472*581=263 -->
+      <rect x="159" y="51" width="263" height="16" rx="3" fill="url(#gGreen)"/>
+      <!-- file bar: 389/564*150=103 -->
+      <rect x="760" y="51" width="103" height="16" rx="3" fill="rgba(52,211,153,0.4)"/>
+      <text x="150" y="62" fill="var(--svg-text)" font-size="10" font-weight="600" text-anchor="end" font-family="JetBrains Mono,monospace">components</text>
+      <text x="427" y="62" fill="var(--svg-sub)" font-size="10" text-anchor="start" font-family="JetBrains Mono,monospace"> 81,546</text>
+      <text x="955" y="62" fill="var(--svg-sub)" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">389</text>
+
+      <!-- Row 2: services  130 files  53680 LOC → 53680/180472*581=173 -->
+      <rect x="0" y="71" width="960" height="25" fill="var(--bar-bg)"/>
+      <rect x="159" y="75" width="173" height="16" rx="3" fill="url(#gAmber)"/>
+      <!-- file bar: 130/564*150=35 -->
+      <rect x="760" y="75" width="35" height="16" rx="3" fill="rgba(251,191,36,0.4)"/>
+      <text x="150" y="86" fill="var(--svg-text)" font-size="10" font-weight="600" text-anchor="end" font-family="JetBrains Mono,monospace">services</text>
+      <text x="337" y="86" fill="var(--svg-sub)" font-size="10" text-anchor="start" font-family="JetBrains Mono,monospace"> 53,680</text>
+      <text x="955" y="86" fill="var(--svg-sub)" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">130</text>
+
+      <!-- Row 3: tools  184 files  50828 LOC → 50828/180472*581=164 -->
+      <rect x="159" y="99" width="164" height="16" rx="3" fill="url(#gViolet)"/>
+      <!-- file bar: 184/564*150=49 -->
+      <rect x="760" y="99" width="49" height="16" rx="3" fill="rgba(167,139,250,0.4)"/>
+      <text x="150" y="110" fill="var(--svg-text)" font-size="10" font-weight="600" text-anchor="end" font-family="JetBrains Mono,monospace">tools</text>
+      <text x="328" y="110" fill="var(--svg-sub)" font-size="10" text-anchor="start" font-family="JetBrains Mono,monospace"> 50,828</text>
+      <text x="955" y="110" fill="var(--svg-sub)" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">184</text>
+
+      <!-- Row 4: commands  207 files  26449 LOC → 26449/180472*581=85 -->
+      <rect x="0" y="119" width="960" height="25" fill="var(--bar-bg)"/>
+      <rect x="159" y="123" width="85" height="16" rx="3" fill="url(#gRose)"/>
+      <!-- file bar: 207/564*150=55 -->
+      <rect x="760" y="123" width="55" height="16" rx="3" fill="rgba(251,113,133,0.4)"/>
+      <text x="150" y="134" fill="var(--svg-text)" font-size="10" font-weight="600" text-anchor="end" font-family="JetBrains Mono,monospace">commands</text>
+      <text x="249" y="134" fill="var(--svg-sub)" font-size="10" text-anchor="start" font-family="JetBrains Mono,monospace"> 26,449</text>
+      <text x="955" y="134" fill="var(--svg-sub)" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">207</text>
+
+      <!-- Row 5: ink  96 files  19842 LOC → 64 -->
+      <rect x="159" y="147" width="64" height="16" rx="3" fill="url(#gOrange)"/>
+      <!-- file bar: 96/564*150=26 -->
+      <rect x="760" y="147" width="26" height="16" rx="3" fill="rgba(251,146,60,0.4)"/>
+      <text x="150" y="158" fill="var(--svg-text)" font-size="10" font-weight="600" text-anchor="end" font-family="JetBrains Mono,monospace">ink (UI)</text>
+      <text x="228" y="158" fill="var(--svg-sub)" font-size="10" text-anchor="start" font-family="JetBrains Mono,monospace"> 19,842</text>
+      <text x="955" y="158" fill="var(--svg-sub)" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">96</text>
+
+      <!-- Row 6: hooks  104 files  19204 LOC → 62 -->
+      <rect x="0" y="167" width="960" height="25" fill="var(--bar-bg)"/>
+      <rect x="159" y="171" width="62" height="16" rx="3" fill="url(#gCyan)"/>
+      <!-- file bar: 104/564*150=28 -->
+      <rect x="760" y="171" width="28" height="16" rx="3" fill="rgba(34,211,238,0.4)"/>
+      <text x="150" y="182" fill="var(--svg-text)" font-size="10" font-weight="600" text-anchor="end" font-family="JetBrains Mono,monospace">hooks</text>
+      <text x="226" y="182" fill="var(--svg-sub)" font-size="10" text-anchor="start" font-family="JetBrains Mono,monospace"> 19,204</text>
+      <text x="955" y="182" fill="var(--svg-sub)" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">104</text>
+
+      <!-- Row 7: bridge  31 files  12613 LOC → 41 -->
+      <rect x="159" y="195" width="41" height="16" rx="3" fill="url(#gBlue)"/>
+      <!-- file bar: 31/564*150=8 -->
+      <rect x="760" y="195" width="8" height="16" rx="3" fill="rgba(96,165,250,0.4)"/>
+      <text x="150" y="206" fill="var(--svg-text)" font-size="10" font-weight="600" text-anchor="end" font-family="JetBrains Mono,monospace">bridge</text>
+      <text x="205" y="206" fill="var(--svg-sub)" font-size="10" text-anchor="start" font-family="JetBrains Mono,monospace"> 12,613</text>
+      <text x="955" y="206" fill="var(--svg-sub)" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">31</text>
+
+      <!-- Row 8: cli  19 files  12353 LOC → 40 -->
+      <rect x="0" y="215" width="960" height="25" fill="var(--bar-bg)"/>
+      <rect x="159" y="219" width="40" height="16" rx="3" fill="url(#gGreen)"/>
+      <rect x="760" y="219" width="5" height="16" rx="3" fill="rgba(52,211,153,0.4)"/>
+      <text x="150" y="230" fill="var(--svg-text)" font-size="10" font-weight="600" text-anchor="end" font-family="JetBrains Mono,monospace">cli</text>
+      <text x="204" y="230" fill="var(--svg-sub)" font-size="10" text-anchor="start" font-family="JetBrains Mono,monospace"> 12,353</text>
+      <text x="955" y="230" fill="var(--svg-sub)" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">19</text>
+
+      <!-- Row 9: screens  3 files  5977 LOC → 19 -->
+      <rect x="159" y="243" width="19" height="16" rx="3" fill="url(#gAmber)"/>
+      <rect x="760" y="243" width="1" height="16" rx="3" fill="rgba(251,191,36,0.4)"/>
+      <text x="150" y="254" fill="var(--svg-text)" font-size="10" font-weight="600" text-anchor="end" font-family="JetBrains Mono,monospace">screens</text>
+      <text x="183" y="254" fill="var(--svg-sub)" font-size="10" text-anchor="start" font-family="JetBrains Mono,monospace"> 5,977</text>
+      <text x="955" y="254" fill="var(--svg-sub)" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">3</text>
+
+      <!-- Row 10: native-ts  4 files  4081 LOC → 13 -->
+      <rect x="0" y="263" width="960" height="25" fill="var(--bar-bg)"/>
+      <rect x="159" y="267" width="13" height="16" rx="3" fill="url(#gViolet)"/>
+      <rect x="760" y="267" width="1" height="16" rx="3" fill="rgba(167,139,250,0.4)"/>
+      <text x="150" y="278" fill="var(--svg-text)" font-size="10" font-weight="600" text-anchor="end" font-family="JetBrains Mono,monospace">native-ts</text>
+      <text x="177" y="278" fill="var(--svg-sub)" font-size="10" text-anchor="start" font-family="JetBrains Mono,monospace"> 4,081</text>
+      <text x="955" y="278" fill="var(--svg-sub)" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">4</text>
+
+      <!-- Row 11: skills  20 files  4066 LOC → 13 -->
+      <rect x="159" y="291" width="13" height="16" rx="3" fill="url(#gRose)"/>
+      <rect x="760" y="291" width="5" height="16" rx="3" fill="rgba(251,113,133,0.4)"/>
+      <text x="150" y="302" fill="var(--svg-text)" font-size="10" font-weight="600" text-anchor="end" font-family="JetBrains Mono,monospace">skills</text>
+      <text x="177" y="302" fill="var(--svg-sub)" font-size="10" text-anchor="start" font-family="JetBrains Mono,monospace"> 4,066</text>
+      <text x="955" y="302" fill="var(--svg-sub)" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">20</text>
+
+      <!-- Row 12: types  11 files  3446 LOC → 11 -->
+      <rect x="0" y="311" width="960" height="25" fill="var(--bar-bg)"/>
+      <rect x="159" y="315" width="11" height="16" rx="3" fill="url(#gOrange)"/>
+      <rect x="760" y="315" width="3" height="16" rx="3" fill="rgba(251,146,60,0.4)"/>
+      <text x="150" y="326" fill="var(--svg-text)" font-size="10" font-weight="600" text-anchor="end" font-family="JetBrains Mono,monospace">types</text>
+      <text x="175" y="326" fill="var(--svg-sub)" font-size="10" text-anchor="start" font-family="JetBrains Mono,monospace"> 3,446</text>
+      <text x="955" y="326" fill="var(--svg-sub)" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">11</text>
+
+      <!-- Row 13: tasks  12 files  3286 LOC → 11 -->
+      <rect x="159" y="339" width="11" height="16" rx="3" fill="url(#gCyan)"/>
+      <rect x="760" y="339" width="3" height="16" rx="3" fill="rgba(34,211,238,0.4)"/>
+      <text x="150" y="350" fill="var(--svg-text)" font-size="10" font-weight="600" text-anchor="end" font-family="JetBrains Mono,monospace">tasks</text>
+      <text x="175" y="350" fill="var(--svg-sub)" font-size="10" text-anchor="start" font-family="JetBrains Mono,monospace"> 3,286</text>
+      <text x="955" y="350" fill="var(--svg-sub)" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">12</text>
+
+      <!-- Row 14: keybindings  14 files  3159 LOC → 10 -->
+      <rect x="0" y="359" width="960" height="25" fill="var(--bar-bg)"/>
+      <rect x="159" y="363" width="10" height="16" rx="3" fill="url(#gBlue)"/>
+      <rect x="760" y="363" width="4" height="16" rx="3" fill="rgba(96,165,250,0.4)"/>
+      <text x="150" y="374" fill="var(--svg-text)" font-size="10" font-weight="600" text-anchor="end" font-family="JetBrains Mono,monospace">keybindings</text>
+      <text x="174" y="374" fill="var(--svg-sub)" font-size="10" text-anchor="start" font-family="JetBrains Mono,monospace"> 3,159</text>
+      <text x="955" y="374" fill="var(--svg-sub)" font-size="10" text-anchor="end" font-family="JetBrains Mono,monospace">14</text>
+
+      <!-- Legend at bottom -->
+      <rect x="0" y="387" width="960" height="33" fill="var(--mask-fill)"/>
+      <rect x="160" y="393" width="40" height="10" rx="2" fill="url(#gBlue)"/>
+      <text x="204" y="401" fill="var(--svg-sub)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">LOC 代码行</tspan><tspan class="le">LOC Bar</tspan>
+      </text>
+      <rect x="760" y="393" width="40" height="10" rx="2" fill="rgba(96,165,250,0.4)"/>
+      <text x="804" y="401" fill="var(--svg-sub)" font-size="10" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">文件数（比例）</tspan><tspan class="le">File Count (prop.)</tspan>
+      </text>
+    </svg>
+  </div>
+
+  <!-- Two-col: Top Files + Discovery Highlights -->
+  <div class="two-col">
+    <div>
+      <div class="section-label">
+        <span class="lz">Top 15 最大文件</span><span class="le">Top 15 Largest Files</span>
+      </div>
+      <div class="chart-wrap" style="padding:0.75rem;">
+        <table class="dtable">
+          <thead>
+            <tr>
+              <th><span class="lz">文件路径</span><span class="le">File Path</span></th>
+              <th class="num">LOC</th>
+              <th><span class="lz">模块</span><span class="le">Module</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td>cli/print.ts</td><td class="num">5,594</td><td>CLI</td></tr>
+            <tr><td>utils/messages.ts</td><td class="num">5,512</td><td>Utils</td></tr>
+            <tr><td>utils/sessionStorage.ts</td><td class="num">5,105</td><td>Utils</td></tr>
+            <tr><td>utils/hooks.ts</td><td class="num">5,022</td><td>Utils</td></tr>
+            <tr><td>screens/REPL.tsx</td><td class="num">5,005</td><td>Screens</td></tr>
+            <tr><td>main.tsx</td><td class="num">4,684</td><td>Root</td></tr>
+            <tr><td>utils/bash/bashParser.ts</td><td class="num">4,436</td><td>Bash</td></tr>
+            <tr><td>utils/attachments.ts</td><td class="num">3,997</td><td>Utils</td></tr>
+            <tr><td>services/api/claude.ts</td><td class="num">3,419</td><td>API</td></tr>
+            <tr><td>services/mcp/client.ts</td><td class="num">3,348</td><td>MCP</td></tr>
+            <tr><td>utils/plugins/pluginLoader.ts</td><td class="num">3,302</td><td>Plugins</td></tr>
+            <tr><td>commands/insights.ts</td><td class="num">3,200</td><td>Cmd</td></tr>
+            <tr><td>bridge/bridgeMain.ts</td><td class="num">2,999</td><td>Bridge</td></tr>
+            <tr><td>utils/bash/ast.ts</td><td class="num">2,679</td><td>Bash</td></tr>
+            <tr><td>utils/plugins/marketplaceManager.ts</td><td class="num">2,643</td><td>Plugins</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
+      <div class="section-label">
+        <span class="lz">关键发现 · A级洞察</span><span class="le">Key Discoveries · Grade A Insights</span>
+      </div>
+      <div class="chart-wrap" style="padding:0.875rem;">
+        <div class="chips">
+          <div class="chip cyan">
+            <span class="lz">🔒 32.7% 文件含安全逻辑</span>
+            <span class="le">🔒 32.7% files have security logic</span>
+          </div>
+          <div class="chip emerald">
+            <span class="lz">⚡ 2,345 异步函数</span>
+            <span class="le">⚡ 2,345 async functions</span>
+          </div>
+          <div class="chip amber">
+            <span class="lz">📦 93 生产依赖</span>
+            <span class="le">📦 93 production deps</span>
+          </div>
+          <div class="chip violet">
+            <span class="lz">📋 2,363 type 定义 · 0 enum</span>
+            <span class="le">📋 2,363 type defs · 0 enums</span>
+          </div>
+          <div class="chip orange">
+            <span class="lz">📄 16,029 import 语句</span>
+            <span class="le">📄 16,029 import statements</span>
+          </div>
+          <div class="chip rose">
+            <span class="lz">💬 52,483 注释行 (10.2%)</span>
+            <span class="le">💬 52,483 comment lines (10.2%)</span>
+          </div>
+          <div class="chip cyan">
+            <span class="lz">🎯 0 测试文件（构建时剥离）</span>
+            <span class="le">🎯 0 test files (stripped at build)</span>
+          </div>
+          <div class="chip emerald">
+            <span class="lz">⚛️ 394 React 组件</span>
+            <span class="le">⚛️ 394 React components</span>
+          </div>
+          <div class="chip amber">
+            <span class="lz">🎣 94 自定义 Hook</span>
+            <span class="le">🎣 94 Custom Hooks</span>
+          </div>
+          <div class="chip violet">
+            <span class="lz">🗺️ 301 目录 · 最深 6 层</span>
+            <span class="le">🗺️ 301 dirs · max depth 6</span>
+          </div>
+          <div class="chip orange">
+            <span class="lz">🛠️ 40 AI 工具 · 36 有 prompt.ts</span>
+            <span class="le">🛠️ 40 AI tools · 36 with prompt.ts</span>
+          </div>
+          <div class="chip rose">
+            <span class="lz">🔌 MCP 横跨 422 文件</span>
+            <span class="le">🔌 MCP spans 422 files</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="section-label" style="margin-top:1rem;">
+        <span class="lz">20 个后端服务</span><span class="le">20 Backend Services</span>
+      </div>
+      <div class="chart-wrap" style="padding:0.75rem;">
+        <div class="chips">
+          <div class="chip cyan">AgentSummary</div>
+          <div class="chip cyan">analytics</div>
+          <div class="chip emerald">api</div>
+          <div class="chip emerald">autoDream</div>
+          <div class="chip amber">compact</div>
+          <div class="chip amber">extractMemories</div>
+          <div class="chip violet">lsp</div>
+          <div class="chip violet">MagicDocs</div>
+          <div class="chip orange">mcp</div>
+          <div class="chip orange">oauth</div>
+          <div class="chip rose">plugins</div>
+          <div class="chip rose">policyLimits</div>
+          <div class="chip cyan">PromptSuggestion</div>
+          <div class="chip cyan">remoteManagedSettings</div>
+          <div class="chip emerald">sandbox</div>
+          <div class="chip emerald">sessions</div>
+          <div class="chip amber">speechToText</div>
+          <div class="chip amber">telemetry</div>
+          <div class="chip violet">tokenCount</div>
+          <div class="chip violet">usage</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Additional Stats Grid -->
+  <div class="section-label">
+    <span class="lz">工具分类 / 命令分类 / 技能列表</span>
+    <span class="le">Tools / Commands / Skills Breakdown</span>
+  </div>
+  <div class="stat-grid">
+    <div class="stat-cell c-violet">
+      <div class="sv">40</div>
+      <div class="sl"><span class="lz">AI 工具总数</span><span class="le">Total AI Tools</span></div>
+    </div>
+    <div class="stat-cell c-orange">
+      <div class="sv">101</div>
+      <div class="sl"><span class="lz">斜杠命令</span><span class="le">Slash Commands</span></div>
+    </div>
+    <div class="stat-cell c-emerald">
+      <div class="sv">16</div>
+      <div class="sl"><span class="lz">内置技能</span><span class="le">Built-in Skills</span></div>
+    </div>
+    <div class="stat-cell c-cyan">
+      <div class="sv">20</div>
+      <div class="sl"><span class="lz">后端服务</span><span class="le">Backend Services</span></div>
+    </div>
+    <div class="stat-cell c-amber">
+      <div class="sv">35</div>
+      <div class="sl"><span class="lz">顶层模块</span><span class="le">Top-level Modules</span></div>
+    </div>
+    <div class="stat-cell c-rose">
+      <div class="sv">6</div>
+      <div class="sl"><span class="lz">最大目录深度</span><span class="le">Max Dir Depth</span></div>
+    </div>
+  </div>
+
+  <div class="footer">
+    VIS-0-002B · <span class="lz">CC源码全量统计仪表盘</span><span class="le">CC Source Stats Dashboard</span>
+    · Claude Code 2.1.88 · src/ 穷举式扫描 · 2026-04-05
+    · <span class="lz">所有数字均为实际计数，非估算</span><span class="le">All figures are actual counts, not estimates</span>
+    · v2 2026-04-14
+  </div>
+</div>
+
+<script>
+(function(){
+  /* gradient id gCyan not defined in defs — add it dynamically for row 6 */
+  const svg=document.querySelector('svg');
+  if(svg){
+    const defs=svg.querySelector('defs');
+    if(defs){
+      const g=document.createElementNS('http://www.w3.org/2000/svg','linearGradient');
+      g.id='gCyan';g.setAttribute('x1','0');g.setAttribute('y1','0');g.setAttribute('x2','1');g.setAttribute('y2','0');
+      const s1=document.createElementNS('http://www.w3.org/2000/svg','stop');
+      s1.setAttribute('offset','0%');s1.setAttribute('stop-color','var(--cyan-s)');s1.setAttribute('stop-opacity','0.9');
+      const s2=document.createElementNS('http://www.w3.org/2000/svg','stop');
+      s2.setAttribute('offset','100%');s2.setAttribute('stop-color','var(--cyan-s)');s2.setAttribute('stop-opacity','0.4');
+      g.appendChild(s1);g.appendChild(s2);defs.appendChild(g);
+    }
+  }
+
+  function setTheme(t){try{localStorage.setItem('vtheme',t);}catch(e){}
+    document.body.setAttribute('data-theme',t);
+    document.querySelectorAll('.controls .cb').forEach(b=>{
+      b.classList.toggle('active',b.getAttribute('onclick').includes("'"+t+"'"));
+    });
+  }
+  function toggleLang(){
+    const cur=document.documentElement.getAttribute('lang')||'zh';
+    document.documentElement.setAttribute('lang',cur==='zh'?'en':'zh');
+  }
+  // cc-restore-on-load
+  try{
+    var _t=localStorage.getItem('vtheme');
+    if(_t==='dark'||_t==='warm'||_t==='light')setTheme(_t);
+    var _l=localStorage.getItem('vlang');
+    if(_l==='en'&&document.documentElement.lang!=='en')toggleLang();
+  }catch(e){}
+  window.setTheme=setTheme;
+  window.toggleLang=toggleLang;
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

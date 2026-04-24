@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<!--
+  VIS-2A-020 · 四层防御纵深嵌套图 · Four-Layer Defense In Depth
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  Enterprise Policy → Sandbox Isolation → Permission State Machine → Code-Level Security
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIS-2A-020 四层防御纵深嵌套图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    :root,[data-theme="dark"]{
+      --bg:#020617;--bg-card:rgba(15,23,42,0.6);--border:#1e293b;
+      --text:#f8fafc;--muted:#94a3b8;--subtle:#64748b;--footer-c:#475569;--pulse:#22d3ee;
+      --svg-bg:#020617;--svg-grid:#1e293b;
+      --rose-s:#fb7185;--rose-f:rgba(251,113,133,0.06);
+      --amber-s:#fbbf24;--amber-f:rgba(251,191,36,0.08);
+      --violet-s:#a78bfa;--violet-f:rgba(167,139,250,0.10);
+      --emerald-s:#34d399;--emerald-f:rgba(52,211,153,0.12);
+      --svg-text:#f8fafc;--svg-sub:#94a3b8;--svg-ann:#64748b;
+      --btn-bg:rgba(15,23,42,0.85);--btn-active:#22d3ee;
+      --card-title:#f8fafc;
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3;--bg-card:rgba(255,255,255,0.85);--border:#e8e0d4;
+      --text:#1a1412;--muted:#6b5a4e;--subtle:#9c8878;--footer-c:#b5a99a;--pulse:#0891b2;
+      --svg-bg:#faf7f2;--svg-grid:#ddd4c4;
+      --rose-s:#e11d48;--rose-f:rgba(225,29,72,0.05);
+      --amber-s:#d97706;--amber-f:rgba(217,119,6,0.07);
+      --violet-s:#7c3aed;--violet-f:rgba(124,58,237,0.08);
+      --emerald-s:#059669;--emerald-f:rgba(5,150,105,0.08);
+      --svg-text:#1a1412;--svg-sub:#6b5a4e;--svg-ann:#9c8878;
+      --btn-bg:rgba(255,255,255,0.9);--btn-active:#0891b2;
+      --card-title:#1a1412;
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--bg-card:rgba(248,250,252,0.95);--border:#e2e8f0;
+      --text:#0f172a;--muted:#475569;--subtle:#94a3b8;--footer-c:#94a3b8;--pulse:#0ea5e9;
+      --svg-bg:#f8fafc;--svg-grid:#e2e8f0;
+      --rose-s:#e11d48;--rose-f:rgba(225,29,72,0.04);
+      --amber-s:#f59e0b;--amber-f:rgba(245,158,11,0.07);
+      --violet-s:#8b5cf6;--violet-f:rgba(139,92,246,0.08);
+      --emerald-s:#10b981;--emerald-f:rgba(16,185,129,0.08);
+      --svg-text:#0f172a;--svg-sub:#475569;--svg-ann:#94a3b8;
+      --btn-bg:rgba(248,250,252,0.95);--btn-active:#0ea5e9;
+      --card-title:#0f172a;
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      font-family:'JetBrains Mono',monospace;
+      background:var(--bg);color:var(--text);
+      min-height:100vh;padding:2rem;
+      transition:background .25s,color .25s;
+    }
+    .container{max-width:1100px;margin:0 auto;}
+
+    /* Floating controls */
+    .controls{
+      position:fixed;top:1rem;right:1rem;display:flex;gap:5px;z-index:100;
+      background:var(--btn-bg);border:1px solid var(--border);border-radius:10px;
+      padding:5px 7px;backdrop-filter:blur(8px);
+    }
+    .cb{
+      font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;
+      padding:4px 9px;border-radius:5px;border:1px solid transparent;
+      background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;
+    }
+    .cb:hover{color:var(--text);border-color:var(--border);}
+    .cb.active{border-color:var(--btn-active);color:var(--text);}
+    .cdiv{width:1px;background:var(--border);margin:2px;}
+
+    /* Header */
+    .header{margin-bottom:1.5rem;}
+    .header-row{display:flex;align-items:center;gap:.875rem;margin-bottom:.375rem;}
+    .pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--pulse);animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
+    h1{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;}
+    .badge{
+      font-size:10px;font-weight:600;padding:3px 8px;border-radius:4px;letter-spacing:.04em;
+      background:rgba(251,113,133,0.12);border:1px solid rgba(251,113,133,0.3);color:var(--rose-s);
+    }
+    .subtitle{font-size:.8rem;color:var(--muted);}/* SVG wrapper */
+    .svg-wrap{
+      background:var(--svg-bg);border:1px solid var(--border);border-radius:12px;
+      padding:0;overflow:hidden;margin-bottom:1.5rem;
+      box-shadow:0 4px 24px rgba(0,0,0,0.3);
+    }
+    .svg-wrap svg{display:block;width:100%;height:auto;}
+
+    /* Info cards */
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;}
+    @media(max-width:700px){.cards{grid-template-columns:1fr;}}
+    .card{
+      background:var(--bg-card);border:1px solid var(--border);border-radius:10px;
+      padding:1rem 1.1rem;transition:background .25s,border-color .25s;
+    }
+    .card-head{display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;}
+    .dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .dot-rose{background:#fb7185;}
+    .dot-amber{background:#fbbf24;}
+    .dot-violet{background:#a78bfa;}
+    .dot-emerald{background:#34d399;}
+    [data-theme="warm"] .dot-rose{background:#e11d48;}
+    [data-theme="warm"] .dot-amber{background:#d97706;}
+    [data-theme="warm"] .dot-violet{background:#7c3aed;}
+    [data-theme="warm"] .dot-emerald{background:#059669;}
+    [data-theme="light"] .dot-rose{background:#e11d48;}
+    [data-theme="light"] .dot-amber{background:#f59e0b;}
+    [data-theme="light"] .dot-violet{background:#8b5cf6;}
+    [data-theme="light"] .dot-emerald{background:#10b981;}
+    .card-title{font-size:.82rem;font-weight:700;color:var(--card-title);}
+    .card ul{list-style:none;padding:0;}
+    .card ul li{
+      font-size:.73rem;color:var(--muted);line-height:1.6;padding:.15rem 0;
+      border-bottom:1px solid var(--border);
+    }
+    .card ul li:last-child{border-bottom:none;}
+
+    /* Footer */
+    .footer{
+      text-align:center;font-size:.72rem;color:var(--footer-c);
+      padding-top:.75rem;border-top:1px solid var(--border);
+    }
+
+    /* Core pulse animation */
+    @keyframes core-glow{
+      0%,100%{filter:drop-shadow(0 0 8px rgba(255,255,255,0.6));}
+      50%{filter:drop-shadow(0 0 20px rgba(255,255,255,0.95)) drop-shadow(0 0 36px rgba(255,255,255,0.4));}
+    }
+    @keyframes attacker-dash{
+      to{stroke-dashoffset:-48;}
+    }
+    .grid-line{stroke:var(--svg-grid,#1e293b);}
+  </style>
+</head>
+<body>
+  <!-- Floating controls -->
+  <div class="controls">
+    <button class="cb active" id="btn-dark" onclick="window.cycleTheme('dark')">Dark</button>
+    <button class="cb" id="btn-warm" onclick="window.cycleTheme('warm')">Warm</button>
+    <button class="cb" id="btn-light" onclick="window.cycleTheme('light')">Light</button>
+    <div class="cdiv"></div>
+    <button class="cb active" id="btn-lang" onclick="window.toggleLang()"><span class="lz">中</span><span class="le">EN</span></button>
+  </div>
+
+  <div class="container">
+    <!-- Header -->
+    <div class="header">
+      <div class="header-row">
+        <div class="pulse-dot"></div>
+        <h1 class="lz">四层防御纵深嵌套图</h1>
+        <h1 class="le">Four-Layer Defense In Depth</h1>
+        <span class="badge">VIS-2A-020</span>
+      </div>
+      <p class="subtitle lz">Enterprise Policy → Sandbox → 权限状态机 → 代码级安全 · 每层独立 · 不可绕过</p>
+      <p class="subtitle le">Enterprise Policy → Sandbox → Permission FSM → Code Security · Independent Layers · Bypass-Proof</p>
+    </div>
+
+    <!-- Main SVG diagram -->
+    <div class="svg-wrap">
+      <svg viewBox="0 0 960 600" xmlns="http://www.w3.org/2000/svg" role="img"
+           aria-label="四层防御纵深嵌套图 — 同心矩形展示四个安全层">
+        <defs>
+          <!-- Background gradient -->
+          <linearGradient id="bg-grad-020" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#0f172a" id="bg-stop0"/>
+            <stop offset="100%" stop-color="#020617" id="bg-stop1"/>
+          </linearGradient>
+
+          <!-- Grid pattern -->
+          <pattern id="g20" width="40" height="40" patternUnits="userSpaceOnUse">
+            <path d="M 40 0 L 0 0 0 40" fill="none" class="grid-line" stroke-width="0.5"/>
+          </pattern>
+
+          <!-- Arrow markers -->
+          <marker id="arr-r" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
+            <polygon points="0 0,9 3,0 6" fill="#ef4444"/>
+          </marker>
+
+          <!-- Glow filters -->
+          <filter id="glow-core" x="-60%" y="-60%" width="220%" height="220%">
+            <feGaussianBlur stdDeviation="6" result="blur"/>
+            <feMerge>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+          <filter id="glow-rose" x="-40%" y="-40%" width="180%" height="180%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge>
+              <feMergeNode in="blur"/>
+              <feMergeNode in="SourceGraphic"/>
+            </feMerge>
+          </filter>
+
+          <!-- Layer fill gradients -->
+          <radialGradient id="core-grad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#ffffff" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#e2e8f0" stop-opacity="0.92"/>
+          </radialGradient>
+        </defs>
+
+        <!-- SVG background -->
+        <rect width="960" height="600" fill="url(#bg-grad-020)"/>
+        <!-- Grid overlay -->
+        <rect width="960" height="600" fill="url(#g20)" opacity="0.3"/>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!--  CONCENTRIC RINGS — outermost first                         -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <!-- L1: Enterprise Policy — rose, w=880 h=520, x=40 y=40 -->
+        <rect x="40" y="40" width="880" height="520" rx="18" ry="18"
+              fill="rgba(251,113,133,0.06)" stroke="#fb7185" stroke-width="2" opacity="0.95"/>
+        <!-- Double-stroke border effect -->
+        <rect x="44" y="44" width="872" height="512" rx="16" ry="16"
+              fill="none" stroke="#fb7185" stroke-width="0.5" opacity="0.3"/>
+
+        <!-- L2: Sandbox Isolation — amber, w=680 h=400, x=140 y=100 -->
+        <rect x="140" y="100" width="680" height="400" rx="14" ry="14"
+              fill="rgba(251,191,36,0.08)" stroke="#fbbf24" stroke-width="2" opacity="0.95"/>
+
+        <!-- L3: Permission State Machine — violet, w=480 h=280, x=240 y=160 -->
+        <rect x="240" y="160" width="480" height="280" rx="12" ry="12"
+              fill="rgba(167,139,250,0.10)" stroke="#a78bfa" stroke-width="2" opacity="0.95"/>
+
+        <!-- L4: Code-Level Security — emerald, w=300 h=180, x=330 y=210 -->
+        <rect x="330" y="210" width="300" height="180" rx="10" ry="10"
+              fill="rgba(52,211,153,0.12)" stroke="#34d399" stroke-width="1.5"
+              stroke-dasharray="4,3" opacity="0.95"/>
+
+        <!-- Protected Core — white circle cx=480 cy=300 r=55 -->
+        <g style="animation:core-glow 3s ease-in-out infinite;" filter="url(#glow-core)">
+          <circle cx="480" cy="300" r="55"
+                  fill="url(#core-grad)" stroke="#ffffff" stroke-width="1.5" opacity="0.97"/>
+          <circle cx="480" cy="300" r="60"
+                  fill="none" stroke="#ffffff" stroke-width="0.5" opacity="0.2" stroke-dasharray="3,4"/>
+        </g>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!--  LAYER LABELS — top-center of each ring                     -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <!-- L1 label at y=58 -->
+        <text x="480" y="62" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="12" font-weight="700" fill="#fb7185" letter-spacing="0.04em">
+          <tspan class="lz">L1 · 企业策略</tspan><tspan class="le">L1 · Enterprise Policy</tspan>
+        </text>
+
+        <!-- L2 label at y=118 -->
+        <text x="480" y="122" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="#fbbf24" letter-spacing="0.04em">
+          <tspan class="lz">L2 · 沙箱隔离</tspan><tspan class="le">L2 · Sandbox Isolation</tspan>
+        </text>
+
+        <!-- L3 label at y=178 -->
+        <text x="480" y="182" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="#a78bfa" letter-spacing="0.04em">
+          <tspan class="lz">L3 · 权限状态机</tspan><tspan class="le">L3 · Permission State Machine</tspan>
+        </text>
+
+        <!-- L4 label at y=228 -->
+        <text x="480" y="232" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10.5" font-weight="700" fill="#34d399" letter-spacing="0.03em">
+          <tspan class="lz">L4 · 代码级安全</tspan><tspan class="le">L4 · Code-level Security</tspan>
+        </text>
+
+        <!-- Core label -->
+        <text x="480" y="295" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#020617">
+          <tspan class="lz">保护核心</tspan><tspan class="le">Protected</tspan>
+        </text>
+        <text x="480" y="309" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#1e293b">
+          <tspan class="lz">Protected Core</tspan><tspan class="le">Core</tspan>
+        </text>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!--  CAPABILITY ANNOTATIONS — right side panels                  -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <!-- L1 annotation: right side of L1 ring (x~740-880, y~150-200) -->
+        <g opacity="0.9">
+          <!-- Connector dot to L1 ring -->
+          <line x1="740" y1="178" x2="790" y2="178" stroke="#fb7185" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.5"/>
+          <circle cx="740" cy="178" r="2.5" fill="#fb7185" opacity="0.7"/>
+          <rect x="792" y="155" width="150" height="48" rx="6" ry="6"
+                fill="rgba(251,113,133,0.07)" stroke="#fb7185" stroke-width="0.8" opacity="0.8"/>
+          <text x="800" y="170" font-family="JetBrains Mono,monospace" font-size="10" fill="#fb7185" font-weight="600">
+            <tspan class="lz">MDM下发 · 不可覆盖</tspan><tspan class="le">MDM Pushed · Immutable</tspan>
+          </text>
+          <text x="800" y="184" font-family="JetBrains Mono,monospace" font-size="10" fill="#fb7185" opacity="0.8">
+            <tspan class="lz">禁用工具 · 限制网络</tspan><tspan class="le">Disable Tools · Restrict Net</tspan>
+          </text>
+          <text x="800" y="197" font-family="JetBrains Mono,monospace" font-size="10" fill="#fb7185" opacity="0.55">
+            <tspan class="lz">Claude Code 企业策略层</tspan><tspan class="le">Enterprise Policy Layer</tspan>
+          </text>
+        </g>
+
+        <!-- L2 annotation: right side of L2 ring -->
+        <g opacity="0.9">
+          <line x1="660" y1="228" x2="720" y2="228" stroke="#fbbf24" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.5"/>
+          <circle cx="660" cy="228" r="2.5" fill="#fbbf24" opacity="0.7"/>
+          <rect x="722" y="208" width="148" height="44" rx="6" ry="6"
+                fill="rgba(251,191,36,0.07)" stroke="#fbbf24" stroke-width="0.8" opacity="0.8"/>
+          <text x="730" y="224" font-family="JetBrains Mono,monospace" font-size="10" fill="#fbbf24" font-weight="600">
+            <tspan class="lz">OS级进程隔离</tspan><tspan class="le">OS-level Process Isolation</tspan>
+          </text>
+          <text x="730" y="238" font-family="JetBrains Mono,monospace" font-size="10" fill="#fbbf24" opacity="0.8">
+            <tspan class="lz">文件/网络调用限制</tspan><tspan class="le">File / Network Call Limit</tspan>
+          </text>
+          <text x="730" y="250" font-family="JetBrains Mono,monospace" font-size="10" fill="#fbbf24" opacity="0.55">
+            <tspan class="lz">Sandbox 隔离层</tspan><tspan class="le">Sandbox Isolation Layer</tspan>
+          </text>
+        </g>
+
+        <!-- L3 annotation: right side of L3 ring -->
+        <g opacity="0.9">
+          <line x1="630" y1="268" x2="680" y2="268" stroke="#a78bfa" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.5"/>
+          <circle cx="630" cy="268" r="2.5" fill="#a78bfa" opacity="0.7"/>
+          <rect x="682" y="250" width="138" height="40" rx="6" ry="6"
+                fill="rgba(167,139,250,0.07)" stroke="#a78bfa" stroke-width="0.8" opacity="0.8"/>
+          <text x="690" y="265" font-family="JetBrains Mono,monospace" font-size="10" fill="#a78bfa" font-weight="600">
+            <tspan class="lz">九步检查链</tspan><tspan class="le">9-Step Check Chain</tspan>
+          </text>
+          <text x="690" y="279" font-family="JetBrains Mono,monospace" font-size="10" fill="#a78bfa" opacity="0.8">
+            <tspan class="lz">六种权限模式</tspan><tspan class="le">6 Permission Modes</tspan>
+          </text>
+          <text x="690" y="288" font-family="JetBrains Mono,monospace" font-size="10" fill="#a78bfa" opacity="0.5">
+            <tspan class="lz">Permission FSM</tspan><tspan class="le">Permission FSM</tspan>
+          </text>
+        </g>
+
+        <!-- L4 annotation: right side of L4 ring -->
+        <g opacity="0.9">
+          <line x1="608" y1="300" x2="648" y2="300" stroke="#34d399" stroke-width="0.8" stroke-dasharray="3,2" opacity="0.5"/>
+          <circle cx="608" cy="300" r="2.5" fill="#34d399" opacity="0.7"/>
+          <rect x="650" y="284" width="120" height="36" rx="6" ry="6"
+                fill="rgba(52,211,153,0.07)" stroke="#34d399" stroke-width="0.8" opacity="0.8"/>
+          <text x="658" y="298" font-family="JetBrains Mono,monospace" font-size="10" fill="#34d399" font-weight="600">
+            <tspan class="lz">输入验证</tspan><tspan class="le">Input Validation</tspan>
+          </text>
+          <text x="658" y="311" font-family="JetBrains Mono,monospace" font-size="10" fill="#34d399" opacity="0.8">
+            <tspan class="lz">路径防护</tspan><tspan class="le">Path Protection</tspan>
+          </text>
+        </g>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!--  ATTACK ARROW — top-left, diagonal, blocked at each layer    -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <!-- Attack vector label -->
+        <text x="36" y="44" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#ef4444" letter-spacing="0.08em">ATTACKER</text>
+
+        <!-- Dashed attack line from (50,52) diagonal to (320,270) -->
+        <line x1="50" y1="56" x2="322" y2="268"
+              stroke="#ef4444" stroke-width="2" stroke-dasharray="8,4" opacity="0.75"
+              style="animation:attacker-dash 1.2s linear infinite;"
+              marker-end="url(#arr-r)"/>
+
+        <!-- × at L1 boundary ~(126, 128) -->
+        <g filter="url(#glow-rose)">
+          <text x="116" y="136" font-family="JetBrains Mono,monospace" font-size="16" font-weight="700" fill="#ef4444" text-anchor="middle" opacity="0.9">×</text>
+        </g>
+        <text x="130" y="150" font-family="JetBrains Mono,monospace" font-size="10" fill="#ef4444" opacity="0.7" text-anchor="middle">
+          <tspan class="lz">策略拦截</tspan><tspan class="le">Policy Block</tspan>
+        </text>
+
+        <!-- × at L2 boundary ~(200, 192) -->
+        <g filter="url(#glow-rose)">
+          <text x="194" y="202" font-family="JetBrains Mono,monospace" font-size="14" font-weight="700" fill="#ef4444" text-anchor="middle" opacity="0.85">×</text>
+        </g>
+        <text x="208" y="214" font-family="JetBrains Mono,monospace" font-size="10" fill="#ef4444" opacity="0.65" text-anchor="middle">
+          <tspan class="lz">沙箱拦截</tspan><tspan class="le">Sandbox Block</tspan>
+        </text>
+
+        <!-- × at L3 boundary ~(263, 238) -->
+        <g filter="url(#glow-rose)">
+          <text x="258" y="248" font-family="JetBrains Mono,monospace" font-size="13" font-weight="700" fill="#ef4444" text-anchor="middle" opacity="0.8">×</text>
+        </g>
+        <text x="272" y="260" font-family="JetBrains Mono,monospace" font-size="10" fill="#ef4444" opacity="0.6" text-anchor="middle">
+          <tspan class="lz">权限拦截</tspan><tspan class="le">Permission Block</tspan>
+        </text>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!--  LEFT SIDE: Layer badge stack                               -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <!-- L1 badge left -->
+        <rect x="48" y="248" width="76" height="24" rx="5" ry="5"
+              fill="rgba(251,113,133,0.10)" stroke="#fb7185" stroke-width="0.8"/>
+        <text x="86" y="264" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#fb7185">
+          <tspan class="lz">企业策略</tspan><tspan class="le">Enterprise</tspan>
+        </text>
+
+        <!-- L2 badge left -->
+        <rect x="148" y="296" width="68" height="22" rx="5" ry="5"
+              fill="rgba(251,191,36,0.10)" stroke="#fbbf24" stroke-width="0.8"/>
+        <text x="182" y="311" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#fbbf24">
+          <tspan class="lz">沙箱隔离</tspan><tspan class="le">Sandbox</tspan>
+        </text>
+
+        <!-- L3 badge left -->
+        <rect x="248" y="338" width="72" height="22" rx="5" ry="5"
+              fill="rgba(167,139,250,0.10)" stroke="#a78bfa" stroke-width="0.8"/>
+        <text x="284" y="353" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#a78bfa">
+          <tspan class="lz">权限状态机</tspan><tspan class="le">Perm FSM</tspan>
+        </text>
+
+        <!-- L4 badge left -->
+        <rect x="338" y="372" width="68" height="22" rx="5" ry="5"
+              fill="rgba(52,211,153,0.10)" stroke="#34d399" stroke-width="0.8" stroke-dasharray="4,2"/>
+        <text x="372" y="387" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" fill="#34d399">
+          <tspan class="lz">代码级安全</tspan><tspan class="le">Code Security</tspan>
+        </text>
+
+        <!-- ═══════════════════════════════════════════════════════════ -->
+        <!--  BOTTOM: Security principle labels                          -->
+        <!-- ═══════════════════════════════════════════════════════════ -->
+
+        <!-- Separator line -->
+        <line x1="40" y1="538" x2="920" y2="538"
+              stroke="#1e293b" stroke-width="0.8" opacity="0.6"/>
+
+        <!-- Three principles bottom row -->
+        <!-- Principle 1: Independent layers -->
+        <text x="180" y="558" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10" fill="#94a3b8" font-weight="600">
+          <tspan class="lz">独立纵深防御</tspan><tspan class="le">Independent Depth</tspan>
+        </text>
+        <text x="180" y="572" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10" fill="#64748b">
+          <tspan class="lz">单层突破不影响整体</tspan><tspan class="le">Single breach doesn't cascade</tspan>
+        </text>
+
+        <!-- Principle 2: Unbyppassable -->
+        <text x="480" y="558" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10" fill="#94a3b8" font-weight="600">
+          <tspan class="lz">不可绕过原则</tspan><tspan class="le">Bypass-Proof Design</tspan>
+        </text>
+        <text x="480" y="572" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10" fill="#64748b">
+          <tspan class="lz">L1 企业策略本地无法修改</tspan><tspan class="le">L1 policy immutable at client</tspan>
+        </text>
+
+        <!-- Principle 3: Four layers coverage -->
+        <text x="780" y="558" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10" fill="#94a3b8" font-weight="600">
+          <tspan class="lz">四层完整覆盖</tspan><tspan class="le">4-Layer Coverage</tspan>
+        </text>
+        <text x="780" y="572" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10" fill="#64748b">
+          <tspan class="lz">Enterprise→Sandbox→Perm→Code</tspan><tspan class="le">Enterprise→Sandbox→Perm→Code</tspan>
+        </text>
+
+        <!-- Dividers between principles -->
+        <line x1="330" y1="548" x2="330" y2="582" stroke="#1e293b" stroke-width="0.8" opacity="0.5"/>
+        <line x1="630" y1="548" x2="630" y2="582" stroke="#1e293b" stroke-width="0.8" opacity="0.5"/>
+
+        <!-- Source tag bottom-right -->
+        <text x="916" y="592" text-anchor="end"
+              font-family="JetBrains Mono,monospace" font-size="10" fill="#334155">
+          Claude Code 2.1.88 · VIS-2A-020
+        </text>
+      </svg>
+    </div>
+
+    <!-- Bottom summary cards -->
+    <div class="cards">
+      <!-- Card 1: Independent depth defense -->
+      <div class="card">
+        <div class="card-head">
+          <div class="dot dot-rose"></div>
+          <span class="card-title lz">独立纵深防御</span>
+          <span class="card-title le">Independent Defense Depth</span>
+        </div>
+        <ul>
+          <li>
+            <span class="lz">每层独立运作，拥有自己的检测与阻断逻辑</span>
+            <span class="le">Each layer operates independently with its own detection and blocking logic</span>
+          </li>
+          <li>
+            <span class="lz">单层被突破不会直接危及内层安全</span>
+            <span class="le">A single breached layer does not compromise inner layers</span>
+          </li>
+          <li>
+            <span class="lz">攻击者需同时突破全部四层才能到达核心</span>
+            <span class="le">Attackers must defeat all 4 layers to reach the protected core</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Card 2: Unbyppassable principle -->
+      <div class="card">
+        <div class="card-head">
+          <div class="dot dot-amber"></div>
+          <span class="card-title lz">不可绕过原则</span>
+          <span class="card-title le">Bypass-Proof Principle</span>
+        </div>
+        <ul>
+          <li>
+            <span class="lz">L1 企业策略由 MDM 系统下发，客户端无法覆盖</span>
+            <span class="le">L1 enterprise policy delivered via MDM, unconfigurable at client</span>
+          </li>
+          <li>
+            <span class="lz">L2 沙箱由 OS 内核强制执行，用户态无法绕过</span>
+            <span class="le">L2 sandbox enforced by OS kernel, user-space cannot bypass</span>
+          </li>
+          <li>
+            <span class="lz">L3 权限状态机九步检查链，缺一步不可通过</span>
+            <span class="le">L3 FSM: 9-step chain, every check mandatory to proceed</span>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Card 3: Four-layer coverage -->
+      <div class="card">
+        <div class="card-head">
+          <div class="dot dot-emerald"></div>
+          <span class="card-title lz">四层防御覆盖</span>
+          <span class="card-title le">4-Layer Defense Coverage</span>
+        </div>
+        <ul>
+          <li>
+            <span class="lz">Enterprise Policy — 组织级不可覆盖策略</span>
+            <span class="le">Enterprise Policy — org-level immutable rules</span>
+          </li>
+          <li>
+            <span class="lz">Sandbox — OS 进程与文件系统隔离</span>
+            <span class="le">Sandbox — OS process &amp; filesystem isolation</span>
+          </li>
+          <li>
+            <span class="lz">Permission FSM → Code Security — 运行时双保险</span>
+            <span class="le">Permission FSM → Code Security — dual runtime guards</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="footer">
+      <span class="lz">Claude Code 2.1.88 源码白皮书 · 第二部分 · 四层防御纵深架构 · VIS-2A-020</span>
+      <span class="le">Claude Code 2.1.88 Source Whitepaper · Part II · Four-Layer Defense In Depth · VIS-2A-020</span>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      'use strict';
+
+      // ── Theme cycling ──
+      const THEMES = ['dark','warm','light'];
+      const THEME_KEY = 'cc-theme';
+      const LANG_KEY  = 'cc-lang';
+
+      function applyTheme(t){
+        document.documentElement.setAttribute('data-theme', t);
+        localStorage.setItem(THEME_KEY, t);
+        THEMES.forEach(function(th){
+          var btn = document.getElementById('btn-' + th);
+          if(btn) btn.classList.toggle('active', th === t);
+        });
+        updateSvgColors(t);
+      }
+
+      function updateSvgColors(t){
+        // Background gradient
+        var bgStop0 = document.getElementById('bg-stop0');
+        var bgStop1 = document.getElementById('bg-stop1');
+        if(t === 'dark'){
+          if(bgStop0) bgStop0.setAttribute('stop-color','#0f172a');
+          if(bgStop1) bgStop1.setAttribute('stop-color','#020617');
+        } else if(t === 'warm'){
+          if(bgStop0) bgStop0.setAttribute('stop-color','#fdf8f0');
+          if(bgStop1) bgStop1.setAttribute('stop-color','#faf7f2');
+        } else {
+          if(bgStop0) bgStop0.setAttribute('stop-color','#f1f5f9');
+          if(bgStop1) bgStop1.setAttribute('stop-color','#f8fafc');
+        }
+
+        // SVG text color updates
+        var svgTextColor = t === 'dark' ? '#f8fafc' : (t === 'warm' ? '#1a1412' : '#0f172a');
+        var svgSubColor  = t === 'dark' ? '#94a3b8' : (t === 'warm' ? '#6b5a4e' : '#475569');
+        var svgAnnColor  = t === 'dark' ? '#64748b' : (t === 'warm' ? '#9c8878' : '#94a3b8');
+
+        document.querySelectorAll('svg text[fill="#f8fafc"]').forEach(function(el){
+          el.setAttribute('fill', svgTextColor);
+        });
+        document.querySelectorAll('svg text[fill="#94a3b8"]').forEach(function(el){
+          el.setAttribute('fill', svgSubColor);
+        });
+        document.querySelectorAll('svg text[fill="#64748b"]').forEach(function(el){
+          el.setAttribute('fill', svgAnnColor);
+        });
+
+        // Rose color adjustments
+        var roseColor = t === 'dark' ? '#fb7185' : '#e11d48';
+        var amberColor = t === 'dark' ? '#fbbf24' : (t === 'warm' ? '#d97706' : '#f59e0b');
+        var violetColor = t === 'dark' ? '#a78bfa' : (t === 'warm' ? '#7c3aed' : '#8b5cf6');
+        var emeraldColor = t === 'dark' ? '#34d399' : (t === 'warm' ? '#059669' : '#10b981');
+
+        // Update grid line colors
+        var gridColor = t === 'dark' ? '#1e293b' : (t === 'warm' ? '#ddd4c4' : '#e2e8f0');
+        document.querySelectorAll('.grid-line').forEach(function(el){
+          el.setAttribute('stroke', gridColor);
+        });
+
+        // Core text color (always dark since background is white)
+        document.querySelectorAll('svg text[fill="#020617"]').forEach(function(el){
+          el.setAttribute('fill', '#020617');
+        });
+        document.querySelectorAll('svg text[fill="#1e293b"]').forEach(function(el){
+          el.setAttribute('fill', '#1e293b');
+        });
+
+        // Source tag color
+        document.querySelectorAll('svg text[fill="#334155"]').forEach(function(el){
+          el.setAttribute('fill', t === 'dark' ? '#334155' : (t === 'warm' ? '#b5a99a' : '#94a3b8'));
+        });
+      }
+
+      window.cycleTheme = function(t){ applyTheme(t); };
+
+      // ── Language toggle ──
+      var isEn = false;
+
+      function applyLang(en){
+        isEn = en;
+        localStorage.setItem(LANG_KEY, en ? 'en' : 'zh');
+        document.documentElement.setAttribute('lang', en ? 'en' : 'zh');
+        document.querySelectorAll('.lz').forEach(function(el){ el.style.display = en ? 'none' : ''; });
+        document.querySelectorAll('.le').forEach(function(el){ el.style.display = en ? '' : 'none'; });
+        // SVG tspans with display attribute
+        document.querySelectorAll('svg tspan.lz').forEach(function(el){
+          el.setAttribute('display', en ? 'none' : 'inline');
+        });
+        document.querySelectorAll('svg tspan.le').forEach(function(el){
+          el.setAttribute('display', en ? 'inline' : 'none');
+        });
+        var langBtn = document.getElementById('btn-lang');
+        if(langBtn) langBtn.classList.toggle('active', true);
+      }
+
+      window.toggleLang = function(){
+        applyLang(!isEn);
+      };
+
+      // ── Init from localStorage ──
+      var savedTheme = localStorage.getItem(THEME_KEY) || 'dark';
+      var savedLang  = localStorage.getItem(LANG_KEY)  || 'zh';
+      applyTheme(savedTheme);
+      applyLang(savedLang === 'en');
+    })();
+  </script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

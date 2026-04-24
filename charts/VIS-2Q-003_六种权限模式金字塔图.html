@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<!--
+  VIS-2Q-003 · 六种权限模式金字塔图 · Permission Modes Spectrum
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  6 种权限模式从最严格（plan）到最宽松（bypass）· 数据来自 src/permissions/
+-->
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-2Q-003 六种权限模式金字塔图 — Claude Code 白皮书</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:24px 28px 32px;transition:background .3s,color .3s;}
+.page{max-width:1020px;margin:0 auto;}
+.hdr{display:flex;align-items:flex-start;gap:12px;margin-bottom:22px;}
+.pulse{width:10px;height:10px;border-radius:50%;background:var(--rose);animation:pulse 2s infinite;flex-shrink:0;margin-top:6px;box-shadow:0 0 12px var(--rose);}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.82)}}
+h1{font-size:20px;font-weight:700;color:var(--text);letter-spacing:.2px;}
+.subtitle{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.65;}
+.diagram-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px 18px 18px;margin-bottom:16px;overflow:hidden;}
+.svg-bg{fill:var(--bg);}
+.panel-txt{fill:var(--text);}
+.muted-txt{fill:var(--muted);}
+.subtle-txt{fill:var(--subtle);}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.stat-v{font-size:20px;font-weight:700;letter-spacing:.3px;margin-bottom:4px;font-family:'JetBrains Mono',monospace;}
+.stat-l{font-size:10px;color:var(--muted);line-height:1.5;}
+.stat.s1 .stat-v{color:var(--cyan);}
+.stat.s2 .stat-v{color:var(--emerald);}
+.stat.s3 .stat-v{color:var(--rose);}
+
+.legend{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-top:4px;}
+.lg{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+.lg-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.lg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.lg-name{font-size:11px;font-weight:700;color:var(--text);}
+.lg-code{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.lg-desc{font-size:10px;color:var(--muted);line-height:1.65;}
+.lg-use{font-size:10px;color:var(--text);margin-top:6px;line-height:1.55;opacity:.82;}
+.lg-warn{display:inline-block;margin-top:6px;font-size:10px;font-weight:700;color:var(--rose);border:1px solid var(--rose);border-radius:4px;padding:1px 6px;}
+
+footer{margin-top:16px;text-align:center;font-size:10px;color:var(--subtle);line-height:1.7;}
+
+.controls{position:fixed;top:14px;right:14px;display:flex;flex-direction:column;gap:6px;z-index:100;}
+.ctrl{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text);cursor:pointer;transition:all .2s;}
+.ctrl:hover{border-color:var(--cyan);color:var(--cyan);}
+
+/* shimmer on bars */
+@keyframes shimmer {
+  0%   { opacity:.0; }
+  50%  { opacity:.35; }
+  100% { opacity:.0; }
+}
+.shimmer { animation: shimmer 3.6s ease-in-out infinite; }
+.shimmer.s2 { animation-delay: .4s; }
+.shimmer.s3 { animation-delay: .8s; }
+.shimmer.s4 { animation-delay: 1.2s; }
+.shimmer.s5 { animation-delay: 1.6s; }
+.shimmer.s6 { animation-delay: 2.0s; }
+
+/* pulsing warning halo for bypass */
+@keyframes halo {
+  0%,100% { opacity:.55; transform: scale(1); }
+  50%     { opacity:.15; transform: scale(1.04); }
+}
+.halo { transform-box: fill-box; transform-origin: center; animation: halo 1.6s ease-in-out infinite; }
+
+@keyframes axisArrow { 0%,100%{ opacity:.9 } 50%{ opacity:.4 } }
+.axis-arrow { animation: axisArrow 2.4s ease-in-out infinite; }
+
+/* ── 金字塔层内文字主题适配 ──
+ * dark/warm 主题：用浅色文字（fecdd3/fed7aa 等）
+ * light 主题：渐变底色变浅后浅色文字失可读性，强制切换为深色文字
+ */
+.tier-txt-plan    { fill:#fecdd3; }
+.tier-txt-dontAsk { fill:#fed7aa; }
+.tier-txt-default { fill:#fde68a; }
+.tier-txt-accept  { fill:#a7f3d0; }
+.tier-txt-auto    { fill:#a5f3fc; }
+.tier-txt-bypass  { fill:#ddd6fe; }
+
+:root[data-theme="light"] .tier-txt-plan,
+:root[data-theme="light"] .tier-txt-dontAsk,
+:root[data-theme="light"] .tier-txt-default,
+:root[data-theme="light"] .tier-txt-accept,
+:root[data-theme="light"] .tier-txt-auto,
+:root[data-theme="light"] .tier-txt-bypass { fill:#0f172a; }
+
+/* light 主题下图标圈文字保持深色以对抗浅底 */
+:root[data-theme="light"] .tier-icon-txt { fill:#0f172a; }
+</style>
+</head>
+<body>
+<div class="controls">
+  <button class="ctrl" onclick="window.cycleTheme()">Theme</button>
+  <button class="ctrl" onclick="window.toggleLang()">EN/中</button>
+</div>
+<div class="page">
+  <div class="hdr">
+    <div class="pulse"></div>
+    <div>
+      <h1><span class="lz">六种权限模式金字塔图</span><span class="le">Six Permission Modes Spectrum</span></h1>
+      <p class="subtitle"><span class="lz">从最严格的 Plan 到最危险的 Bypass — Claude Code 2.1.88 · src/permissions/</span><span class="le">From strictest Plan to most dangerous Bypass — Claude Code 2.1.88 · src/permissions/</span></p>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat s1">
+      <div class="stat-v">6</div>
+      <div class="stat-l"><span class="lz">权限模式</span><span class="le">permission modes</span></div>
+    </div>
+    <div class="stat s2">
+      <div class="stat-v"><span class="lz">渐进式信任</span><span class="le">progressive trust</span></div>
+      <div class="stat-l"><span class="lz">安全 ↔ 便利 的梯度</span><span class="le">safety ↔ convenience gradient</span></div>
+    </div>
+    <div class="stat s3">
+      <div class="stat-v">bypass = <span class="lz">危险</span><span class="le">danger</span></div>
+      <div class="stat-l"><span class="lz">仅供开发调试</span><span class="le">dev &amp; debug only</span></div>
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <svg viewBox="0 0 920 560" width="100%" style="display:block" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- bar gradients -->
+        <linearGradient id="g-plan" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stop-color="#f43f5e" stop-opacity=".85"/>
+          <stop offset="1" stop-color="#f43f5e" stop-opacity=".35"/>
+        </linearGradient>
+        <linearGradient id="g-dontAsk" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stop-color="#f97316" stop-opacity=".85"/>
+          <stop offset="1" stop-color="#f97316" stop-opacity=".35"/>
+        </linearGradient>
+        <linearGradient id="g-default" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stop-color="#f59e0b" stop-opacity=".85"/>
+          <stop offset="1" stop-color="#f59e0b" stop-opacity=".35"/>
+        </linearGradient>
+        <linearGradient id="g-accept" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stop-color="#10b981" stop-opacity=".85"/>
+          <stop offset="1" stop-color="#10b981" stop-opacity=".35"/>
+        </linearGradient>
+        <linearGradient id="g-auto" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stop-color="#22d3ee" stop-opacity=".85"/>
+          <stop offset="1" stop-color="#22d3ee" stop-opacity=".35"/>
+        </linearGradient>
+        <linearGradient id="g-bypass" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stop-color="#8b5cf6" stop-opacity=".9"/>
+          <stop offset="1" stop-color="#8b5cf6" stop-opacity=".4"/>
+        </linearGradient>
+
+        <!-- shimmer overlay gradient -->
+        <linearGradient id="shimmer-grad" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0"   stop-color="#ffffff" stop-opacity="0"/>
+          <stop offset=".5" stop-color="#ffffff" stop-opacity=".18"/>
+          <stop offset="1"   stop-color="#ffffff" stop-opacity="0"/>
+        </linearGradient>
+
+        <!-- danger halo -->
+        <radialGradient id="danger-halo" cx=".5" cy=".5" r=".5">
+          <stop offset="0"  stop-color="#f43f5e" stop-opacity=".5"/>
+          <stop offset="1"  stop-color="#f43f5e" stop-opacity="0"/>
+        </radialGradient>
+
+        <!-- subtle glow filters per tier -->
+        <filter id="glow-rose"><feDropShadow stdDeviation="3" flood-color="#f43f5e" flood-opacity=".45"/></filter>
+        <filter id="glow-violet"><feDropShadow stdDeviation="4" flood-color="#8b5cf6" flood-opacity=".55"/></filter>
+      </defs>
+
+      <rect width="920" height="560" class="svg-bg"/>
+
+      <!-- Title inside SVG -->
+      <text x="460" y="32" text-anchor="middle" font-size="12" font-weight="700" class="panel-txt" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">权限模式光谱 — 安全 ↕ 便利 的 6 层梯度</tspan><tspan class="le">Permission Modes Spectrum — 6-tier Safety ↕ Convenience gradient</tspan>
+      </text>
+
+      <!-- LEFT AXIS: Safety -->
+      <g>
+        <line x1="60" y1="70" x2="60" y2="510" stroke="var(--rose)" stroke-width="1.5" stroke-dasharray="3,3" opacity=".7"/>
+        <polygon points="60,62 55,74 65,74" fill="var(--rose)" class="axis-arrow"/>
+        <text x="40" y="290" text-anchor="middle" font-size="11" font-weight="700" fill="#f43f5e" font-family="JetBrains Mono,monospace" transform="rotate(-90 40 290)">
+          <tspan class="lz">安全性 Safety ↑</tspan><tspan class="le">Safety ↑ more restrictive</tspan>
+        </text>
+      </g>
+
+      <!-- RIGHT AXIS: Convenience -->
+      <g>
+        <line x1="860" y1="70" x2="860" y2="510" stroke="var(--violet)" stroke-width="1.5" stroke-dasharray="3,3" opacity=".7"/>
+        <polygon points="860,518 855,506 865,506" fill="var(--violet)" class="axis-arrow"/>
+        <text x="880" y="290" text-anchor="middle" font-size="11" font-weight="700" fill="#8b5cf6" font-family="JetBrains Mono,monospace" transform="rotate(90 880 290)">
+          <tspan class="lz">便利性 Convenience ↓</tspan><tspan class="le">Convenience ↓ less restrictive</tspan>
+        </text>
+      </g>
+
+      <!-- ─── Tier 1: plan (widest bar, most restrictive / top) ─── -->
+      <g>
+        <!-- centered bar, width=720 at tier1 -->
+        <rect x="100" y="72" width="720" height="62" rx="8" fill="url(#g-plan)" stroke="#f43f5e" stroke-width="1.3"/>
+        <rect x="100" y="72" width="720" height="62" rx="8" fill="url(#shimmer-grad)" class="shimmer s1"/>
+        <!-- icon circle -->
+        <circle cx="135" cy="103" r="18" fill="rgba(244,63,94,0.25)" stroke="#f43f5e" stroke-width="1.2"/>
+        <text x="135" y="108" text-anchor="middle" font-size="14" class="tier-txt-plan tier-icon-txt" font-family="JetBrains Mono,monospace" font-weight="700">P</text>
+        <!-- tier label -->
+        <text x="170" y="96" font-size="13" font-weight="700" class="tier-txt-plan" font-family="JetBrains Mono,monospace">1. plan</text>
+        <text x="170" y="114" font-size="11" class="tier-txt-plan" font-family="JetBrains Mono,monospace" opacity=".85">
+          <tspan class="lz">计划模式 · 只规划不执行</tspan><tspan class="le">Plan mode · plan only, no execution</tspan>
+        </text>
+        <!-- use case right -->
+        <text x="800" y="96" text-anchor="end" font-size="10" class="tier-txt-plan" font-family="JetBrains Mono,monospace" opacity=".9">
+          <tspan class="lz">用途：方案讨论阶段</tspan><tspan class="le">Use: planning phase</tspan>
+        </text>
+        <text x="800" y="114" text-anchor="end" font-size="10" class="tier-txt-plan" font-family="JetBrains Mono,monospace" opacity=".75">
+          <tspan class="lz">所有工具禁用</tspan><tspan class="le">all tools disabled</tspan>
+        </text>
+        <!-- safety/convenience score -->
+        <text x="800" y="128" text-anchor="end" font-size="10" class="tier-txt-plan" font-family="JetBrains Mono,monospace" opacity=".6">Safety 100  ·  Conv 0</text>
+      </g>
+
+      <!-- ─── Tier 2: dontAsk ─── -->
+      <g>
+        <rect x="120" y="146" width="680" height="62" rx="8" fill="url(#g-dontAsk)" stroke="#f97316" stroke-width="1.3"/>
+        <rect x="120" y="146" width="680" height="62" rx="8" fill="url(#shimmer-grad)" class="shimmer s2"/>
+        <circle cx="155" cy="177" r="18" fill="rgba(249,115,22,0.25)" stroke="#f97316" stroke-width="1.2"/>
+        <text x="155" y="182" text-anchor="middle" font-size="14" class="tier-txt-dontAsk tier-icon-txt" font-family="JetBrains Mono,monospace" font-weight="700">D</text>
+        <text x="190" y="170" font-size="13" font-weight="700" class="tier-txt-dontAsk" font-family="JetBrains Mono,monospace">2. dontAsk</text>
+        <text x="190" y="188" font-size="11" class="tier-txt-dontAsk" font-family="JetBrains Mono,monospace" opacity=".85">
+          <tspan class="lz">禁问模式 · 超权限直接失败</tspan><tspan class="le">No-prompt mode · fail if beyond scope</tspan>
+        </text>
+        <text x="780" y="170" text-anchor="end" font-size="10" class="tier-txt-dontAsk" font-family="JetBrains Mono,monospace" opacity=".9">
+          <tspan class="lz">用途：CI / 自动化脚本</tspan><tspan class="le">Use: CI / automation scripts</tspan>
+        </text>
+        <text x="780" y="188" text-anchor="end" font-size="10" class="tier-txt-dontAsk" font-family="JetBrains Mono,monospace" opacity=".75">
+          <tspan class="lz">无交互，静默失败</tspan><tspan class="le">no interaction, silent fail</tspan>
+        </text>
+        <text x="780" y="202" text-anchor="end" font-size="10" class="tier-txt-dontAsk" font-family="JetBrains Mono,monospace" opacity=".6">Safety 85  ·  Conv 20</text>
+      </g>
+
+      <!-- ─── Tier 3: default ─── -->
+      <g>
+        <rect x="140" y="220" width="640" height="62" rx="8" fill="url(#g-default)" stroke="#f59e0b" stroke-width="1.3"/>
+        <rect x="140" y="220" width="640" height="62" rx="8" fill="url(#shimmer-grad)" class="shimmer s3"/>
+        <circle cx="175" cy="251" r="18" fill="rgba(245,158,11,0.25)" stroke="#f59e0b" stroke-width="1.2"/>
+        <text x="175" y="256" text-anchor="middle" font-size="14" class="tier-txt-default tier-icon-txt" font-family="JetBrains Mono,monospace" font-weight="700">?</text>
+        <text x="210" y="244" font-size="13" font-weight="700" class="tier-txt-default" font-family="JetBrains Mono,monospace">3. default</text>
+        <text x="210" y="262" font-size="11" class="tier-txt-default" font-family="JetBrains Mono,monospace" opacity=".85">
+          <tspan class="lz">默认模式 · 敏感操作每次询问</tspan><tspan class="le">Default mode · ask for each sensitive op</tspan>
+        </text>
+        <text x="760" y="244" text-anchor="end" font-size="10" class="tier-txt-default" font-family="JetBrains Mono,monospace" opacity=".9">
+          <tspan class="lz">用途：日常交互使用</tspan><tspan class="le">Use: daily interactive use</tspan>
+        </text>
+        <text x="760" y="262" text-anchor="end" font-size="10" class="tier-txt-default" font-family="JetBrains Mono,monospace" opacity=".75">
+          <tspan class="lz">写/删/执行需确认</tspan><tspan class="le">write/del/exec need confirm</tspan>
+        </text>
+        <text x="760" y="276" text-anchor="end" font-size="10" class="tier-txt-default" font-family="JetBrains Mono,monospace" opacity=".6">Safety 70  ·  Conv 45</text>
+      </g>
+
+      <!-- ─── Tier 4: acceptEdits ─── -->
+      <g>
+        <rect x="160" y="294" width="600" height="62" rx="8" fill="url(#g-accept)" stroke="#10b981" stroke-width="1.3"/>
+        <rect x="160" y="294" width="600" height="62" rx="8" fill="url(#shimmer-grad)" class="shimmer s4"/>
+        <circle cx="195" cy="325" r="18" fill="rgba(16,185,129,0.25)" stroke="#10b981" stroke-width="1.2"/>
+        <text x="195" y="330" text-anchor="middle" font-size="14" class="tier-txt-accept tier-icon-txt" font-family="JetBrains Mono,monospace" font-weight="700">E</text>
+        <text x="230" y="318" font-size="13" font-weight="700" class="tier-txt-accept" font-family="JetBrains Mono,monospace">4. acceptEdits</text>
+        <text x="230" y="336" font-size="11" class="tier-txt-accept" font-family="JetBrains Mono,monospace" opacity=".85">
+          <tspan class="lz">编辑放行 · 文件编辑自动批准</tspan><tspan class="le">Accept-edits · auto-approve edits</tspan>
+        </text>
+        <text x="740" y="318" text-anchor="end" font-size="10" class="tier-txt-accept" font-family="JetBrains Mono,monospace" opacity=".9">
+          <tspan class="lz">用途：编辑密集型会话</tspan><tspan class="le">Use: edit-intensive sessions</tspan>
+        </text>
+        <text x="740" y="336" text-anchor="end" font-size="10" class="tier-txt-accept" font-family="JetBrains Mono,monospace" opacity=".75">
+          <tspan class="lz">Bash / Web 仍需询问</tspan><tspan class="le">Bash / Web still ask</tspan>
+        </text>
+        <text x="740" y="350" text-anchor="end" font-size="10" class="tier-txt-accept" font-family="JetBrains Mono,monospace" opacity=".6">Safety 55  ·  Conv 65</text>
+      </g>
+
+      <!-- ─── Tier 5: auto ─── -->
+      <g>
+        <rect x="180" y="368" width="560" height="62" rx="8" fill="url(#g-auto)" stroke="#22d3ee" stroke-width="1.3"/>
+        <rect x="180" y="368" width="560" height="62" rx="8" fill="url(#shimmer-grad)" class="shimmer s5"/>
+        <circle cx="215" cy="399" r="18" fill="rgba(34,211,238,0.25)" stroke="#22d3ee" stroke-width="1.2"/>
+        <text x="215" y="404" text-anchor="middle" font-size="14" class="tier-txt-auto tier-icon-txt" font-family="JetBrains Mono,monospace" font-weight="700">A</text>
+        <text x="250" y="392" font-size="13" font-weight="700" class="tier-txt-auto" font-family="JetBrains Mono,monospace">5. auto</text>
+        <text x="250" y="410" font-size="11" class="tier-txt-auto" font-family="JetBrains Mono,monospace" opacity=".85">
+          <tspan class="lz">自动模式 · 所有工具自动批准</tspan><tspan class="le">Auto mode · all tools auto-approved</tspan>
+        </text>
+        <text x="720" y="392" text-anchor="end" font-size="10" class="tier-txt-auto" font-family="JetBrains Mono,monospace" opacity=".9">
+          <tspan class="lz">用途：受信沙箱环境</tspan><tspan class="le">Use: trusted sandbox</tspan>
+        </text>
+        <text x="720" y="410" text-anchor="end" font-size="10" class="tier-txt-auto" font-family="JetBrains Mono,monospace" opacity=".75">
+          <tspan class="lz">含 Bash · 但仍走规则</tspan><tspan class="le">incl. Bash · rules still apply</tspan>
+        </text>
+        <text x="720" y="424" text-anchor="end" font-size="10" class="tier-txt-auto" font-family="JetBrains Mono,monospace" opacity=".6">Safety 35  ·  Conv 85</text>
+      </g>
+
+      <!-- ─── Tier 6: bypass (narrowest / most permissive / DANGER) ─── -->
+      <g>
+        <!-- pulsing halo behind bar -->
+        <rect x="180" y="432" width="560" height="82" rx="16" fill="url(#danger-halo)" class="halo"/>
+        <rect x="200" y="442" width="520" height="62" rx="8" fill="url(#g-bypass)" stroke="#8b5cf6" stroke-width="1.5" filter="url(#glow-violet)"/>
+        <rect x="200" y="442" width="520" height="62" rx="8" fill="url(#shimmer-grad)" class="shimmer s6"/>
+        <circle cx="235" cy="473" r="18" fill="rgba(139,92,246,0.3)" stroke="#8b5cf6" stroke-width="1.3"/>
+        <text x="235" y="478" text-anchor="middle" font-size="14" class="tier-txt-bypass tier-icon-txt" font-family="JetBrains Mono,monospace" font-weight="700">!</text>
+        <text x="270" y="466" font-size="13" font-weight="700" class="tier-txt-bypass" font-family="JetBrains Mono,monospace">6. bypass</text>
+        <text x="270" y="484" font-size="11" class="tier-txt-bypass" font-family="JetBrains Mono,monospace" opacity=".85">
+          <tspan class="lz">绕过模式 · 全部权限检查跳过</tspan><tspan class="le">Bypass mode · all permission checks skipped</tspan>
+        </text>
+        <!-- danger badge inline -->
+        <rect x="540" y="454" width="76" height="18" rx="4" fill="rgba(244,63,94,0.25)" stroke="#f43f5e" stroke-width="1" filter="url(#glow-rose)"/>
+        <text x="578" y="467" text-anchor="middle" font-size="10" font-weight="700" class="tier-txt-plan" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">⚠ 最危险</tspan><tspan class="le">⚠ DANGER</tspan>
+        </text>
+        <text x="700" y="466" text-anchor="end" font-size="10" class="tier-txt-bypass" font-family="JetBrains Mono,monospace" opacity=".9">
+          <tspan class="lz">用途：仅开发调试</tspan><tspan class="le">Use: dev &amp; debug only</tspan>
+        </text>
+        <text x="700" y="484" text-anchor="end" font-size="10" class="tier-txt-bypass" font-family="JetBrains Mono,monospace" opacity=".75">
+          <tspan class="lz">生产禁用 · 不可恢复风险</tspan><tspan class="le">no prod · unrecoverable risk</tspan>
+        </text>
+        <text x="700" y="498" text-anchor="end" font-size="10" class="tier-txt-bypass" font-family="JetBrains Mono,monospace" opacity=".6">Safety 5  ·  Conv 100</text>
+      </g>
+
+      <!-- Bottom scale markers -->
+      <g>
+        <text x="100" y="540" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">← 最严格</tspan><tspan class="le">← most restrictive</tspan>
+        </text>
+        <text x="820" y="540" text-anchor="end" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">最宽松 →</tspan><tspan class="le">most permissive →</tspan>
+        </text>
+        <line x1="100" y1="530" x2="820" y2="530" stroke="var(--subtle)" stroke-width="0.6" stroke-dasharray="2,3" opacity=".6"/>
+      </g>
+    </svg>
+  </div>
+
+  <div class="legend">
+    <div class="lg">
+      <div class="lg-hdr">
+        <span class="lg-dot" style="background:#f43f5e"></span>
+        <span class="lg-name">plan</span>
+        <span class="lg-code">· rose</span>
+      </div>
+      <div class="lg-desc"><span class="lz">只允许规划，无任何执行。</span><span class="le">Plan only, no execution.</span></div>
+      <div class="lg-use"><span class="lz">用途：与用户讨论方案阶段</span><span class="le">Use: planning phase</span></div>
+    </div>
+    <div class="lg">
+      <div class="lg-hdr">
+        <span class="lg-dot" style="background:#f97316"></span>
+        <span class="lg-name">dontAsk</span>
+        <span class="lg-code">· orange</span>
+      </div>
+      <div class="lg-desc"><span class="lz">禁止询问用户，超出权限直接失败。</span><span class="le">No user prompts, fail if beyond scope.</span></div>
+      <div class="lg-use"><span class="lz">用途：自动化脚本 / CI</span><span class="le">Use: automation scripts / CI</span></div>
+    </div>
+    <div class="lg">
+      <div class="lg-hdr">
+        <span class="lg-dot" style="background:#f59e0b"></span>
+        <span class="lg-name">default</span>
+        <span class="lg-code">· amber</span>
+      </div>
+      <div class="lg-desc"><span class="lz">每次敏感操作都询问。</span><span class="le">Ask for each sensitive op.</span></div>
+      <div class="lg-use"><span class="lz">用途：日常交互式使用</span><span class="le">Use: daily interactive use</span></div>
+    </div>
+    <div class="lg">
+      <div class="lg-hdr">
+        <span class="lg-dot" style="background:#10b981"></span>
+        <span class="lg-name">acceptEdits</span>
+        <span class="lg-code">· emerald</span>
+      </div>
+      <div class="lg-desc"><span class="lz">自动批准文件编辑，其他仍需询问。</span><span class="le">Auto-approve edits, others ask.</span></div>
+      <div class="lg-use"><span class="lz">用途：编辑密集型会话</span><span class="le">Use: edit-intensive sessions</span></div>
+    </div>
+    <div class="lg">
+      <div class="lg-hdr">
+        <span class="lg-dot" style="background:#22d3ee"></span>
+        <span class="lg-name">auto</span>
+        <span class="lg-code">· cyan</span>
+      </div>
+      <div class="lg-desc"><span class="lz">所有工具自动批准，不询问。</span><span class="le">All tools auto-approved.</span></div>
+      <div class="lg-use"><span class="lz">用途：受信沙箱环境</span><span class="le">Use: trusted sandbox</span></div>
+    </div>
+    <div class="lg">
+      <div class="lg-hdr">
+        <span class="lg-dot" style="background:#8b5cf6"></span>
+        <span class="lg-name">bypass</span>
+        <span class="lg-code">· violet</span>
+      </div>
+      <div class="lg-desc"><span class="lz">绕过所有权限检查。</span><span class="le">Bypass all permission checks.</span></div>
+      <div class="lg-use"><span class="lz">用途：仅开发调试</span><span class="le">Use: dev &amp; debug only</span></div>
+      <span class="lg-warn"><span class="lz">⚠ 危险模式</span><span class="le">⚠ DANGER MODE</span></span>
+    </div>
+  </div>
+
+  <footer>
+    <span class="lz">数据来源：Claude Code 2.1.88 · src/permissions/ · 6 个权限模式常量定义</span>
+    <span class="le">Source: Claude Code 2.1.88 · src/permissions/ · 6 permission-mode constants</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

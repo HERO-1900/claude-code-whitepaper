@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<!--
+  VIS-2Q-011 · Memory 系统架构图 · Memory System Architecture
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  3 层记忆层级 · 工作 / 会话 / 长期 + 团队云同步 · 数据来自 src/memory/ + .claude/
+-->
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-2Q-011 Memory 系统架构图 — Claude Code 白皮书</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+*{margin:0;padding:0;box-sizing:border-box;}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:24px 28px 32px;transition:background .3s,color .3s;}
+.page{max-width:1020px;margin:0 auto;}
+.hdr{display:flex;align-items:flex-start;gap:12px;margin-bottom:22px;}
+.pulse{width:10px;height:10px;border-radius:50%;background:var(--cyan);animation:pulse 2s infinite;flex-shrink:0;margin-top:6px;box-shadow:0 0 12px var(--cyan);}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.55;transform:scale(.82)}}
+h1{font-size:20px;font-weight:700;color:var(--text);letter-spacing:.2px;}
+.subtitle{font-size:11px;color:var(--muted);margin-top:5px;line-height:1.65;}
+.diagram-card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:22px 18px 18px;margin-bottom:16px;overflow:hidden;}
+.svg-bg{fill:var(--bg);}
+.panel-txt{fill:var(--text);}
+.muted-txt{fill:var(--muted);}
+.subtle-txt{fill:var(--subtle);}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+.stat{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.stat-v{font-size:20px;font-weight:700;letter-spacing:.3px;margin-bottom:4px;font-family:'JetBrains Mono',monospace;}
+.stat-l{font-size:10px;color:var(--muted);line-height:1.5;}
+.stat.s1 .stat-v{color:var(--cyan);}
+.stat.s2 .stat-v{color:var(--amber);}
+.stat.s3 .stat-v{color:var(--emerald);}
+
+.legend{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:4px;}
+.lg{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+.lg-hdr{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.lg-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.lg-name{font-size:11px;font-weight:700;color:var(--text);}
+.lg-code{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;}
+.lg-desc{font-size:10px;color:var(--muted);line-height:1.65;}
+.lg-use{font-size:10px;color:var(--text);margin-top:6px;line-height:1.55;opacity:.82;}
+
+footer{margin-top:16px;text-align:center;font-size:10px;color:var(--subtle);line-height:1.7;}
+
+.controls{position:fixed;top:14px;right:14px;display:flex;flex-direction:column;gap:6px;z-index:100;}
+.ctrl{background:var(--panel);border:1px solid var(--border);border-radius:6px;padding:6px 12px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--text);cursor:pointer;transition:all .2s;}
+.ctrl:hover{border-color:var(--cyan);color:var(--cyan);}
+
+/* shimmer */
+@keyframes shimmer {
+  0%   { opacity:.0; }
+  50%  { opacity:.32; }
+  100% { opacity:.0; }
+}
+.shimmer { animation: shimmer 3.8s ease-in-out infinite; }
+.shimmer.s2 { animation-delay: .5s; }
+.shimmer.s3 { animation-delay: 1.0s; }
+
+/* arrow flow animation */
+@keyframes flowUp {
+  0%   { stroke-dashoffset: 20; opacity:.3 }
+  50%  { opacity:.9 }
+  100% { stroke-dashoffset: 0; opacity:.3 }
+}
+.flow-up { stroke-dasharray:6,4; animation: flowUp 2.4s linear infinite; }
+
+@keyframes flowDown {
+  0%   { stroke-dashoffset: 0; opacity:.3 }
+  50%  { opacity:.9 }
+  100% { stroke-dashoffset: 20; opacity:.3 }
+}
+.flow-down { stroke-dasharray:6,4; animation: flowDown 2.4s linear infinite; }
+
+/* cloud sync ping */
+@keyframes syncPing {
+  0%,100% { opacity:.55; transform: scale(1); }
+  50%     { opacity:.15; transform: scale(1.08); }
+}
+.cloud-ping { transform-box: fill-box; transform-origin: center; animation: syncPing 2s ease-in-out infinite; }
+
+/* file icon fade */
+@keyframes fileFade {
+  0%,100% { opacity:.75; }
+  50%     { opacity:1; }
+}
+.file-fade { animation: fileFade 3s ease-in-out infinite; }
+.file-fade.f2 { animation-delay: .3s; }
+.file-fade.f3 { animation-delay: .6s; }
+</style>
+</head>
+<body>
+<div class="controls">
+  <button class="ctrl" onclick="window.cycleTheme()">Theme</button>
+  <button class="ctrl" onclick="window.toggleLang()">EN/中</button>
+</div>
+<div class="page">
+  <div class="hdr">
+    <div class="pulse"></div>
+    <div>
+      <h1><span class="lz">Memory 系统架构图</span><span class="le">Memory System Architecture</span></h1>
+      <p class="subtitle"><span class="lz">三层记忆体系 + 团队云同步 — Claude Code 2.1.88 · .claude/ 目录结构</span><span class="le">Three memory tiers + team cloud sync — Claude Code 2.1.88 · .claude/ directory</span></p>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat s1">
+      <div class="stat-v">3</div>
+      <div class="stat-l"><span class="lz">记忆层级 · 工作/会话/长期</span><span class="le">memory tiers · working/session/long-term</span></div>
+    </div>
+    <div class="stat s2">
+      <div class="stat-v"><span class="lz">团队同步</span><span class="le">team sync</span></div>
+      <div class="stat-l"><span class="lz">ETag 增量 · 2s 防抖</span><span class="le">ETag delta · 2s debounce</span></div>
+    </div>
+    <div class="stat s3">
+      <div class="stat-v">.claude/</div>
+      <div class="stat-l"><span class="lz">持久化目录 · 版本可控</span><span class="le">persistent dir · version-controlled</span></div>
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <svg viewBox="0 0 920 540" width="100%" style="display:block" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- tier gradients -->
+        <linearGradient id="g-working" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stop-color="#22d3ee" stop-opacity=".9"/>
+          <stop offset="1" stop-color="#22d3ee" stop-opacity=".35"/>
+        </linearGradient>
+        <linearGradient id="g-session" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stop-color="#8b5cf6" stop-opacity=".9"/>
+          <stop offset="1" stop-color="#8b5cf6" stop-opacity=".35"/>
+        </linearGradient>
+        <linearGradient id="g-longterm" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stop-color="#10b981" stop-opacity=".9"/>
+          <stop offset="1" stop-color="#10b981" stop-opacity=".35"/>
+        </linearGradient>
+        <linearGradient id="g-cloud" x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0" stop-color="#f59e0b" stop-opacity=".75"/>
+          <stop offset="1" stop-color="#f59e0b" stop-opacity=".25"/>
+        </linearGradient>
+
+        <!-- shimmer overlay -->
+        <linearGradient id="shimmer-grad" x1="0" x2="1" y1="0" y2="0">
+          <stop offset="0" stop-color="#ffffff" stop-opacity="0"/>
+          <stop offset=".5" stop-color="#ffffff" stop-opacity=".16"/>
+          <stop offset="1" stop-color="#ffffff" stop-opacity="0"/>
+        </linearGradient>
+
+        <!-- cloud glow halo -->
+        <radialGradient id="cloud-halo" cx=".5" cy=".5" r=".5">
+          <stop offset="0" stop-color="#f59e0b" stop-opacity=".45"/>
+          <stop offset="1" stop-color="#f59e0b" stop-opacity="0"/>
+        </radialGradient>
+
+        <!-- arrow markers -->
+        <marker id="arr-cyan" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#22d3ee"/>
+        </marker>
+        <marker id="arr-emerald" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#10b981"/>
+        </marker>
+        <marker id="arr-amber" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/>
+        </marker>
+
+        <filter id="glow-amber"><feDropShadow stdDeviation="3" flood-color="#f59e0b" flood-opacity=".5"/></filter>
+      </defs>
+
+      <rect width="920" height="540" class="svg-bg"/>
+
+      <!-- Title inside SVG -->
+      <text x="360" y="32" text-anchor="middle" font-size="12" font-weight="700" class="panel-txt" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">三层记忆架构 — 工作 → 会话 → 长期 + 团队云同步</tspan><tspan class="le">Three-tier memory — Working → Session → Long-term + Team Sync</tspan>
+      </text>
+
+      <!-- Left axis: persistence -->
+      <g>
+        <line x1="42" y1="72" x2="42" y2="470" stroke="var(--muted)" stroke-width="1" stroke-dasharray="2,3" opacity=".55"/>
+        <text x="30" y="80" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace" text-anchor="start">
+          <tspan class="lz">短</tspan><tspan class="le">short</tspan>
+        </text>
+        <text x="30" y="465" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace" text-anchor="start">
+          <tspan class="lz">长</tspan><tspan class="le">long</tspan>
+        </text>
+        <text x="20" y="270" text-anchor="middle" font-size="10" font-weight="700" fill="var(--muted)" font-family="JetBrains Mono,monospace" transform="rotate(-90 20 270)">
+          <tspan class="lz">持久化 Persistence ↓</tspan><tspan class="le">Persistence ↓</tspan>
+        </text>
+      </g>
+
+      <!-- ============ TIER 1: Working Memory (cyan) ============ -->
+      <g>
+        <rect x="70" y="70" width="640" height="110" rx="12" fill="url(#g-working)" stroke="#22d3ee" stroke-width="1.4"/>
+        <rect x="70" y="70" width="640" height="110" rx="12" fill="url(#shimmer-grad)" class="shimmer s1"/>
+
+        <!-- icon circle - brain -->
+        <circle cx="108" cy="125" r="24" fill="rgba(34,211,238,0.28)" stroke="#22d3ee" stroke-width="1.4"/>
+        <text x="108" y="132" text-anchor="middle" font-size="20" fill="#a5f3fc" font-family="JetBrains Mono,monospace" font-weight="700">W</text>
+
+        <!-- tier label -->
+        <text x="146" y="98" font-size="14" font-weight="700" fill="#a5f3fc" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">Tier 1 · 工作记忆</tspan><tspan class="le">Tier 1 · Working Memory</tspan>
+        </text>
+        <text x="146" y="116" font-size="11" fill="#a5f3fc" font-family="JetBrains Mono,monospace" opacity=".85">
+          <tspan class="lz">LLM 上下文窗口 · 当前会话</tspan><tspan class="le">LLM context window · current convo</tspan>
+        </text>
+
+        <!-- details left -->
+        <text x="146" y="140" font-size="10" fill="#a5f3fc" font-family="JetBrains Mono,monospace" opacity=".8">
+          <tspan class="lz">范围：当前会话窗口</tspan><tspan class="le">Scope: current conversation</tspan>
+        </text>
+        <text x="146" y="156" font-size="10" fill="#a5f3fc" font-family="JetBrains Mono,monospace" opacity=".8">
+          <tspan class="lz">容量：~200K tokens</tspan><tspan class="le">Size: ~200K tokens</tspan>
+        </text>
+        <text x="146" y="172" font-size="10" fill="#a5f3fc" font-family="JetBrains Mono,monospace" opacity=".8">
+          <tspan class="lz">示例：最新消息 / 活跃工具输出</tspan><tspan class="le">Ex: recent msgs / active tool outputs</tspan>
+        </text>
+
+        <!-- 3 mini file icons on right (representing content in context) -->
+        <g>
+          <rect x="460" y="92" width="38" height="48" rx="3" fill="rgba(34,211,238,0.18)" stroke="#22d3ee" stroke-width="0.9" class="file-fade"/>
+          <line x1="467" y1="104" x2="491" y2="104" stroke="#a5f3fc" stroke-width="0.6" opacity=".7"/>
+          <line x1="467" y1="112" x2="491" y2="112" stroke="#a5f3fc" stroke-width="0.6" opacity=".7"/>
+          <line x1="467" y1="120" x2="485" y2="120" stroke="#a5f3fc" stroke-width="0.6" opacity=".7"/>
+          <text x="479" y="154" text-anchor="middle" font-size="10" fill="#a5f3fc" font-family="JetBrains Mono,monospace" opacity=".75">msg</text>
+
+          <rect x="506" y="92" width="38" height="48" rx="3" fill="rgba(34,211,238,0.18)" stroke="#22d3ee" stroke-width="0.9" class="file-fade f2"/>
+          <line x1="513" y1="104" x2="537" y2="104" stroke="#a5f3fc" stroke-width="0.6" opacity=".7"/>
+          <line x1="513" y1="112" x2="537" y2="112" stroke="#a5f3fc" stroke-width="0.6" opacity=".7"/>
+          <line x1="513" y1="120" x2="531" y2="120" stroke="#a5f3fc" stroke-width="0.6" opacity=".7"/>
+          <text x="525" y="154" text-anchor="middle" font-size="10" fill="#a5f3fc" font-family="JetBrains Mono,monospace" opacity=".75">tool</text>
+
+          <rect x="552" y="92" width="38" height="48" rx="3" fill="rgba(34,211,238,0.18)" stroke="#22d3ee" stroke-width="0.9" class="file-fade f3"/>
+          <line x1="559" y1="104" x2="583" y2="104" stroke="#a5f3fc" stroke-width="0.6" opacity=".7"/>
+          <line x1="559" y1="112" x2="583" y2="112" stroke="#a5f3fc" stroke-width="0.6" opacity=".7"/>
+          <line x1="559" y1="120" x2="577" y2="120" stroke="#a5f3fc" stroke-width="0.6" opacity=".7"/>
+          <text x="571" y="154" text-anchor="middle" font-size="10" fill="#a5f3fc" font-family="JetBrains Mono,monospace" opacity=".75">sys</text>
+        </g>
+
+        <!-- timing indicator (right) -->
+        <g>
+          <rect x="612" y="100" width="80" height="52" rx="6" fill="rgba(34,211,238,0.15)" stroke="#22d3ee" stroke-width="0.8" stroke-dasharray="2,2"/>
+          <text x="652" y="118" text-anchor="middle" font-size="10" fill="#a5f3fc" font-family="JetBrains Mono,monospace" opacity=".7">
+            <tspan class="lz">时效</tspan><tspan class="le">TTL</tspan>
+          </text>
+          <text x="652" y="138" text-anchor="middle" font-size="14" font-weight="700" fill="#a5f3fc" font-family="JetBrains Mono,monospace">ms</text>
+        </g>
+      </g>
+
+      <!-- flow arrows between T1 and T2 -->
+      <g>
+        <!-- down (persist): T1 → T2 -->
+        <path d="M 300 180 L 300 208" stroke="#8b5cf6" stroke-width="1.6" fill="none" marker-end="url(#arr-emerald)" class="flow-down" opacity=".8"/>
+        <text x="310" y="198" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">持久</tspan><tspan class="le">persist</tspan>
+        </text>
+        <!-- up (read): T2 → T1 -->
+        <path d="M 400 208 L 400 180" stroke="#22d3ee" stroke-width="1.6" fill="none" marker-end="url(#arr-cyan)" class="flow-up" opacity=".8"/>
+        <text x="410" y="198" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">读取</tspan><tspan class="le">read</tspan>
+        </text>
+      </g>
+
+      <!-- ============ TIER 2: Session Memory (violet) ============ -->
+      <g>
+        <rect x="70" y="210" width="640" height="110" rx="12" fill="url(#g-session)" stroke="#8b5cf6" stroke-width="1.4"/>
+        <rect x="70" y="210" width="640" height="110" rx="12" fill="url(#shimmer-grad)" class="shimmer s2"/>
+
+        <circle cx="108" cy="265" r="24" fill="rgba(139,92,246,0.28)" stroke="#8b5cf6" stroke-width="1.4"/>
+        <text x="108" y="272" text-anchor="middle" font-size="20" fill="#ddd6fe" font-family="JetBrains Mono,monospace" font-weight="700">S</text>
+
+        <text x="146" y="238" font-size="14" font-weight="700" fill="#ddd6fe" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">Tier 2 · 会话记忆</tspan><tspan class="le">Tier 2 · Session Memory</tspan>
+        </text>
+        <text x="146" y="256" font-size="11" fill="#ddd6fe" font-family="JetBrains Mono,monospace" opacity=".85">
+          <tspan class="lz">.claude/session/&lt;id&gt;.json · 临时文件</tspan><tspan class="le">.claude/session/&lt;id&gt;.json · ephemeral</tspan>
+        </text>
+
+        <text x="146" y="280" font-size="10" fill="#ddd6fe" font-family="JetBrains Mono,monospace" opacity=".8">
+          <tspan class="lz">范围：每会话独立 · 临时态</tspan><tspan class="le">Scope: per-session · ephemeral</tspan>
+        </text>
+        <text x="146" y="296" font-size="10" fill="#ddd6fe" font-family="JetBrains Mono,monospace" opacity=".8">
+          <tspan class="lz">生命周期：会话结束即消</tspan><tspan class="le">Lifetime: until session ends</tspan>
+        </text>
+        <text x="146" y="312" font-size="10" fill="#ddd6fe" font-family="JetBrains Mono,monospace" opacity=".8">
+          <tspan class="lz">示例：TodoList / 草稿纸 / 临时态</tspan><tspan class="le">Ex: TodoList / scratchpad / temp state</tspan>
+        </text>
+
+        <!-- 3 mini file icons -->
+        <g>
+          <rect x="460" y="232" width="38" height="48" rx="3" fill="rgba(139,92,246,0.18)" stroke="#8b5cf6" stroke-width="0.9" class="file-fade"/>
+          <line x1="467" y1="244" x2="491" y2="244" stroke="#ddd6fe" stroke-width="0.6" opacity=".7"/>
+          <line x1="467" y1="252" x2="491" y2="252" stroke="#ddd6fe" stroke-width="0.6" opacity=".7"/>
+          <line x1="467" y1="260" x2="485" y2="260" stroke="#ddd6fe" stroke-width="0.6" opacity=".7"/>
+          <text x="479" y="294" text-anchor="middle" font-size="10" fill="#ddd6fe" font-family="JetBrains Mono,monospace" opacity=".75">todo</text>
+
+          <rect x="506" y="232" width="38" height="48" rx="3" fill="rgba(139,92,246,0.18)" stroke="#8b5cf6" stroke-width="0.9" class="file-fade f2"/>
+          <line x1="513" y1="244" x2="537" y2="244" stroke="#ddd6fe" stroke-width="0.6" opacity=".7"/>
+          <line x1="513" y1="252" x2="537" y2="252" stroke="#ddd6fe" stroke-width="0.6" opacity=".7"/>
+          <line x1="513" y1="260" x2="531" y2="260" stroke="#ddd6fe" stroke-width="0.6" opacity=".7"/>
+          <text x="525" y="294" text-anchor="middle" font-size="10" fill="#ddd6fe" font-family="JetBrains Mono,monospace" opacity=".75">scrp</text>
+
+          <rect x="552" y="232" width="38" height="48" rx="3" fill="rgba(139,92,246,0.18)" stroke="#8b5cf6" stroke-width="0.9" class="file-fade f3"/>
+          <line x1="559" y1="244" x2="583" y2="244" stroke="#ddd6fe" stroke-width="0.6" opacity=".7"/>
+          <line x1="559" y1="252" x2="583" y2="252" stroke="#ddd6fe" stroke-width="0.6" opacity=".7"/>
+          <line x1="559" y1="260" x2="577" y2="260" stroke="#ddd6fe" stroke-width="0.6" opacity=".7"/>
+          <text x="571" y="294" text-anchor="middle" font-size="10" fill="#ddd6fe" font-family="JetBrains Mono,monospace" opacity=".75">tmp</text>
+        </g>
+
+        <g>
+          <rect x="612" y="240" width="80" height="52" rx="6" fill="rgba(139,92,246,0.15)" stroke="#8b5cf6" stroke-width="0.8" stroke-dasharray="2,2"/>
+          <text x="652" y="258" text-anchor="middle" font-size="10" fill="#ddd6fe" font-family="JetBrains Mono,monospace" opacity=".7">
+            <tspan class="lz">时效</tspan><tspan class="le">TTL</tspan>
+          </text>
+          <text x="652" y="278" text-anchor="middle" font-size="14" font-weight="700" fill="#ddd6fe" font-family="JetBrains Mono,monospace">s</text>
+        </g>
+      </g>
+
+      <!-- flow arrows between T2 and T3 -->
+      <g>
+        <path d="M 300 320 L 300 348" stroke="#10b981" stroke-width="1.6" fill="none" marker-end="url(#arr-emerald)" class="flow-down" opacity=".8"/>
+        <text x="310" y="338" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">沉淀</tspan><tspan class="le">commit</tspan>
+        </text>
+        <path d="M 400 348 L 400 320" stroke="#22d3ee" stroke-width="1.6" fill="none" marker-end="url(#arr-cyan)" class="flow-up" opacity=".8"/>
+        <text x="410" y="338" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">召回</tspan><tspan class="le">recall</tspan>
+        </text>
+      </g>
+
+      <!-- ============ TIER 3: Long-term Memory (emerald) ============ -->
+      <g>
+        <rect x="70" y="350" width="640" height="110" rx="12" fill="url(#g-longterm)" stroke="#10b981" stroke-width="1.4"/>
+        <rect x="70" y="350" width="640" height="110" rx="12" fill="url(#shimmer-grad)" class="shimmer s3"/>
+
+        <circle cx="108" cy="405" r="24" fill="rgba(16,185,129,0.28)" stroke="#10b981" stroke-width="1.4"/>
+        <text x="108" y="412" text-anchor="middle" font-size="20" fill="#a7f3d0" font-family="JetBrains Mono,monospace" font-weight="700">L</text>
+
+        <text x="146" y="378" font-size="14" font-weight="700" fill="#a7f3d0" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">Tier 3 · 长期记忆</tspan><tspan class="le">Tier 3 · Long-term Memory</tspan>
+        </text>
+        <text x="146" y="396" font-size="11" fill="#a7f3d0" font-family="JetBrains Mono,monospace" opacity=".85">
+          <tspan class="lz">.claude/memory/*.md · 持久文件</tspan><tspan class="le">.claude/memory/*.md · persistent</tspan>
+        </text>
+
+        <text x="146" y="420" font-size="10" fill="#a7f3d0" font-family="JetBrains Mono,monospace" opacity=".8">
+          <tspan class="lz">范围：跨会话 · 项目级持久</tspan><tspan class="le">Scope: cross-session · project-persistent</tspan>
+        </text>
+        <text x="146" y="436" font-size="10" fill="#a7f3d0" font-family="JetBrains Mono,monospace" opacity=".8">
+          <tspan class="lz">生命周期：永久 · Git 版本可控</tspan><tspan class="le">Lifetime: forever · Git-controlled</tspan>
+        </text>
+        <text x="146" y="452" font-size="10" fill="#a7f3d0" font-family="JetBrains Mono,monospace" opacity=".8">
+          <tspan class="lz">示例：团队知识 / 自定义指令</tspan><tspan class="le">Ex: team knowledge / custom instructions</tspan>
+        </text>
+
+        <!-- 3 mini file icons (markdown files) -->
+        <g>
+          <rect x="460" y="372" width="38" height="48" rx="3" fill="rgba(16,185,129,0.18)" stroke="#10b981" stroke-width="0.9" class="file-fade"/>
+          <text x="479" y="392" text-anchor="middle" font-size="10" font-weight="700" fill="#a7f3d0" font-family="JetBrains Mono,monospace">MD</text>
+          <line x1="467" y1="402" x2="491" y2="402" stroke="#a7f3d0" stroke-width="0.6" opacity=".7"/>
+          <line x1="467" y1="410" x2="485" y2="410" stroke="#a7f3d0" stroke-width="0.6" opacity=".7"/>
+          <text x="479" y="434" text-anchor="middle" font-size="10" fill="#a7f3d0" font-family="JetBrains Mono,monospace" opacity=".75">team</text>
+
+          <rect x="506" y="372" width="38" height="48" rx="3" fill="rgba(16,185,129,0.18)" stroke="#10b981" stroke-width="0.9" class="file-fade f2"/>
+          <text x="525" y="392" text-anchor="middle" font-size="10" font-weight="700" fill="#a7f3d0" font-family="JetBrains Mono,monospace">MD</text>
+          <line x1="513" y1="402" x2="537" y2="402" stroke="#a7f3d0" stroke-width="0.6" opacity=".7"/>
+          <line x1="513" y1="410" x2="531" y2="410" stroke="#a7f3d0" stroke-width="0.6" opacity=".7"/>
+          <text x="525" y="434" text-anchor="middle" font-size="10" fill="#a7f3d0" font-family="JetBrains Mono,monospace" opacity=".75">rules</text>
+
+          <rect x="552" y="372" width="38" height="48" rx="3" fill="rgba(16,185,129,0.18)" stroke="#10b981" stroke-width="0.9" class="file-fade f3"/>
+          <text x="571" y="392" text-anchor="middle" font-size="10" font-weight="700" fill="#a7f3d0" font-family="JetBrains Mono,monospace">MD</text>
+          <line x1="559" y1="402" x2="583" y2="402" stroke="#a7f3d0" stroke-width="0.6" opacity=".7"/>
+          <line x1="559" y1="410" x2="577" y2="410" stroke="#a7f3d0" stroke-width="0.6" opacity=".7"/>
+          <text x="571" y="434" text-anchor="middle" font-size="10" fill="#a7f3d0" font-family="JetBrains Mono,monospace" opacity=".75">prefs</text>
+        </g>
+
+        <g>
+          <rect x="612" y="380" width="80" height="52" rx="6" fill="rgba(16,185,129,0.15)" stroke="#10b981" stroke-width="0.8" stroke-dasharray="2,2"/>
+          <text x="652" y="398" text-anchor="middle" font-size="10" fill="#a7f3d0" font-family="JetBrains Mono,monospace" opacity=".7">
+            <tspan class="lz">时效</tspan><tspan class="le">TTL</tspan>
+          </text>
+          <text x="652" y="420" text-anchor="middle" font-size="18" font-weight="700" fill="#a7f3d0" font-family="JetBrains Mono,monospace">∞</text>
+        </g>
+      </g>
+
+      <!-- ============ RIGHT COLUMN: Team Sync (amber) ============ -->
+      <g>
+        <!-- pulsing halo behind cloud -->
+        <rect x="734" y="70" width="170" height="390" rx="18" fill="url(#cloud-halo)" class="cloud-ping"/>
+
+        <!-- Cloud column panel -->
+        <rect x="744" y="80" width="150" height="370" rx="14" fill="rgba(245,158,11,0.10)" stroke="#f59e0b" stroke-width="1.3" stroke-dasharray="5,3"/>
+
+        <!-- header -->
+        <text x="819" y="104" text-anchor="middle" font-size="12" font-weight="700" fill="#fcd34d" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">团队同步</tspan><tspan class="le">Team Sync</tspan>
+        </text>
+        <text x="819" y="120" text-anchor="middle" font-size="10" fill="#fcd34d" font-family="JetBrains Mono,monospace" opacity=".75">
+          <tspan class="lz">Anthropic Cloud</tspan><tspan class="le">Anthropic Cloud</tspan>
+        </text>
+
+        <!-- CLOUD ICON -->
+        <g filter="url(#glow-amber)">
+          <path d="M 770 195
+                   C 760 195, 756 180, 770 178
+                   C 770 166, 790 160, 800 172
+                   C 815 165, 835 178, 830 192
+                   C 845 196, 842 214, 830 214
+                   L 770 214
+                   C 758 214, 754 200, 770 195 Z"
+                fill="rgba(245,158,11,0.28)" stroke="#f59e0b" stroke-width="1.5"/>
+        </g>
+
+        <!-- Bidirectional arrows in cloud -->
+        <g>
+          <path d="M 790 190 L 790 205" stroke="#fcd34d" stroke-width="1.4" fill="none" marker-end="url(#arr-amber)"/>
+          <path d="M 810 205 L 810 190" stroke="#fcd34d" stroke-width="1.4" fill="none" marker-end="url(#arr-amber)"/>
+        </g>
+
+        <!-- Specs / features -->
+        <g>
+          <rect x="754" y="238" width="130" height="22" rx="4" fill="rgba(245,158,11,0.12)" stroke="#f59e0b" stroke-width="0.8"/>
+          <text x="819" y="253" text-anchor="middle" font-size="10" font-weight="600" fill="#fcd34d" font-family="JetBrains Mono,monospace">
+            <tspan class="lz">双向同步</tspan><tspan class="le">Bidirectional</tspan>
+          </text>
+        </g>
+        <g>
+          <rect x="754" y="268" width="130" height="22" rx="4" fill="rgba(245,158,11,0.12)" stroke="#f59e0b" stroke-width="0.8"/>
+          <text x="819" y="283" text-anchor="middle" font-size="10" font-weight="600" fill="#fcd34d" font-family="JetBrains Mono,monospace">
+            <tspan class="lz">ETag 增量同步</tspan><tspan class="le">ETag delta sync</tspan>
+          </text>
+        </g>
+        <g>
+          <rect x="754" y="298" width="130" height="22" rx="4" fill="rgba(245,158,11,0.12)" stroke="#f59e0b" stroke-width="0.8"/>
+          <text x="819" y="313" text-anchor="middle" font-size="10" font-weight="600" fill="#fcd34d" font-family="JetBrains Mono,monospace">
+            <tspan class="lz">2s 防抖节流</tspan><tspan class="le">2s debounce</tspan>
+          </text>
+        </g>
+
+        <!-- data flow metrics -->
+        <g>
+          <line x1="764" y1="340" x2="874" y2="340" stroke="var(--subtle)" stroke-width="0.6" stroke-dasharray="2,2" opacity=".6"/>
+          <text x="819" y="358" text-anchor="middle" font-size="10" fill="#fcd34d" font-family="JetBrains Mono,monospace" opacity=".8">
+            <tspan class="lz">上传：变更即发</tspan><tspan class="le">Upload: on change</tspan>
+          </text>
+          <text x="819" y="374" text-anchor="middle" font-size="10" fill="#fcd34d" font-family="JetBrains Mono,monospace" opacity=".8">
+            <tspan class="lz">下载：启动时拉</tspan><tspan class="le">Download: on start</tspan>
+          </text>
+          <text x="819" y="390" text-anchor="middle" font-size="10" fill="#fcd34d" font-family="JetBrains Mono,monospace" opacity=".8">
+            <tspan class="lz">冲突：版本向量比对</tspan><tspan class="le">Conflict: vector clock</tspan>
+          </text>
+        </g>
+
+        <!-- status badge -->
+        <g>
+          <rect x="764" y="410" width="110" height="28" rx="6" fill="rgba(245,158,11,0.22)" stroke="#f59e0b" stroke-width="1"/>
+          <circle cx="776" cy="424" r="3" fill="#10b981">
+            <animate attributeName="opacity" values="1;.3;1" dur="1.5s" repeatCount="indefinite"/>
+          </circle>
+          <text x="819" y="429" text-anchor="middle" font-size="10" font-weight="700" fill="#fcd34d" font-family="JetBrains Mono,monospace">
+            <tspan class="lz">在线 · 已同步</tspan><tspan class="le">online · synced</tspan>
+          </text>
+        </g>
+      </g>
+
+      <!-- Horizontal sync arrows from Tier 3 to cloud column -->
+      <g>
+        <path d="M 710 405 C 722 405, 730 405, 744 405" stroke="#f59e0b" stroke-width="1.6" fill="none" marker-end="url(#arr-amber)" class="flow-up" opacity=".8"/>
+        <text x="727" y="398" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">push</tspan><tspan class="le">push</tspan>
+        </text>
+        <path d="M 744 425 C 730 425, 722 425, 710 425" stroke="#f59e0b" stroke-width="1.6" fill="none" marker-end="url(#arr-amber)" class="flow-down" opacity=".8"/>
+        <text x="727" y="442" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">pull</tspan><tspan class="le">pull</tspan>
+        </text>
+      </g>
+
+      <!-- Bottom summary strip -->
+      <g>
+        <line x1="70" y1="484" x2="894" y2="484" stroke="var(--subtle)" stroke-width="0.6" stroke-dasharray="2,3" opacity=".55"/>
+        <text x="82" y="504" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">⏱ 时效递增  ms → s → ∞     </tspan><tspan class="le">⏱ TTL increasing  ms → s → ∞    </tspan>
+        </text>
+        <text x="82" y="520" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">💾 持久化：内存态 → 本地文件 → 云同步 </tspan><tspan class="le">💾 Persistence: in-mem → local file → cloud</tspan>
+        </text>
+        <text x="894" y="504" text-anchor="end" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">Source: src/memory/ · .claude/</tspan><tspan class="le">Source: src/memory/ · .claude/</tspan>
+        </text>
+        <text x="894" y="520" text-anchor="end" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">v2.1.88 · 3 tiers + team sync</tspan><tspan class="le">v2.1.88 · 3 tiers + team sync</tspan>
+        </text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="legend">
+    <div class="lg">
+      <div class="lg-hdr">
+        <span class="lg-dot" style="background:#22d3ee"></span>
+        <span class="lg-name">Working</span>
+        <span class="lg-code">· cyan</span>
+      </div>
+      <div class="lg-desc"><span class="lz">LLM 上下文窗口，~200K tokens。</span><span class="le">LLM context window, ~200K tokens.</span></div>
+      <div class="lg-use"><span class="lz">示例：最新消息、活跃工具输出</span><span class="le">Ex: recent msgs, tool outputs</span></div>
+    </div>
+    <div class="lg">
+      <div class="lg-hdr">
+        <span class="lg-dot" style="background:#8b5cf6"></span>
+        <span class="lg-name">Session</span>
+        <span class="lg-code">· violet</span>
+      </div>
+      <div class="lg-desc"><span class="lz">.claude/session/&lt;id&gt;.json，临时态。</span><span class="le">.claude/session/&lt;id&gt;.json, ephemeral.</span></div>
+      <div class="lg-use"><span class="lz">示例：TodoList、scratchpad、临时状态</span><span class="le">Ex: TodoList, scratchpad, temp state</span></div>
+    </div>
+    <div class="lg">
+      <div class="lg-hdr">
+        <span class="lg-dot" style="background:#10b981"></span>
+        <span class="lg-name">Long-term</span>
+        <span class="lg-code">· emerald</span>
+      </div>
+      <div class="lg-desc"><span class="lz">.claude/memory/*.md，永久 · Git 可控。</span><span class="le">.claude/memory/*.md, forever · Git-controlled.</span></div>
+      <div class="lg-use"><span class="lz">示例：团队知识、自定义指令</span><span class="le">Ex: team knowledge, custom instructions</span></div>
+    </div>
+    <div class="lg">
+      <div class="lg-hdr">
+        <span class="lg-dot" style="background:#f59e0b"></span>
+        <span class="lg-name">Team Sync</span>
+        <span class="lg-code">· amber</span>
+      </div>
+      <div class="lg-desc"><span class="lz">云端双向 · ETag 增量 · 2s 防抖。</span><span class="le">Bidirectional cloud · ETag delta · 2s debounce.</span></div>
+      <div class="lg-use"><span class="lz">用途：团队知识共享</span><span class="le">Use: team knowledge sharing</span></div>
+    </div>
+  </div>
+
+  <footer>
+    <span class="lz">数据来源：Claude Code 2.1.88 · src/memory/ · .claude/ 目录结构 · 三层记忆分层 + Anthropic 云同步</span>
+    <span class="le">Source: Claude Code 2.1.88 · src/memory/ · .claude/ directory · 3-tier memory + Anthropic cloud sync</span>
+  </footer>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

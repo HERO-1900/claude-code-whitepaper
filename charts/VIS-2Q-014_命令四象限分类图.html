@@ -1,0 +1,493 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VIS-2Q-014 命令四象限分类图 / Command Quadrant Classification</title>
+<style>
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;}
+.wrap{max-width:1000px;margin:0 auto;padding:24px 20px 48px;}
+.toolbar{display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px;}
+.toolbar button{background:var(--panel);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;transition:opacity .2s;}
+.toolbar button:hover{opacity:.8;}
+.hdr{margin-bottom:18px;}
+.hdr h1{font-size:22px;font-weight:700;letter-spacing:.3px;margin-bottom:6px;}
+.hdr .sub{color:var(--muted);font-size:13px;}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:18px;}
+.chart{width:100%;height:auto;display:block;}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center;}
+.stat .v{font-size:22px;font-weight:700;color:var(--emerald);margin-bottom:4px;}
+.stat .l{font-size:11px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;font-size:11px;color:var(--muted);}
+.legend .it{display:flex;align-items:center;gap:6px;}
+.legend .dot{width:10px;height:10px;border-radius:2px;}
+.footnote{color:var(--muted);font-size:11px;margin-top:10px;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="toolbar">
+    <button onclick="cycleTheme()">
+      <span class="lz">主题</span><span class="le">Theme</span>
+    </button>
+    <button onclick="toggleLang()">
+      <span class="lz">EN</span><span class="le">中</span>
+    </button>
+  </div>
+
+  <div class="hdr">
+    <h1>
+      <span class="lz">命令四象限分类图</span>
+      <span class="le">Command Quadrant Classification</span>
+    </h1>
+    <div class="sub">
+      <span class="lz">Claude Code 40+ 斜杠命令按「本地/远程 × 标准/进阶」两轴四象限分类</span>
+      <span class="le">40+ slash commands classified by Local/Remote × Standard/Advanced axes</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <svg class="chart" viewBox="0 0 920 540" xmlns="http://www.w3.org/2000/svg" role="img">
+      <defs>
+        <linearGradient id="gq1" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#10b981" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="#10b981" stop-opacity="0.04"/>
+        </linearGradient>
+        <linearGradient id="gq2" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f97316" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="#f97316" stop-opacity="0.04"/>
+        </linearGradient>
+        <linearGradient id="gq3" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.04"/>
+        </linearGradient>
+        <linearGradient id="gq4" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.04"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Grid frame: 2x2 at (60,50)->(860,470). Cell size 400 x 210. -->
+      <!-- Q1 top-left: Local + Standard = 用户命令 -->
+      <!-- Q2 top-right: Remote + Standard = 内部命令 (per axis: X右=Remote, Y上=Standard) -->
+      <!-- Q3 bottom-right: Remote + Advanced = 远程命令 -->
+      <!-- Q4 bottom-left: Local + Advanced = 实验命令 -->
+
+      <!-- Q1 user commands (top-left) -->
+      <rect x="60" y="50" width="400" height="210" fill="url(#gq1)" stroke="#10b981" stroke-width="1.5" rx="4"/>
+      <rect x="60" y="50" width="400" height="26" fill="#10b981" rx="4"/>
+      <rect x="60" y="70" width="400" height="6" fill="#10b981"/>
+      <text x="76" y="68" fill="#ffffff" font-size="13" font-weight="700">
+        <tspan class="lz">Q1 · 用户命令</tspan>
+        <tspan class="le">Q1 · User Commands</tspan>
+      </text>
+      <text x="448" y="68" text-anchor="end" fill="#ffffff" font-size="11" font-weight="600" opacity="0.9">~15</text>
+
+      <!-- Q1 icon circle -->
+      <circle cx="84" cy="104" r="13" fill="#10b981" opacity="0.18" stroke="#10b981" stroke-width="1.2"/>
+      <text x="84" y="109" text-anchor="middle" fill="#10b981" font-size="14" font-weight="700">U</text>
+
+      <text x="106" y="100" fill="var(--text)" font-size="12" font-weight="600">
+        <tspan class="lz">用户主动控制 · Safe + Standard</tspan>
+        <tspan class="le">User-initiated control · Safe + Standard</tspan>
+      </text>
+      <text x="106" y="116" fill="var(--muted)" font-size="11">
+        <tspan class="lz">日常对话与会话管理，最常用入口</tspan>
+        <tspan class="le">Day-to-day chat &amp; session management</tspan>
+      </text>
+
+      <!-- Q1 examples list -->
+      <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="11">
+        <rect x="78" y="136" width="76" height="22" rx="4" fill="#10b981" fill-opacity="0.12" stroke="#10b981" stroke-opacity="0.35"/>
+        <text x="116" y="151" text-anchor="middle" fill="#10b981" font-weight="600">/help</text>
+
+        <rect x="164" y="136" width="76" height="22" rx="4" fill="#10b981" fill-opacity="0.12" stroke="#10b981" stroke-opacity="0.35"/>
+        <text x="202" y="151" text-anchor="middle" fill="#10b981" font-weight="600">/clear</text>
+
+        <rect x="250" y="136" width="80" height="22" rx="4" fill="#10b981" fill-opacity="0.12" stroke="#10b981" stroke-opacity="0.35"/>
+        <text x="290" y="151" text-anchor="middle" fill="#10b981" font-weight="600">/status</text>
+
+        <rect x="340" y="136" width="72" height="22" rx="4" fill="#10b981" fill-opacity="0.12" stroke="#10b981" stroke-opacity="0.35"/>
+        <text x="376" y="151" text-anchor="middle" fill="#10b981" font-weight="600">/exit</text>
+
+        <rect x="78" y="166" width="84" height="22" rx="4" fill="#10b981" fill-opacity="0.12" stroke="#10b981" stroke-opacity="0.35"/>
+        <text x="120" y="181" text-anchor="middle" fill="#10b981" font-weight="600">/doctor</text>
+
+        <rect x="172" y="166" width="88" height="22" rx="4" fill="#10b981" fill-opacity="0.12" stroke="#10b981" stroke-opacity="0.35"/>
+        <text x="216" y="181" text-anchor="middle" fill="#10b981" font-weight="600">/compact</text>
+
+        <rect x="270" y="166" width="80" height="22" rx="4" fill="#10b981" fill-opacity="0.12" stroke="#10b981" stroke-opacity="0.35"/>
+        <text x="310" y="181" text-anchor="middle" fill="#10b981" font-weight="600">/config</text>
+
+        <rect x="360" y="166" width="72" height="22" rx="4" fill="#10b981" fill-opacity="0.12" stroke="#10b981" stroke-opacity="0.35"/>
+        <text x="396" y="181" text-anchor="middle" fill="#10b981" font-weight="600">/cost</text>
+      </g>
+
+      <!-- Q1 footer tag -->
+      <text x="78" y="210" fill="var(--muted)" font-size="10">
+        <tspan class="lz">[安全等级] 无破坏性 · 可随时调用</tspan>
+        <tspan class="le">[Safety] Non-destructive · always callable</tspan>
+      </text>
+      <text x="78" y="228" fill="var(--muted)" font-size="10">
+        <tspan class="lz">[典型场景] 新手上手 / 查状态 / 开新话题</tspan>
+        <tspan class="le">[Use case] Onboarding / status / new thread</tspan>
+      </text>
+      <text x="78" y="246" fill="var(--emerald)" font-size="10" font-weight="600">
+        <tspan class="lz">占比 38% · 最常用象限</tspan>
+        <tspan class="le">38% share · most used quadrant</tspan>
+      </text>
+
+      <!-- Q2 internal commands (top-right) - Standard + Remote -->
+      <rect x="460" y="50" width="400" height="210" fill="url(#gq4)" stroke="#8b5cf6" stroke-width="1.5" rx="4"/>
+      <rect x="460" y="50" width="400" height="26" fill="#8b5cf6" rx="4"/>
+      <rect x="460" y="70" width="400" height="6" fill="#8b5cf6"/>
+      <text x="476" y="68" fill="#ffffff" font-size="13" font-weight="700">
+        <tspan class="lz">Q2 · 内部命令</tspan>
+        <tspan class="le">Q2 · Internal Commands</tspan>
+      </text>
+      <text x="848" y="68" text-anchor="end" fill="#ffffff" font-size="11" font-weight="600" opacity="0.9">~12</text>
+
+      <circle cx="484" cy="104" r="13" fill="#8b5cf6" opacity="0.18" stroke="#8b5cf6" stroke-width="1.2"/>
+      <text x="484" y="109" text-anchor="middle" fill="#8b5cf6" font-size="14" font-weight="700">I</text>
+
+      <text x="506" y="100" fill="var(--text)" font-size="12" font-weight="600">
+        <tspan class="lz">系统级 · Standard + Remote</tspan>
+        <tspan class="le">System-level · Standard + Remote</tspan>
+      </text>
+      <text x="506" y="116" fill="var(--muted)" font-size="11">
+        <tspan class="lz">默认隐藏，内部钩子与追踪</tspan>
+        <tspan class="le">Hidden by default, internal hooks &amp; traces</tspan>
+      </text>
+
+      <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="11">
+        <rect x="478" y="136" width="96" height="22" rx="4" fill="#8b5cf6" fill-opacity="0.12" stroke="#8b5cf6" stroke-opacity="0.35"/>
+        <text x="526" y="151" text-anchor="middle" fill="#8b5cf6" font-weight="600">/_internal</text>
+
+        <rect x="584" y="136" width="80" height="22" rx="4" fill="#8b5cf6" fill-opacity="0.12" stroke="#8b5cf6" stroke-opacity="0.35"/>
+        <text x="624" y="151" text-anchor="middle" fill="#8b5cf6" font-weight="600">/_trace</text>
+
+        <rect x="674" y="136" width="76" height="22" rx="4" fill="#8b5cf6" fill-opacity="0.12" stroke="#8b5cf6" stroke-opacity="0.35"/>
+        <text x="712" y="151" text-anchor="middle" fill="#8b5cf6" font-weight="600">/_hook</text>
+
+        <rect x="760" y="136" width="88" height="22" rx="4" fill="#8b5cf6" fill-opacity="0.12" stroke="#8b5cf6" stroke-opacity="0.35"/>
+        <text x="804" y="151" text-anchor="middle" fill="#8b5cf6" font-weight="600">/_context</text>
+
+        <rect x="478" y="166" width="84" height="22" rx="4" fill="#8b5cf6" fill-opacity="0.12" stroke="#8b5cf6" stroke-opacity="0.35"/>
+        <text x="520" y="181" text-anchor="middle" fill="#8b5cf6" font-weight="600">/_token</text>
+
+        <rect x="572" y="166" width="92" height="22" rx="4" fill="#8b5cf6" fill-opacity="0.12" stroke="#8b5cf6" stroke-opacity="0.35"/>
+        <text x="618" y="181" text-anchor="middle" fill="#8b5cf6" font-weight="600">/_metrics</text>
+
+        <rect x="674" y="166" width="76" height="22" rx="4" fill="#8b5cf6" fill-opacity="0.12" stroke="#8b5cf6" stroke-opacity="0.35"/>
+        <text x="712" y="181" text-anchor="middle" fill="#8b5cf6" font-weight="600">/_log</text>
+
+        <rect x="760" y="166" width="88" height="22" rx="4" fill="#8b5cf6" fill-opacity="0.12" stroke="#8b5cf6" stroke-opacity="0.35"/>
+        <text x="804" y="181" text-anchor="middle" fill="#8b5cf6" font-weight="600">/_cache</text>
+      </g>
+
+      <text x="478" y="210" fill="var(--muted)" font-size="10">
+        <tspan class="lz">[安全等级] 需显式开启 · 仅调试可见</tspan>
+        <tspan class="le">[Safety] Opt-in only · debug-visible</tspan>
+      </text>
+      <text x="478" y="228" fill="var(--muted)" font-size="10">
+        <tspan class="lz">[典型场景] 源码排障 / 性能诊断 / 埋点</tspan>
+        <tspan class="le">[Use case] Source debug / perf / telemetry</tspan>
+      </text>
+      <text x="478" y="246" fill="#8b5cf6" font-size="10" font-weight="600">
+        <tspan class="lz">占比 30% · 开发者可见</tspan>
+        <tspan class="le">30% share · developer-visible</tspan>
+      </text>
+
+      <!-- Q3 remote commands (bottom-right) Advanced + Remote -->
+      <rect x="460" y="260" width="400" height="210" fill="url(#gq3)" stroke="#22d3ee" stroke-width="1.5" rx="4"/>
+      <rect x="460" y="260" width="400" height="26" fill="#22d3ee" rx="4"/>
+      <rect x="460" y="280" width="400" height="6" fill="#22d3ee"/>
+      <text x="476" y="278" fill="#0b3a44" font-size="13" font-weight="700">
+        <tspan class="lz">Q3 · 远程命令</tspan>
+        <tspan class="le">Q3 · Remote Commands</tspan>
+      </text>
+      <text x="848" y="278" text-anchor="end" fill="#0b3a44" font-size="11" font-weight="600" opacity="0.9">~5</text>
+
+      <circle cx="484" cy="314" r="13" fill="#22d3ee" opacity="0.22" stroke="#22d3ee" stroke-width="1.2"/>
+      <text x="484" y="319" text-anchor="middle" fill="#22d3ee" font-size="14" font-weight="700">R</text>
+
+      <text x="506" y="310" fill="var(--text)" font-size="12" font-weight="600">
+        <tspan class="lz">外部集成 · Advanced + Remote</tspan>
+        <tspan class="le">External integration · Advanced + Remote</tspan>
+      </text>
+      <text x="506" y="326" fill="var(--muted)" font-size="11">
+        <tspan class="lz">回传 Anthropic · 社区协作</tspan>
+        <tspan class="le">Send to Anthropic · community sharing</tspan>
+      </text>
+
+      <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="11">
+        <rect x="478" y="346" width="76" height="22" rx="4" fill="#22d3ee" fill-opacity="0.14" stroke="#22d3ee" stroke-opacity="0.4"/>
+        <text x="516" y="361" text-anchor="middle" fill="#22d3ee" font-weight="600">/bug</text>
+
+        <rect x="564" y="346" width="96" height="22" rx="4" fill="#22d3ee" fill-opacity="0.14" stroke="#22d3ee" stroke-opacity="0.4"/>
+        <text x="612" y="361" text-anchor="middle" fill="#22d3ee" font-weight="600">/feedback</text>
+
+        <rect x="670" y="346" width="80" height="22" rx="4" fill="#22d3ee" fill-opacity="0.14" stroke="#22d3ee" stroke-opacity="0.4"/>
+        <text x="710" y="361" text-anchor="middle" fill="#22d3ee" font-weight="600">/share</text>
+
+        <rect x="760" y="346" width="88" height="22" rx="4" fill="#22d3ee" fill-opacity="0.14" stroke="#22d3ee" stroke-opacity="0.4"/>
+        <text x="804" y="361" text-anchor="middle" fill="#22d3ee" font-weight="600">/release</text>
+
+        <rect x="478" y="376" width="96" height="22" rx="4" fill="#22d3ee" fill-opacity="0.14" stroke="#22d3ee" stroke-opacity="0.4"/>
+        <text x="526" y="391" text-anchor="middle" fill="#22d3ee" font-weight="600">/telemetry</text>
+      </g>
+
+      <text x="478" y="420" fill="var(--muted)" font-size="10">
+        <tspan class="lz">[安全等级] 触发网络请求 · 需用户授权</tspan>
+        <tspan class="le">[Safety] Network calls · user consent</tspan>
+      </text>
+      <text x="478" y="438" fill="var(--muted)" font-size="10">
+        <tspan class="lz">[典型场景] 上报 Bug / 分享会话 / 发送反馈</tspan>
+        <tspan class="le">[Use case] Report bug / share / send feedback</tspan>
+      </text>
+      <text x="478" y="456" fill="#22d3ee" font-size="10" font-weight="600">
+        <tspan class="lz">占比 12% · 唯一联网象限</tspan>
+        <tspan class="le">12% share · only online quadrant</tspan>
+      </text>
+
+      <!-- Q4 experimental commands (bottom-left) Advanced + Local -->
+      <rect x="60" y="260" width="400" height="210" fill="url(#gq2)" stroke="#f97316" stroke-width="1.5" rx="4"/>
+      <rect x="60" y="260" width="400" height="26" fill="#f97316" rx="4"/>
+      <rect x="60" y="280" width="400" height="6" fill="#f97316"/>
+      <text x="76" y="278" fill="#ffffff" font-size="13" font-weight="700">
+        <tspan class="lz">Q4 · 实验命令</tspan>
+        <tspan class="le">Q4 · Experimental Commands</tspan>
+      </text>
+      <text x="448" y="278" text-anchor="end" fill="#ffffff" font-size="11" font-weight="600" opacity="0.9">~8</text>
+
+      <circle cx="84" cy="314" r="13" fill="#f97316" opacity="0.22" stroke="#f97316" stroke-width="1.2"/>
+      <text x="84" y="319" text-anchor="middle" fill="#f97316" font-size="14" font-weight="700">E</text>
+
+      <text x="106" y="310" fill="var(--text)" font-size="12" font-weight="600">
+        <tspan class="lz">测试探索 · Advanced + Local</tspan>
+        <tspan class="le">Testing &amp; exploration · Advanced + Local</tspan>
+      </text>
+      <text x="106" y="326" fill="var(--muted)" font-size="11">
+        <tspan class="lz">开发中 API，行为可能变化</tspan>
+        <tspan class="le">Dev-in-progress APIs, may change</tspan>
+      </text>
+
+      <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="11">
+        <rect x="78" y="346" width="80" height="22" rx="4" fill="#f97316" fill-opacity="0.14" stroke="#f97316" stroke-opacity="0.4"/>
+        <text x="118" y="361" text-anchor="middle" fill="#f97316" font-weight="600">/debug</text>
+
+        <rect x="168" y="346" width="72" height="22" rx="4" fill="#f97316" fill-opacity="0.14" stroke="#f97316" stroke-opacity="0.4"/>
+        <text x="204" y="361" text-anchor="middle" fill="#f97316" font-weight="600">/eval</text>
+
+        <rect x="250" y="346" width="84" height="22" rx="4" fill="#f97316" fill-opacity="0.14" stroke="#f97316" stroke-opacity="0.4"/>
+        <text x="292" y="361" text-anchor="middle" fill="#f97316" font-weight="600">/inspect</text>
+
+        <rect x="344" y="346" width="80" height="22" rx="4" fill="#f97316" fill-opacity="0.14" stroke="#f97316" stroke-opacity="0.4"/>
+        <text x="384" y="361" text-anchor="middle" fill="#f97316" font-weight="600">/replay</text>
+
+        <rect x="78" y="376" width="88" height="22" rx="4" fill="#f97316" fill-opacity="0.14" stroke="#f97316" stroke-opacity="0.4"/>
+        <text x="122" y="391" text-anchor="middle" fill="#f97316" font-weight="600">/snapshot</text>
+
+        <rect x="176" y="376" width="80" height="22" rx="4" fill="#f97316" fill-opacity="0.14" stroke="#f97316" stroke-opacity="0.4"/>
+        <text x="216" y="391" text-anchor="middle" fill="#f97316" font-weight="600">/bench</text>
+
+        <rect x="266" y="376" width="80" height="22" rx="4" fill="#f97316" fill-opacity="0.14" stroke="#f97316" stroke-opacity="0.4"/>
+        <text x="306" y="391" text-anchor="middle" fill="#f97316" font-weight="600">/mock</text>
+
+        <rect x="356" y="376" width="76" height="22" rx="4" fill="#f97316" fill-opacity="0.14" stroke="#f97316" stroke-opacity="0.4"/>
+        <text x="394" y="391" text-anchor="middle" fill="#f97316" font-weight="600">/flag</text>
+      </g>
+
+      <text x="78" y="420" fill="var(--muted)" font-size="10">
+        <tspan class="lz">[安全等级] 本地沙箱 · 不影响生产</tspan>
+        <tspan class="le">[Safety] Local sandbox · no prod impact</tspan>
+      </text>
+      <text x="78" y="438" fill="var(--muted)" font-size="10">
+        <tspan class="lz">[典型场景] A/B 评估 / 回放诊断 / 基线对比</tspan>
+        <tspan class="le">[Use case] A/B eval / replay / benchmark</tspan>
+      </text>
+      <text x="78" y="456" fill="#f97316" font-size="10" font-weight="600">
+        <tspan class="lz">占比 20% · 实验预留区</tspan>
+        <tspan class="le">20% share · experimental slot</tspan>
+      </text>
+
+      <!-- Center crosshairs (drawn after quadrants to stay on top) -->
+      <line x1="460" y1="50" x2="460" y2="470" stroke="var(--text)" stroke-width="2" opacity="0.55"/>
+      <line x1="60" y1="260" x2="860" y2="260" stroke="var(--text)" stroke-width="2" opacity="0.55"/>
+
+      <!-- Center origin marker -->
+      <circle cx="460" cy="260" r="6" fill="var(--bg)" stroke="var(--text)" stroke-width="1.6"/>
+      <circle cx="460" cy="260" r="2.2" fill="var(--text)"/>
+
+      <!-- Axis labels: X axis (bottom) -->
+      <text x="60" y="495" fill="var(--muted)" font-size="11" font-weight="600">
+        <tspan class="lz">← 本地 Local</tspan>
+        <tspan class="le">← Local</tspan>
+      </text>
+      <text x="460" y="495" text-anchor="middle" fill="var(--text)" font-size="11" font-weight="700">
+        <tspan class="lz">X 轴 · 部署位置</tspan>
+        <tspan class="le">X axis · Deployment</tspan>
+      </text>
+      <text x="860" y="495" text-anchor="end" fill="var(--muted)" font-size="11" font-weight="600">
+        <tspan class="lz">Remote 远程 →</tspan>
+        <tspan class="le">Remote →</tspan>
+      </text>
+
+      <!-- Axis labels: Y axis (rotated on left) -->
+      <text x="30" y="50" fill="var(--muted)" font-size="11" font-weight="600" transform="rotate(-90 30 50)">
+        <tspan class="lz">↑ 标准 Standard</tspan>
+        <tspan class="le">↑ Standard</tspan>
+      </text>
+      <text x="30" y="260" text-anchor="middle" fill="var(--text)" font-size="11" font-weight="700" transform="rotate(-90 30 260)">
+        <tspan class="lz">Y 轴 · 复杂度</tspan>
+        <tspan class="le">Y axis · Complexity</tspan>
+      </text>
+      <text x="30" y="470" text-anchor="end" fill="var(--muted)" font-size="11" font-weight="600" transform="rotate(-90 30 470)">
+        <tspan class="lz">Advanced 进阶 ↓</tspan>
+        <tspan class="le">Advanced ↓</tspan>
+      </text>
+
+      <!-- Center tick labels -->
+      <text x="470" y="256" fill="var(--muted)" font-size="10" font-style="italic">
+        <tspan class="lz">原点 · 40+ 命令交汇</tspan>
+        <tspan class="le">Origin · 40+ commands</tspan>
+      </text>
+
+      <!-- Bottom caption -->
+      <text x="460" y="524" text-anchor="middle" fill="var(--muted)" font-size="10">
+        <tspan class="lz">图 2Q-014 · 数据来源：cc-recovered-main/commands/ 目录遍历 · 2026-04</tspan>
+        <tspan class="le">Fig 2Q-014 · Source: walk of cc-recovered-main/commands/ · 2026-04</tspan>
+      </text>
+    </svg>
+
+    <div class="legend">
+      <div class="it"><span class="dot" style="background:#10b981"></span><span class="lz">Q1 用户命令</span><span class="le">Q1 User</span></div>
+      <div class="it"><span class="dot" style="background:#f97316"></span><span class="lz">Q4 实验命令</span><span class="le">Q4 Experimental</span></div>
+      <div class="it"><span class="dot" style="background:#22d3ee"></span><span class="lz">Q3 远程命令</span><span class="le">Q3 Remote</span></div>
+      <div class="it"><span class="dot" style="background:#8b5cf6"></span><span class="lz">Q2 内部命令</span><span class="le">Q2 Internal</span></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="v" style="color:var(--emerald)">40+</div>
+        <div class="l">
+          <span class="lz">命令总数</span><span class="le">Total commands</span>
+        </div>
+      </div>
+      <div class="stat">
+        <div class="v" style="color:var(--cyan)">4</div>
+        <div class="l">
+          <span class="lz">分类域</span><span class="le">Classification domains</span>
+        </div>
+      </div>
+      <div class="stat">
+        <div class="v" style="color:var(--violet);font-family:ui-monospace,Menlo,Consolas,monospace;font-size:18px">/help</div>
+        <div class="l">
+          <span class="lz">查看全部</span><span class="le">View all</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footnote">
+      <span class="lz">读图说明：两轴将命令空间切成 2×2，横轴判断是否触发网络/回传 Anthropic，纵轴判断默认可见还是需要进阶开关。象限大小和命令数量成正比，Q1 用户命令是新手最先接触的入口，Q2 内部命令默认以 `_` 前缀隐藏，Q3 远程命令是唯一会主动建立出站连接的家族，Q4 实验命令在 Claude Code 版本间最易发生签名变化。</span>
+      <span class="le">Reading guide: the two axes cut the command space into a 2×2 grid. X = whether it hits the network / sends data to Anthropic; Y = whether it is visible by default or requires an advanced toggle. Quadrant size scales with command count. Q1 User is the first entry point for newcomers, Q2 Internal is hidden by the `_` prefix, Q3 Remote is the only family that opens outbound connections, and Q4 Experimental is the most likely to change signatures across Claude Code releases.</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

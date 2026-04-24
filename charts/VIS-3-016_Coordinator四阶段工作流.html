@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-3-016 Coordinator 四阶段工作流</title>
+<style>
+  :root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+  :root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+  :root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+  :root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;height:100%;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;transition:background .3s,color .3s;}
+
+  .page{display:flex;flex-direction:column;align-items:center;min-height:100vh;padding:24px 16px 40px;}
+
+  /* ── header ── */
+  .header{width:100%;max-width:960px;display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:24px;}
+  .header-left{display:flex;flex-direction:column;gap:4px;}
+  .vis-id{font-size:11px;font-weight:600;letter-spacing:.08em;color:var(--rose);text-transform:uppercase;}
+  .title-zh{font-size:22px;font-weight:700;line-height:1.25;color:var(--text);}
+  .title-en{font-size:13px;color:var(--muted);margin-top:2px;}
+  .controls{display:flex;gap:8px;flex-shrink:0;margin-top:4px;}
+  .btn{display:inline-flex;align-items:center;gap:5px;padding:6px 14px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--muted);font-size:12px;font-weight:500;cursor:pointer;transition:border-color .2s,color .2s;}
+  .btn:hover{border-color:var(--rose);color:var(--text);}
+
+  /* ── svg container ── */
+  .viz-wrap{width:100%;max-width:960px;background:var(--panel);border:1px solid var(--border);border-radius:16px;overflow:hidden;position:relative;}
+  .viz-wrap svg{display:block;width:100%;height:auto;}
+
+  /* ── svg shared styles ── */
+  .coord-bar{fill:rgba(244,63,94,.12);stroke:var(--rose);stroke-width:1.5;}
+  .coord-label{fill:var(--rose);font-family:inherit;}
+  .phase-box{fill:none;stroke-width:1.5;rx:10;}
+  .phase-bg{opacity:.07;}
+  .connector{stroke-dasharray:4 3;stroke-width:1.2;opacity:.6;}
+  .flow-arrow{fill:none;stroke-width:2;stroke-linecap:round;}
+  .arrow-head{stroke:none;}
+  .num-circle{stroke:none;r:12;}
+  .num-text{font-weight:700;fill:#fff;font-size:12px;dominant-baseline:central;text-anchor:middle;}
+  .phase-title-zh{font-size:13px;font-weight:700;dominant-baseline:central;}
+  .phase-title-en{font-size:11px;dominant-baseline:central;opacity:.7;}
+  .worker-pill{rx:8;ry:8;height:22px;opacity:.18;}
+  .worker-text{font-size:10px;font-weight:600;dominant-baseline:central;text-anchor:middle;}
+  .output-label-zh{font-size:10px;font-weight:600;dominant-baseline:central;}
+  .output-label-en{font-size:10px;dominant-baseline:central;opacity:.75;}
+  .output-box{rx:6;ry:6;opacity:.15;height:26px;}
+  .stat-box{rx:10;ry:10;fill:var(--subtle,#334155);}
+  .stat-num{font-size:18px;font-weight:800;dominant-baseline:central;text-anchor:middle;}
+  .stat-label-zh{font-size:11px;dominant-baseline:central;text-anchor:middle;}
+  .stat-label-en{font-size:10px;dominant-baseline:central;text-anchor:middle;opacity:.7;}
+
+  /* ── animation ── */
+  @keyframes flowPulse{0%{stroke-dashoffset:16}100%{stroke-dashoffset:0}}
+  .flow-animated{stroke-dasharray:6 3;animation:flowPulse 1.4s linear infinite;}
+  @keyframes dotSlide{0%{opacity:0;transform:translateX(0)}50%{opacity:1}100%{opacity:0;transform:translateX(28px)}}
+  .flow-dot{animation:dotSlide 1.6s ease-in-out infinite;}
+  .flow-dot-2{animation-delay:.53s;}
+  .flow-dot-3{animation-delay:1.07s;}
+
+  /* ── responsive ── */
+  @media(max-width:600px){.title-zh{font-size:17px;}.controls{flex-direction:column;gap:6px;}}
+</style>
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+</head>
+<body>
+<div class="page">
+
+  <!-- Header -->
+  <header class="header">
+    <div class="header-left">
+      <span class="vis-id">VIS-3-016</span>
+      <div class="title-zh lz">Coordinator 四阶段工作流</div>
+      <div class="title-en le" style="display:none;font-size:22px;font-weight:700;color:var(--text);">Coordinator Orchestration — 4-Phase Workflow</div>
+      <div class="title-en lz" style="font-size:13px;color:var(--muted);margin-top:2px;">Coordinator Orchestration · 4-Phase Pipeline</div>
+    </div>
+    <div class="controls">
+      <button class="btn" onclick="cycleTheme()">🎨 <span class="lz">主题</span><span class="le" style="display:none;">Theme</span></button>
+      <button class="btn" onclick="toggleLang()">🌐 <span class="lz">中/EN</span><span class="le" style="display:none">EN/中</span></button>
+    </div>
+  </header>
+
+  <!-- SVG Visualization -->
+  <div class="viz-wrap">
+    <svg viewBox="0 0 920 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Coordinator 四阶段工作流">
+      <defs>
+        <!-- Phase colors as fill patterns & gradients -->
+        <linearGradient id="grad-cyan" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#22d3ee" stop-opacity=".22"/>
+          <stop offset="100%" stop-color="#22d3ee" stop-opacity=".04"/>
+        </linearGradient>
+        <linearGradient id="grad-violet" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#8b5cf6" stop-opacity=".22"/>
+          <stop offset="100%" stop-color="#8b5cf6" stop-opacity=".04"/>
+        </linearGradient>
+        <linearGradient id="grad-emerald" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#10b981" stop-opacity=".22"/>
+          <stop offset="100%" stop-color="#10b981" stop-opacity=".04"/>
+        </linearGradient>
+        <linearGradient id="grad-amber" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f59e0b" stop-opacity=".22"/>
+          <stop offset="100%" stop-color="#f59e0b" stop-opacity=".04"/>
+        </linearGradient>
+        <linearGradient id="grad-coord" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#f43f5e" stop-opacity=".18"/>
+          <stop offset="50%" stop-color="#f43f5e" stop-opacity=".1"/>
+          <stop offset="100%" stop-color="#f43f5e" stop-opacity=".18"/>
+        </linearGradient>
+        <!-- Arrow markers -->
+        <marker id="arr-cyan" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 Z" fill="#22d3ee"/>
+        </marker>
+        <marker id="arr-violet" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 Z" fill="#8b5cf6"/>
+        </marker>
+        <marker id="arr-emerald" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 Z" fill="#10b981"/>
+        </marker>
+        <marker id="arr-amber" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 Z" fill="#f59e0b"/>
+        </marker>
+        <marker id="arr-rose" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 Z" fill="#f43f5e"/>
+        </marker>
+      </defs>
+
+      <!-- ═══════════════════════════════════════════
+           COORDINATOR CONTROL PLANE BAR (top)
+           y: 28–76
+      ═══════════════════════════════════════════ -->
+      <rect x="24" y="28" width="872" height="50" rx="10" ry="10" fill="url(#grad-coord)" stroke="#f43f5e" stroke-width="1.5"/>
+      <!-- Coordinator icon dots -->
+      <circle cx="52" cy="53" r="8" fill="#f43f5e" opacity=".9"/>
+      <text x="52" y="53" text-anchor="middle" dominant-baseline="central" font-size="10" font-weight="700" fill="#fff">C</text>
+      <!-- Label ZH -->
+      <text x="74" y="49" class="lz" font-size="14" font-weight="700" fill="#f43f5e" dominant-baseline="auto">Coordinator 控制平面</text>
+      <text x="74" y="65" class="lz" font-size="10" fill="#f43f5e" opacity=".7" dominant-baseline="auto">调度 · 聚合 · 验证 · 并行分发</text>
+      <!-- Label EN -->
+      <text x="74" y="49" class="le" font-size="14" font-weight="700" fill="#f43f5e" dominant-baseline="auto" display="none">Coordinator Control Plane</text>
+      <text x="74" y="65" class="le" font-size="10" fill="#f43f5e" opacity=".7" dominant-baseline="auto" display="none">Dispatch · Aggregate · Verify · Parallel Fan-out</text>
+      <!-- Right badge -->
+      <rect x="780" y="36" width="106" height="28" rx="8" ry="8" fill="#f43f5e" opacity=".15" stroke="#f43f5e" stroke-width="1"/>
+      <text x="833" y="50" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="600" fill="#f43f5e" class="lz">4 阶段编排器</text>
+      <text x="833" y="50" text-anchor="middle" dominant-baseline="central" font-size="11" font-weight="600" fill="#f43f5e" class="le" display="none">4-Phase Orchestrator</text>
+
+      <!-- ═══════════════════════════════════════════
+           VERTICAL CONNECTOR LINES (coordinator → phases)
+           Phase centers: 126, 336, 546, 756  (col mid-x)
+      ═══════════════════════════════════════════ -->
+      <!-- Phase 1 connector -->
+      <line x1="131" y1="78" x2="131" y2="102" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="3 2" opacity=".7"/>
+      <!-- Phase 2 connector -->
+      <line x1="341" y1="78" x2="341" y2="102" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="3 2" opacity=".7"/>
+      <!-- Phase 3 connector -->
+      <line x1="551" y1="78" x2="551" y2="102" stroke="#10b981" stroke-width="1.5" stroke-dasharray="3 2" opacity=".7"/>
+      <!-- Phase 4 connector -->
+      <line x1="761" y1="78" x2="761" y2="102" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="3 2" opacity=".7"/>
+
+      <!-- ═══════════════════════════════════════════
+           PHASE COLUMNS — y: 102–430
+           col1 x:26,  col2 x:236, col3 x:446, col4 x:656
+           col width: 200, gap: 10
+      ═══════════════════════════════════════════ -->
+
+      <!-- ─── PHASE 1: Research 调研 (cyan) ─── -->
+      <rect x="26" y="102" width="200" height="328" rx="12" ry="12" fill="url(#grad-cyan)" stroke="#22d3ee" stroke-width="1.5"/>
+      <!-- Phase number badge -->
+      <circle cx="52" cy="126" r="14" fill="#22d3ee" opacity=".9"/>
+      <text x="52" y="126" class="num-text" font-family="inherit">1</text>
+      <!-- Phase title -->
+      <text x="80" y="120" class="phase-title-zh lz" fill="#22d3ee" font-family="inherit">Research 调研</text>
+      <text x="80" y="135" class="phase-title-en lz" fill="#22d3ee" font-family="inherit">并行分发研究 Agent</text>
+      <text x="80" y="120" class="phase-title-zh le" fill="#22d3ee" font-family="inherit" display="none">Research</text>
+      <text x="80" y="135" class="phase-title-en le" fill="#22d3ee" font-family="inherit" display="none">Parallel Research Agents</text>
+      <!-- Divider -->
+      <line x1="38" y1="150" x2="214" y2="150" stroke="#22d3ee" stroke-width=".8" opacity=".3"/>
+
+      <!-- Sub-label -->
+      <text x="36" y="170" font-size="10" fill="#22d3ee" opacity=".6" font-family="inherit" class="lz">▸ 子 Agent 并行执行</text>
+      <text x="36" y="170" font-size="10" fill="#22d3ee" opacity=".6" font-family="inherit" class="le" display="none">▸ Sub-agents (parallel)</text>
+
+      <!-- Worker pills -->
+      <!-- WebSearch Agent -->
+      <rect x="36" y="180" width="180" height="26" rx="8" ry="8" fill="#22d3ee" opacity=".15" stroke="#22d3ee" stroke-width="1"/>
+      <circle cx="54" cy="193" r="7" fill="#22d3ee" opacity=".4"/>
+      <text x="54" y="193" font-size="10" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-weight="700" font-family="inherit">W</text>
+      <text x="126" y="193" font-size="11" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="lz">WebSearch Agent</text>
+      <text x="126" y="193" font-size="11" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="le" display="none">WebSearch Agent</text>
+
+      <!-- CodeRead Agent -->
+      <rect x="36" y="214" width="180" height="26" rx="8" ry="8" fill="#22d3ee" opacity=".15" stroke="#22d3ee" stroke-width="1"/>
+      <circle cx="54" cy="227" r="7" fill="#22d3ee" opacity=".4"/>
+      <text x="54" y="227" font-size="10" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-weight="700" font-family="inherit">R</text>
+      <text x="126" y="227" font-size="11" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="lz">CodeRead Agent</text>
+      <text x="126" y="227" font-size="11" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="le" display="none">CodeRead Agent</text>
+
+      <!-- FileSystem Agent -->
+      <rect x="36" y="248" width="180" height="26" rx="8" ry="8" fill="#22d3ee" opacity=".15" stroke="#22d3ee" stroke-width="1"/>
+      <circle cx="54" cy="261" r="7" fill="#22d3ee" opacity=".4"/>
+      <text x="54" y="261" font-size="10" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-weight="700" font-family="inherit">F</text>
+      <text x="126" y="261" font-size="11" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="lz">FileSystem Agent</text>
+      <text x="126" y="261" font-size="11" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="le" display="none">FileSystem Agent</text>
+
+      <!-- Output box -->
+      <rect x="36" y="374" width="180" height="42" rx="8" ry="8" fill="#22d3ee" opacity=".12" stroke="#22d3ee" stroke-width="1"/>
+      <text x="126" y="389" font-size="11" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-weight="700" font-family="inherit" class="lz">↓ 调研报告</text>
+      <text x="126" y="406" font-size="10" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="lz" opacity=".75">Research Report</text>
+      <text x="126" y="389" font-size="11" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-weight="700" font-family="inherit" class="le" display="none">↓ Research Report</text>
+      <text x="126" y="406" font-size="10" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="le" opacity=".75" display="none">Research Report</text>
+
+      <!-- Parallel indicator -->
+      <rect x="36" y="296" width="180" height="68" rx="8" ry="8" fill="#22d3ee" opacity=".05" stroke="#22d3ee" stroke-width=".8" stroke-dasharray="3 2"/>
+      <text x="126" y="318" font-size="10" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="lz" opacity=".6">⇉ 三路并行执行</text>
+      <text x="126" y="335" font-size="10" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="lz" opacity=".5">fan-out → fan-in</text>
+      <text x="126" y="318" font-size="10" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="le" opacity=".6" display="none">⇉ 3-Way Parallel</text>
+      <text x="126" y="335" font-size="10" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="le" opacity=".5" display="none">fan-out → fan-in</text>
+
+
+      <!-- ─── PHASE 2: Synthesis 综合 (violet) ─── -->
+      <rect x="236" y="102" width="200" height="328" rx="12" ry="12" fill="url(#grad-violet)" stroke="#8b5cf6" stroke-width="1.5"/>
+      <circle cx="262" cy="126" r="14" fill="#8b5cf6" opacity=".9"/>
+      <text x="262" y="126" class="num-text" font-family="inherit">2</text>
+      <text x="290" y="120" class="phase-title-zh lz" fill="#8b5cf6" font-family="inherit">Synthesis 综合</text>
+      <text x="290" y="135" class="phase-title-en lz" fill="#8b5cf6" font-family="inherit">聚合 · 去重 · 分析</text>
+      <text x="290" y="120" class="phase-title-zh le" fill="#8b5cf6" font-family="inherit" display="none">Synthesis</text>
+      <text x="290" y="135" class="phase-title-en le" fill="#8b5cf6" font-family="inherit" display="none">Aggregate · Dedup · Analyze</text>
+      <line x1="248" y1="150" x2="424" y2="150" stroke="#8b5cf6" stroke-width=".8" opacity=".3"/>
+
+      <text x="246" y="170" font-size="10" fill="#8b5cf6" opacity=".6" font-family="inherit" class="lz">▸ 结果聚合处理</text>
+      <text x="246" y="170" font-size="10" fill="#8b5cf6" opacity=".6" font-family="inherit" class="le" display="none">▸ Result Aggregation</text>
+
+      <!-- Analysis Agent -->
+      <rect x="246" y="180" width="180" height="26" rx="8" ry="8" fill="#8b5cf6" opacity=".15" stroke="#8b5cf6" stroke-width="1"/>
+      <circle cx="264" cy="193" r="7" fill="#8b5cf6" opacity=".4"/>
+      <text x="264" y="193" font-size="10" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-weight="700" font-family="inherit">A</text>
+      <text x="336" y="193" font-size="11" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="lz">Analysis Agent</text>
+      <text x="336" y="193" font-size="11" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="le" display="none">Analysis Agent</text>
+
+      <!-- Dedup Agent -->
+      <rect x="246" y="214" width="180" height="26" rx="8" ry="8" fill="#8b5cf6" opacity=".15" stroke="#8b5cf6" stroke-width="1"/>
+      <circle cx="264" cy="227" r="7" fill="#8b5cf6" opacity=".4"/>
+      <text x="264" y="227" font-size="10" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-weight="700" font-family="inherit">D</text>
+      <text x="336" y="227" font-size="11" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="lz">Dedup Agent</text>
+      <text x="336" y="227" font-size="11" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="le" display="none">Dedup Agent</text>
+
+      <!-- Synthesis detail note -->
+      <rect x="246" y="258" width="180" height="106" rx="8" ry="8" fill="#8b5cf6" opacity=".05" stroke="#8b5cf6" stroke-width=".8" stroke-dasharray="3 2"/>
+      <text x="336" y="281" font-size="10" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="lz" opacity=".6">汇总 Phase 1 输出</text>
+      <text x="336" y="298" font-size="10" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="lz" opacity=".5">删除冗余信息</text>
+      <text x="336" y="315" font-size="10" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="lz" opacity=".5">结构化综合方案</text>
+      <text x="336" y="281" font-size="10" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="le" opacity=".6" display="none">Merge Phase 1 outputs</text>
+      <text x="336" y="298" font-size="10" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="le" opacity=".5" display="none">Remove redundancy</text>
+      <text x="336" y="315" font-size="10" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="le" opacity=".5" display="none">Structure synthesis</text>
+
+      <!-- Output box -->
+      <rect x="246" y="374" width="180" height="42" rx="8" ry="8" fill="#8b5cf6" opacity=".12" stroke="#8b5cf6" stroke-width="1"/>
+      <text x="336" y="389" font-size="11" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-weight="700" font-family="inherit" class="lz">↓ 综合方案</text>
+      <text x="336" y="406" font-size="10" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="lz" opacity=".75">Synthesis Plan</text>
+      <text x="336" y="389" font-size="11" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-weight="700" font-family="inherit" class="le" display="none">↓ Synthesis Plan</text>
+      <text x="336" y="406" font-size="10" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="le" opacity=".75" display="none">Synthesis Plan</text>
+
+
+      <!-- ─── PHASE 3: Implementation 实现 (emerald) ─── -->
+      <rect x="446" y="102" width="200" height="328" rx="12" ry="12" fill="url(#grad-emerald)" stroke="#10b981" stroke-width="1.5"/>
+      <circle cx="472" cy="126" r="14" fill="#10b981" opacity=".9"/>
+      <text x="472" y="126" class="num-text" font-family="inherit">3</text>
+      <text x="500" y="120" class="phase-title-zh lz" fill="#10b981" font-family="inherit">Implementation 实现</text>
+      <text x="500" y="135" class="phase-title-en lz" fill="#10b981" font-family="inherit">派发编码 Agent</text>
+      <text x="500" y="120" class="phase-title-zh le" fill="#10b981" font-family="inherit" display="none">Implementation</text>
+      <text x="500" y="135" class="phase-title-en le" fill="#10b981" font-family="inherit" display="none">Dispatch Coding Agents</text>
+      <line x1="458" y1="150" x2="634" y2="150" stroke="#10b981" stroke-width=".8" opacity=".3"/>
+
+      <text x="456" y="170" font-size="10" fill="#10b981" opacity=".6" font-family="inherit" class="lz">▸ 并行编码执行</text>
+      <text x="456" y="170" font-size="10" fill="#10b981" opacity=".6" font-family="inherit" class="le" display="none">▸ Parallel Coding Execution</text>
+
+      <!-- Edit Agent -->
+      <rect x="456" y="180" width="180" height="26" rx="8" ry="8" fill="#10b981" opacity=".15" stroke="#10b981" stroke-width="1"/>
+      <circle cx="474" cy="193" r="7" fill="#10b981" opacity=".4"/>
+      <text x="474" y="193" font-size="10" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-weight="700" font-family="inherit">E</text>
+      <text x="546" y="193" font-size="11" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="lz">Edit Agent</text>
+      <text x="546" y="193" font-size="11" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="le" display="none">Edit Agent</text>
+
+      <!-- Bash Agent -->
+      <rect x="456" y="214" width="180" height="26" rx="8" ry="8" fill="#10b981" opacity=".15" stroke="#10b981" stroke-width="1"/>
+      <circle cx="474" cy="227" r="7" fill="#10b981" opacity=".4"/>
+      <text x="474" y="227" font-size="10" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-weight="700" font-family="inherit">B</text>
+      <text x="546" y="227" font-size="11" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="lz">Bash Agent</text>
+      <text x="546" y="227" font-size="11" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="le" display="none">Bash Agent</text>
+
+      <!-- Test Agent -->
+      <rect x="456" y="248" width="180" height="26" rx="8" ry="8" fill="#10b981" opacity=".15" stroke="#10b981" stroke-width="1"/>
+      <circle cx="474" cy="261" r="7" fill="#10b981" opacity=".4"/>
+      <text x="474" y="261" font-size="10" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-weight="700" font-family="inherit">T</text>
+      <text x="546" y="261" font-size="11" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="lz">Test Agent</text>
+      <text x="546" y="261" font-size="11" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="le" display="none">Test Agent</text>
+
+      <!-- Detail note -->
+      <rect x="456" y="296" width="180" height="68" rx="8" ry="8" fill="#10b981" opacity=".05" stroke="#10b981" stroke-width=".8" stroke-dasharray="3 2"/>
+      <text x="546" y="318" font-size="10" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="lz" opacity=".6">文件编辑 · 命令执行</text>
+      <text x="546" y="335" font-size="10" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="lz" opacity=".5">单元测试同步运行</text>
+      <text x="546" y="318" font-size="10" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="le" opacity=".6" display="none">File edits · Shell commands</text>
+      <text x="546" y="335" font-size="10" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="le" opacity=".5" display="none">Unit tests run in parallel</text>
+
+      <!-- Output box -->
+      <rect x="456" y="374" width="180" height="42" rx="8" ry="8" fill="#10b981" opacity=".12" stroke="#10b981" stroke-width="1"/>
+      <text x="546" y="389" font-size="11" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-weight="700" font-family="inherit" class="lz">↓ 代码变更</text>
+      <text x="546" y="406" font-size="10" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="lz" opacity=".75">Code Changes</text>
+      <text x="546" y="389" font-size="11" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-weight="700" font-family="inherit" class="le" display="none">↓ Code Changes</text>
+      <text x="546" y="406" font-size="10" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="le" opacity=".75" display="none">Code Changes</text>
+
+
+      <!-- ─── PHASE 4: Verification 验证 (amber) ─── -->
+      <rect x="656" y="102" width="240" height="328" rx="12" ry="12" fill="url(#grad-amber)" stroke="#f59e0b" stroke-width="1.5"/>
+      <circle cx="682" cy="126" r="14" fill="#f59e0b" opacity=".9"/>
+      <text x="682" y="126" class="num-text" font-family="inherit">4</text>
+      <text x="710" y="120" class="phase-title-zh lz" fill="#f59e0b" font-family="inherit">Verification 验证</text>
+      <text x="710" y="135" class="phase-title-en lz" fill="#f59e0b" font-family="inherit">检查 · 审核 · 确认</text>
+      <text x="710" y="120" class="phase-title-zh le" fill="#f59e0b" font-family="inherit" display="none">Verification</text>
+      <text x="710" y="135" class="phase-title-en le" fill="#f59e0b" font-family="inherit" display="none">Check · Review · Confirm</text>
+      <line x1="668" y1="150" x2="884" y2="150" stroke="#f59e0b" stroke-width=".8" opacity=".3"/>
+
+      <text x="666" y="170" font-size="10" fill="#f59e0b" opacity=".6" font-family="inherit" class="lz">▸ Coordinator 验证结果</text>
+      <text x="666" y="170" font-size="10" fill="#f59e0b" opacity=".6" font-family="inherit" class="le" display="none">▸ Coordinator Checks Results</text>
+
+      <!-- QA Agent -->
+      <rect x="666" y="180" width="220" height="26" rx="8" ry="8" fill="#f59e0b" opacity=".15" stroke="#f59e0b" stroke-width="1"/>
+      <circle cx="684" cy="193" r="7" fill="#f59e0b" opacity=".4"/>
+      <text x="684" y="193" font-size="10" fill="#f59e0b" text-anchor="middle" dominant-baseline="central" font-weight="700" font-family="inherit">Q</text>
+      <text x="776" y="193" font-size="11" fill="#f59e0b" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="lz">QA Agent</text>
+      <text x="776" y="193" font-size="11" fill="#f59e0b" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="le" display="none">QA Agent</text>
+
+      <!-- Review Agent -->
+      <rect x="666" y="214" width="220" height="26" rx="8" ry="8" fill="#f59e0b" opacity=".15" stroke="#f59e0b" stroke-width="1"/>
+      <circle cx="684" cy="227" r="7" fill="#f59e0b" opacity=".4"/>
+      <text x="684" y="227" font-size="10" fill="#f59e0b" text-anchor="middle" dominant-baseline="central" font-weight="700" font-family="inherit">R</text>
+      <text x="776" y="227" font-size="11" fill="#f59e0b" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="lz">Review Agent</text>
+      <text x="776" y="227" font-size="11" fill="#f59e0b" text-anchor="middle" dominant-baseline="central" font-weight="600" font-family="inherit" class="le" display="none">Review Agent</text>
+
+      <!-- Detail note -->
+      <rect x="666" y="258" width="220" height="106" rx="8" ry="8" fill="#f59e0b" opacity=".05" stroke="#f59e0b" stroke-width=".8" stroke-dasharray="3 2"/>
+      <text x="776" y="281" font-size="10" fill="#f59e0b" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="lz" opacity=".6">质量门禁检查</text>
+      <text x="776" y="298" font-size="10" fill="#f59e0b" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="lz" opacity=".5">回归测试验证</text>
+      <text x="776" y="315" font-size="10" fill="#f59e0b" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="lz" opacity=".5">失败则回退重试</text>
+      <text x="776" y="281" font-size="10" fill="#f59e0b" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="le" opacity=".6" display="none">Quality gate checks</text>
+      <text x="776" y="298" font-size="10" fill="#f59e0b" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="le" opacity=".5" display="none">Regression test validation</text>
+      <text x="776" y="315" font-size="10" fill="#f59e0b" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="le" opacity=".5" display="none">Retry on failure</text>
+
+      <!-- Output box -->
+      <rect x="666" y="374" width="220" height="42" rx="8" ry="8" fill="#f59e0b" opacity=".12" stroke="#f59e0b" stroke-width="1"/>
+      <text x="776" y="389" font-size="11" fill="#f59e0b" text-anchor="middle" dominant-baseline="central" font-weight="700" font-family="inherit" class="lz">↓ 验证报告</text>
+      <text x="776" y="406" font-size="10" fill="#f59e0b" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="lz" opacity=".75">Verification Report</text>
+      <text x="776" y="389" font-size="11" fill="#f59e0b" text-anchor="middle" dominant-baseline="central" font-weight="700" font-family="inherit" class="le" display="none">↓ Verification Report</text>
+      <text x="776" y="406" font-size="10" fill="#f59e0b" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="le" opacity=".75" display="none">Verification Report</text>
+
+
+      <!-- ═══════════════════════════════════════════
+           FLOW ARROWS BETWEEN PHASES (horizontal)
+           Phase midpoints y ≈ 266; arrow in output zone y≈395
+           Arrow from right edge of phase box to left edge of next
+      ═══════════════════════════════════════════ -->
+
+      <!-- Arrow 1→2  x: 226→236 at y=395 -->
+      <line x1="228" y1="395" x2="234" y2="395" stroke="#22d3ee" stroke-width="2" marker-end="url(#arr-cyan)" class="flow-animated"/>
+      <!-- gap label -->
+      <text x="231" y="383" font-size="10" fill="#94a3b8" text-anchor="middle" font-family="inherit" class="lz" opacity=".6">→</text>
+
+      <!-- Arrow 2→3  x: 438→446 at y=395 -->
+      <line x1="440" y1="395" x2="444" y2="395" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arr-violet)" class="flow-animated" style="animation-delay:.4s"/>
+
+      <!-- Arrow 3→4  x: 648→656 at y=395 -->
+      <line x1="650" y1="395" x2="654" y2="395" stroke="#10b981" stroke-width="2" marker-end="url(#arr-emerald)" class="flow-animated" style="animation-delay:.8s"/>
+
+
+      <!-- ═══════════════════════════════════════════
+           FLOW ARROWS (mid-body horizontal connectors)
+           Show pipeline between phase bodies at y=266
+      ═══════════════════════════════════════════ -->
+
+      <!-- Connector 1→2 at mid-body -->
+      <path d="M226,266 Q231,266 236,266" fill="none" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4 3" opacity=".45" marker-end="url(#arr-cyan)"/>
+      <!-- Connector 2→3 -->
+      <path d="M436,266 Q441,266 446,266" fill="none" stroke="#8b5cf6" stroke-width="1.5" stroke-dasharray="4 3" opacity=".45" marker-end="url(#arr-violet)"/>
+      <!-- Connector 3→4 -->
+      <path d="M646,266 Q651,266 656,266" fill="none" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4 3" opacity=".45" marker-end="url(#arr-emerald)"/>
+
+
+      <!-- ═══════════════════════════════════════════
+           STATS ROW  y: 446–510
+      ═══════════════════════════════════════════ -->
+
+      <!-- Stat 1: 工作阶段 -->
+      <rect x="24" y="446" width="278" height="70" rx="10" ry="10" fill="#22d3ee" opacity=".08" stroke="#22d3ee" stroke-width="1"/>
+      <text x="163" y="468" font-size="22" font-weight="800" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-family="inherit">4</text>
+      <text x="163" y="492" font-size="12" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="lz">工作阶段</text>
+      <text x="163" y="492" font-size="12" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="le" display="none">Work Phases</text>
+      <text x="163" y="507" font-size="10" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-family="inherit" opacity=".6" class="lz">串行推进，顺序执行</text>
+      <text x="163" y="507" font-size="10" fill="#22d3ee" text-anchor="middle" dominant-baseline="central" font-family="inherit" opacity=".6" class="le" display="none">Sequential pipeline</text>
+
+      <!-- Stat 2: 专业 Agent -->
+      <rect x="322" y="446" width="278" height="70" rx="10" ry="10" fill="#8b5cf6" opacity=".08" stroke="#8b5cf6" stroke-width="1"/>
+      <text x="461" y="468" font-size="22" font-weight="800" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-family="inherit">9</text>
+      <text x="461" y="492" font-size="12" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="lz">专业 Agent</text>
+      <text x="461" y="492" font-size="12" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="le" display="none">Specialist Agents</text>
+      <text x="461" y="507" font-size="10" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-family="inherit" opacity=".6" class="lz">跨4阶段专项分工</text>
+      <text x="461" y="507" font-size="10" fill="#8b5cf6" text-anchor="middle" dominant-baseline="central" font-family="inherit" opacity=".6" class="le" display="none">Specialized across 4 phases</text>
+
+      <!-- Stat 3: 混合模式 -->
+      <rect x="620" y="446" width="276" height="70" rx="10" ry="10" fill="#10b981" opacity=".08" stroke="#10b981" stroke-width="1"/>
+      <text x="758" y="465" font-size="13" font-weight="800" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="lz">并行+串行</text>
+      <text x="758" y="465" font-size="13" font-weight="800" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="le" display="none">Parallel + Serial</text>
+      <text x="758" y="484" font-size="12" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="lz">混合执行模式</text>
+      <text x="758" y="484" font-size="12" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-family="inherit" class="le" display="none">Hybrid Execution Mode</text>
+      <text x="758" y="507" font-size="10" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-family="inherit" opacity=".6" class="lz">阶段内并行 · 阶段间串行</text>
+      <text x="758" y="507" font-size="10" fill="#10b981" text-anchor="middle" dominant-baseline="central" font-family="inherit" opacity=".6" class="le" display="none">Intra-phase parallel · inter-phase serial</text>
+
+    </svg>
+  </div>
+
+</div>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

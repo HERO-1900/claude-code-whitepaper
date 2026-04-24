@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIS-2Q-009 · Bridge 时序图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+    :root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+    :root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+    :root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;padding:20px 24px 32px;transition:background .25s,color .25s}
+
+    .svg-bg{fill:var(--bg)}
+    .panel-bg{fill:var(--panel)}
+    .lifeline{stroke:var(--muted);stroke-opacity:.45;stroke-dasharray:4,4;stroke-width:1}
+    .axis-text{fill:var(--muted)}
+    .title-text{fill:var(--text)}
+    .muted-text{fill:var(--muted)}
+    .msg-text{fill:var(--text)}
+    .arrow-line{stroke-width:1.6;fill:none}
+    .return-line{stroke-width:1.4;fill:none;stroke-dasharray:5,3}
+    .step-num-bg{fill:var(--panel);stroke-width:1.2}
+
+    .vis-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+    .vis-dot{width:10px;height:10px;border-radius:50%;background:var(--violet);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+    .vis-title{font-size:17px;font-weight:700;color:var(--text)}
+    .vis-sub{font-size:11px;color:var(--muted);margin-left:4px}
+
+    .svg-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:16px;overflow-x:auto}
+
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+    .stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;display:flex;align-items:center;gap:14px}
+    .stat-ico{width:38px;height:38px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;font-weight:700;flex-shrink:0}
+    .stat-body{display:flex;flex-direction:column;gap:2px;min-width:0}
+    .stat-val{font-size:20px;font-weight:700;line-height:1.1}
+    .stat-lab{font-size:10px;color:var(--muted);line-height:1.3}
+
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px}
+    .card-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+    .card-dot{width:10px;height:10px;border-radius:50%}
+    .card-hd h3{font-size:12px;font-weight:700;color:var(--text)}
+    .card-sub{font-size:10px;color:var(--muted);margin-left:auto}
+    .card ul{list-style:none;font-size:11px;color:var(--muted);line-height:1.75}
+    .card li strong{color:var(--text);font-weight:600}
+
+    .vis-footer{font-size:10px;color:var(--muted);text-align:center;border-top:1px solid var(--border);padding-top:10px}
+
+    .ctrl{position:fixed;top:16px;right:16px;display:flex;gap:6px;z-index:999}
+    .ctrl button{background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:6px 11px;border-radius:6px;cursor:pointer;transition:all .15s}
+    .ctrl button:hover{border-color:var(--subtle);transform:translateY(-1px)}
+  </style>
+</head>
+<body>
+<div class="ctrl">
+  <button onclick="window.cycleTheme()">Theme</button>
+  <button onclick="window.toggleLang()">EN/中</button>
+</div>
+
+<div class="vis-header">
+  <div class="vis-dot"></div>
+  <div class="vis-title">
+    <span class="lz">Bridge 时序图 · CLI ↔ Daemon ↔ 外部工具</span>
+    <span class="le" style="display:none">Bridge Sequence · CLI ↔ Daemon ↔ External Tool</span>
+  </div>
+  <div class="vis-sub">VIS-2Q-009 · <span class="lz">10 条消息，双向透传一次 tool_call</span><span class="le" style="display:none">10 messages, one tool_call round-trip</span></div>
+</div>
+
+<div class="svg-wrap">
+<svg viewBox="0 0 920 560" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+  <defs>
+    <!-- arrowhead markers, one per color -->
+    <marker id="arrCyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#22d3ee"/>
+    </marker>
+    <marker id="arrVioletR" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8b5cf6"/>
+    </marker>
+    <marker id="arrVioletL" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#8b5cf6"/>
+    </marker>
+    <marker id="arrEmerald" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#10b981"/>
+    </marker>
+
+    <linearGradient id="gCyan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity=".95"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity=".75"/>
+    </linearGradient>
+    <linearGradient id="gViolet" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity=".95"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity=".75"/>
+    </linearGradient>
+    <linearGradient id="gEmerald" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#10b981" stop-opacity=".95"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity=".75"/>
+    </linearGradient>
+  </defs>
+
+  <!-- bg -->
+  <rect width="920" height="560" class="svg-bg"/>
+
+  <!-- =================== GEOMETRY =====================
+       Actor lane x positions:
+         CLI       x = 180
+         Bridge    x = 460
+         External  x = 740
+       Actor header band:  y = 30..80
+       Lifeline:           y = 80..510
+       Message rows:       y = 110, 145, 180, 215, 250, 285, 320, 355, 390, 425
+       Time axis label:    y = 530..545
+       ==================================================== -->
+
+  <!-- ============ ACTOR HEADERS ============ -->
+  <!-- CLI actor box -->
+  <rect x="90" y="34" width="180" height="44" rx="8" fill="url(#gCyan)" stroke="#22d3ee" stroke-width="1.4"/>
+  <text x="180" y="54" text-anchor="middle" font-size="13" font-weight="700" fill="#0f172a">Claude Code CLI</text>
+  <text x="180" y="70" text-anchor="middle" font-size="10" font-weight="600" fill="#0f172a">
+    <tspan class="lz">发起方 · 工具调用者</tspan>
+    <tspan class="le" display="none">Initiator · Tool caller</tspan>
+  </text>
+
+  <!-- Bridge actor box -->
+  <rect x="370" y="34" width="180" height="44" rx="8" fill="url(#gViolet)" stroke="#8b5cf6" stroke-width="1.4"/>
+  <text x="460" y="54" text-anchor="middle" font-size="13" font-weight="700" fill="#f5f3ff">Bridge Daemon</text>
+  <text x="460" y="70" text-anchor="middle" font-size="10" font-weight="600" fill="#f5f3ff">
+    <tspan class="lz">中继器 · 双向透传</tspan>
+    <tspan class="le" display="none">Relay · Bidirectional proxy</tspan>
+  </text>
+
+  <!-- External actor box -->
+  <rect x="650" y="34" width="180" height="44" rx="8" fill="url(#gEmerald)" stroke="#10b981" stroke-width="1.4"/>
+  <text x="740" y="54" text-anchor="middle" font-size="13" font-weight="700" fill="#022c22">External Tool</text>
+  <text x="740" y="70" text-anchor="middle" font-size="10" font-weight="600" fill="#022c22">
+    <tspan class="lz">外部工具 · VS Code / Cursor</tspan>
+    <tspan class="le" display="none">External · VS Code / Cursor</tspan>
+  </text>
+
+  <!-- ============ LIFELINES ============ -->
+  <line x1="180" y1="80" x2="180" y2="510" class="lifeline"/>
+  <line x1="460" y1="80" x2="460" y2="510" class="lifeline"/>
+  <line x1="740" y1="80" x2="740" y2="510" class="lifeline"/>
+
+  <!-- vertical time arrow on far left -->
+  <line x1="48" y1="90" x2="48" y2="500" stroke="#94a3b8" stroke-width="1" stroke-opacity="0.45"/>
+  <path d="M 44 498 L 48 508 L 52 498 Z" fill="#94a3b8" fill-opacity="0.55"/>
+  <g transform="translate(32,295) rotate(-90)">
+    <text x="0" y="0" text-anchor="middle" font-size="10" font-weight="600" class="axis-text" letter-spacing="2">
+      <tspan class="lz">时间 TIME →</tspan>
+      <tspan class="le" display="none">TIME →</tspan>
+    </text>
+  </g>
+
+  <!-- ============ ACTIVATION BOXES (thin rects on lifelines) ============ -->
+  <!-- CLI activation: active during whole sequence (lightly) -->
+  <rect x="175" y="100" width="10" height="340" rx="2" fill="#22d3ee" fill-opacity="0.12" stroke="#22d3ee" stroke-opacity="0.55" stroke-width="0.8"/>
+
+  <!-- Bridge activation: active after first connect -->
+  <rect x="455" y="110" width="10" height="330" rx="2" fill="#8b5cf6" fill-opacity="0.14" stroke="#8b5cf6" stroke-opacity="0.6" stroke-width="0.8"/>
+
+  <!-- External activation: active from forward_registration (msg4) to result (msg9) -->
+  <rect x="735" y="215" width="10" height="180" rx="2" fill="#10b981" fill-opacity="0.14" stroke="#10b981" stroke-opacity="0.6" stroke-width="0.8"/>
+
+  <!-- ============ MESSAGES ============
+       Row y grid: 110 145 180 215 250 285 320 355 390 425
+  -->
+
+  <!-- === 1. CLI → Bridge : connect()  (y=110) === -->
+  <text x="320" y="104" text-anchor="middle" font-size="11" font-weight="700" fill="#22d3ee">connect()</text>
+  <line x1="185" y1="110" x2="451" y2="110" class="arrow-line" stroke="#22d3ee" marker-end="url(#arrCyan)"/>
+  <circle cx="105" cy="110" r="10" class="step-num-bg" stroke="#22d3ee"/>
+  <text x="105" y="114" text-anchor="middle" font-size="11" font-weight="700" fill="#22d3ee">1</text>
+
+  <!-- === 2. Bridge → CLI : connected, session_id  (y=145) === -->
+  <text x="320" y="139" text-anchor="middle" font-size="11" font-weight="700" fill="#8b5cf6">
+    <tspan class="lz">connected, session_id</tspan>
+    <tspan class="le" display="none">connected, session_id</tspan>
+  </text>
+  <line x1="455" y1="145" x2="189" y2="145" class="return-line" stroke="#8b5cf6" marker-end="url(#arrVioletL)"/>
+  <circle cx="105" cy="145" r="10" class="step-num-bg" stroke="#8b5cf6"/>
+  <text x="105" y="149" text-anchor="middle" font-size="11" font-weight="700" fill="#8b5cf6">2</text>
+
+  <!-- === 3. CLI → Bridge : register_tool(edit)  (y=180) === -->
+  <text x="320" y="174" text-anchor="middle" font-size="11" font-weight="700" fill="#22d3ee">register_tool(edit)</text>
+  <line x1="185" y1="180" x2="451" y2="180" class="arrow-line" stroke="#22d3ee" marker-end="url(#arrCyan)"/>
+  <circle cx="105" cy="180" r="10" class="step-num-bg" stroke="#22d3ee"/>
+  <text x="105" y="184" text-anchor="middle" font-size="11" font-weight="700" fill="#22d3ee">3</text>
+
+  <!-- === 4. Bridge → External : forward_registration  (y=215) === -->
+  <text x="600" y="209" text-anchor="middle" font-size="11" font-weight="700" fill="#8b5cf6">forward_registration</text>
+  <line x1="465" y1="215" x2="731" y2="215" class="arrow-line" stroke="#8b5cf6" marker-end="url(#arrVioletR)"/>
+  <circle cx="870" cy="215" r="10" class="step-num-bg" stroke="#8b5cf6"/>
+  <text x="870" y="219" text-anchor="middle" font-size="11" font-weight="700" fill="#8b5cf6">4</text>
+
+  <!-- === 5. External → Bridge : ack, capabilities  (y=250) === -->
+  <text x="600" y="244" text-anchor="middle" font-size="11" font-weight="700" fill="#10b981">
+    <tspan class="lz">ack, capabilities</tspan>
+    <tspan class="le" display="none">ack, capabilities</tspan>
+  </text>
+  <line x1="735" y1="250" x2="469" y2="250" class="return-line" stroke="#10b981" marker-end="url(#arrEmerald)"/>
+  <circle cx="870" cy="250" r="10" class="step-num-bg" stroke="#10b981"/>
+  <text x="870" y="254" text-anchor="middle" font-size="11" font-weight="700" fill="#10b981">5</text>
+
+  <!-- === 6. Bridge → CLI : capabilities  (y=285) === -->
+  <text x="320" y="279" text-anchor="middle" font-size="11" font-weight="700" fill="#8b5cf6">capabilities</text>
+  <line x1="455" y1="285" x2="189" y2="285" class="return-line" stroke="#8b5cf6" marker-end="url(#arrVioletL)"/>
+  <circle cx="105" cy="285" r="10" class="step-num-bg" stroke="#8b5cf6"/>
+  <text x="105" y="289" text-anchor="middle" font-size="11" font-weight="700" fill="#8b5cf6">6</text>
+
+  <!-- === 7. CLI → Bridge : tool_call(edit, params)  (y=320) === -->
+  <text x="320" y="314" text-anchor="middle" font-size="11" font-weight="700" fill="#22d3ee">tool_call(edit, params)</text>
+  <line x1="185" y1="320" x2="451" y2="320" class="arrow-line" stroke="#22d3ee" marker-end="url(#arrCyan)"/>
+  <circle cx="105" cy="320" r="10" class="step-num-bg" stroke="#22d3ee"/>
+  <text x="105" y="324" text-anchor="middle" font-size="11" font-weight="700" fill="#22d3ee">7</text>
+
+  <!-- === 8. Bridge → External : execute_edit  (y=355) === -->
+  <text x="600" y="349" text-anchor="middle" font-size="11" font-weight="700" fill="#8b5cf6">execute_edit</text>
+  <line x1="465" y1="355" x2="731" y2="355" class="arrow-line" stroke="#8b5cf6" marker-end="url(#arrVioletR)"/>
+  <circle cx="870" cy="355" r="10" class="step-num-bg" stroke="#8b5cf6"/>
+  <text x="870" y="359" text-anchor="middle" font-size="11" font-weight="700" fill="#8b5cf6">8</text>
+
+  <!-- === 9. External → Bridge : result  (y=390) === -->
+  <text x="600" y="384" text-anchor="middle" font-size="11" font-weight="700" fill="#10b981">result</text>
+  <line x1="735" y1="390" x2="469" y2="390" class="return-line" stroke="#10b981" marker-end="url(#arrEmerald)"/>
+  <circle cx="870" cy="390" r="10" class="step-num-bg" stroke="#10b981"/>
+  <text x="870" y="394" text-anchor="middle" font-size="11" font-weight="700" fill="#10b981">9</text>
+
+  <!-- === 10. Bridge → CLI : tool_result  (y=425) === -->
+  <text x="320" y="419" text-anchor="middle" font-size="11" font-weight="700" fill="#8b5cf6">tool_result</text>
+  <line x1="455" y1="425" x2="189" y2="425" class="return-line" stroke="#8b5cf6" marker-end="url(#arrVioletL)"/>
+  <circle cx="105" cy="425" r="10" class="step-num-bg" stroke="#8b5cf6"/>
+  <text x="105" y="429" text-anchor="middle" font-size="11" font-weight="700" fill="#8b5cf6">10</text>
+
+  <!-- ============ PHASE SEPARATORS (subtle) ============ -->
+  <!-- Phase A: Handshake (msgs 1-2) -->
+  <line x1="55" y1="162" x2="860" y2="162" stroke="#22d3ee" stroke-width="0.6" stroke-dasharray="2,4" stroke-opacity="0.35"/>
+  <text x="858" y="158" text-anchor="end" font-size="10" font-weight="600" fill="#22d3ee" fill-opacity="0.85">
+    <tspan class="lz">A · 握手阶段</tspan>
+    <tspan class="le" display="none">A · Handshake</tspan>
+  </text>
+
+  <!-- Phase B: Registration (msgs 3-6) -->
+  <line x1="55" y1="302" x2="860" y2="302" stroke="#8b5cf6" stroke-width="0.6" stroke-dasharray="2,4" stroke-opacity="0.35"/>
+  <text x="858" y="298" text-anchor="end" font-size="10" font-weight="600" fill="#8b5cf6" fill-opacity="0.85">
+    <tspan class="lz">B · 注册与能力协商</tspan>
+    <tspan class="le" display="none">B · Registration &amp; capability</tspan>
+  </text>
+
+  <!-- Phase C: Execute (msgs 7-10) -->
+  <line x1="55" y1="442" x2="860" y2="442" stroke="#10b981" stroke-width="0.6" stroke-dasharray="2,4" stroke-opacity="0.35"/>
+  <text x="858" y="438" text-anchor="end" font-size="10" font-weight="600" fill="#10b981" fill-opacity="0.85">
+    <tspan class="lz">C · 工具调用往返</tspan>
+    <tspan class="le" display="none">C · Tool-call round-trip</tspan>
+  </text>
+
+  <!-- ============ BOTTOM LEGEND ============ -->
+  <g transform="translate(60,470)">
+    <text x="0" y="0" font-size="10" font-weight="700" class="muted-text">
+      <tspan class="lz">图例</tspan>
+      <tspan class="le" display="none">LEGEND</tspan>
+    </text>
+
+    <!-- solid arrow = request -->
+    <line x1="60" y1="-4" x2="110" y2="-4" stroke="#94a3b8" stroke-width="1.6"/>
+    <polygon points="110,-4 104,-7 104,-1" fill="#94a3b8"/>
+    <text x="118" y="0" font-size="10" class="muted-text">
+      <tspan class="lz">实线 · 请求 / 发起</tspan>
+      <tspan class="le" display="none">solid · request</tspan>
+    </text>
+
+    <!-- dashed arrow = response -->
+    <line x1="260" y1="-4" x2="310" y2="-4" stroke="#94a3b8" stroke-width="1.4" stroke-dasharray="5,3"/>
+    <polygon points="310,-4 304,-7 304,-1" fill="#94a3b8"/>
+    <text x="318" y="0" font-size="10" class="muted-text">
+      <tspan class="lz">虚线 · 响应 / 返回</tspan>
+      <tspan class="le" display="none">dashed · response</tspan>
+    </text>
+
+    <!-- activation rect -->
+    <rect x="460" y="-10" width="8" height="12" fill="#94a3b8" fill-opacity="0.25" stroke="#94a3b8" stroke-opacity="0.6" stroke-width="0.8"/>
+    <text x="476" y="0" font-size="10" class="muted-text">
+      <tspan class="lz">激活条 · 处理中</tspan>
+      <tspan class="le" display="none">activation · processing</tspan>
+    </text>
+
+    <!-- step number -->
+    <circle cx="635" cy="-4" r="8" class="step-num-bg" stroke="#94a3b8"/>
+    <text x="635" y="-1" text-anchor="middle" font-size="10" font-weight="700" fill="#94a3b8">n</text>
+    <text x="650" y="0" font-size="10" class="muted-text">
+      <tspan class="lz">步骤编号 1-10</tspan>
+      <tspan class="le" display="none">step number 1-10</tspan>
+    </text>
+  </g>
+
+  <!-- ============ FOOTER CAPTION ============ -->
+  <text x="460" y="540" text-anchor="middle" font-size="10" font-weight="600" class="muted-text">
+    <tspan class="lz">时间自上而下推进 · Bridge 既是接线员也是能力目录 · 任何请求都走 Bridge 不直连外部工具</tspan>
+    <tspan class="le" display="none">Time flows top-down · Bridge is operator &amp; capability catalog · All traffic routed via Bridge, never direct</tspan>
+  </text>
+</svg>
+</div>
+
+<!-- ===== Stats Row ===== -->
+<div class="stats">
+  <div class="stat" style="border-color:rgba(34,211,238,.35)">
+    <div class="stat-ico" style="background:rgba(34,211,238,.18);color:#22d3ee">◇</div>
+    <div class="stat-body">
+      <div class="stat-val" style="color:#22d3ee">3</div>
+      <div class="stat-lab">
+        <span class="lz">参与者 · CLI / Bridge / 外部工具</span>
+        <span class="le" style="display:none">Actors · CLI / Bridge / External</span>
+      </div>
+    </div>
+  </div>
+  <div class="stat" style="border-color:rgba(139,92,246,.35)">
+    <div class="stat-ico" style="background:rgba(139,92,246,.18);color:#8b5cf6">✉</div>
+    <div class="stat-body">
+      <div class="stat-val" style="color:#8b5cf6">10</div>
+      <div class="stat-lab">
+        <span class="lz">消息 · 5 次请求 + 5 次响应</span>
+        <span class="le" style="display:none">Messages · 5 requests + 5 responses</span>
+      </div>
+    </div>
+  </div>
+  <div class="stat" style="border-color:rgba(16,185,129,.35)">
+    <div class="stat-ico" style="background:rgba(16,185,129,.18);color:#10b981">⇄</div>
+    <div class="stat-body">
+      <div class="stat-val" style="color:#10b981">
+        <span class="lz">双向透传</span>
+        <span class="le" style="display:none">Bidirectional</span>
+      </div>
+      <div class="stat-lab">
+        <span class="lz">Bridge 不改语义 · 仅中继</span>
+        <span class="le" style="display:none">Bridge preserves semantics · pure relay</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== Explanation Cards ===== -->
+<div class="cards">
+  <div class="card" style="border-left:3px solid #22d3ee">
+    <div class="card-hd">
+      <div class="card-dot" style="background:#22d3ee"></div>
+      <h3><span class="lz">A · 握手阶段</span><span class="le" style="display:none">A · Handshake</span></h3>
+      <span class="card-sub">1-2</span>
+    </div>
+    <ul>
+      <li>• <strong>connect()</strong> <span class="lz">建立本地 socket / pipe 通道</span><span class="le" style="display:none">opens local socket / pipe channel</span></li>
+      <li>• <span class="lz">Bridge 分配</span><span class="le" style="display:none">Bridge issues</span> <strong>session_id</strong> <span class="lz">作为后续消息的票据</span><span class="le" style="display:none">as ticket for later messages</span></li>
+      <li>• <span class="lz">💡 通俗理解：打进前台电话，前台给你一个房间号，之后所有对话都报这个号</span><span class="le" style="display:none">Like calling reception — they give you a room number and every later call quotes it</span></li>
+    </ul>
+  </div>
+
+  <div class="card" style="border-left:3px solid #8b5cf6">
+    <div class="card-hd">
+      <div class="card-dot" style="background:#8b5cf6"></div>
+      <h3><span class="lz">B · 注册与能力协商</span><span class="le" style="display:none">B · Registration &amp; capabilities</span></h3>
+      <span class="card-sub">3-6</span>
+    </div>
+    <ul>
+      <li>• CLI <strong>register_tool(edit)</strong> <span class="lz">告诉 Bridge 自己想用 edit</span><span class="le" style="display:none">tells Bridge it wants edit</span></li>
+      <li>• Bridge <strong>forward_registration</strong> <span class="lz">透传给外部工具，回收</span><span class="le" style="display:none">forwards to External, collects</span> <strong>capabilities</strong></li>
+      <li>• <span class="lz">💡 通俗理解：你跟前台说"我要叫维修"，前台打给维修部问他会什么，再告诉你清单</span><span class="le" style="display:none">Like asking reception for "repair" — they ring the repair dept, collect the skill list, and hand it back</span></li>
+    </ul>
+  </div>
+
+  <div class="card" style="border-left:3px solid #10b981">
+    <div class="card-hd">
+      <div class="card-dot" style="background:#10b981"></div>
+      <h3><span class="lz">C · 工具调用往返</span><span class="le" style="display:none">C · Tool-call round-trip</span></h3>
+      <span class="card-sub">7-10</span>
+    </div>
+    <ul>
+      <li>• CLI <strong>tool_call(edit, params)</strong> → Bridge → <strong>execute_edit</strong> <span class="lz">落到外部工具</span><span class="le" style="display:none">lands on External</span></li>
+      <li>• <strong>result</strong> <span class="lz">原路回传，变成 CLI 看到的</span><span class="le" style="display:none">flows back, becomes</span> <strong>tool_result</strong></li>
+      <li>• <span class="lz">💡 通俗理解：点菜条经前台递进厨房，菜从厨房原路端回到你桌上，期间前台只负责传递不下厨</span><span class="le" style="display:none">Order slip passes through reception to kitchen, dish returns the same way — reception only relays, never cooks</span></li>
+    </ul>
+  </div>
+</div>
+
+<div class="vis-footer">
+  VIS-2Q-009 · Claude Code 2.1.88 · Bridge Daemon · <span class="lz">3 参与者 · 10 消息 · 3 阶段 (握手 / 注册 / 调用)</span><span class="le" style="display:none">3 actors · 10 messages · 3 phases (handshake / register / invoke)</span> · <span class="lz">v2 生产版</span><span class="le" style="display:none">v2 Production</span>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

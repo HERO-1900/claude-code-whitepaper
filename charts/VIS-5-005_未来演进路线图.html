@@ -1,0 +1,670 @@
+<!DOCTYPE html>
+<!--
+  VIS-5-005 · Claude Code 未来演进路线图 · Evolution Roadmap
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  三阶段水平时间线 · 近期/中期/远期 · 12 个关键里程碑
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · 未来演进路线图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+    :root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+    :root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+    :root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+    html,body{width:100%;min-height:100vh;}
+    body{
+      background:var(--bg);
+      color:var(--text);
+      font-family:'JetBrains Mono',ui-monospace,monospace;
+      display:flex;flex-direction:column;align-items:center;
+      padding:24px 16px 40px;
+      transition:background .3s,color .3s;
+    }
+
+    /* ── Controls ── */
+    .controls{
+      display:flex;gap:8px;margin-bottom:20px;align-self:flex-end;
+    }
+    button{
+      font-family:inherit;font-size:11px;
+      padding:5px 12px;border-radius:6px;cursor:pointer;
+      border:1px solid var(--border);
+      background:var(--panel);color:var(--muted);
+      transition:all .2s;
+    }
+    button:hover{border-color:var(--cyan);color:var(--text);}
+
+    /* ── Main card ── */
+    .card{
+      width:100%;max-width:960px;
+      background:var(--panel);
+      border:1px solid var(--border);
+      border-radius:16px;
+      padding:32px 28px 24px;
+      overflow:hidden;
+    }
+
+    /* ── Header ── */
+    .header{margin-bottom:24px;text-align:center;}
+    .header h1{font-size:18px;font-weight:700;letter-spacing:.02em;line-height:1.4;}
+    .header .sub{font-size:12px;color:var(--muted);margin-top:4px;}
+
+    /* ── Stats row ── */
+    .stats{
+      display:flex;justify-content:center;gap:32px;
+      margin-bottom:28px;padding:14px 0;
+      border-top:1px solid var(--border);
+      border-bottom:1px solid var(--border);
+    }
+    .stat{text-align:center;}
+    .stat .val{font-size:22px;font-weight:700;color:var(--cyan);}
+    .stat .lbl{font-size:10px;color:var(--muted);margin-top:2px;}
+
+    /* ── SVG wrapper ── */
+    .svg-wrap{
+      width:100%;
+      overflow:visible;
+    }
+    svg{width:100%;height:auto;}
+
+    /* ── Bottom phase cards ── */
+    .phase-cards{
+      display:grid;grid-template-columns:repeat(3,1fr);
+      gap:12px;margin-top:24px;
+    }
+    .phase-card{
+      background:var(--card);
+      border:1px solid var(--border);
+      border-radius:10px;
+      padding:14px 16px;
+    }
+    .phase-card .ph-badge{
+      display:inline-flex;align-items:center;gap:6px;
+      font-size:10px;font-weight:600;letter-spacing:.06em;
+      margin-bottom:8px;
+      padding:3px 8px;border-radius:4px;
+    }
+    .phase-card .ph-title{font-size:12px;font-weight:600;margin-bottom:4px;}
+    .phase-card .ph-desc{font-size:10px;color:var(--muted);line-height:1.5;}
+
+    /* ── Footer ── */
+    .footer{
+      margin-top:20px;font-size:10px;color:var(--muted);
+      text-align:center;line-height:1.6;
+    }
+  
+</style>
+</head>
+<body>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+
+<div class="controls">
+  <button onclick="cycleTheme()">☀ <span class="lz">主题</span><span class="le" style="display:none">Theme</span></button>
+  <button onclick="toggleLang()"><span class="lz">EN</span><span class="le" style="display:none">中文</span></button>
+</div>
+
+<div class="card">
+  <div class="header">
+    <h1>
+      <span class="lz">Claude Code · 未来演进路线图</span>
+      <span class="le" style="display:none">Claude Code · Evolution Roadmap</span>
+    </h1>
+    <div class="sub">
+      <span class="lz">从当前状态到未来可能性 · 三阶段 · 12 个关键里程碑</span>
+      <span class="le" style="display:none">From Current State to Future Possibilities · 3 Phases · 12 Key Milestones</span>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="val" style="color:var(--cyan)">3</div>
+      <div class="lbl"><span class="lz">演进阶段</span><span class="le" style="display:none">Phases</span></div>
+    </div>
+    <div class="stat">
+      <div class="val" style="color:var(--violet)">12</div>
+      <div class="lbl"><span class="lz">关键里程碑</span><span class="le" style="display:none">Key Milestones</span></div>
+    </div>
+    <div class="stat">
+      <div class="val" style="color:var(--rose)">18<span style="font-size:14px" class="lz">个月</span><span style="font-size:14px" class="le" style="display:none">mo</span></div>
+      <div class="lbl"><span class="lz">愿景规划期</span><span class="le" style="display:none">Vision Horizon</span></div>
+    </div>
+  </div>
+
+  <!-- SVG Timeline -->
+  <div class="svg-wrap">
+    <svg viewBox="0 0 920 380" xmlns="http://www.w3.org/2000/svg" aria-label="Claude Code 未来演进路线图">
+      <defs>
+        <!-- Phase zone gradients -->
+        <linearGradient id="grad-p1" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#22d3ee;stop-opacity:0.13"/>
+          <stop offset="100%" style="stop-color:#22d3ee;stop-opacity:0.05"/>
+        </linearGradient>
+        <linearGradient id="grad-p2" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:0.08"/>
+          <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:0.13"/>
+        </linearGradient>
+        <linearGradient id="grad-p3" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#f43f5e;stop-opacity:0.08"/>
+          <stop offset="100%" style="stop-color:#f43f5e;stop-opacity:0.16"/>
+        </linearGradient>
+        <!-- Timeline gradient line -->
+        <linearGradient id="grad-line" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#22d3ee"/>
+          <stop offset="45%" style="stop-color:#8b5cf6"/>
+          <stop offset="100%" style="stop-color:#f43f5e"/>
+        </linearGradient>
+        <!-- Glow filters -->
+        <filter id="glow-cyan" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow-violet" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow-rose" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <!-- Card drop shadow -->
+        <filter id="card-shadow" x="-10%" y="-10%" width="120%" height="140%">
+          <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="rgba(0,0,0,0.3)"/>
+        </filter>
+      </defs>
+
+      <!-- ── Phase background zones ── -->
+      <!-- Phase 1: x=60 to x=355 -->
+      <rect x="60" y="30" width="295" height="290" rx="12" fill="url(#grad-p1)" stroke="#22d3ee" stroke-width="1" stroke-opacity="0.2"/>
+      <!-- Phase 2: x=360 to x=615 -->
+      <rect x="360" y="30" width="255" height="290" rx="12" fill="url(#grad-p2)" stroke="#8b5cf6" stroke-width="1" stroke-opacity="0.2"/>
+      <!-- Phase 3: x=620 to x=900 -->
+      <rect x="620" y="30" width="280" height="290" rx="12" fill="url(#grad-p3)" stroke="#f43f5e" stroke-width="1" stroke-opacity="0.2"/>
+
+      <!-- ── Phase header badges ── -->
+      <!-- Phase 1 badge -->
+      <rect x="90" y="42" width="126" height="26" rx="6" fill="#22d3ee" fill-opacity="0.18" stroke="#22d3ee" stroke-width="1" stroke-opacity="0.6"/>
+      <text x="153" y="59" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#22d3ee">
+        <tspan class="lz">近期 · 0–6 个月</tspan>
+        <tspan class="le" display="none">Near · 0–6 mo</tspan>
+      </text>
+      <!-- Phase 2 badge -->
+      <rect x="375" y="42" width="126" height="26" rx="6" fill="#8b5cf6" fill-opacity="0.18" stroke="#8b5cf6" stroke-width="1" stroke-opacity="0.6"/>
+      <text x="438" y="59" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#8b5cf6">
+        <tspan class="lz">中期 · 6–18 个月</tspan>
+        <tspan class="le" display="none">Mid · 6–18 mo</tspan>
+      </text>
+      <!-- Phase 3 badge -->
+      <rect x="640" y="42" width="124" height="26" rx="6" fill="#f43f5e" fill-opacity="0.18" stroke="#f43f5e" stroke-width="1" stroke-opacity="0.6"/>
+      <text x="702" y="59" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="#f43f5e">
+        <tspan class="lz">远期 · 18+ 个月</tspan>
+        <tspan class="le" display="none">Long · 18+ mo</tspan>
+      </text>
+
+      <!-- ── Main timeline line ── -->
+      <line x1="60" y1="200" x2="892" y2="200" stroke="url(#grad-line)" stroke-width="3" stroke-linecap="round"/>
+      <!-- Arrowhead -->
+      <polygon points="892,200 880,194 880,206" fill="#f43f5e"/>
+
+      <!-- ── "现在 Now" marker ── -->
+      <line x1="60" y1="80" x2="60" y2="290" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="4,3" stroke-opacity="0.7"/>
+      <circle cx="60" cy="200" r="6" fill="#22d3ee" filter="url(#glow-cyan)"/>
+      <rect x="22" y="284" width="76" height="22" rx="5" fill="#22d3ee" fill-opacity="0.15" stroke="#22d3ee" stroke-width="1" stroke-opacity="0.5"/>
+      <text x="60" y="299" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" fill="#22d3ee">
+        <tspan class="lz">现在</tspan>
+        <tspan class="le" display="none">Now</tspan>
+      </text>
+
+      <!-- ── Phase dividers ── -->
+      <line x1="357" y1="80" x2="357" y2="310" stroke="rgba(139,92,246,0.35)" stroke-width="1.5" stroke-dasharray="5,4"/>
+      <line x1="617" y1="80" x2="617" y2="310" stroke="rgba(244,63,94,0.35)" stroke-width="1.5" stroke-dasharray="5,4"/>
+
+      <!-- ══════════════════════════════════════════
+           PHASE 1 MILESTONES (cyan)
+           Dots at: x=130, 190, 250, 315
+           Alternating: above(1,3) / below(2,4)
+      ═══════════════════════════════════════════ -->
+
+      <!-- M1-1: MCP协议标准化 (above) -->
+      <line x1="130" y1="200" x2="130" y2="160" stroke="#22d3ee" stroke-width="1.5" stroke-opacity="0.6"/>
+      <circle cx="130" cy="200" r="5" fill="#22d3ee" filter="url(#glow-cyan)"/>
+      <!-- card above -->
+      <rect x="72" y="88" width="116" height="68" rx="7" fill="rgba(34,211,238,0.1)" stroke="#22d3ee" stroke-width="1" stroke-opacity="0.5" filter="url(#card-shadow)"/>
+      <text x="130" y="104" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#22d3ee">
+        <tspan x="130" dy="0" class="lz">MCP 协议</tspan>
+        <tspan x="130" dy="0" class="le" display="none">MCP Protocol</tspan>
+      </text>
+      <text x="130" y="118" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#22d3ee">
+        <tspan x="130" dy="0" class="lz">标准化完善</tspan>
+        <tspan x="130" dy="0" class="le" display="none">Standardization</tspan>
+      </text>
+      <text x="130" y="133" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(34,211,238,0.7)">
+        <tspan x="130" dy="0" class="lz">协议生态规范统一</tspan>
+        <tspan x="130" dy="0" class="le" display="none">Ecosystem unification</tspan>
+      </text>
+      <text x="130" y="147" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(34,211,238,0.7)">
+        <tspan x="130" dy="0" class="lz">跨工具互操作性</tspan>
+        <tspan x="130" dy="0" class="le" display="none">Cross-tool interop</tspan>
+      </text>
+
+      <!-- M1-2: Team Memory云同步 (below) -->
+      <line x1="193" y1="200" x2="193" y2="240" stroke="#22d3ee" stroke-width="1.5" stroke-opacity="0.6"/>
+      <circle cx="193" cy="200" r="5" fill="#22d3ee" filter="url(#glow-cyan)"/>
+      <!-- card below -->
+      <rect x="137" y="244" width="112" height="60" rx="7" fill="rgba(34,211,238,0.1)" stroke="#22d3ee" stroke-width="1" stroke-opacity="0.5" filter="url(#card-shadow)"/>
+      <text x="193" y="259" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#22d3ee">
+        <tspan x="193" dy="0" class="lz">Team Memory</tspan>
+        <tspan x="193" dy="0" class="le" display="none">Team Memory</tspan>
+      </text>
+      <text x="193" y="272" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#22d3ee">
+        <tspan x="193" dy="0" class="lz">云同步稳定</tspan>
+        <tspan x="193" dy="0" class="le" display="none">Cloud Sync Stable</tspan>
+      </text>
+      <text x="193" y="286" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(34,211,238,0.7)">
+        <tspan x="193" dy="0" class="lz">团队记忆持久化</tspan>
+        <tspan x="193" dy="0" class="le" display="none">Persistent team memory</tspan>
+      </text>
+
+      <!-- M1-3: Hook系统扩展 (above) -->
+      <line x1="256" y1="200" x2="256" y2="160" stroke="#22d3ee" stroke-width="1.5" stroke-opacity="0.6"/>
+      <circle cx="256" cy="200" r="5" fill="#22d3ee" filter="url(#glow-cyan)"/>
+      <!-- card above -->
+      <rect x="198" y="88" width="116" height="68" rx="7" fill="rgba(34,211,238,0.1)" stroke="#22d3ee" stroke-width="1" stroke-opacity="0.5" filter="url(#card-shadow)"/>
+      <text x="256" y="104" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#22d3ee">
+        <tspan x="256" dy="0" class="lz">Hook 系统</tspan>
+        <tspan x="256" dy="0" class="le" display="none">Hook System</tspan>
+      </text>
+      <text x="256" y="118" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#22d3ee">
+        <tspan x="256" dy="0" class="lz">扩展增强</tspan>
+        <tspan x="256" dy="0" class="le" display="none">Extended</tspan>
+      </text>
+      <text x="256" y="133" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(34,211,238,0.7)">
+        <tspan x="256" dy="0" class="lz">更丰富事件钩子</tspan>
+        <tspan x="256" dy="0" class="le" display="none">Richer event hooks</tspan>
+      </text>
+      <text x="256" y="147" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(34,211,238,0.7)">
+        <tspan x="256" dy="0" class="lz">工作流自动化</tspan>
+        <tspan x="256" dy="0" class="le" display="none">Workflow automation</tspan>
+      </text>
+
+      <!-- M1-4: 并发优化 (below) -->
+      <line x1="318" y1="200" x2="318" y2="240" stroke="#22d3ee" stroke-width="1.5" stroke-opacity="0.6"/>
+      <circle cx="318" cy="200" r="5" fill="#22d3ee" filter="url(#glow-cyan)"/>
+      <!-- card below -->
+      <rect x="259" y="244" width="116" height="60" rx="7" fill="rgba(34,211,238,0.1)" stroke="#22d3ee" stroke-width="1" stroke-opacity="0.5" filter="url(#card-shadow)"/>
+      <text x="318" y="259" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#22d3ee">
+        <tspan x="318" dy="0" class="lz">更多工具</tspan>
+        <tspan x="318" dy="0" class="le" display="none">Tool Parallel</tspan>
+      </text>
+      <text x="318" y="272" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#22d3ee">
+        <tspan x="318" dy="0" class="lz">并发优化</tspan>
+        <tspan x="318" dy="0" class="le" display="none">Optimization</tspan>
+      </text>
+      <text x="318" y="286" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(34,211,238,0.7)">
+        <tspan x="318" dy="0" class="lz">并行执行效率提升</tspan>
+        <tspan x="318" dy="0" class="le" display="none">Parallel exec boost</tspan>
+      </text>
+
+      <!-- ══════════════════════════════════════════
+           PHASE 2 MILESTONES (violet)
+           Dots at: x=405, 460, 515, 570
+           Alternating: above(1,3) / below(2,4)
+      ═══════════════════════════════════════════ -->
+
+      <!-- M2-1: 多Agent编排框架 (above) -->
+      <line x1="405" y1="200" x2="405" y2="160" stroke="#8b5cf6" stroke-width="1.5" stroke-opacity="0.6"/>
+      <circle cx="405" cy="200" r="5" fill="#8b5cf6" filter="url(#glow-violet)"/>
+      <!-- card above -->
+      <rect x="347" y="88" width="116" height="68" rx="7" fill="rgba(139,92,246,0.12)" stroke="#8b5cf6" stroke-width="1" stroke-opacity="0.5" filter="url(#card-shadow)"/>
+      <text x="405" y="104" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#8b5cf6">
+        <tspan x="405" dy="0" class="lz">多 Agent 编排</tspan>
+        <tspan x="405" dy="0" class="le" display="none">Multi-Agent</tspan>
+      </text>
+      <text x="405" y="118" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#8b5cf6">
+        <tspan x="405" dy="0" class="lz">框架成熟</tspan>
+        <tspan x="405" dy="0" class="le" display="none">Orchestration Mature</tspan>
+      </text>
+      <text x="405" y="133" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(139,92,246,0.75)">
+        <tspan x="405" dy="0" class="lz">复杂任务协同分解</tspan>
+        <tspan x="405" dy="0" class="le" display="none">Complex task decomp</tspan>
+      </text>
+      <text x="405" y="147" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(139,92,246,0.75)">
+        <tspan x="405" dy="0" class="lz">层级调度稳定</tspan>
+        <tspan x="405" dy="0" class="le" display="none">Hierarchical dispatch</tspan>
+      </text>
+
+      <!-- M2-2: 跨项目记忆共享 (below) -->
+      <line x1="462" y1="200" x2="462" y2="240" stroke="#8b5cf6" stroke-width="1.5" stroke-opacity="0.6"/>
+      <circle cx="462" cy="200" r="5" fill="#8b5cf6" filter="url(#glow-violet)"/>
+      <!-- card below -->
+      <rect x="403" y="244" width="116" height="60" rx="7" fill="rgba(139,92,246,0.12)" stroke="#8b5cf6" stroke-width="1" stroke-opacity="0.5" filter="url(#card-shadow)"/>
+      <text x="462" y="259" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#8b5cf6">
+        <tspan x="462" dy="0" class="lz">跨项目</tspan>
+        <tspan x="462" dy="0" class="le" display="none">Cross-project</tspan>
+      </text>
+      <text x="462" y="272" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#8b5cf6">
+        <tspan x="462" dy="0" class="lz">记忆共享</tspan>
+        <tspan x="462" dy="0" class="le" display="none">Memory Sharing</tspan>
+      </text>
+      <text x="462" y="286" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(139,92,246,0.75)">
+        <tspan x="462" dy="0" class="lz">知识库跨仓库迁移</tspan>
+        <tspan x="462" dy="0" class="le" display="none">Cross-repo knowledge</tspan>
+      </text>
+
+      <!-- M2-3: 智能代码库索引 (above) -->
+      <line x1="522" y1="200" x2="522" y2="160" stroke="#8b5cf6" stroke-width="1.5" stroke-opacity="0.6"/>
+      <circle cx="522" cy="200" r="5" fill="#8b5cf6" filter="url(#glow-violet)"/>
+      <!-- card above -->
+      <rect x="464" y="88" width="116" height="68" rx="7" fill="rgba(139,92,246,0.12)" stroke="#8b5cf6" stroke-width="1" stroke-opacity="0.5" filter="url(#card-shadow)"/>
+      <text x="522" y="104" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#8b5cf6">
+        <tspan x="522" dy="0" class="lz">智能代码库</tspan>
+        <tspan x="522" dy="0" class="le" display="none">Intelligent</tspan>
+      </text>
+      <text x="522" y="118" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#8b5cf6">
+        <tspan x="522" dy="0" class="lz">索引系统</tspan>
+        <tspan x="522" dy="0" class="le" display="none">Codebase Index</tspan>
+      </text>
+      <text x="522" y="133" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(139,92,246,0.75)">
+        <tspan x="522" dy="0" class="lz">语义代码搜索</tspan>
+        <tspan x="522" dy="0" class="le" display="none">Semantic code search</tspan>
+      </text>
+      <text x="522" y="147" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(139,92,246,0.75)">
+        <tspan x="522" dy="0" class="lz">上下文自动构建</tspan>
+        <tspan x="522" dy="0" class="le" display="none">Auto context build</tspan>
+      </text>
+
+      <!-- M2-4: 自适应权限学习 (below) -->
+      <line x1="580" y1="200" x2="580" y2="240" stroke="#8b5cf6" stroke-width="1.5" stroke-opacity="0.6"/>
+      <circle cx="580" cy="200" r="5" fill="#8b5cf6" filter="url(#glow-violet)"/>
+      <!-- card below -->
+      <rect x="521" y="244" width="116" height="60" rx="7" fill="rgba(139,92,246,0.12)" stroke="#8b5cf6" stroke-width="1" stroke-opacity="0.5" filter="url(#card-shadow)"/>
+      <text x="580" y="259" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#8b5cf6">
+        <tspan x="580" dy="0" class="lz">自适应权限</tspan>
+        <tspan x="580" dy="0" class="le" display="none">Adaptive</tspan>
+      </text>
+      <text x="580" y="272" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#8b5cf6">
+        <tspan x="580" dy="0" class="lz">学习系统</tspan>
+        <tspan x="580" dy="0" class="le" display="none">Permission Learning</tspan>
+      </text>
+      <text x="580" y="286" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(139,92,246,0.75)">
+        <tspan x="580" dy="0" class="lz">动态信任策略</tspan>
+        <tspan x="580" dy="0" class="le" display="none">Dynamic trust policy</tspan>
+      </text>
+
+      <!-- ══════════════════════════════════════════
+           PHASE 3 MILESTONES (rose)
+           Dots at: x=660, 718, 775, 835
+           Alternating: above(1,3) / below(2,4)
+      ═══════════════════════════════════════════ -->
+
+      <!-- M3-1: 完全自主软件工程 (above) -->
+      <line x1="660" y1="200" x2="660" y2="160" stroke="#f43f5e" stroke-width="1.5" stroke-opacity="0.6"/>
+      <circle cx="660" cy="200" r="5" fill="#f43f5e" filter="url(#glow-rose)"/>
+      <!-- card above -->
+      <rect x="600" y="88" width="120" height="68" rx="7" fill="rgba(244,63,94,0.12)" stroke="#f43f5e" stroke-width="1" stroke-opacity="0.5" filter="url(#card-shadow)"/>
+      <text x="660" y="104" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#f43f5e">
+        <tspan x="660" dy="0" class="lz">完全自主</tspan>
+        <tspan x="660" dy="0" class="le" display="none">Fully Autonomous</tspan>
+      </text>
+      <text x="660" y="118" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#f43f5e">
+        <tspan x="660" dy="0" class="lz">软件工程</tspan>
+        <tspan x="660" dy="0" class="le" display="none">Software Eng.</tspan>
+      </text>
+      <text x="660" y="133" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(244,63,94,0.75)">
+        <tspan x="660" dy="0" class="lz">端到端项目交付</tspan>
+        <tspan x="660" dy="0" class="le" display="none">End-to-end delivery</tspan>
+      </text>
+      <text x="660" y="147" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(244,63,94,0.75)">
+        <tspan x="660" dy="0" class="lz">最小人工干预</tspan>
+        <tspan x="660" dy="0" class="le" display="none">Minimal human input</tspan>
+      </text>
+
+      <!-- M3-2: 分布式Agent协作网络 (below) -->
+      <line x1="718" y1="200" x2="718" y2="240" stroke="#f43f5e" stroke-width="1.5" stroke-opacity="0.6"/>
+      <circle cx="718" cy="200" r="5" fill="#f43f5e" filter="url(#glow-rose)"/>
+      <!-- card below -->
+      <rect x="656" y="244" width="124" height="60" rx="7" fill="rgba(244,63,94,0.12)" stroke="#f43f5e" stroke-width="1" stroke-opacity="0.5" filter="url(#card-shadow)"/>
+      <text x="718" y="259" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#f43f5e">
+        <tspan x="718" dy="0" class="lz">分布式 Agent</tspan>
+        <tspan x="718" dy="0" class="le" display="none">Distributed Agent</tspan>
+      </text>
+      <text x="718" y="272" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#f43f5e">
+        <tspan x="718" dy="0" class="lz">协作网络</tspan>
+        <tspan x="718" dy="0" class="le" display="none">Collab Network</tspan>
+      </text>
+      <text x="718" y="286" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(244,63,94,0.75)">
+        <tspan x="718" dy="0" class="lz">跨团队 Agent 协同</tspan>
+        <tspan x="718" dy="0" class="le" display="none">Cross-team agent sync</tspan>
+      </text>
+
+      <!-- M3-3: 持续学习代码风格 (above) -->
+      <line x1="778" y1="200" x2="778" y2="160" stroke="#f43f5e" stroke-width="1.5" stroke-opacity="0.6"/>
+      <circle cx="778" cy="200" r="5" fill="#f43f5e" filter="url(#glow-rose)"/>
+      <!-- card above -->
+      <rect x="718" y="88" width="120" height="68" rx="7" fill="rgba(244,63,94,0.12)" stroke="#f43f5e" stroke-width="1" stroke-opacity="0.5" filter="url(#card-shadow)"/>
+      <text x="778" y="104" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#f43f5e">
+        <tspan x="778" dy="0" class="lz">持续学习</tspan>
+        <tspan x="778" dy="0" class="le" display="none">Continuous Learning</tspan>
+      </text>
+      <text x="778" y="118" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#f43f5e">
+        <tspan x="778" dy="0" class="lz">代码风格</tspan>
+        <tspan x="778" dy="0" class="le" display="none">Code Style</tspan>
+      </text>
+      <text x="778" y="133" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(244,63,94,0.75)">
+        <tspan x="778" dy="0" class="lz">个性化适应用户</tspan>
+        <tspan x="778" dy="0" class="le" display="none">Personalized to user</tspan>
+      </text>
+      <text x="778" y="147" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(244,63,94,0.75)">
+        <tspan x="778" dy="0" class="lz">风格偏好记忆</tspan>
+        <tspan x="778" dy="0" class="le" display="none">Style pref memory</tspan>
+      </text>
+
+      <!-- M3-4: 预测性bug修复 (below) -->
+      <line x1="840" y1="200" x2="840" y2="240" stroke="#f43f5e" stroke-width="1.5" stroke-opacity="0.6"/>
+      <circle cx="840" cy="200" r="5" fill="#f43f5e" filter="url(#glow-rose)"/>
+      <!-- card below -->
+      <rect x="780" y="244" width="116" height="60" rx="7" fill="rgba(244,63,94,0.12)" stroke="#f43f5e" stroke-width="1" stroke-opacity="0.5" filter="url(#card-shadow)"/>
+      <text x="840" y="259" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#f43f5e">
+        <tspan x="840" dy="0" class="lz">预测性</tspan>
+        <tspan x="840" dy="0" class="le" display="none">Predictive</tspan>
+      </text>
+      <text x="840" y="272" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="#f43f5e">
+        <tspan x="840" dy="0" class="lz">Bug 修复</tspan>
+        <tspan x="840" dy="0" class="le" display="none">Bug Fixing</tspan>
+      </text>
+      <text x="840" y="286" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(244,63,94,0.75)">
+        <tspan x="840" dy="0" class="lz">缺陷提前感知</tspan>
+        <tspan x="840" dy="0" class="le" display="none">Proactive defect sense</tspan>
+      </text>
+
+      <!-- ── Time labels on axis ── -->
+      <text x="130" y="218" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(34,211,238,0.55)">
+        <tspan class="lz">1月</tspan><tspan class="le" display="none">1m</tspan>
+      </text>
+      <text x="193" y="218" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(34,211,238,0.55)">
+        <tspan class="lz">2月</tspan><tspan class="le" display="none">2m</tspan>
+      </text>
+      <text x="256" y="218" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(34,211,238,0.55)">
+        <tspan class="lz">4月</tspan><tspan class="le" display="none">4m</tspan>
+      </text>
+      <text x="318" y="218" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(34,211,238,0.55)">
+        <tspan class="lz">6月</tspan><tspan class="le" display="none">6m</tspan>
+      </text>
+      <text x="462" y="218" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(139,92,246,0.55)">
+        <tspan class="lz">9月</tspan><tspan class="le" display="none">9m</tspan>
+      </text>
+      <text x="580" y="218" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(139,92,246,0.55)">
+        <tspan class="lz">18月</tspan><tspan class="le" display="none">18m</tspan>
+      </text>
+      <text x="840" y="218" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(244,63,94,0.55)">
+        <tspan class="lz">远期</tspan><tspan class="le" display="none">Long</tspan>
+      </text>
+
+      <!-- ── Milestone count labels ── -->
+      <text x="207" y="360" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(34,211,238,0.5)">
+        <tspan class="lz">× 4 里程碑</tspan>
+        <tspan class="le" display="none">× 4 milestones</tspan>
+      </text>
+      <text x="490" y="360" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(139,92,246,0.5)">
+        <tspan class="lz">× 4 里程碑</tspan>
+        <tspan class="le" display="none">× 4 milestones</tspan>
+      </text>
+      <text x="760" y="360" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="rgba(244,63,94,0.5)">
+        <tspan class="lz">× 4 里程碑</tspan>
+        <tspan class="le" display="none">× 4 milestones</tspan>
+      </text>
+    </svg>
+  </div>
+
+  <!-- ── Phase summary cards ── -->
+  <div class="phase-cards">
+    <!-- Card 1: Phase 1 -->
+    <div class="phase-card">
+      <div class="ph-badge" style="background:rgba(34,211,238,0.12);color:#22d3ee;border:1px solid rgba(34,211,238,0.3);">
+        <span>▶</span>
+        <span class="lz">近期 · 0–6 个月</span>
+        <span class="le" style="display:none">Near Term · 0–6 mo</span>
+      </div>
+      <div class="ph-title" style="color:#22d3ee;">
+        <span class="lz">生态基础夯实</span>
+        <span class="le" style="display:none">Ecosystem Foundation</span>
+      </div>
+      <div class="ph-desc">
+        <span class="lz">聚焦 MCP 标准化、Team Memory 稳定、Hook 扩展与并发性能，打通核心工作流，降低工具集成门槛。</span>
+        <span class="le" style="display:none">Focus on MCP standardization, Team Memory stability, extended hooks, and concurrency to lower integration barriers.</span>
+      </div>
+    </div>
+    <!-- Card 2: Phase 2 -->
+    <div class="phase-card">
+      <div class="ph-badge" style="background:rgba(139,92,246,0.12);color:#8b5cf6;border:1px solid rgba(139,92,246,0.3);">
+        <span>◈</span>
+        <span class="lz">中期 · 6–18 个月</span>
+        <span class="le" style="display:none">Mid Term · 6–18 mo</span>
+      </div>
+      <div class="ph-title" style="color:#8b5cf6;">
+        <span class="lz">智能协作跃升</span>
+        <span class="le" style="display:none">Intelligent Collaboration</span>
+      </div>
+      <div class="ph-desc">
+        <span class="lz">多 Agent 编排框架趋于成熟，跨项目记忆共享与智能索引推动知识复用，自适应权限让安全与效率并举。</span>
+        <span class="le" style="display:none">Multi-agent orchestration matures; cross-project memory and intelligent indexing drive knowledge reuse.</span>
+      </div>
+    </div>
+    <!-- Card 3: Phase 3 -->
+    <div class="phase-card">
+      <div class="ph-badge" style="background:rgba(244,63,94,0.12);color:#f43f5e;border:1px solid rgba(244,63,94,0.3);">
+        <span>◆</span>
+        <span class="lz">远期 · 18+ 个月</span>
+        <span class="le" style="display:none">Long Term · 18+ mo</span>
+      </div>
+      <div class="ph-title" style="color:#f43f5e;">
+        <span class="lz">自主工程愿景</span>
+        <span class="le" style="display:none">Autonomous Eng. Vision</span>
+      </div>
+      <div class="ph-desc">
+        <span class="lz">完全自主软件工程、分布式 Agent 协作网络、持续学习代码风格、预测性 Bug 修复，重塑人机协作边界。</span>
+        <span class="le" style="display:none">Fully autonomous SE, distributed agent networks, continuous style learning, and predictive bug fixing reshape human-AI boundaries.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="footer">
+  <span class="lz">VIS-5-005 · Claude Code 未来演进路线图 · 3 演进阶段 · 12 关键里程碑 · 18 个月愿景</span>
+  <span class="le" style="display:none">VIS-5-005 · Claude Code Evolution Roadmap · 3 Phases · 12 Key Milestones · 18-Month Vision</span>
+</div>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

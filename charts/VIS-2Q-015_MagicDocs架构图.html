@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>VIS-2Q-015 MagicDocs 架构图 / MagicDocs Architecture</title>
+<style>
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;}
+.wrap{max-width:1000px;margin:0 auto;padding:24px 20px 48px;}
+.toolbar{display:flex;justify-content:flex-end;gap:8px;margin-bottom:14px;}
+.toolbar button{background:var(--panel);border:1px solid var(--border);color:var(--text);padding:6px 14px;border-radius:6px;font-size:12px;cursor:pointer;transition:opacity .2s;}
+.toolbar button:hover{opacity:.8;}
+.hdr{margin-bottom:18px;}
+.hdr h1{font-size:22px;font-weight:700;letter-spacing:.3px;margin-bottom:6px;}
+.hdr .sub{color:var(--muted);font-size:13px;}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:18px;}
+.chart{width:100%;height:auto;display:block;}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:18px;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px;text-align:center;}
+.stat .v{font-size:22px;font-weight:700;color:var(--emerald);margin-bottom:4px;}
+.stat .l{font-size:11px;color:var(--muted);letter-spacing:.5px;text-transform:uppercase;}
+.legend{display:flex;flex-wrap:wrap;gap:10px;margin-top:16px;font-size:11px;color:var(--muted);}
+.legend .it{display:flex;align-items:center;gap:6px;}
+.legend .dot{width:10px;height:10px;border-radius:2px;}
+.footnote{color:var(--muted);font-size:11px;margin-top:10px;line-height:1.6;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="toolbar">
+    <button onclick="cycleTheme()">
+      <span class="lz">主题</span><span class="le">Theme</span>
+    </button>
+    <button onclick="toggleLang()">
+      <span class="lz">EN</span><span class="le">中</span>
+    </button>
+  </div>
+
+  <div class="hdr">
+    <h1>
+      <span class="lz">MagicDocs 架构图</span>
+      <span class="le">MagicDocs Architecture</span>
+    </h1>
+    <div class="sub">
+      <span class="lz">自动文档系统：从源码扫描到 Markdown 输出的五段流水线，配置与缓存为横切层</span>
+      <span class="le">Auto-documentation pipeline: 5-stage flow from source scan to Markdown output, with config &amp; cache as cross-cutting layers</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <svg class="chart" viewBox="0 0 920 520" xmlns="http://www.w3.org/2000/svg" role="img">
+      <defs>
+        <!-- Component gradients -->
+        <linearGradient id="gScanner" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.28"/>
+          <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.08"/>
+        </linearGradient>
+        <linearGradient id="gParser" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.28"/>
+          <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.08"/>
+        </linearGradient>
+        <linearGradient id="gLLM" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.28"/>
+          <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.08"/>
+        </linearGradient>
+        <linearGradient id="gTpl" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#10b981" stop-opacity="0.28"/>
+          <stop offset="100%" stop-color="#10b981" stop-opacity="0.08"/>
+        </linearGradient>
+        <linearGradient id="gOut" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f97316" stop-opacity="0.28"/>
+          <stop offset="100%" stop-color="#f97316" stop-opacity="0.08"/>
+        </linearGradient>
+        <linearGradient id="gCache" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#64748b" stop-opacity="0.28"/>
+          <stop offset="100%" stop-color="#64748b" stop-opacity="0.08"/>
+        </linearGradient>
+        <linearGradient id="gCfg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f43f5e" stop-opacity="0.28"/>
+          <stop offset="100%" stop-color="#f43f5e" stop-opacity="0.08"/>
+        </linearGradient>
+        <!-- Arrow markers -->
+        <marker id="arrMain" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="var(--text)" opacity="0.85"/>
+        </marker>
+        <marker id="arrCfg" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#f43f5e" opacity="0.8"/>
+        </marker>
+        <marker id="arrCache" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#64748b" opacity="0.8"/>
+        </marker>
+      </defs>
+
+      <!-- Title band -->
+      <rect x="40" y="24" width="620" height="28" fill="var(--subtle)" opacity="0.5" rx="4"/>
+      <text x="52" y="43" fill="var(--text)" font-size="12" font-weight="700">
+        <tspan class="lz">主流水线 · 源码 → 文档</tspan>
+        <tspan class="le">Main pipeline · Source → Docs</tspan>
+      </text>
+      <text x="648" y="43" text-anchor="end" fill="var(--muted)" font-size="11">
+        <tspan class="lz">5 段式架构</tspan>
+        <tspan class="le">5-stage</tspan>
+      </text>
+
+      <!-- =========================================
+           Main pipeline - 5 horizontal modules
+           Each: 112x84 at y=76..160, spacing aligned
+           Centers: 96, 232, 368, 504, 640 (gap ~24)
+           ========================================= -->
+
+      <!-- 1. Source Scanner (cyan) -->
+      <rect x="40" y="76" width="112" height="84" rx="10" fill="url(#gScanner)" stroke="#22d3ee" stroke-width="1.6"/>
+      <rect x="40" y="76" width="112" height="22" rx="10" fill="#22d3ee"/>
+      <rect x="40" y="90" width="112" height="8" fill="#22d3ee"/>
+      <text x="96" y="92" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="700">
+        <tspan class="lz">① 源码扫描</tspan>
+        <tspan class="le">① Scanner</tspan>
+      </text>
+      <circle cx="96" cy="114" r="9" fill="#22d3ee" opacity="0.22" stroke="#22d3ee" stroke-width="1.2"/>
+      <text x="96" y="118" text-anchor="middle" fill="#22d3ee" font-size="11" font-weight="700">S</text>
+      <text x="96" y="138" text-anchor="middle" fill="var(--text)" font-size="11" font-weight="600">
+        <tspan class="lz">Source Scanner</tspan>
+        <tspan class="le">Source Scanner</tspan>
+      </text>
+      <text x="96" y="151" text-anchor="middle" fill="var(--muted)" font-size="10">
+        <tspan class="lz">扫描代码仓</tspan>
+        <tspan class="le">walk codebase</tspan>
+      </text>
+
+      <!-- 2. AST Parser (violet) -->
+      <rect x="176" y="76" width="112" height="84" rx="10" fill="url(#gParser)" stroke="#8b5cf6" stroke-width="1.6"/>
+      <rect x="176" y="76" width="112" height="22" rx="10" fill="#8b5cf6"/>
+      <rect x="176" y="90" width="112" height="8" fill="#8b5cf6"/>
+      <text x="232" y="92" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="700">
+        <tspan class="lz">② AST 解析</tspan>
+        <tspan class="le">② AST Parser</tspan>
+      </text>
+      <circle cx="232" cy="114" r="9" fill="#8b5cf6" opacity="0.22" stroke="#8b5cf6" stroke-width="1.2"/>
+      <text x="232" y="118" text-anchor="middle" fill="#8b5cf6" font-size="11" font-weight="700">A</text>
+      <text x="232" y="138" text-anchor="middle" fill="var(--text)" font-size="11" font-weight="600">
+        <tspan class="lz">AST Parser</tspan>
+        <tspan class="le">AST Parser</tspan>
+      </text>
+      <text x="232" y="151" text-anchor="middle" fill="var(--muted)" font-size="10">
+        <tspan class="lz">提取签名结构</tspan>
+        <tspan class="le">signatures</tspan>
+      </text>
+
+      <!-- 3. LLM Generator (amber) -->
+      <rect x="312" y="76" width="112" height="84" rx="10" fill="url(#gLLM)" stroke="#f59e0b" stroke-width="1.6"/>
+      <rect x="312" y="76" width="112" height="22" rx="10" fill="#f59e0b"/>
+      <rect x="312" y="90" width="112" height="8" fill="#f59e0b"/>
+      <text x="368" y="92" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="700">
+        <tspan class="lz">③ LLM 生成</tspan>
+        <tspan class="le">③ LLM Gen</tspan>
+      </text>
+      <circle cx="368" cy="114" r="9" fill="#f59e0b" opacity="0.22" stroke="#f59e0b" stroke-width="1.2"/>
+      <text x="368" y="118" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="700">L</text>
+      <text x="368" y="138" text-anchor="middle" fill="var(--text)" font-size="11" font-weight="600">
+        <tspan class="lz">LLM Generator</tspan>
+        <tspan class="le">LLM Generator</tspan>
+      </text>
+      <text x="368" y="151" text-anchor="middle" fill="var(--muted)" font-size="10">
+        <tspan class="lz">Claude 写文档</tspan>
+        <tspan class="le">Claude writes</tspan>
+      </text>
+
+      <!-- 4. Template Engine (emerald) -->
+      <rect x="448" y="76" width="112" height="84" rx="10" fill="url(#gTpl)" stroke="#10b981" stroke-width="1.6"/>
+      <rect x="448" y="76" width="112" height="22" rx="10" fill="#10b981"/>
+      <rect x="448" y="90" width="112" height="8" fill="#10b981"/>
+      <text x="504" y="92" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="700">
+        <tspan class="lz">④ 模板引擎</tspan>
+        <tspan class="le">④ Templater</tspan>
+      </text>
+      <circle cx="504" cy="114" r="9" fill="#10b981" opacity="0.22" stroke="#10b981" stroke-width="1.2"/>
+      <text x="504" y="118" text-anchor="middle" fill="#10b981" font-size="11" font-weight="700">T</text>
+      <text x="504" y="138" text-anchor="middle" fill="var(--text)" font-size="11" font-weight="600">
+        <tspan class="lz">Template Engine</tspan>
+        <tspan class="le">Template Engine</tspan>
+      </text>
+      <text x="504" y="151" text-anchor="middle" fill="var(--muted)" font-size="10">
+        <tspan class="lz">MD / HTML 格式</tspan>
+        <tspan class="le">MD / HTML fmt</tspan>
+      </text>
+
+      <!-- 5. Output Writer (orange) -->
+      <rect x="584" y="76" width="112" height="84" rx="10" fill="url(#gOut)" stroke="#f97316" stroke-width="1.6"/>
+      <rect x="584" y="76" width="112" height="22" rx="10" fill="#f97316"/>
+      <rect x="584" y="90" width="112" height="8" fill="#f97316"/>
+      <text x="640" y="92" text-anchor="middle" fill="#ffffff" font-size="11" font-weight="700">
+        <tspan class="lz">⑤ 输出写入</tspan>
+        <tspan class="le">⑤ Writer</tspan>
+      </text>
+      <circle cx="640" cy="114" r="9" fill="#f97316" opacity="0.22" stroke="#f97316" stroke-width="1.2"/>
+      <text x="640" y="118" text-anchor="middle" fill="#f97316" font-size="11" font-weight="700">W</text>
+      <text x="640" y="138" text-anchor="middle" fill="var(--text)" font-size="11" font-weight="600">
+        <tspan class="lz">Output Writer</tspan>
+        <tspan class="le">Output Writer</tspan>
+      </text>
+      <text x="640" y="151" text-anchor="middle" fill="var(--muted)" font-size="10">
+        <tspan class="lz">写入 docs/</tspan>
+        <tspan class="le">writes docs/</tspan>
+      </text>
+
+      <!-- =========================================
+           Arrows between main modules
+           y=118 horizontal center-line
+           ========================================= -->
+      <line x1="152" y1="118" x2="176" y2="118" stroke="var(--text)" stroke-width="2" opacity="0.8" marker-end="url(#arrMain)"/>
+      <line x1="288" y1="118" x2="312" y2="118" stroke="var(--text)" stroke-width="2" opacity="0.8" marker-end="url(#arrMain)"/>
+      <line x1="424" y1="118" x2="448" y2="118" stroke="var(--text)" stroke-width="2" opacity="0.8" marker-end="url(#arrMain)"/>
+      <line x1="560" y1="118" x2="584" y2="118" stroke="var(--text)" stroke-width="2" opacity="0.8" marker-end="url(#arrMain)"/>
+
+      <!-- =========================================
+           Cache layer (slate) - bottom
+           Intercepts between Scanner and Parser
+           ========================================= -->
+      <rect x="40" y="230" width="656" height="70" rx="10" fill="url(#gCache)" stroke="#64748b" stroke-width="1.6" stroke-dasharray="4 3"/>
+      <rect x="40" y="230" width="656" height="22" rx="10" fill="#64748b"/>
+      <rect x="40" y="244" width="656" height="8" fill="#64748b"/>
+      <text x="52" y="246" fill="#ffffff" font-size="11" font-weight="700">
+        <tspan class="lz">横切层 · 缓存 Cache Layer</tspan>
+        <tspan class="le">Cross-cutting · Cache Layer</tspan>
+      </text>
+      <text x="684" y="246" text-anchor="end" fill="#ffffff" font-size="10" font-weight="600" opacity="0.9">
+        <tspan class="lz">未变更文件走缓存</tspan>
+        <tspan class="le">unchanged → cache</tspan>
+      </text>
+
+      <circle cx="66" cy="276" r="10" fill="#64748b" opacity="0.22" stroke="#64748b" stroke-width="1.2"/>
+      <text x="66" y="280" text-anchor="middle" fill="#64748b" font-size="11" font-weight="700">C</text>
+
+      <text x="90" y="272" fill="var(--text)" font-size="11" font-weight="600">
+        <tspan class="lz">按 mtime + SHA1 指纹比对</tspan>
+        <tspan class="le">Fingerprint by mtime + SHA1</tspan>
+      </text>
+      <text x="90" y="288" fill="var(--muted)" font-size="10">
+        <tspan class="lz">命中则跳过解析与 LLM，直接复用上次生成结果 · 增量更新</tspan>
+        <tspan class="le">On hit: skip parser &amp; LLM, reuse last output · incremental update</tspan>
+      </text>
+
+      <!-- Sample cache stats chips -->
+      <g font-family="ui-monospace,Menlo,Consolas,monospace">
+        <rect x="420" y="262" width="82" height="22" rx="4" fill="#64748b" fill-opacity="0.18" stroke="#64748b" stroke-opacity="0.45"/>
+        <text x="461" y="277" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">hit 87%</text>
+
+        <rect x="510" y="262" width="82" height="22" rx="4" fill="#64748b" fill-opacity="0.18" stroke="#64748b" stroke-opacity="0.45"/>
+        <text x="551" y="277" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">.cache/</text>
+
+        <rect x="600" y="262" width="88" height="22" rx="4" fill="#64748b" fill-opacity="0.18" stroke="#64748b" stroke-opacity="0.45"/>
+        <text x="644" y="277" text-anchor="middle" fill="#94a3b8" font-size="10" font-weight="600">TTL 7d</text>
+      </g>
+
+      <!-- Cache interception arrows: Scanner ↔ Cache (between Scanner and Parser) -->
+      <!-- Scanner down to Cache -->
+      <path d="M96,160 C96,185 96,205 96,230" stroke="#64748b" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#arrCache)" opacity="0.9"/>
+      <!-- Cache up to Parser (hit path bypasses parser actually, but we show cache→parser join point) -->
+      <path d="M232,230 C232,205 232,185 232,160" stroke="#64748b" stroke-width="1.6" stroke-dasharray="4 3" fill="none" marker-end="url(#arrCache)" opacity="0.9"/>
+
+      <!-- Intercept label between Scanner→Parser arrow -->
+      <rect x="156" y="176" width="152" height="18" rx="9" fill="var(--bg)" stroke="#64748b" stroke-opacity="0.5"/>
+      <text x="232" y="189" text-anchor="middle" fill="#64748b" font-size="10" font-weight="600">
+        <tspan class="lz">缓存拦截点 cache intercept</tspan>
+        <tspan class="le">cache intercept point</tspan>
+      </text>
+
+      <!-- =========================================
+           Config (rose) - top right
+           ========================================= -->
+      <rect x="712" y="24" width="168" height="72" rx="10" fill="url(#gCfg)" stroke="#f43f5e" stroke-width="1.6"/>
+      <rect x="712" y="24" width="168" height="22" rx="10" fill="#f43f5e"/>
+      <rect x="712" y="38" width="168" height="8" fill="#f43f5e"/>
+      <text x="724" y="40" fill="#ffffff" font-size="11" font-weight="700">
+        <tspan class="lz">配置 · Config</tspan>
+        <tspan class="le">Config</tspan>
+      </text>
+      <text x="868" y="40" text-anchor="end" fill="#ffffff" font-size="10" font-weight="600" opacity="0.9">top-right</text>
+
+      <text x="724" y="68" fill="var(--text)" font-family="ui-monospace,Menlo,Consolas,monospace" font-size="11" font-weight="600">.magicdocs.json</text>
+      <text x="724" y="84" fill="var(--muted)" font-size="10">
+        <tspan class="lz">路径白名单 · 模型 · 模板路径</tspan>
+        <tspan class="le">paths · model · template dir</tspan>
+      </text>
+
+      <!-- Config fan-out arrows to all 5 modules -->
+      <!-- Anchor at bottom-center of config: (796, 96) -->
+      <path d="M796,96 C700,80 400,70 96,76" stroke="#f43f5e" stroke-width="1.1" stroke-dasharray="3 3" fill="none" marker-end="url(#arrCfg)" opacity="0.7"/>
+      <path d="M796,96 C700,85 500,82 232,76" stroke="#f43f5e" stroke-width="1.1" stroke-dasharray="3 3" fill="none" marker-end="url(#arrCfg)" opacity="0.7"/>
+      <path d="M796,96 C700,90 550,86 368,76" stroke="#f43f5e" stroke-width="1.1" stroke-dasharray="3 3" fill="none" marker-end="url(#arrCfg)" opacity="0.7"/>
+      <path d="M796,96 C700,92 600,88 504,76" stroke="#f43f5e" stroke-width="1.1" stroke-dasharray="3 3" fill="none" marker-end="url(#arrCfg)" opacity="0.7"/>
+      <path d="M796,96 C720,92 680,88 640,76" stroke="#f43f5e" stroke-width="1.1" stroke-dasharray="3 3" fill="none" marker-end="url(#arrCfg)" opacity="0.7"/>
+
+      <!-- Small config-fanout legend chip -->
+      <text x="868" y="112" text-anchor="end" fill="#f43f5e" font-size="10" font-weight="600">
+        <tspan class="lz">向 5 个模块下发</tspan>
+        <tspan class="le">fan-out to 5 modules</tspan>
+      </text>
+
+      <!-- =========================================
+           Right panel: Example output
+           ========================================= -->
+      <rect x="712" y="124" width="168" height="280" rx="10" fill="var(--card)" stroke="var(--border)"/>
+      <rect x="712" y="124" width="168" height="24" rx="10" fill="var(--subtle)"/>
+      <rect x="712" y="140" width="168" height="8" fill="var(--subtle)"/>
+      <text x="724" y="141" fill="var(--text)" font-size="11" font-weight="700">
+        <tspan class="lz">示例输出 · Example Output</tspan>
+        <tspan class="le">Example Output</tspan>
+      </text>
+
+      <!-- Mock markdown output -->
+      <g font-family="ui-monospace,Menlo,Consolas,monospace" font-size="10">
+        <text x="724" y="164" fill="#f97316" font-weight="700"># Auth.login()</text>
+        <text x="724" y="180" fill="var(--muted)">&#47;&#47; docs/auth/login.md</text>
+
+        <rect x="724" y="188" width="144" height="1" fill="var(--border)"/>
+
+        <text x="724" y="204" fill="var(--text)">
+          <tspan class="lz">## 用途</tspan>
+          <tspan class="le">## Purpose</tspan>
+        </text>
+        <text x="724" y="218" fill="var(--muted)">
+          <tspan class="lz">验证用户凭据并签发 token</tspan>
+          <tspan class="le">Validate creds, issue token</tspan>
+        </text>
+
+        <text x="724" y="238" fill="var(--text)">
+          <tspan class="lz">## 参数</tspan>
+          <tspan class="le">## Params</tspan>
+        </text>
+        <text x="724" y="252" fill="#22d3ee">email: string</text>
+        <text x="724" y="266" fill="#22d3ee">password: string</text>
+
+        <text x="724" y="286" fill="var(--text)">
+          <tspan class="lz">## 返回</tspan>
+          <tspan class="le">## Returns</tspan>
+        </text>
+        <text x="724" y="300" fill="#10b981">Promise&lt;Token&gt;</text>
+
+        <text x="724" y="320" fill="var(--text)">
+          <tspan class="lz">## 异常</tspan>
+          <tspan class="le">## Throws</tspan>
+        </text>
+        <text x="724" y="334" fill="#f43f5e">AuthError · 401</text>
+
+        <rect x="724" y="344" width="144" height="1" fill="var(--border)"/>
+        <text x="724" y="362" fill="var(--muted)">
+          <tspan class="lz">by MagicDocs · Claude</tspan>
+          <tspan class="le">by MagicDocs · Claude</tspan>
+        </text>
+        <text x="724" y="376" fill="#64748b">cached · 2ms</text>
+      </g>
+
+      <!-- Arrow from Writer into example panel -->
+      <path d="M696,118 C706,120 712,130 716,138" stroke="var(--text)" stroke-width="1.4" fill="none" marker-end="url(#arrMain)" opacity="0.7"/>
+      <text x="708" y="134" fill="var(--muted)" font-size="10" text-anchor="end">
+        <tspan class="lz">render →</tspan>
+        <tspan class="le">render →</tspan>
+      </text>
+
+      <!-- =========================================
+           Data flow arrow labels along main pipeline
+           ========================================= -->
+      <text x="164" y="110" text-anchor="middle" fill="var(--muted)" font-size="10" font-style="italic">
+        <tspan class="lz">files</tspan>
+        <tspan class="le">files</tspan>
+      </text>
+      <text x="300" y="110" text-anchor="middle" fill="var(--muted)" font-size="10" font-style="italic">
+        <tspan class="lz">AST</tspan>
+        <tspan class="le">AST</tspan>
+      </text>
+      <text x="436" y="110" text-anchor="middle" fill="var(--muted)" font-size="10" font-style="italic">
+        <tspan class="lz">draft</tspan>
+        <tspan class="le">draft</tspan>
+      </text>
+      <text x="572" y="110" text-anchor="middle" fill="var(--muted)" font-size="10" font-style="italic">
+        <tspan class="lz">rendered</tspan>
+        <tspan class="le">rendered</tspan>
+      </text>
+
+      <!-- =========================================
+           Stats row (inside SVG, bottom band)
+           ========================================= -->
+      <rect x="40" y="332" width="656" height="72" rx="10" fill="var(--card)" stroke="var(--border)"/>
+
+      <!-- Stat 1 -->
+      <g>
+        <rect x="52" y="344" width="200" height="48" rx="6" fill="#22d3ee" fill-opacity="0.08" stroke="#22d3ee" stroke-opacity="0.3"/>
+        <text x="152" y="365" text-anchor="middle" fill="#22d3ee" font-size="18" font-weight="800">5</text>
+        <text x="152" y="383" text-anchor="middle" fill="var(--muted)" font-size="10" font-weight="600">
+          <tspan class="lz">模块 · Modules</tspan>
+          <tspan class="le">Modules</tspan>
+        </text>
+      </g>
+      <!-- Stat 2 -->
+      <g>
+        <rect x="260" y="344" width="200" height="48" rx="6" fill="#f59e0b" fill-opacity="0.08" stroke="#f59e0b" stroke-opacity="0.3"/>
+        <text x="360" y="367" text-anchor="middle" fill="#f59e0b" font-size="14" font-weight="800">
+          <tspan class="lz">自动文档</tspan>
+          <tspan class="le">Auto docs</tspan>
+        </text>
+        <text x="360" y="383" text-anchor="middle" fill="var(--muted)" font-size="10" font-weight="600">
+          <tspan class="lz">无需人工干预</tspan>
+          <tspan class="le">zero manual effort</tspan>
+        </text>
+      </g>
+      <!-- Stat 3 -->
+      <g>
+        <rect x="468" y="344" width="216" height="48" rx="6" fill="#10b981" fill-opacity="0.08" stroke="#10b981" stroke-opacity="0.3"/>
+        <text x="576" y="367" text-anchor="middle" fill="#10b981" font-size="14" font-weight="800">
+          <tspan class="lz">增量更新</tspan>
+          <tspan class="le">Incremental</tspan>
+        </text>
+        <text x="576" y="383" text-anchor="middle" fill="var(--muted)" font-size="10" font-weight="600">
+          <tspan class="lz">缓存命中 87% · 仅跑变更</tspan>
+          <tspan class="le">87% cache hit · deltas only</tspan>
+        </text>
+      </g>
+
+      <!-- =========================================
+           Bottom axis / flow direction label
+           ========================================= -->
+      <line x1="40" y1="432" x2="880" y2="432" stroke="var(--border)" stroke-width="1"/>
+      <text x="40" y="452" fill="var(--muted)" font-size="11" font-weight="600">
+        <tspan class="lz">← 输入：代码仓库</tspan>
+        <tspan class="le">← Input: codebase</tspan>
+      </text>
+      <text x="460" y="452" text-anchor="middle" fill="var(--text)" font-size="11" font-weight="700">
+        <tspan class="lz">数据流方向 · Data Flow</tspan>
+        <tspan class="le">Data Flow Direction</tspan>
+      </text>
+      <text x="880" y="452" text-anchor="end" fill="var(--muted)" font-size="11" font-weight="600">
+        <tspan class="lz">输出：docs/ 目录 →</tspan>
+        <tspan class="le">Output: docs/ →</tspan>
+      </text>
+
+      <!-- Layer callouts -->
+      <text x="40" y="476" fill="#f43f5e" font-size="10" font-weight="600">
+        <tspan class="lz">● 红色虚线 = 配置下发（顶部 → 所有模块）</tspan>
+        <tspan class="le">● Red dashed = config fan-out (top → all modules)</tspan>
+      </text>
+      <text x="40" y="494" fill="#64748b" font-size="10" font-weight="600">
+        <tspan class="lz">● 灰色虚线 = 缓存拦截（Scanner ↔ Cache ↔ Parser）</tspan>
+        <tspan class="le">● Gray dashed = cache intercept (Scanner ↔ Cache ↔ Parser)</tspan>
+      </text>
+
+      <!-- Bottom caption -->
+      <text x="460" y="514" text-anchor="middle" fill="var(--muted)" font-size="10">
+        <tspan class="lz">图 2Q-015 · MagicDocs 自动文档系统架构 · 5 核心 + 2 横切</tspan>
+        <tspan class="le">Fig 2Q-015 · MagicDocs auto-doc architecture · 5 core + 2 cross-cutting</tspan>
+      </text>
+    </svg>
+
+    <div class="legend">
+      <div class="it"><span class="dot" style="background:#22d3ee"></span><span class="lz">① Source Scanner</span><span class="le">① Source Scanner</span></div>
+      <div class="it"><span class="dot" style="background:#8b5cf6"></span><span class="lz">② AST Parser</span><span class="le">② AST Parser</span></div>
+      <div class="it"><span class="dot" style="background:#f59e0b"></span><span class="lz">③ LLM Generator</span><span class="le">③ LLM Generator</span></div>
+      <div class="it"><span class="dot" style="background:#10b981"></span><span class="lz">④ Template Engine</span><span class="le">④ Template Engine</span></div>
+      <div class="it"><span class="dot" style="background:#f97316"></span><span class="lz">⑤ Output Writer</span><span class="le">⑤ Output Writer</span></div>
+      <div class="it"><span class="dot" style="background:#64748b"></span><span class="lz">Cache 缓存</span><span class="le">Cache</span></div>
+      <div class="it"><span class="dot" style="background:#f43f5e"></span><span class="lz">Config 配置</span><span class="le">Config</span></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="v" style="color:var(--cyan)">5</div>
+        <div class="l">
+          <span class="lz">核心模块</span><span class="le">Core modules</span>
+        </div>
+      </div>
+      <div class="stat">
+        <div class="v" style="color:var(--amber);font-size:18px">
+          <span class="lz">自动文档</span><span class="le">Auto docs</span>
+        </div>
+        <div class="l">
+          <span class="lz">零人工干预</span><span class="le">Zero manual effort</span>
+        </div>
+      </div>
+      <div class="stat">
+        <div class="v" style="color:var(--emerald);font-size:18px">
+          <span class="lz">增量更新</span><span class="le">Incremental</span>
+        </div>
+        <div class="l">
+          <span class="lz">缓存命中 87%</span><span class="le">87% cache hit</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footnote">
+      <span class="lz">读图说明：主流水线从左到右共 5 段——源码扫描 → AST 解析 → LLM 生成 → 模板引擎 → 输出写入，每一段颜色独立（青 / 紫 / 琥珀 / 翡翠 / 橙），对应源码中的 5 个独立包。下方灰色带是「缓存层」横切：Scanner 算出文件指纹后先问缓存；命中（87% 的场景）就跳过 Parser 与 LLM，直接复用上次的文档——这是 MagicDocs 能做到「每次改完代码几秒钟出新文档」的关键。右上角的玫红色方块是 `.magicdocs.json` 配置，通过 5 条虚线下发给每一个模块（路径白名单、使用的 Claude 模型、模板目录等）。右侧灰色面板是一份典型输出示例——`docs/auth/login.md`，包含用途 / 参数 / 返回 / 异常四段，底部带有「cached · 2ms」标签，说明这次走了缓存。</span>
+      <span class="le">Reading guide: the main pipeline runs left-to-right through 5 stages — Scanner → Parser → LLM → Templater → Writer — each with its own color (cyan / violet / amber / emerald / orange) mapping to 5 separate packages in the source. The gray band below is the cross-cutting Cache Layer: after Scanner fingerprints a file it asks the cache first; on hit (87% of cases) it skips Parser &amp; LLM entirely and reuses last output — this is why MagicDocs can emit fresh docs seconds after an edit. The rose block at top-right is `.magicdocs.json`, fanned out to all 5 modules via 5 dashed arrows (path whitelist, Claude model choice, template dir, etc.). The gray right panel shows a sample output — `docs/auth/login.md` — with Purpose / Params / Returns / Throws sections and a `cached · 2ms` tag at the bottom indicating a cache-served render.</span>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

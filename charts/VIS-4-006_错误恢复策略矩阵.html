@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>错误恢复策略矩阵 | Error Recovery Strategy Matrix</title>
+<style>
+  :root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+  :root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+  :root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+  :root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 32px 20px;
+  }
+
+  /* Header */
+  .header {
+    width: 100%;
+    max-width: 960px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 28px;
+    gap: 16px;
+  }
+  .header-left { flex: 1; }
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--emerald);
+    background: rgba(16,185,129,0.12);
+    border: 1px solid rgba(16,185,129,0.3);
+    border-radius: 4px;
+    padding: 3px 8px;
+    margin-bottom: 10px;
+  }
+  .title-zh {
+    font-size: 22px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.3;
+    margin-bottom: 4px;
+  }
+  .title-en {
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--muted);
+    letter-spacing: 0.02em;
+  }
+
+  /* Controls */
+  .controls {
+    display: flex;
+    gap: 8px;
+    flex-shrink: 0;
+    margin-top: 4px;
+  }
+  .ctrl-btn {
+    background: var(--subtle);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    border-radius: 6px;
+    padding: 6px 12px;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+  .ctrl-btn:hover {
+    color: var(--text);
+    border-color: rgba(255,255,255,0.2);
+  }
+
+  /* Main card */
+  .main-card {
+    width: 100%;
+    max-width: 960px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    margin-bottom: 20px;
+  }
+
+  /* Matrix container */
+  .matrix-wrapper {
+    position: relative;
+    width: 100%;
+  }
+
+  /* SVG chart */
+  .chart-svg {
+    display: block;
+    width: 100%;
+    max-width: 896px;
+    margin: 0 auto;
+    overflow: visible;
+  }
+
+  /* Stats row */
+  .stats-row {
+    width: 100%;
+    max-width: 960px;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+  .stat-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px 20px;
+    text-align: center;
+  }
+  .stat-value {
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--emerald);
+    margin-bottom: 4px;
+  }
+  .stat-label-zh { font-size: 12px; color: var(--muted); }
+  .stat-label-en { font-size: 11px; color: var(--muted); }
+
+  /* Quadrant card styles inside SVG via foreignObject */
+  .q-card {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    padding: 14px 16px;
+    gap: 6px;
+    overflow: hidden;
+  }
+  .q-icon {
+    font-size: 22px;
+    line-height: 1;
+    margin-bottom: 2px;
+  }
+  .q-title-zh {
+    font-size: 15px;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.2;
+  }
+  .q-title-en {
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--muted);
+    line-height: 1.2;
+    margin-bottom: 2px;
+  }
+  .q-strategy {
+    font-size: 11px;
+    color: var(--muted);
+    line-height: 1.4;
+    margin-bottom: 4px;
+    padding: 4px 8px;
+    background: rgba(255,255,255,0.04);
+    border-radius: 4px;
+  }
+  [data-theme="light"] .q-strategy { background: rgba(0,0,0,0.04); }
+  .q-examples {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+  .q-examples li {
+    font-size: 11px;
+    color: var(--muted);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    line-height: 1.3;
+  }
+  .q-bullet {
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    opacity: 0.7;
+  }
+
+  /* Axis label styles */
+  .axis-label { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', sans-serif; }
+
+  /* Light theme adjustments */
+  [data-theme="light"] .ctrl-btn { background: #e2e8f0; }
+  [data-theme="light"] .ctrl-btn:hover { background: #cbd5e1; color: #0f172a; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-left">
+    <div class="badge">VIS-4-006</div>
+    <div class="title-zh lz">错误处理的艺术 — 错误恢复策略矩阵</div>
+    <div class="title-en le" style="display:none;font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px;">The Art of Error Handling — Error Recovery Strategy Matrix</div>
+    <div class="title-en lz" style="font-size:13px;font-weight:500;color:var(--muted);">The Art of Error Handling — Error Recovery Strategy Matrix</div>
+    <div class="title-zh le" style="display:none;font-size:13px;font-weight:500;color:var(--muted);">The Art of Error Handling — Error Recovery Strategy Matrix</div>
+  </div>
+  <div class="controls">
+    <button class="ctrl-btn" onclick="cycleTheme()">⬡ Theme</button>
+    <button class="ctrl-btn" onclick="toggleLang()"><span class="lz">EN</span><span class="le" style="display:none">中文</span></button>
+  </div>
+</div>
+
+<div class="main-card">
+  <div class="matrix-wrapper">
+    <svg class="chart-svg" viewBox="0 0 896 500" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Gradient: X axis -->
+        <linearGradient id="grad-x" x1="0%" y1="0%" x2="100%" y2="0%">
+          <stop offset="0%" style="stop-color:#64748b;stop-opacity:0.4"/>
+          <stop offset="100%" style="stop-color:#f43f5e;stop-opacity:0.9"/>
+        </linearGradient>
+        <!-- Gradient: Y axis -->
+        <linearGradient id="grad-y" x1="0%" y1="100%" x2="0%" y2="0%">
+          <stop offset="0%" style="stop-color:#64748b;stop-opacity:0.4"/>
+          <stop offset="100%" style="stop-color:#10b981;stop-opacity:0.9"/>
+        </linearGradient>
+        <!-- Drop shadow filter -->
+        <filter id="shadow" x="-5%" y="-5%" width="110%" height="110%">
+          <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="rgba(0,0,0,0.3)" flood-opacity="0.4"/>
+        </filter>
+        <!-- Glow filter for crosshair -->
+        <filter id="glow">
+          <feGaussianBlur stdDeviation="2" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+
+        <!-- Clip paths for quadrant content -->
+        <clipPath id="clip-q1"><rect x="455" y="36" width="408" height="208" rx="10"/></clipPath>
+        <clipPath id="clip-q2"><rect x="33" y="36" width="408" height="208" rx="10"/></clipPath>
+        <clipPath id="clip-q3"><rect x="455" y="258" width="408" height="208" rx="10"/></clipPath>
+        <clipPath id="clip-q4"><rect x="33" y="258" width="408" height="208" rx="10"/></clipPath>
+      </defs>
+
+      <!-- ============================================================
+           QUADRANT BACKGROUNDS
+      ============================================================ -->
+
+      <!-- Q1: top-right — Fast Recovery (emerald) -->
+      <rect x="455" y="36" width="408" height="208" rx="10"
+            fill="rgba(16,185,129,0.07)" stroke="rgba(16,185,129,0.25)" stroke-width="1.5"/>
+      <!-- Top border accent -->
+      <rect x="455" y="36" width="408" height="4" rx="2" fill="#10b981" opacity="0.8"/>
+
+      <!-- Q2: top-left — Silent Retry (amber) -->
+      <rect x="33" y="36" width="408" height="208" rx="10"
+            fill="rgba(245,158,11,0.07)" stroke="rgba(245,158,11,0.25)" stroke-width="1.5"/>
+      <rect x="33" y="36" width="408" height="4" rx="2" fill="#f59e0b" opacity="0.8"/>
+
+      <!-- Q3: bottom-right — Graceful Degradation (cyan) -->
+      <rect x="455" y="258" width="408" height="208" rx="10"
+            fill="rgba(34,211,238,0.07)" stroke="rgba(34,211,238,0.25)" stroke-width="1.5"/>
+      <rect x="455" y="258" width="408" height="4" rx="2" fill="#22d3ee" opacity="0.8"/>
+
+      <!-- Q4: bottom-left — Fail Gracefully (rose) -->
+      <rect x="33" y="258" width="408" height="208" rx="10"
+            fill="rgba(244,63,94,0.07)" stroke="rgba(244,63,94,0.25)" stroke-width="1.5"/>
+      <rect x="33" y="258" width="408" height="4" rx="2" fill="#f43f5e" opacity="0.8"/>
+
+      <!-- ============================================================
+           QUADRANT CONTENT — Q1: Fast Recovery (top-right, emerald)
+      ============================================================ -->
+      <!-- Icon -->
+      <text x="472" y="74" font-size="24" fill="#10b981">↺</text>
+      <!-- Title ZH -->
+      <text x="504" y="74" font-size="16" font-weight="700" fill="#f1f5f9" class="lz">快速恢复</text>
+      <!-- Title EN -->
+      <text x="504" y="74" font-size="14" font-weight="700" fill="#f1f5f9" class="le" display="none">Fast Recovery</text>
+      <!-- Subtitle EN -->
+      <text x="472" y="92" font-size="11" fill="#94a3b8" class="le" display="none">High Severity + High Recoverability</text>
+      <!-- Strategy label -->
+      <rect x="472" y="98" width="375" height="30" rx="4" fill="rgba(16,185,129,0.1)"/>
+      <!-- Strategy ZH -->
+      <text x="484" y="112" font-size="11" fill="#10b981" class="lz">策略：指数退避重试 (Exponential Backoff)</text>
+      <text x="484" y="124" font-size="10" fill="#94a3b8" class="lz">每次重试间隔翻倍，避免雪崩式冲击服务</text>
+      <!-- Strategy EN -->
+      <text x="484" y="112" font-size="11" fill="#10b981" class="le" display="none">Strategy: Retry with exponential backoff</text>
+      <text x="484" y="124" font-size="10" fill="#94a3b8" class="le" display="none">Double interval each retry to prevent thundering herd</text>
+      <!-- Divider -->
+      <line x1="472" y1="136" x2="847" y2="136" stroke="rgba(16,185,129,0.2)" stroke-width="1"/>
+      <!-- Examples header -->
+      <text x="472" y="152" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="0.06em" class="lz">典型场景</text>
+      <text x="472" y="152" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="0.06em" class="le" display="none">EXAMPLES</text>
+      <!-- Example bullets -->
+      <circle cx="479" cy="167" r="3" fill="#10b981" opacity="0.7"/>
+      <text x="489" y="171" font-size="11" fill="#94a3b8" class="lz">网络超时 (Network Timeout)</text>
+      <text x="489" y="171" font-size="11" fill="#94a3b8" class="le" display="none">Network timeout</text>
+      <circle cx="479" cy="187" r="3" fill="#10b981" opacity="0.7"/>
+      <text x="489" y="191" font-size="11" fill="#94a3b8" class="lz">API 速率限制 (Rate Limit 429)</text>
+      <text x="489" y="191" font-size="11" fill="#94a3b8" class="le" display="none">API rate limit (HTTP 429)</text>
+      <circle cx="479" cy="207" r="3" fill="#10b981" opacity="0.7"/>
+      <text x="489" y="211" font-size="11" fill="#94a3b8" class="lz">服务临时不可用 (503 Retry-After)</text>
+      <text x="489" y="211" font-size="11" fill="#94a3b8" class="le" display="none">Service temporarily unavailable (503)</text>
+      <!-- Corner badge -->
+      <rect x="782" y="44" width="68" height="20" rx="4" fill="rgba(16,185,129,0.15)"/>
+      <text x="816" y="57" font-size="10" fill="#10b981" text-anchor="middle" class="lz">高可恢复</text>
+      <text x="816" y="57" font-size="10" fill="#10b981" text-anchor="middle" class="le" display="none">High Rec.</text>
+
+      <!-- ============================================================
+           QUADRANT CONTENT — Q2: Silent Retry (top-left, amber)
+      ============================================================ -->
+      <text x="50" y="74" font-size="24" fill="#f59e0b">⟳</text>
+      <text x="82" y="74" font-size="16" font-weight="700" fill="#f1f5f9" class="lz">静默重试</text>
+      <text x="82" y="74" font-size="14" font-weight="700" fill="#f1f5f9" class="le" display="none">Silent Retry</text>
+      <text x="50" y="92" font-size="11" fill="#94a3b8" class="le" display="none">Low Severity + High Recoverability</text>
+      <rect x="50" y="98" width="375" height="30" rx="4" fill="rgba(245,158,11,0.1)"/>
+      <text x="62" y="112" font-size="11" fill="#f59e0b" class="lz">策略：透明自动重试，异步记录监控日志</text>
+      <text x="62" y="124" font-size="10" fill="#94a3b8" class="lz">用户无感知，后台默默处理并上报指标</text>
+      <text x="62" y="112" font-size="11" fill="#f59e0b" class="le" display="none">Strategy: Auto-retry transparently, log for monitoring</text>
+      <text x="62" y="124" font-size="10" fill="#94a3b8" class="le" display="none">User-invisible handling, async metrics reporting</text>
+      <line x1="50" y1="136" x2="425" y2="136" stroke="rgba(245,158,11,0.2)" stroke-width="1"/>
+      <text x="50" y="152" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="0.06em" class="lz">典型场景</text>
+      <text x="50" y="152" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="0.06em" class="le" display="none">EXAMPLES</text>
+      <circle cx="57" cy="167" r="3" fill="#f59e0b" opacity="0.7"/>
+      <text x="67" y="171" font-size="11" fill="#94a3b8" class="lz">缓存未命中 (Cache Miss)</text>
+      <text x="67" y="171" font-size="11" fill="#94a3b8" class="le" display="none">Cache miss</text>
+      <circle cx="57" cy="187" r="3" fill="#f59e0b" opacity="0.7"/>
+      <text x="67" y="191" font-size="11" fill="#94a3b8" class="lz">临时文件锁定 (Temp File Lock)</text>
+      <text x="67" y="191" font-size="11" fill="#94a3b8" class="le" display="none">Temporary file lock</text>
+      <circle cx="57" cy="207" r="3" fill="#f59e0b" opacity="0.7"/>
+      <text x="67" y="211" font-size="11" fill="#94a3b8" class="lz">轻量资源竞争 (Race Condition)</text>
+      <text x="67" y="211" font-size="11" fill="#94a3b8" class="le" display="none">Minor resource race condition</text>
+      <!-- Corner badge -->
+      <rect x="360" y="44" width="56" height="20" rx="4" fill="rgba(245,158,11,0.15)"/>
+      <text x="388" y="57" font-size="10" fill="#f59e0b" text-anchor="middle" class="lz">高可恢复</text>
+      <text x="388" y="57" font-size="10" fill="#f59e0b" text-anchor="middle" class="le" display="none">High Rec.</text>
+
+      <!-- ============================================================
+           QUADRANT CONTENT — Q3: Graceful Degradation (bottom-right, cyan)
+      ============================================================ -->
+      <text x="472" y="296" font-size="24" fill="#22d3ee">⬇</text>
+      <text x="504" y="296" font-size="16" font-weight="700" fill="#f1f5f9" class="lz">降级服务</text>
+      <text x="504" y="296" font-size="14" font-weight="700" fill="#f1f5f9" class="le" display="none">Graceful Degradation</text>
+      <text x="472" y="314" font-size="11" fill="#94a3b8" class="le" display="none">High Severity + Low Recoverability</text>
+      <rect x="472" y="320" width="375" height="30" rx="4" fill="rgba(34,211,238,0.1)"/>
+      <text x="484" y="334" font-size="11" fill="#22d3ee" class="lz">策略：保留部分功能，切换至安全降级模式</text>
+      <text x="484" y="346" font-size="10" fill="#94a3b8" class="lz">核心路径继续运行，非关键功能优雅禁用</text>
+      <text x="484" y="334" font-size="11" fill="#22d3ee" class="le" display="none">Strategy: Partial functionality, fallback to safe mode</text>
+      <text x="484" y="346" font-size="10" fill="#94a3b8" class="le" display="none">Keep critical path alive, gracefully disable non-essentials</text>
+      <line x1="472" y1="358" x2="847" y2="358" stroke="rgba(34,211,238,0.2)" stroke-width="1"/>
+      <text x="472" y="374" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="0.06em" class="lz">典型场景</text>
+      <text x="472" y="374" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="0.06em" class="le" display="none">EXAMPLES</text>
+      <circle cx="479" cy="389" r="3" fill="#22d3ee" opacity="0.7"/>
+      <text x="489" y="393" font-size="11" fill="#94a3b8" class="lz">权限拒绝 (Permission Denied)</text>
+      <text x="489" y="393" font-size="11" fill="#94a3b8" class="le" display="none">Permission denied</text>
+      <circle cx="479" cy="409" r="3" fill="#22d3ee" opacity="0.7"/>
+      <text x="489" y="413" font-size="11" fill="#94a3b8" class="lz">工具不可用 (Tool Unavailable)</text>
+      <text x="489" y="413" font-size="11" fill="#94a3b8" class="le" display="none">Tool unavailable</text>
+      <circle cx="479" cy="429" r="3" fill="#22d3ee" opacity="0.7"/>
+      <text x="489" y="433" font-size="11" fill="#94a3b8" class="lz">外部依赖失效 (Dependency Failure)</text>
+      <text x="489" y="433" font-size="11" fill="#94a3b8" class="le" display="none">External dependency failure</text>
+      <!-- Corner badge -->
+      <rect x="782" y="266" width="56" height="20" rx="4" fill="rgba(34,211,238,0.15)"/>
+      <text x="810" y="279" font-size="10" fill="#22d3ee" text-anchor="middle" class="lz">低可恢复</text>
+      <text x="810" y="279" font-size="10" fill="#22d3ee" text-anchor="middle" class="le" display="none">Low Rec.</text>
+
+      <!-- ============================================================
+           QUADRANT CONTENT — Q4: Fail Gracefully (bottom-left, rose)
+      ============================================================ -->
+      <text x="50" y="296" font-size="22" fill="#f43f5e">✗</text>
+      <text x="82" y="296" font-size="16" font-weight="700" fill="#f1f5f9" class="lz">报错终止</text>
+      <text x="82" y="296" font-size="14" font-weight="700" fill="#f1f5f9" class="le" display="none">Fail Gracefully</text>
+      <text x="50" y="314" font-size="11" fill="#94a3b8" class="le" display="none">Low Severity + Low Recoverability</text>
+      <rect x="50" y="320" width="375" height="30" rx="4" fill="rgba(244,63,94,0.1)"/>
+      <text x="62" y="334" font-size="11" fill="#f43f5e" class="lz">策略：向用户展示清晰错误信息，安全中止</text>
+      <text x="62" y="346" font-size="10" fill="#94a3b8" class="lz">不静默失败，确保状态一致后优雅退出</text>
+      <text x="62" y="334" font-size="11" fill="#f43f5e" class="le" display="none">Strategy: Surface error to user with clear message, abort safely</text>
+      <text x="62" y="346" font-size="10" fill="#94a3b8" class="le" display="none">Never fail silently; ensure state consistency before exit</text>
+      <line x1="50" y1="358" x2="425" y2="358" stroke="rgba(244,63,94,0.2)" stroke-width="1"/>
+      <text x="50" y="374" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="0.06em" class="lz">典型场景</text>
+      <text x="50" y="374" font-size="10" font-weight="600" fill="#94a3b8" letter-spacing="0.06em" class="le" display="none">EXAMPLES</text>
+      <circle cx="57" cy="389" r="3" fill="#f43f5e" opacity="0.7"/>
+      <text x="67" y="393" font-size="11" fill="#94a3b8" class="lz">关键文件不存在 (File Not Found)</text>
+      <text x="67" y="393" font-size="11" fill="#94a3b8" class="le" display="none">File not found (critical path)</text>
+      <circle cx="57" cy="409" r="3" fill="#f43f5e" opacity="0.7"/>
+      <text x="67" y="413" font-size="11" fill="#94a3b8" class="lz">配置文件损坏 (Config Corrupted)</text>
+      <text x="67" y="413" font-size="11" fill="#94a3b8" class="le" display="none">Config file corrupted</text>
+      <circle cx="57" cy="429" r="3" fill="#f43f5e" opacity="0.7"/>
+      <text x="67" y="433" font-size="11" fill="#94a3b8" class="lz">不可逆数据错误 (Fatal Data Error)</text>
+      <text x="67" y="433" font-size="11" fill="#94a3b8" class="le" display="none">Irreversible data error</text>
+      <!-- Corner badge -->
+      <rect x="360" y="266" width="56" height="20" rx="4" fill="rgba(244,63,94,0.15)"/>
+      <text x="388" y="279" font-size="10" fill="#f43f5e" text-anchor="middle" class="lz">低可恢复</text>
+      <text x="388" y="279" font-size="10" fill="#f43f5e" text-anchor="middle" class="le" display="none">Low Rec.</text>
+
+      <!-- ============================================================
+           CROSSHAIR LINES (center dividers)
+      ============================================================ -->
+      <!-- Vertical center line -->
+      <line x1="441" y1="28" x2="441" y2="474"
+            stroke="rgba(255,255,255,0.12)" stroke-width="1.5" stroke-dasharray="5,4"/>
+      <!-- Horizontal center line -->
+      <line x1="25" y1="247" x2="857" y2="247"
+            stroke="rgba(255,255,255,0.12)" stroke-width="1.5" stroke-dasharray="5,4"/>
+
+      <!-- Center intersection indicator -->
+      <circle cx="441" cy="247" r="10" fill="none"
+              stroke="rgba(255,255,255,0.25)" stroke-width="1.5" filter="url(#glow)"/>
+      <circle cx="441" cy="247" r="3" fill="rgba(255,255,255,0.5)"/>
+
+      <!-- ============================================================
+           AXES
+      ============================================================ -->
+
+      <!-- X Axis arrow line (bottom) -->
+      <line x1="33" y1="476" x2="848" y2="476"
+            stroke="url(#grad-x)" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- X Axis arrowhead -->
+      <polygon points="848,476 840,471 840,481" fill="#f43f5e" opacity="0.9"/>
+
+      <!-- Y Axis arrow line (left) -->
+      <line x1="20" y1="466" x2="20" y2="28"
+            stroke="url(#grad-y)" stroke-width="2.5" stroke-linecap="round"/>
+      <!-- Y Axis arrowhead -->
+      <polygon points="20,28 15,36 25,36" fill="#10b981" opacity="0.9"/>
+
+      <!-- X Axis labels -->
+      <!-- Low label -->
+      <text x="33" y="494" font-size="11" fill="#64748b" class="lz">低</text>
+      <text x="33" y="494" font-size="11" fill="#64748b" class="le" display="none">Low</text>
+      <!-- X mid label ZH -->
+      <text x="441" y="494" font-size="11" fill="#94a3b8" text-anchor="middle" class="lz">← 错误严重度 →</text>
+      <text x="441" y="494" font-size="11" fill="#94a3b8" text-anchor="middle" class="le" display="none">← Error Severity →</text>
+      <!-- High label -->
+      <text x="848" y="494" font-size="11" fill="#f43f5e" text-anchor="end" class="lz">高</text>
+      <text x="848" y="494" font-size="11" fill="#f43f5e" text-anchor="end" class="le" display="none">High</text>
+
+      <!-- Y Axis labels -->
+      <!-- Low label (bottom) -->
+      <text x="10" y="470" font-size="11" fill="#64748b" text-anchor="middle" class="lz" transform="rotate(-90,10,440)">低</text>
+      <text x="10" y="470" font-size="11" fill="#64748b" text-anchor="middle" class="le" display="none" transform="rotate(-90,10,440)">Low</text>
+      <!-- Y axis title -->
+      <text x="10" y="247" font-size="11" fill="#94a3b8" text-anchor="middle" transform="rotate(-90,10,247)" class="lz">↑ 可恢复性 ↑</text>
+      <text x="10" y="247" font-size="11" fill="#94a3b8" text-anchor="middle" transform="rotate(-90,10,247)" class="le" display="none">↑ Recoverability ↑</text>
+      <!-- High label (top) -->
+      <text x="10" y="40" font-size="11" fill="#10b981" text-anchor="middle" class="lz" transform="rotate(-90,10,40)">高</text>
+      <text x="10" y="40" font-size="11" fill="#10b981" text-anchor="middle" class="le" display="none" transform="rotate(-90,10,40)">High</text>
+
+      <!-- ============================================================
+           QUADRANT CORNER LABELS (severity/recoverability descriptors)
+      ============================================================ -->
+      <!-- Top-left corner (low severity, high recoverability) -->
+      <text x="38" y="50" font-size="10" fill="#f59e0b" opacity="0.7" class="lz">低严重 + 高可恢复</text>
+      <text x="38" y="50" font-size="10" fill="#f59e0b" opacity="0.7" class="le" display="none">Low Severity + High Rec.</text>
+      <!-- Top-right corner (high severity, high recoverability) -->
+      <text x="462" y="50" font-size="10" fill="#10b981" opacity="0.7" class="lz">高严重 + 高可恢复</text>
+      <text x="462" y="50" font-size="10" fill="#10b981" opacity="0.7" class="le" display="none">High Severity + High Rec.</text>
+      <!-- Bottom-left corner (low severity, low recoverability) -->
+      <text x="38" y="272" font-size="10" fill="#f43f5e" opacity="0.7" class="lz">低严重 + 低可恢复</text>
+      <text x="38" y="272" font-size="10" fill="#f43f5e" opacity="0.7" class="le" display="none">Low Severity + Low Rec.</text>
+      <!-- Bottom-right corner (high severity, low recoverability) -->
+      <text x="462" y="272" font-size="10" fill="#22d3ee" opacity="0.7" class="lz">高严重 + 低可恢复</text>
+      <text x="462" y="272" font-size="10" fill="#22d3ee" opacity="0.7" class="le" display="none">High Severity + Low Rec.</text>
+
+    </svg>
+  </div>
+</div>
+
+<!-- Stats Row -->
+<div class="stats-row">
+  <div class="stat-card">
+    <div class="stat-value">4</div>
+    <div class="stat-label-zh lz">策略象限</div>
+    <div class="stat-label-en le" style="display:none">Strategy Quadrants</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" style="color:var(--cyan);">2×2</div>
+    <div class="stat-label-zh lz">错误分类方法论</div>
+    <div class="stat-label-en le" style="display:none">Error Classification Matrix</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-value" style="color:var(--amber);"><span class="lz">优先</span><span class="le">First</span></div>
+    <div class="stat-label-zh lz">优雅降级优先</div>
+    <div class="stat-label-en le" style="display:none">Graceful Degradation First</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

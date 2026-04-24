@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-25-A · Brief 双成员关系图 / Brief Two-Member Relationship</title>
+<style>
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+*{box-sizing:border-box;margin:0;padding:0;}
+html,body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Hiragino Sans GB","Microsoft YaHei","Segoe UI",sans-serif;-webkit-font-smoothing:antialiased;}
+body{padding:32px 24px;min-height:100vh;}
+.wrap{max-width:1080px;margin:0 auto;}
+
+.toolbar{display:flex;gap:8px;justify-content:flex-end;margin-bottom:16px;}
+.btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:6px;font-size:12px;cursor:pointer;font-family:inherit;}
+.btn:hover{border-color:var(--cyan);}
+
+.header{margin-bottom:24px;border-bottom:1px solid var(--border);padding-bottom:16px;}
+.tag{display:inline-block;font-size:11px;color:var(--cyan);background:rgba(34,211,238,.1);padding:3px 8px;border-radius:4px;margin-bottom:8px;font-weight:600;letter-spacing:.5px;}
+h1{font-size:22px;font-weight:600;margin-bottom:6px;}
+.sub{font-size:13px;color:var(--muted);}
+
+.canvas{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:20px;}
+.svg-box{width:100%;display:block;}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:20px;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px;text-align:center;}
+.stat-num{font-size:20px;font-weight:700;color:var(--cyan);margin-bottom:4px;font-family:"SF Mono",Monaco,monospace;}
+.stat-label{font-size:11px;color:var(--muted);}
+
+.legend{display:flex;gap:20px;flex-wrap:wrap;justify-content:center;margin-top:16px;font-size:12px;color:var(--muted);}
+.legend-item{display:flex;align-items:center;gap:6px;}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;}
+
+.notes{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 20px;font-size:12px;color:var(--muted);line-height:1.7;}
+.notes b{color:var(--text);font-weight:600;}
+.notes-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+
+@media (max-width:720px){
+  .stats{grid-template-columns:1fr;}
+  .notes-grid{grid-template-columns:1fr;}
+  body{padding:16px 12px;}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="toolbar">
+    <button class="btn" onclick="cycleTheme()"><span class="lz">主题</span><span class="le">Theme</span></button>
+    <button class="btn" onclick="toggleLang()">中 / EN</button>
+  </div>
+
+  <div class="header">
+    <span class="tag">VIS-25-A</span>
+    <h1>
+      <span class="lz">Brief 双成员关系图</span>
+      <span class="le" style="display:none">Brief Two-Member Relationship</span>
+    </h1>
+    <div class="sub">
+      <span class="lz">两个成员之间的简报与回报模式：简报方下发任务、受简方执行回报</span>
+      <span class="le" style="display:none">Two-member pattern: Briefing party issues tasks, Briefed party executes and reports back</span>
+    </div>
+  </div>
+
+  <div style="max-width:960px;margin:0 auto 16px;background:rgba(245,158,11,0.1);border:1px solid #f59e0b;border-radius:8px;padding:12px 16px;font-size:12px;color:var(--text);">
+    <strong style="color:#f59e0b"><span class="lz">⚠ 示意字段</span><span class="le" style="display:none">⚠ Illustrative Fields</span></strong><span class="lz"> · 双成员关系（简报方 ↔ 受简方）是 BriefTool 真实模型。但中央数据契约中的字段名（task_id / scope / deadline / return_schema）是作者构造的教学示意，真实 schema 见 src/tools/BriefTool/（含 message / attachments / status: 'normal'|'proactive'）。</span><span class="le" style="display:none"> · Two-member relationship (Briefing ↔ Briefed) is a real BriefTool model. But the data contract field names (task_id / scope / deadline / return_schema) in the middle are pedagogical constructs — real schema is in src/tools/BriefTool/ (contains message / attachments / status: 'normal'|'proactive').</span>
+  </div>
+
+  <div class="canvas">
+    <svg class="svg-box" viewBox="0 0 920 480" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Arrow markers -->
+        <marker id="arrCyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#22d3ee"/>
+        </marker>
+        <marker id="arrViolet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path d="M 0 0 L 10 5 L 0 10 z" fill="#8b5cf6"/>
+        </marker>
+
+        <!-- Gradients for circles -->
+        <radialGradient id="gradA" cx="35%" cy="35%" r="70%">
+          <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.08"/>
+        </radialGradient>
+        <radialGradient id="gradB" cx="35%" cy="35%" r="70%">
+          <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.08"/>
+        </radialGradient>
+      </defs>
+
+      <!-- Background subtle grid line -->
+      <line x1="60" y1="240" x2="860" y2="240" stroke="currentColor" stroke-opacity="0.05" stroke-dasharray="2,4"/>
+
+      <!-- ===== Entity A: Briefing (left) ===== -->
+      <g>
+        <circle cx="160" cy="240" r="100" fill="url(#gradA)" stroke="#22d3ee" stroke-width="2"/>
+        <!-- Icon: megaphone -->
+        <g transform="translate(160,168)">
+          <path d="M -14 -2 L 6 -10 L 6 14 L -14 6 Z" fill="none" stroke="#22d3ee" stroke-width="1.8" stroke-linejoin="round"/>
+          <line x1="6" y1="-10" x2="14" y2="-12" stroke="#22d3ee" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="6" y1="14" x2="14" y2="16" stroke="#22d3ee" stroke-width="1.8" stroke-linecap="round"/>
+          <line x1="-18" y1="2" x2="-22" y2="2" stroke="#22d3ee" stroke-width="1.8" stroke-linecap="round"/>
+        </g>
+
+        <!-- Name ZH -->
+        <text class="lz" x="160" y="208" text-anchor="middle" fill="#22d3ee" font-size="17" font-weight="700">简报方</text>
+        <text class="lz" x="160" y="226" text-anchor="middle" fill="var(--muted)" font-size="11">Briefing Party</text>
+        <!-- Name EN -->
+        <text class="le" x="160" y="208" text-anchor="middle" fill="#22d3ee" font-size="17" font-weight="700" display="none">Briefing</text>
+        <text class="le" x="160" y="226" text-anchor="middle" fill="var(--muted)" font-size="11" display="none">(Initiator)</text>
+
+        <!-- Role list ZH -->
+        <g class="lz">
+          <text x="160" y="252" text-anchor="middle" fill="var(--text)" font-size="12">主导方 · Initiator</text>
+          <text x="160" y="270" text-anchor="middle" fill="var(--text)" font-size="12">提出需求</text>
+          <text x="160" y="288" text-anchor="middle" fill="var(--text)" font-size="12">定义 scope</text>
+        </g>
+        <!-- Role list EN -->
+        <g class="le" display="none">
+          <text x="160" y="252" text-anchor="middle" fill="var(--text)" font-size="12">Leads / Initiator</text>
+          <text x="160" y="270" text-anchor="middle" fill="var(--text)" font-size="12">Issues requests</text>
+          <text x="160" y="288" text-anchor="middle" fill="var(--text)" font-size="12">Defines scope</text>
+        </g>
+
+        <!-- Examples chip -->
+        <rect x="80" y="358" width="160" height="46" rx="6" fill="rgba(34,211,238,.08)" stroke="#22d3ee" stroke-opacity="0.4" stroke-width="1"/>
+        <text class="lz" x="160" y="376" text-anchor="middle" fill="var(--muted)" font-size="10">示例 / Examples</text>
+        <text class="lz" x="160" y="394" text-anchor="middle" fill="#22d3ee" font-size="12" font-weight="600">用户 · Orchestrator</text>
+        <text class="le" x="160" y="376" text-anchor="middle" fill="var(--muted)" font-size="10" display="none">Examples</text>
+        <text class="le" x="160" y="394" text-anchor="middle" fill="#22d3ee" font-size="12" font-weight="600" display="none">User · Orchestrator</text>
+      </g>
+
+      <!-- ===== Entity B: Briefed (right) ===== -->
+      <g>
+        <circle cx="760" cy="240" r="100" fill="url(#gradB)" stroke="#8b5cf6" stroke-width="2"/>
+        <!-- Icon: gear/worker -->
+        <g transform="translate(760,168)" stroke="#8b5cf6" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="0" cy="0" r="8"/>
+          <circle cx="0" cy="0" r="2.5" fill="#8b5cf6"/>
+          <line x1="0" y1="-12" x2="0" y2="-15"/>
+          <line x1="0" y1="12" x2="0" y2="15"/>
+          <line x1="-12" y1="0" x2="-15" y2="0"/>
+          <line x1="12" y1="0" x2="15" y2="0"/>
+          <line x1="-8.5" y1="-8.5" x2="-10.6" y2="-10.6"/>
+          <line x1="8.5" y1="8.5" x2="10.6" y2="10.6"/>
+          <line x1="-8.5" y1="8.5" x2="-10.6" y2="10.6"/>
+          <line x1="8.5" y1="-8.5" x2="10.6" y2="-10.6"/>
+        </g>
+
+        <!-- Name ZH -->
+        <text class="lz" x="760" y="208" text-anchor="middle" fill="#8b5cf6" font-size="17" font-weight="700">受简方</text>
+        <text class="lz" x="760" y="226" text-anchor="middle" fill="var(--muted)" font-size="11">Briefed Party</text>
+        <!-- Name EN -->
+        <text class="le" x="760" y="208" text-anchor="middle" fill="#8b5cf6" font-size="17" font-weight="700" display="none">Briefed</text>
+        <text class="le" x="760" y="226" text-anchor="middle" fill="var(--muted)" font-size="11" display="none">(Executor)</text>
+
+        <!-- Role list ZH -->
+        <g class="lz">
+          <text x="760" y="252" text-anchor="middle" fill="var(--text)" font-size="12">执行方 · Executor</text>
+          <text x="760" y="270" text-anchor="middle" fill="var(--text)" font-size="12">接受任务</text>
+          <text x="760" y="288" text-anchor="middle" fill="var(--text)" font-size="12">报告进度</text>
+        </g>
+        <!-- Role list EN -->
+        <g class="le" display="none">
+          <text x="760" y="252" text-anchor="middle" fill="var(--text)" font-size="12">Executor</text>
+          <text x="760" y="270" text-anchor="middle" fill="var(--text)" font-size="12">Accepts tasks</text>
+          <text x="760" y="288" text-anchor="middle" fill="var(--text)" font-size="12">Reports progress</text>
+        </g>
+
+        <!-- Examples chip -->
+        <rect x="680" y="358" width="160" height="46" rx="6" fill="rgba(139,92,246,.08)" stroke="#8b5cf6" stroke-opacity="0.4" stroke-width="1"/>
+        <text class="lz" x="760" y="376" text-anchor="middle" fill="var(--muted)" font-size="10">示例 / Examples</text>
+        <text class="lz" x="760" y="394" text-anchor="middle" fill="#8b5cf6" font-size="12" font-weight="600">Sub-agent · Worker</text>
+        <text class="le" x="760" y="376" text-anchor="middle" fill="var(--muted)" font-size="10" display="none">Examples</text>
+        <text class="le" x="760" y="394" text-anchor="middle" fill="#8b5cf6" font-size="12" font-weight="600" display="none">Sub-agent · Worker</text>
+      </g>
+
+      <!-- ===== Center: Data Contract Box ===== -->
+      <g>
+        <rect x="370" y="180" width="180" height="120" rx="8" fill="var(--card)" stroke="var(--border)" stroke-width="1"/>
+        <text class="lz" x="460" y="200" text-anchor="middle" fill="var(--text)" font-size="12" font-weight="600">数据契约 / Data Contract</text>
+        <text class="le" x="460" y="200" text-anchor="middle" fill="var(--text)" font-size="12" font-weight="600" display="none">Data Contract</text>
+        <line x1="385" y1="208" x2="535" y2="208" stroke="var(--border)" stroke-width="1"/>
+
+        <g font-family="SF Mono, Monaco, Consolas, monospace" font-size="11" fill="var(--muted)">
+          <text x="385" y="225"><tspan fill="#22d3ee">task_id</tspan>: "t-9f3a"</text>
+          <text x="385" y="243"><tspan fill="#22d3ee">scope</tspan>: ["read","grep"]</text>
+          <text x="385" y="261"><tspan fill="#22d3ee">deadline</tspan>: 30s</text>
+          <text x="385" y="279"><tspan fill="#22d3ee">return_schema</tspan>: {...}</text>
+          <text x="385" y="296" fill="var(--muted)" font-size="10" font-style="italic">// inherits parent perms</text>
+        </g>
+      </g>
+
+      <!-- ===== Bidirectional Arrows ===== -->
+      <!-- Brief: A → B (top arc) -->
+      <g>
+        <path d="M 260 215 Q 460 145 660 215" fill="none" stroke="#22d3ee" stroke-width="2" marker-end="url(#arrCyan)"/>
+        <rect x="408" y="138" width="104" height="26" rx="13" fill="var(--bg)" stroke="#22d3ee" stroke-width="1.2"/>
+        <text class="lz" x="460" y="155" text-anchor="middle" fill="#22d3ee" font-size="12" font-weight="600">Brief · 简报</text>
+        <text class="le" x="460" y="155" text-anchor="middle" fill="#22d3ee" font-size="12" font-weight="600" display="none">Brief (sync)</text>
+        <text class="lz" x="460" y="125" text-anchor="middle" fill="var(--muted)" font-size="10">同步 · task + context</text>
+        <text class="le" x="460" y="125" text-anchor="middle" fill="var(--muted)" font-size="10" display="none">task + context</text>
+      </g>
+
+      <!-- Report: B → A (bottom arc) -->
+      <g>
+        <path d="M 660 265 Q 460 335 260 265" fill="none" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrViolet)"/>
+        <rect x="408" y="316" width="104" height="26" rx="13" fill="var(--bg)" stroke="#8b5cf6" stroke-width="1.2"/>
+        <text class="lz" x="460" y="333" text-anchor="middle" fill="#8b5cf6" font-size="12" font-weight="600">Report · 回报</text>
+        <text class="le" x="460" y="333" text-anchor="middle" fill="#8b5cf6" font-size="12" font-weight="600" display="none">Report (async)</text>
+        <text class="lz" x="460" y="357" text-anchor="middle" fill="var(--muted)" font-size="10">异步 · status + results</text>
+        <text class="le" x="460" y="357" text-anchor="middle" fill="var(--muted)" font-size="10" display="none">status + results</text>
+      </g>
+
+      <!-- Permission inheritance hint badge -->
+      <g transform="translate(460,425)">
+        <rect x="-130" y="-14" width="260" height="28" rx="14" fill="rgba(16,185,129,.10)" stroke="#10b981" stroke-opacity="0.5" stroke-width="1"/>
+        <circle cx="-110" cy="0" r="4" fill="#10b981"/>
+        <text class="lz" x="-95" y="4" fill="var(--text)" font-size="11">权限继承：受简方 ⊆ 简报方（scoped）</text>
+        <text class="le" x="-95" y="4" fill="var(--text)" font-size="11" display="none">Trust: Briefed inherits Briefing's perms (scoped)</text>
+      </g>
+
+    </svg>
+
+    <div class="legend">
+      <div class="legend-item"><span class="dot" style="background:#22d3ee"></span><span class="lz">简报方 (Briefing)</span><span class="le" style="display:none">Briefing</span></div>
+      <div class="legend-item"><span class="dot" style="background:#8b5cf6"></span><span class="lz">受简方 (Briefed)</span><span class="le" style="display:none">Briefed</span></div>
+      <div class="legend-item"><span class="dot" style="background:#10b981"></span><span class="lz">权限继承</span><span class="le" style="display:none">Permission inheritance</span></div>
+    </div>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num">2</div>
+      <div class="stat-label"><span class="lz">成员关系</span><span class="le" style="display:none">Member Relationship</span></div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">⇄</div>
+      <div class="stat-label"><span class="lz">双向通信</span><span class="le" style="display:none">Bidirectional Comm</span></div>
+    </div>
+    <div class="stat">
+      <div class="stat-num">⊆</div>
+      <div class="stat-label"><span class="lz">权限继承</span><span class="le" style="display:none">Inherits Permissions</span></div>
+    </div>
+  </div>
+
+  <div class="notes" style="margin-top:20px">
+    <div class="notes-grid">
+      <div>
+        <div class="lz">
+          <p><b>关系本质</b></p>
+          <p style="margin-top:6px">Brief 模式是一种最小协作单元：恰好两个成员，一方简报 (Brief)、一方执行回报 (Report)，构成 <b>有方向的信任链</b>。</p>
+          <p style="margin-top:8px"><b>典型用例</b></p>
+          <p style="margin-top:6px">Orchestrator 向 Sub-agent 下发子任务（如"读这5个文件并提炼")，Sub-agent 在 scope 内执行完毕后回传结果。</p>
+        </div>
+        <div class="le" style="display:none">
+          <p><b>Relationship Essence</b></p>
+          <p style="margin-top:6px">Brief is the minimum collaboration unit: exactly two members — one briefs (Brief) and the other executes/reports (Report) — forming a <b>directional trust chain</b>.</p>
+          <p style="margin-top:8px"><b>Typical Use Case</b></p>
+          <p style="margin-top:6px">Orchestrator briefs a Sub-agent with a subtask (e.g. "read these 5 files and summarize"); Sub-agent executes within scope and returns results.</p>
+        </div>
+      </div>
+
+      <div>
+        <div class="lz">
+          <p><b>时序特征</b></p>
+          <p style="margin-top:6px">• <b>Brief 同步</b>：调用方 await，阻塞直到 Sub-agent 启动并接受契约<br>• <b>Report 异步</b>：执行过程可流式回传 status，最终结果按 schema 落盘</p>
+          <p style="margin-top:8px"><b>权限边界</b></p>
+          <p style="margin-top:6px">受简方权限恒为简报方的<b>子集</b>（scoped down），契约里的 scope 字段是硬约束，越权请求会被工具层拒绝。</p>
+        </div>
+        <div class="le" style="display:none">
+          <p><b>Timing</b></p>
+          <p style="margin-top:6px">• <b>Brief is synchronous</b>: caller awaits, blocks until Sub-agent accepts the contract<br>• <b>Report is async</b>: status streams back during execution; final results land per schema</p>
+          <p style="margin-top:8px"><b>Permission Boundary</b></p>
+          <p style="margin-top:6px">Briefed permissions are always a <b>subset</b> of Briefing (scoped down). The scope field is a hard constraint — out-of-scope calls are rejected at tool layer.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

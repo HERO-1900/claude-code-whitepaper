@@ -1,0 +1,370 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-2A-005 模式路由决策树 — Claude Code 白皮书</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--bg2:#0f172a;--bg3:#1e293b;--txt:#f1f5f9;--txt2:#94a3b8;--txt3:#475569;--brd:rgba(148,163,184,0.15);--card-bg:rgba(15,23,42,0.85);--ctrl-bg:rgba(30,41,59,0.9);--node-bg:#020617;--grid-stroke:#1e293b;}
+[data-theme="warm"]{--bg:#f8f6f3;--bg2:#f1ede8;--bg3:#e8e2d9;--txt:#1e293b;--txt2:#475569;--txt3:#94a3b8;--brd:rgba(100,116,139,0.2);--card-bg:rgba(241,237,232,0.9);--ctrl-bg:rgba(241,237,232,0.95);--node-bg:#f8f6f3;--grid-stroke:#e0d8cc;}
+[data-theme="light"]{--bg:#ffffff;--bg2:#f8fafc;--bg3:#f1f5f9;--txt:#0f172a;--txt2:#64748b;--txt3:#94a3b8;--brd:rgba(100,116,139,0.15);--card-bg:rgba(248,250,252,0.95);--ctrl-bg:rgba(248,250,252,0.95);--node-bg:#ffffff;--grid-stroke:#e2e8f0;}
+[lang="en"] .lz{display:none}*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--txt);min-height:100vh;transition:background .3s,color .3s}
+.page{max-width:1020px;margin:0 auto;padding:32px 20px}
+.hdr{display:flex;align-items:flex-start;gap:12px;margin-bottom:24px}
+.pulse{width:10px;height:10px;border-radius:50%;background:#22d3ee;animation:pulse 2s infinite;flex-shrink:0;margin-top:5px}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.85)}}
+h1{font-size:20px;font-weight:700;color:var(--txt)}
+.subtitle{font-size:11px;color:var(--txt2);margin-top:4px}
+.diagram-card{background:var(--card-bg);border:1px solid var(--brd);border-radius:14px;padding:20px 16px;margin-bottom:16px;overflow:hidden}
+.svg-bg{fill:var(--bg)}.grid-line{stroke:var(--grid-stroke)}.node-bg{fill:var(--node-bg)}.node-title{fill:var(--txt)}.node-meta{fill:var(--txt2)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card{background:var(--card-bg);border:1px solid var(--brd);border-radius:10px;padding:14px}
+.card-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.card h3{font-size:11px;font-weight:600;color:var(--txt)}
+.card ul{list-style:none;font-size:10px;color:var(--txt2);line-height:1.9}
+footer{margin-top:16px;text-align:center;font-size:10px;color:var(--txt3)}
+.controls{position:fixed;top:14px;right:14px;display:flex;flex-direction:column;gap:6px;z-index:100}
+.ctrl{background:var(--ctrl-bg);border:1px solid var(--brd);border-radius:6px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--txt);cursor:pointer;transition:all .2s}
+.ctrl:hover{border-color:#22d3ee;color:#22d3ee}
+</style>
+</head>
+<body>
+<div class="controls">
+  <button class="ctrl" onclick="window.cycleTheme()">Theme</button>
+  <button class="ctrl" onclick="window.toggleLang()">EN/中</button>
+</div>
+<div class="page">
+  <div class="hdr">
+    <div class="pulse"></div>
+    <div>
+      <h1><span class="lz">模式路由决策树</span><span class="le">Mode Routing Decision Tree</span></h1>
+      <p class="subtitle"><span class="lz">Claude Code 启动时根据参数/环境变量路由到8种运行模式 · REPL为默认路径</span><span class="le">Claude Code routes to 8 run modes based on args/env vars · REPL is the default path</span></p>
+    </div>
+  </div>
+  <div class="diagram-card">
+    <svg viewBox="0 0 960 480" width="100%" style="display:block" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="g2a5" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" class="grid-line" stroke-width="0.5"/>
+        </pattern>
+        <marker id="arr5" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="#64748b"/>
+        </marker>
+        <marker id="arr5y" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="#22d3ee"/>
+        </marker>
+        <marker id="arr5r" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="#34d399"/>
+        </marker>
+        <filter id="glow5"><feDropShadow stdDeviation="5" flood-color="#22d3ee" flood-opacity="0.5"/></filter>
+      </defs>
+      <rect width="960" height="480" class="svg-bg"/>
+      <rect width="960" height="480" fill="url(#g2a5)"/>
+
+      <!-- ─── ENTRY NODE ─── -->
+      <rect x="10" y="104" width="68" height="40" rx="8" class="node-bg"/>
+      <rect x="10" y="104" width="68" height="40" rx="8" fill="rgba(30,41,59,0.8)" stroke="#64748b" stroke-width="1.5"/>
+      <text x="44" y="120" fill="#94a3b8" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">CLI Args</text>
+      <text x="44" y="134" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">启动参数</tspan><tspan class="le">startup args</tspan></text>
+      <!-- Arrow to first diamond -->
+      <line x1="78" y1="124" x2="92" y2="124" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr5)"/>
+
+      <!-- ─── 7 DECISION DIAMONDS ─── -->
+      <!-- Diamond macro: cx,cy,dx=28,dy=20 → points="cx-28,cy cx,cy-20 cx+28,cy cx,cy+20" -->
+      <!-- D1 (headless) cx=120,cy=124 -->
+      <polygon points="92,124 120,104 148,124 120,144" fill="rgba(30,41,59,0.8)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="120" y="120" fill="#f1f5f9" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">-p /</text>
+      <text x="120" y="132" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">--print?</text>
+      <!-- Yes arrow: down to T1 -->
+      <line x1="120" y1="144" x2="120" y2="210" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arr5y)"/>
+      <rect x="108" y="152" width="24" height="12" rx="2" class="node-bg"/>
+      <text x="120" y="162" fill="#22d3ee" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">Yes</text>
+      <!-- No arrow: right -->
+      <line x1="148" y1="124" x2="165" y2="124" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr5)"/>
+      <rect x="149" y="114" width="14" height="12" rx="2" class="node-bg"/>
+      <text x="156" y="124" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">N</text>
+
+      <!-- D2 (mcp) cx=193,cy=124 -->
+      <polygon points="165,124 193,104 221,124 193,144" fill="rgba(30,41,59,0.8)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="193" y="120" fill="#f1f5f9" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">mcp</text>
+      <text x="193" y="132" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">serve?</text>
+      <line x1="193" y1="144" x2="193" y2="210" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arr5y)"/>
+      <rect x="181" y="152" width="24" height="12" rx="2" class="node-bg"/>
+      <text x="193" y="162" fill="#22d3ee" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">Yes</text>
+      <line x1="221" y1="124" x2="238" y2="124" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr5)"/>
+      <rect x="222" y="114" width="14" height="12" rx="2" class="node-bg"/>
+      <text x="229" y="124" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">N</text>
+
+      <!-- D3 (ssh) cx=266,cy=124 -->
+      <polygon points="238,124 266,104 294,124 266,144" fill="rgba(30,41,59,0.8)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="266" y="120" fill="#f1f5f9" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">SSH</text>
+      <text x="266" y="132" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">REMOTE?</text>
+      <line x1="266" y1="144" x2="266" y2="210" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arr5y)"/>
+      <rect x="254" y="152" width="24" height="12" rx="2" class="node-bg"/>
+      <text x="266" y="162" fill="#22d3ee" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">Yes</text>
+      <line x1="294" y1="124" x2="311" y2="124" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr5)"/>
+      <rect x="295" y="114" width="14" height="12" rx="2" class="node-bg"/>
+      <text x="302" y="124" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">N</text>
+
+      <!-- D4 (bridge/sdk) cx=339,cy=124 -->
+      <polygon points="311,124 339,104 367,124 339,144" fill="rgba(30,41,59,0.8)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="339" y="120" fill="#f1f5f9" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">BRIDGE</text>
+      <text x="339" y="132" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">MODE?</text>
+      <line x1="339" y1="144" x2="339" y2="210" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arr5y)"/>
+      <rect x="327" y="152" width="24" height="12" rx="2" class="node-bg"/>
+      <text x="339" y="162" fill="#22d3ee" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">Yes</text>
+      <line x1="367" y1="124" x2="384" y2="124" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr5)"/>
+      <rect x="368" y="114" width="14" height="12" rx="2" class="node-bg"/>
+      <text x="375" y="124" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">N</text>
+
+      <!-- D5 (coordinator) cx=412,cy=124 -->
+      <polygon points="384,124 412,104 440,124 412,144" fill="rgba(30,41,59,0.8)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="412" y="120" fill="#f1f5f9" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">COORD</text>
+      <text x="412" y="132" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">MODE?</text>
+      <line x1="412" y1="144" x2="412" y2="210" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arr5y)"/>
+      <rect x="400" y="152" width="24" height="12" rx="2" class="node-bg"/>
+      <text x="412" y="162" fill="#22d3ee" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">Yes</text>
+      <line x1="440" y1="124" x2="457" y2="124" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr5)"/>
+      <rect x="441" y="114" width="14" height="12" rx="2" class="node-bg"/>
+      <text x="448" y="124" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">N</text>
+
+      <!-- D6 (kairos) cx=485,cy=124 -->
+      <polygon points="457,124 485,104 513,124 485,144" fill="rgba(30,41,59,0.8)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="485" y="120" fill="#f1f5f9" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">KAIROS</text>
+      <text x="485" y="132" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">mode?</text>
+      <line x1="485" y1="144" x2="485" y2="210" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arr5y)"/>
+      <rect x="473" y="152" width="24" height="12" rx="2" class="node-bg"/>
+      <text x="485" y="162" fill="#22d3ee" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">Yes</text>
+      <line x1="513" y1="124" x2="530" y2="124" stroke="#64748b" stroke-width="1.5" marker-end="url(#arr5)"/>
+      <rect x="514" y="114" width="14" height="12" rx="2" class="node-bg"/>
+      <text x="521" y="124" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">N</text>
+
+      <!-- D7 (direct) cx=558,cy=124 -->
+      <polygon points="530,124 558,104 586,124 558,144" fill="rgba(30,41,59,0.8)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="558" y="120" fill="#f1f5f9" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">DIRECT</text>
+      <text x="558" y="132" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">CONN?</text>
+      <line x1="558" y1="144" x2="558" y2="210" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arr5y)"/>
+      <rect x="546" y="152" width="24" height="12" rx="2" class="node-bg"/>
+      <text x="558" y="162" fill="#22d3ee" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">Yes</text>
+      <!-- No arrow to REPL -->
+      <line x1="586" y1="124" x2="610" y2="124" stroke="#34d399" stroke-width="2" marker-end="url(#arr5r)"/>
+      <rect x="587" y="114" width="22" height="12" rx="2" class="node-bg"/>
+      <text x="598" y="124" fill="#34d399" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">No</text>
+
+      <!-- ─── TERMINAL NODES (y=210..295) ─── -->
+
+      <!-- T1 Headless -->
+      <rect x="80" y="210" width="80" height="62" rx="6" class="node-bg"/>
+      <rect x="80" y="210" width="80" height="62" rx="6" fill="rgba(30,41,59,0.7)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="120" y="230" fill="#f1f5f9" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">Headless</text>
+      <text x="120" y="246" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">-p / --print</text>
+      <text x="120" y="260" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">单次输出退出</tspan><tspan class="le">one-shot exit</tspan></text>
+
+      <!-- T2 MCP Serve -->
+      <rect x="153" y="210" width="80" height="62" rx="6" class="node-bg"/>
+      <rect x="153" y="210" width="80" height="62" rx="6" fill="rgba(30,41,59,0.7)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="193" y="230" fill="#f1f5f9" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">MCP Serve</text>
+      <text x="193" y="246" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">mcp serve</text>
+      <text x="193" y="260" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">协议服务器</tspan><tspan class="le">protocol server</tspan></text>
+
+      <!-- T3 SSH Remote -->
+      <rect x="226" y="210" width="80" height="62" rx="6" class="node-bg"/>
+      <rect x="226" y="210" width="80" height="62" rx="6" fill="rgba(30,41,59,0.7)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="266" y="230" fill="#f1f5f9" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">SSH Remote</text>
+      <text x="266" y="246" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">SSH_REMOTE</text>
+      <text x="266" y="260" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">远程终端</tspan><tspan class="le">remote terminal</tspan></text>
+
+      <!-- T4 SDK Mode -->
+      <rect x="299" y="210" width="80" height="62" rx="6" class="node-bg"/>
+      <rect x="299" y="210" width="80" height="62" rx="6" fill="rgba(30,41,59,0.7)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="339" y="230" fill="#f1f5f9" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">SDK Mode</text>
+      <text x="339" y="246" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">BRIDGE_MODE</text>
+      <text x="339" y="260" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">桥接模式</tspan><tspan class="le">bridge mode</tspan></text>
+
+      <!-- T5 Coordinator -->
+      <rect x="372" y="210" width="80" height="62" rx="6" class="node-bg"/>
+      <rect x="372" y="210" width="80" height="62" rx="6" fill="rgba(30,41,59,0.7)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="412" y="230" fill="#f1f5f9" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">Coordinator</text>
+      <text x="412" y="246" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">COORD_MODE=1</text>
+      <text x="412" y="260" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">多Worker编排</tspan><tspan class="le">multi-worker</tspan></text>
+
+      <!-- T6 KAIROS -->
+      <rect x="445" y="210" width="80" height="62" rx="6" class="node-bg"/>
+      <rect x="445" y="210" width="80" height="62" rx="6" fill="rgba(30,41,59,0.7)" stroke="#a78bfa" stroke-width="1.5"/>
+      <text x="485" y="230" fill="#f1f5f9" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">KAIROS</text>
+      <text x="485" y="246" fill="#a78bfa" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">ant-only</text>
+      <text x="485" y="260" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">内部专用</tspan><tspan class="le">Anthropic internal</tspan></text>
+
+      <!-- T7 Direct Connect -->
+      <rect x="518" y="210" width="80" height="62" rx="6" class="node-bg"/>
+      <rect x="518" y="210" width="80" height="62" rx="6" fill="rgba(30,41,59,0.7)" stroke="#94a3b8" stroke-width="1.5"/>
+      <text x="558" y="230" fill="#f1f5f9" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">Direct</text>
+      <text x="558" y="246" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">DIRECT_CONN</text>
+      <text x="558" y="260" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">cc:// URL</text>
+
+      <!-- ─── REPL DEFAULT (highlighted) ─── -->
+      <rect x="610" y="82" width="180" height="84" rx="10" class="node-bg"/>
+      <rect x="610" y="82" width="180" height="84" rx="10" fill="rgba(6,78,59,0.5)" stroke="#34d399" stroke-width="2.5" filter="url(#glow5)"/>
+      <text x="700" y="108" fill="#34d399" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">★ REPL Mode</text>
+      <text x="700" y="127" fill="#f1f5f9" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">交互式命令行</tspan><tspan class="le">Interactive CLI</tspan></text>
+      <text x="700" y="143" fill="#6ee7b7" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">默认路径 · 最常见模式</tspan><tspan class="le">Default path · Most common mode</tspan></text>
+      <text x="700" y="158" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">无特殊参数时启动</tspan><tspan class="le">Starts when no special flags</tspan></text>
+
+      <!-- ─── MIGRATION CHECK (between chain and REPL) ─── -->
+      <!-- Small annotation about migration -->
+      <rect x="628" y="190" width="144" height="34" rx="6" fill="rgba(251,191,36,0.1)" stroke="#fbbf24" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="700" y="204" fill="#fbbf24" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">Migration Check</text>
+      <text x="700" y="216" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">配置迁移检查（内嵌于REPL路径）</tspan><tspan class="le">Config migration (part of REPL path)</tspan></text>
+
+      <!-- ─── DATA ANNOTATION SECTION ─── -->
+      <!-- Mode grid at bottom (y=300-460) -->
+      <rect x="20" y="300" width="920" height="168" rx="8" fill="rgba(15,23,42,0.6)" stroke="rgba(148,163,184,0.1)" stroke-width="1"/>
+      <text x="480" y="322" fill="#64748b" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">各模式触发条件速查</tspan><tspan class="le">Mode trigger quick reference</tspan></text>
+
+      <!-- Mode info grid (2 columns × 4 rows) -->
+      <!-- Row 1 -->
+      <text x="36" y="346" fill="#f1f5f9" font-size="10" font-weight="600" font-family="JetBrains Mono,monospace">Headless</text>
+      <text x="36" y="360" fill="#94a3b8" font-size="10" font-family="JetBrains Mono,monospace">-p/--print · <tspan class="lz">脚本集成、CI/CD、批处理</tspan><tspan class="le">scripts, CI/CD, batch</tspan></text>
+      <text x="496" y="346" fill="#f1f5f9" font-size="10" font-weight="600" font-family="JetBrains Mono,monospace">MCP Serve</text>
+      <text x="496" y="360" fill="#94a3b8" font-size="10" font-family="JetBrains Mono,monospace">mcp serve · <tspan class="lz">为外部客户端提供AI接口</tspan><tspan class="le">provide AI interface to external clients</tspan></text>
+      <!-- Row 2 -->
+      <text x="36" y="384" fill="#f1f5f9" font-size="10" font-weight="600" font-family="JetBrains Mono,monospace">SSH Remote</text>
+      <text x="36" y="398" fill="#94a3b8" font-size="10" font-family="JetBrains Mono,monospace">SSH_REMOTE flag · <tspan class="lz">SSH协议远程连接</tspan><tspan class="le">remote connect via SSH protocol</tspan></text>
+      <text x="496" y="384" fill="#f1f5f9" font-size="10" font-weight="600" font-family="JetBrains Mono,monospace">SDK Mode</text>
+      <text x="496" y="398" fill="#94a3b8" font-size="10" font-family="JetBrains Mono,monospace">BRIDGE_MODE flag · <tspan class="lz">第三方SDK桥接集成</tspan><tspan class="le">third-party SDK bridge integration</tspan></text>
+      <!-- Row 3 -->
+      <text x="36" y="422" fill="#f1f5f9" font-size="10" font-weight="600" font-family="JetBrains Mono,monospace">Coordinator</text>
+      <text x="36" y="436" fill="#94a3b8" font-size="10" font-family="JetBrains Mono,monospace">CLAUDE_CODE_COORDINATOR_MODE=1 · <tspan class="lz">多Worker并行编排</tspan><tspan class="le">multi-worker orchestration</tspan></text>
+      <text x="496" y="422" fill="#a78bfa" font-size="10" font-weight="600" font-family="JetBrains Mono,monospace">KAIROS (ant-only)</text>
+      <text x="496" y="436" fill="#94a3b8" font-size="10" font-family="JetBrains Mono,monospace">KAIROS env · <tspan class="lz">Anthropic内部Assistant专用</tspan><tspan class="le">Anthropic internal Assistant only</tspan></text>
+      <!-- Row 4 -->
+      <text x="36" y="460" fill="#f1f5f9" font-size="10" font-weight="600" font-family="JetBrains Mono,monospace">Direct Connect</text>
+      <text x="36" y="474" fill="#94a3b8" font-size="10" font-family="JetBrains Mono,monospace">DIRECT_CONNECT flag · cc:// <tspan class="lz">自定义协议直连</tspan><tspan class="le">custom protocol direct link</tspan></text>
+      <text x="496" y="460" fill="#34d399" font-size="10" font-weight="600" font-family="JetBrains Mono,monospace">★ REPL (default)</text>
+      <text x="496" y="474" fill="#94a3b8" font-size="10" font-family="JetBrains Mono,monospace"><tspan class="lz">无特殊参数 · 完整交互式AI编程助手体验</tspan><tspan class="le">No special flags · Full interactive AI assistant</tspan></text>
+    </svg>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-hdr"><div class="dot" style="background:#34d399"></div><h3><span class="lz">REPL — 默认路径</span><span class="le">REPL — Default Path</span></h3></div>
+      <ul>
+        <li>• <span class="lz">所有条件检查都为 No 时进入 REPL 模式</span><span class="le">REPL mode entered when all 7 checks return No</span></li>
+        <li>• <span class="lz">完整交互式 AI 编程助手体验，支持上下文感知</span><span class="le">Full interactive AI assistant with context awareness</span></li>
+        <li>• <span class="lz">进入前会执行配置迁移检查（migrate）</span><span class="le">Migration check (migrate) runs before entering REPL</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="dot" style="background:#22d3ee"></div><h3><span class="lz">特殊模式（6种）</span><span class="le">Special Modes (6 kinds)</span></h3></div>
+      <ul>
+        <li>• <span class="lz">Headless：-p 参数触发，单次输出后退出，适合 CI/CD</span><span class="le">Headless: -p flag, one-shot output, ideal for CI/CD</span></li>
+        <li>• <span class="lz">MCP Serve：启动 Model Context Protocol 服务器</span><span class="le">MCP Serve: launches Model Context Protocol server</span></li>
+        <li>• <span class="lz">SSH/Bridge/Coordinator/Direct：各对应 Feature Flag 控制</span><span class="le">SSH/Bridge/Coordinator/Direct: each controlled by feature flags</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="dot" style="background:#a78bfa"></div><h3><span class="lz">KAIROS — 内部专属</span><span class="le">KAIROS — Internal Only</span></h3></div>
+      <ul>
+        <li>• <span class="lz">标记为 ant-only，仅 Anthropic 内部 Assistant 使用</span><span class="le">Marked ant-only, used only by internal Anthropic Assistant</span></li>
+        <li>• <span class="lz">通过 KAIROS 环境变量触发，提供定制化能力</span><span class="le">Triggered by KAIROS env var, provides customized capabilities</span></li>
+        <li>• <span class="lz">体现了 Claude Code 作为 Anthropic 基础设施的地位</span><span class="le">Shows Claude Code's role as Anthropic's internal infrastructure</span></li>
+      </ul>
+    </div>
+  </div>
+  <footer><span class="lz">VIS-2A-005 · Claude Code 2.1.88 白皮书 · 模式路由决策树 · v2.0</span><span class="le">VIS-2A-005 · Claude Code 2.1.88 Whitepaper · Mode Routing Decision Tree · v2.0</span></footer>
+</div>
+<script>
+(function(){
+  var themes=['dark','warm','light'],i=0;
+  var stored=localStorage.getItem('vtheme');
+  if(stored){i=themes.indexOf(stored);if(i<0)i=0;}
+  document.documentElement.setAttribute('data-theme',themes[i]);
+  window.cycleTheme=function(){i=(i+1)%3;var t=themes[i];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  var lang=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('lang',lang);
+  window.toggleLang=function(){lang=lang==='zh'?'en':'zh';document.documentElement.setAttribute('lang',lang);localStorage.setItem('vlang',lang);};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

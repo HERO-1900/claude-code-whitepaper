@@ -1,0 +1,938 @@
+<!DOCTYPE html>
+<!--
+  VIS-2A-023 · 攻击面矩阵 · Attack Surface Matrix
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  7 种攻击向量 × 4 层防御 · 覆盖率分析
+-->
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIS-2A-023 攻击面矩阵</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    /* ── 设计 Token ─────────────────────────────────────────────── */
+    :root,[data-theme="dark"]{
+      --bg:#020617;--panel:#0f172a;--card:#0f172a;--border:#1e293b;
+      --text:#e2e8f0;--muted:#64748b;--subtle:#334155;
+      --amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;
+      --emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#f97316;
+      /* layer colors */
+      --l1:#fb7185;--l2:#fbbf24;--l3:#a78bfa;--l4:#34d399;
+      /* badges */
+      --block-bg:rgba(52,211,153,0.15);--block-border:rgba(52,211,153,0.4);--block-text:#34d399;
+      --partial-bg:rgba(251,191,36,0.15);--partial-border:rgba(251,191,36,0.4);--partial-text:#fbbf24;
+      --empty-text:rgba(100,116,139,0.5);
+      /* controls */
+      --btn-bg:rgba(15,23,42,0.92);--btn-border:rgba(34,211,238,0.25);
+      --btn-text:#64748b;--btn-active:#22d3ee;
+      /* stats bar */
+      --bar-bg:#1e293b;
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3;--panel:#ffffff;--card:#faf9f7;--border:#e2d9cc;
+      --text:#1c1917;--muted:#78716c;--subtle:#d6ccc2;
+      --amber:#d97706;--cyan:#0891b2;--violet:#7c3aed;
+      --emerald:#059669;--rose:#e11d48;--slate:#6b7280;--orange:#ea580c;
+      --l1:#e11d48;--l2:#d97706;--l3:#7c3aed;--l4:#059669;
+      --block-bg:rgba(5,150,105,0.1);--block-border:rgba(5,150,105,0.3);--block-text:#059669;
+      --partial-bg:rgba(217,119,6,0.1);--partial-border:rgba(217,119,6,0.3);--partial-text:#d97706;
+      --empty-text:rgba(120,113,108,0.4);
+      --btn-bg:rgba(255,255,255,0.95);--btn-border:rgba(8,145,178,0.25);
+      --btn-text:#78716c;--btn-active:#0891b2;
+      --bar-bg:#e2d9cc;
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--panel:#f8fafc;--card:#f8fafc;--border:#e2e8f0;
+      --text:#0f172a;--muted:#64748b;--subtle:#cbd5e1;
+      --amber:#d97706;--cyan:#0ea5e9;--violet:#7c3aed;
+      --emerald:#059669;--rose:#e11d48;--slate:#94a3b8;--orange:#ea580c;
+      --l1:#e11d48;--l2:#d97706;--l3:#7c3aed;--l4:#059669;
+      --block-bg:rgba(5,150,105,0.08);--block-border:rgba(5,150,105,0.25);--block-text:#059669;
+      --partial-bg:rgba(217,119,6,0.08);--partial-border:rgba(217,119,6,0.25);--partial-text:#d97706;
+      --empty-text:rgba(100,116,139,0.4);
+      --btn-bg:rgba(248,250,252,0.95);--btn-border:rgba(14,165,233,0.25);
+      --btn-text:#64748b;--btn-active:#0ea5e9;
+      --bar-bg:#e2e8f0;
+    }
+
+    /* ── Reset ─────────────────────────────────────────────────── */
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      font-family:'JetBrains Mono',monospace;
+      background:var(--bg);color:var(--text);
+      min-height:100vh;padding:24px 20px 40px;
+      transition:background .3s,color .3s;
+    }
+
+    /* ── Controls ──────────────────────────────────────────────── */
+    .ctrl{
+      position:fixed;top:16px;right:16px;z-index:999;
+      display:flex;gap:6px;align-items:center;
+      background:var(--btn-bg);border:1px solid var(--btn-border);
+      border-radius:10px;padding:7px 10px;backdrop-filter:blur(12px);
+    }
+    .ctrl button{
+      background:none;border:none;cursor:pointer;
+      font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600;
+      color:var(--btn-text);padding:4px 8px;border-radius:6px;transition:all .2s;
+    }
+    .ctrl button:hover{color:var(--btn-active);}
+    .ctrl-sep{width:1px;height:16px;background:var(--border);margin:0 2px;}
+
+html[data-lang="en"] .row-zh{display:none}
+    .row-en{display:none} html[data-lang="en"] .row-en{display:block}
+
+    /* ── Page Header ────────────────────────────────────────────── */
+    .page-header{
+      max-width:1100px;margin:0 auto 28px;
+      display:flex;flex-direction:column;gap:8px;
+    }
+    .page-tag{
+      font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+      color:var(--muted);display:flex;align-items:center;gap:8px;
+    }
+    .page-tag::before{content:'';display:block;width:24px;height:2px;background:var(--rose);}
+    .page-title{
+      font-size:22px;font-weight:700;color:var(--text);line-height:1.3;
+    }
+    .page-desc{font-size:12px;color:var(--muted);line-height:1.6;max-width:720px;}
+
+    /* ── Main Container ─────────────────────────────────────────── */
+    .main{max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:24px;}
+
+    /* ── Matrix Wrapper ─────────────────────────────────────────── */
+    .matrix-wrap{
+      background:var(--panel);border:1px solid var(--border);border-radius:14px;
+      overflow:hidden;
+    }
+
+    /* ── Grid Table ─────────────────────────────────────────────── */
+    .matrix{
+      width:100%;border-collapse:collapse;
+      font-size:11.5px;
+    }
+
+    /* Column headers */
+    .matrix th{
+      padding:14px 12px;border-bottom:1px solid var(--border);
+      text-align:center;font-weight:700;font-size:11px;letter-spacing:.04em;
+      vertical-align:middle;
+    }
+    .matrix th.corner{
+      background:var(--panel);text-align:left;
+      border-right:1px solid var(--border);
+      font-size:10px;color:var(--muted);letter-spacing:.08em;text-transform:uppercase;
+    }
+    .col-l1{background:rgba(251,113,133,0.07);color:var(--l1);}
+    .col-l2{background:rgba(251,191,36,0.07);color:var(--l2);}
+    .col-l3{background:rgba(167,139,250,0.07);color:var(--l3);}
+    .col-l4{background:rgba(52,211,153,0.07);color:var(--l4);}
+    .col-stat{background:var(--panel);color:var(--muted);font-size:10px;}
+
+    /* Column header layer label */
+    .layer-code{font-size:18px;font-weight:700;display:block;margin-bottom:3px;letter-spacing:-.01em;}
+    .layer-name{display:block;font-size:10px;font-weight:600;letter-spacing:.03em;opacity:.9;}
+    .layer-tag{
+      display:inline-block;margin-top:4px;padding:2px 7px;border-radius:99px;
+      font-size: 10px;font-weight:700;letter-spacing:.06em;
+    }
+    .tag-l1{background:rgba(251,113,133,0.18);color:var(--l1);}
+    .tag-l2{background:rgba(251,191,36,0.18);color:var(--l2);}
+    .tag-l3{background:rgba(167,139,250,0.18);color:var(--l3);}
+    .tag-l4{background:rgba(52,211,153,0.18);color:var(--l4);}
+
+    /* Row cells */
+    .matrix td{
+      padding:12px 10px;border-bottom:1px solid var(--border);
+      border-right:1px solid var(--border);vertical-align:middle;
+      transition:background .2s;
+    }
+    .matrix tr:last-child td{border-bottom:none;}
+
+    /* Row header */
+    .row-hdr{
+      background:rgba(15,23,42,0.6);
+      border-right:1px solid var(--border);
+      min-width:200px;max-width:220px;
+    }
+    [data-theme="warm"] .row-hdr{background:rgba(240,235,228,0.6);}
+    [data-theme="light"] .row-hdr{background:rgba(241,245,249,0.7);}
+
+    .row-inner{display:flex;align-items:center;gap:10px;}
+    .row-icon{font-size:18px;line-height:1;flex-shrink:0;}
+    .row-texts{display:flex;flex-direction:column;gap:2px;}
+    .row-zh{font-size:12px;font-weight:700;color:var(--text);}
+    .row-en{font-size:10px;color:var(--muted);}
+
+    /* Data cells */
+    .cell-data{text-align:center;min-width:140px;}
+    .matrix tr:hover td{background:rgba(255,255,255,0.025);}
+    [data-theme="warm"] .matrix tr:hover td{background:rgba(0,0,0,0.02);}
+    [data-theme="light"] .matrix tr:hover td{background:rgba(0,0,0,0.015);}
+
+    /* Badges */
+    .badge{
+      display:inline-flex;flex-direction:column;align-items:center;
+      gap:3px;padding:5px 10px;border-radius:6px;
+      border:1px solid transparent;min-width:80px;
+    }
+    .badge-block{
+      background:var(--block-bg);border-color:var(--block-border);
+    }
+    .badge-block .b-label{color:var(--block-text);font-size:10px;font-weight:700;letter-spacing:.08em;}
+    .badge-partial{
+      background:var(--partial-bg);border-color:var(--partial-border);
+    }
+    .badge-partial .b-label{color:var(--partial-text);font-size:10px;font-weight:700;letter-spacing:.08em;}
+    .b-mech{font-size: 10px;color:var(--muted);font-weight:500;white-space:nowrap;}
+    .b-dot{
+      font-size:18px;color:var(--empty-text);font-weight:300;line-height:1;
+    }
+
+    /* Stats column */
+    .cell-stat{
+      text-align:center;min-width:90px;
+      background:rgba(15,23,42,0.3);
+    }
+    [data-theme="warm"] .cell-stat{background:rgba(240,235,228,0.4);}
+    [data-theme="light"] .cell-stat{background:rgba(241,245,249,0.5);}
+
+    .stat-pct{font-size:16px;font-weight:700;margin-bottom:4px;}
+    .stat-fraction{font-size: 10px;color:var(--muted);margin-bottom:5px;}
+    .stat-bar-wrap{width:52px;height:4px;border-radius:2px;background:var(--bar-bg);margin:0 auto;overflow:hidden;}
+    .stat-bar-fill{height:100%;border-radius:2px;transition:width .5s ease;}
+    .pct-100{color:var(--emerald);}
+    .pct-88{color:var(--cyan);}
+    .pct-75{color:var(--amber);}
+
+    /* Stats row (bottom) */
+    .stats-row td{
+      padding:10px 10px;background:rgba(15,23,42,0.5);
+      border-top:2px solid var(--border);font-size:10px;
+      text-align:center;
+    }
+    [data-theme="warm"] .stats-row td{background:rgba(230,220,210,0.5);}
+    [data-theme="light"] .stats-row td{background:rgba(226,232,240,0.5);}
+
+    .stats-row td.corner-stat{text-align:left;color:var(--muted);font-size:10px;letter-spacing:.06em;text-transform:uppercase;}
+    .layer-stat-val{font-size:13px;font-weight:700;}
+    .layer-stat-sub{font-size: 10px;color:var(--muted);margin-top:2px;}
+
+    /* ── Legend ─────────────────────────────────────────────────── */
+    .legend{
+      display:flex;align-items:center;gap:20px;flex-wrap:wrap;
+      padding:12px 18px;background:var(--panel);
+      border-top:1px solid var(--border);
+    }
+    .legend-label{font-size:10px;color:var(--muted);font-weight:600;letter-spacing:.06em;text-transform:uppercase;}
+    .legend-item{display:flex;align-items:center;gap:7px;font-size:10px;color:var(--muted);}
+    .leg-badge{
+      padding:2px 8px;border-radius:4px;font-size: 10px;font-weight:700;
+      border:1px solid transparent;
+    }
+    .leg-block{background:var(--block-bg);border-color:var(--block-border);color:var(--block-text);}
+    .leg-partial{background:var(--partial-bg);border-color:var(--partial-border);color:var(--partial-text);}
+    .leg-empty{color:var(--empty-text);font-size:14px;line-height:1;}
+
+    /* ── Summary Cards ──────────────────────────────────────────── */
+    .cards{
+      display:grid;grid-template-columns:repeat(3,1fr);gap:12px;
+    }
+    @media(max-width:720px){.cards{grid-template-columns:1fr;}}
+
+    .card{
+      background:var(--panel);border:1px solid var(--border);border-radius:12px;
+      padding:18px 16px;display:flex;flex-direction:column;gap:8px;
+      transition:border-color .2s;
+    }
+    .card:hover{border-color:var(--subtle);}
+    .card-icon{font-size:20px;line-height:1;}
+    .card-num{font-size:22px;font-weight:700;line-height:1;}
+    .card-title{font-size:11px;font-weight:600;color:var(--text);}
+    .card-desc{font-size:10px;color:var(--muted);line-height:1.5;}
+    .c1 .card-num{color:var(--rose);}
+    .c2 .card-num{color:var(--violet);}
+    .c3 .card-num{color:var(--emerald);}
+
+    /* ── Footer ─────────────────────────────────────────────────── */
+    .footer{
+      max-width:1100px;margin:8px auto 0;
+      font-size:10px;color:var(--muted);
+      display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:6px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Controls -->
+<div class="ctrl">
+  <button onclick="window.cycleTheme()"><span class="lz">主题</span><span class="le">Theme</span></button>
+  <div class="ctrl-sep"></div>
+  <button onclick="window.toggleLang()">EN/中</button>
+</div>
+
+<!-- Page Header -->
+<header class="page-header">
+  <div class="page-tag">
+    <span>VIS-2A-023</span>
+    <span class="lz">安全章节 · 攻击面矩阵</span>
+    <span class="le">Security · Attack Surface Matrix</span>
+  </div>
+  <h1 class="page-title">
+    <span class="lz">攻击面矩阵</span>
+    <span class="le">Attack Surface Matrix</span>
+  </h1>
+  <p class="page-desc">
+    <span class="lz">Claude Code 安全防御体系 · 7 种攻击向量 × 4 层防御纵深 · 覆盖率可视化分析</span>
+    <span class="le">Claude Code Security Defense · 7 Attack Vectors × 4 Defense Layers · Coverage Analysis</span>
+  </p>
+</header>
+
+<!-- Main -->
+<main class="main">
+
+  <!-- Matrix Table -->
+  <div class="matrix-wrap">
+    <table class="matrix">
+      <colgroup>
+        <col style="width:210px">
+        <col style="min-width:145px">
+        <col style="min-width:145px">
+        <col style="min-width:145px">
+        <col style="min-width:145px">
+        <col style="width:96px">
+      </colgroup>
+      <thead>
+        <tr>
+          <!-- corner -->
+          <th class="corner">
+            <span class="lz">攻击向量 / 防御层</span>
+            <span class="le">Attack / Defense</span>
+          </th>
+          <!-- L1 -->
+          <th class="col-l1">
+            <span class="layer-code">L1</span>
+            <span class="layer-name lz">企业策略</span>
+            <span class="layer-name le">Enterprise Policy</span>
+            <span class="layer-tag tag-l1">Policy</span>
+          </th>
+          <!-- L2 -->
+          <th class="col-l2">
+            <span class="layer-code">L2</span>
+            <span class="layer-name lz">沙箱隔离</span>
+            <span class="layer-name le">Sandbox Isolation</span>
+            <span class="layer-tag tag-l2">Sandbox</span>
+          </th>
+          <!-- L3 -->
+          <th class="col-l3">
+            <span class="layer-code">L3</span>
+            <span class="layer-name lz">权限状态机</span>
+            <span class="layer-name le">Permission State Machine</span>
+            <span class="layer-tag tag-l3">StateMachine</span>
+          </th>
+          <!-- L4 -->
+          <th class="col-l4">
+            <span class="layer-code">L4</span>
+            <span class="layer-name lz">代码级安全</span>
+            <span class="layer-name le">Code-level Security</span>
+            <span class="layer-tag tag-l4">CodeSec</span>
+          </th>
+          <!-- Stats -->
+          <th class="col-stat">
+            <span class="lz">覆盖率</span>
+            <span class="le">Coverage</span>
+          </th>
+        </tr>
+      </thead>
+      <tbody>
+
+        <!-- Row 1: Prompt Injection -->
+        <tr>
+          <td class="row-hdr">
+            <div class="row-inner">
+              <span class="row-icon">🎭</span>
+              <div class="row-texts">
+                <span class="row-zh">Prompt 注入</span>
+                <span class="row-en">Prompt Injection</span>
+              </div>
+            </div>
+          </td>
+          <!-- L1: partial -->
+          <td class="cell-data">
+            <div class="badge badge-partial">
+              <span class="b-label">PARTIAL</span>
+              <span class="b-mech lz">策略过滤</span>
+              <span class="b-mech le">Policy Filter</span>
+            </div>
+          </td>
+          <!-- L2: — -->
+          <td class="cell-data">
+            <span class="b-dot">—</span>
+          </td>
+          <!-- L3: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">Hook 过滤</span>
+              <span class="b-mech le">Hook Filtering</span>
+            </div>
+          </td>
+          <!-- L4: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">输入验证</span>
+              <span class="b-mech le">Input Validation</span>
+            </div>
+          </td>
+          <!-- stat: 75% 3/4 -->
+          <td class="cell-stat">
+            <div class="stat-pct pct-75">75%</div>
+            <div class="stat-fraction">3 / 4</div>
+            <div class="stat-bar-wrap">
+              <div class="stat-bar-fill" style="width:75%;background:var(--amber);"></div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Row 2: Malicious Tool Output -->
+        <tr>
+          <td class="row-hdr">
+            <div class="row-inner">
+              <span class="row-icon">🔄</span>
+              <div class="row-texts">
+                <span class="row-zh">恶意工具输出</span>
+                <span class="row-en">Malicious Tool Output</span>
+              </div>
+            </div>
+          </td>
+          <!-- L1: — -->
+          <td class="cell-data">
+            <span class="b-dot">—</span>
+          </td>
+          <!-- L2: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">沙箱隔离</span>
+              <span class="b-mech le">Sandbox</span>
+            </div>
+          </td>
+          <!-- L3: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">权限检查</span>
+              <span class="b-mech le">Permission Check</span>
+            </div>
+          </td>
+          <!-- L4: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">Zod Schema</span>
+              <span class="b-mech le">Zod Schema</span>
+            </div>
+          </td>
+          <!-- stat: 100% -->
+          <td class="cell-stat">
+            <div class="stat-pct pct-100">100%</div>
+            <div class="stat-fraction">4 / 4</div>
+            <div class="stat-bar-wrap">
+              <div class="stat-bar-fill" style="width:100%;background:var(--emerald);"></div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Row 3: Path Traversal -->
+        <tr>
+          <td class="row-hdr">
+            <div class="row-inner">
+              <span class="row-icon">💉</span>
+              <div class="row-texts">
+                <span class="row-zh">路径遍历</span>
+                <span class="row-en">Path Traversal</span>
+              </div>
+            </div>
+          </td>
+          <!-- L1: partial -->
+          <td class="cell-data">
+            <div class="badge badge-partial">
+              <span class="b-label">PARTIAL</span>
+              <span class="b-mech lz">路径限制</span>
+              <span class="b-mech le">Path Restrict</span>
+            </div>
+          </td>
+          <!-- L2: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">文件系统限制</span>
+              <span class="b-mech le">FS Limit</span>
+            </div>
+          </td>
+          <!-- L3: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">绕过免疫</span>
+              <span class="b-mech le">Bypass-immune</span>
+            </div>
+          </td>
+          <!-- L4: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">路径规范化</span>
+              <span class="b-mech le">Path Normalize</span>
+            </div>
+          </td>
+          <!-- stat: 100% -->
+          <td class="cell-stat">
+            <div class="stat-pct pct-100">100%</div>
+            <div class="stat-fraction">4 / 4</div>
+            <div class="stat-bar-wrap">
+              <div class="stat-bar-fill" style="width:100%;background:var(--emerald);"></div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Row 4: SSRF -->
+        <tr>
+          <td class="row-hdr">
+            <div class="row-inner">
+              <span class="row-icon">🌐</span>
+              <div class="row-texts">
+                <span class="row-zh">SSRF</span>
+                <span class="row-en">Server-Side Request Forgery</span>
+              </div>
+            </div>
+          </td>
+          <!-- L1: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">网络限制</span>
+              <span class="b-mech le">Network Limit</span>
+            </div>
+          </td>
+          <!-- L2: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">网络沙箱</span>
+              <span class="b-mech le">Network Sandbox</span>
+            </div>
+          </td>
+          <!-- L3: partial -->
+          <td class="cell-data">
+            <div class="badge badge-partial">
+              <span class="b-label">PARTIAL</span>
+              <span class="b-mech lz">请求拦截</span>
+              <span class="b-mech le">Request Intercept</span>
+            </div>
+          </td>
+          <!-- L4: — -->
+          <td class="cell-data">
+            <span class="b-dot">—</span>
+          </td>
+          <!-- stat: 75% -->
+          <td class="cell-stat">
+            <div class="stat-pct pct-75">75%</div>
+            <div class="stat-fraction">3 / 4</div>
+            <div class="stat-bar-wrap">
+              <div class="stat-bar-fill" style="width:75%;background:var(--amber);"></div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Row 5: Code Injection -->
+        <tr>
+          <td class="row-hdr">
+            <div class="row-inner">
+              <span class="row-icon">💻</span>
+              <div class="row-texts">
+                <span class="row-zh">代码注入</span>
+                <span class="row-en">Code Injection</span>
+              </div>
+            </div>
+          </td>
+          <!-- L1: partial -->
+          <td class="cell-data">
+            <div class="badge badge-partial">
+              <span class="b-label">PARTIAL</span>
+              <span class="b-mech lz">执行策略</span>
+              <span class="b-mech le">Exec Policy</span>
+            </div>
+          </td>
+          <!-- L2: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">seccomp 过滤</span>
+              <span class="b-mech le">seccomp Filter</span>
+            </div>
+          </td>
+          <!-- L3: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">拒绝危险命令</span>
+              <span class="b-mech le">Deny Dangerous</span>
+            </div>
+          </td>
+          <!-- L4: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">参数白名单</span>
+              <span class="b-mech le">Arg Whitelist</span>
+            </div>
+          </td>
+          <!-- stat: 100% -->
+          <td class="cell-stat">
+            <div class="stat-pct pct-100">100%</div>
+            <div class="stat-fraction">4 / 4</div>
+            <div class="stat-bar-wrap">
+              <div class="stat-bar-fill" style="width:100%;background:var(--emerald);"></div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Row 6: Secret Exfiltration -->
+        <tr>
+          <td class="row-hdr">
+            <div class="row-inner">
+              <span class="row-icon">🔑</span>
+              <div class="row-texts">
+                <span class="row-zh">密钥泄露</span>
+                <span class="row-en">Secret Exfiltration</span>
+              </div>
+            </div>
+          </td>
+          <!-- L1: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">路径限制</span>
+              <span class="b-mech le">Path Restrict</span>
+            </div>
+          </td>
+          <!-- L2: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">文件系统隔离</span>
+              <span class="b-mech le">FS Isolation</span>
+            </div>
+          </td>
+          <!-- L3: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">Hook + 绕过检测</span>
+              <span class="b-mech le">Hook + Bypass</span>
+            </div>
+          </td>
+          <!-- L4: partial -->
+          <td class="cell-data">
+            <div class="badge badge-partial">
+              <span class="b-label">PARTIAL</span>
+              <span class="b-mech lz">输出扫描</span>
+              <span class="b-mech le">Output Scan</span>
+            </div>
+          </td>
+          <!-- stat: 88% -->
+          <td class="cell-stat">
+            <div class="stat-pct pct-88">88%</div>
+            <div class="stat-fraction">3.5 / 4</div>
+            <div class="stat-bar-wrap">
+              <div class="stat-bar-fill" style="width:88%;background:var(--cyan);"></div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Row 7: Multi-step Attack -->
+        <tr>
+          <td class="row-hdr">
+            <div class="row-inner">
+              <span class="row-icon">🤖</span>
+              <div class="row-texts">
+                <span class="row-zh">多步攻击</span>
+                <span class="row-en">Multi-step Attack Chain</span>
+              </div>
+            </div>
+          </td>
+          <!-- L1: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">全局策略</span>
+              <span class="b-mech le">Policy</span>
+            </div>
+          </td>
+          <!-- L2: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">完全隔离</span>
+              <span class="b-mech le">Isolation</span>
+            </div>
+          </td>
+          <!-- L3: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">状态机追踪</span>
+              <span class="b-mech le">State Machine</span>
+            </div>
+          </td>
+          <!-- L4: block -->
+          <td class="cell-data">
+            <div class="badge badge-block">
+              <span class="b-label">BLOCK</span>
+              <span class="b-mech lz">全量验证</span>
+              <span class="b-mech le">Validation</span>
+            </div>
+          </td>
+          <!-- stat: 100% -->
+          <td class="cell-stat">
+            <div class="stat-pct pct-100">100%</div>
+            <div class="stat-fraction">4 / 4</div>
+            <div class="stat-bar-wrap">
+              <div class="stat-bar-fill" style="width:100%;background:var(--emerald);"></div>
+            </div>
+          </td>
+        </tr>
+
+        <!-- Stats Row (bottom) -->
+        <tr class="stats-row">
+          <td class="corner-stat">
+            <span class="lz">层防御成功率</span>
+            <span class="le">Layer Success Rate</span>
+          </td>
+          <!-- L1 stats: 4/7 BLOCK or PARTIAL = 71% -->
+          <td>
+            <div class="layer-stat-val" style="color:var(--l1);">71%</div>
+            <div class="layer-stat-sub">
+              <span class="lz">4 BLOCK · 3 PARTIAL</span>
+              <span class="le">4 BLOCK · 3 PARTIAL</span>
+            </div>
+          </td>
+          <!-- L2 stats: 6/7 = 86% -->
+          <td>
+            <div class="layer-stat-val" style="color:var(--l2);">86%</div>
+            <div class="layer-stat-sub">
+              <span class="lz">6 BLOCK · 0 PARTIAL</span>
+              <span class="le">6 BLOCK · 0 PARTIAL</span>
+            </div>
+          </td>
+          <!-- L3 stats: 6/7 = 86% -->
+          <td>
+            <div class="layer-stat-val" style="color:var(--l3);">86%</div>
+            <div class="layer-stat-sub">
+              <span class="lz">6 BLOCK · 1 PARTIAL</span>
+              <span class="le">6 BLOCK · 1 PARTIAL</span>
+            </div>
+          </td>
+          <!-- L4 stats: 5/7 = 79% -->
+          <td>
+            <div class="layer-stat-val" style="color:var(--l4);">79%</div>
+            <div class="layer-stat-sub">
+              <span class="lz">5 BLOCK · 1 PARTIAL</span>
+              <span class="le">5 BLOCK · 1 PARTIAL</span>
+            </div>
+          </td>
+          <!-- corner right -->
+          <td style="text-align:center;">
+            <div class="layer-stat-val" style="color:var(--cyan);">92%</div>
+            <div class="layer-stat-sub" style="color:var(--muted);">
+              <span class="lz">综合</span>
+              <span class="le">Overall</span>
+            </div>
+          </td>
+        </tr>
+
+      </tbody>
+    </table>
+
+    <!-- Legend -->
+    <div class="legend">
+      <span class="legend-label lz">图例</span>
+      <span class="legend-label le">Legend</span>
+      <div class="legend-item">
+        <span class="leg-badge leg-block">BLOCK</span>
+        <span class="lz">主要防御层，有效拦截</span>
+        <span class="le">Primary defense, effective block</span>
+      </div>
+      <div class="legend-item">
+        <span class="leg-badge leg-partial">PARTIAL</span>
+        <span class="lz">部分防御，减少攻击面</span>
+        <span class="le">Partial defense, reduces surface</span>
+      </div>
+      <div class="legend-item">
+        <span class="leg-empty">—</span>
+        <span class="lz">非主要防御层</span>
+        <span class="le">Not primary defense layer</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Summary Cards -->
+  <div class="cards">
+    <div class="card c1">
+      <div class="card-icon">📊</div>
+      <div class="card-num">7×4</div>
+      <div class="card-title">
+        <span class="lz">覆盖矩阵</span>
+        <span class="le">Coverage Matrix</span>
+      </div>
+      <div class="card-desc">
+        <span class="lz">全面分析 Claude Code 攻击面，7 种攻击向量对 4 个防御层的交叉覆盖</span>
+        <span class="le">Comprehensive Claude Code attack surface analysis — 7 vectors × 4 defense layers</span>
+      </div>
+    </div>
+    <div class="card c2">
+      <div class="card-icon">🛡️</div>
+      <div class="card-num"><span class="lz">4 层</span><span class="le">4 Layers</span></div>
+      <div class="card-title">
+        <span class="lz">独立防御纵深</span>
+        <span class="le">Independent Defense Layers</span>
+      </div>
+      <div class="card-desc">
+        <span class="lz">任一层被突破不代表全面失守。企业策略 → 沙箱 → 权限状态机 → 代码级安全，层层递进</span>
+        <span class="le">A breach of one layer does not mean total compromise. Each layer independently defends</span>
+      </div>
+    </div>
+    <div class="card c3">
+      <div class="card-icon">🔒</div>
+      <div class="card-num">100%</div>
+      <div class="card-title">
+        <span class="lz">多步攻击防护</span>
+        <span class="le">Multi-step Attack Coverage</span>
+      </div>
+      <div class="card-desc">
+        <span class="lz">协同防御机制最强，四层全覆盖。复杂攻击链在任意层级均可被阻断</span>
+        <span class="le">Strongest coordinated defense — all 4 layers active. Attack chains stopped at any stage</span>
+      </div>
+    </div>
+  </div>
+
+</main>
+
+<!-- Footer -->
+<footer class="footer">
+  <span>VIS-2A-023 · <span class="lz">Claude Code 安全架构白皮书</span><span class="le">Claude Code Security Architecture</span></span>
+  <span style="color:var(--subtle);">CC 2.1.88 · 2026</span>
+</footer>
+
+<script>
+(function(){
+  var t = localStorage.getItem('vtheme') || 'dark';
+  document.documentElement.setAttribute('data-theme', t);
+
+  window.cycleTheme = function(){
+    var themes = ['dark', 'warm', 'light'];
+    var i = (themes.indexOf(document.documentElement.getAttribute('data-theme')) + 1) % 3;
+    t = themes[i];
+    document.documentElement.setAttribute('data-theme', t);
+    localStorage.setItem('vtheme', t);
+  };
+
+  window.toggleLang = function(){
+    var les = document.querySelectorAll('.le');
+    var isEn = les.length > 0 && les[0].style.display === 'inline';
+    var nextLang = isEn ? 'zh' : 'en';
+    document.querySelectorAll('.lz').forEach(function(e){ e.style.display = isEn ? '' : 'none'; });
+    document.querySelectorAll('.le').forEach(function(e){ e.style.display = isEn ? 'none' : 'inline'; });
+    document.documentElement.setAttribute('data-lang', nextLang);
+    localStorage.setItem('vlang', nextLang);
+  };
+
+  if (localStorage.getItem('vlang') === 'en') {
+    document.documentElement.setAttribute('data-lang', 'en');
+    window.toggleLang();
+  }
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

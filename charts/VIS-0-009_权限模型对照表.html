@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<!--
+  VIS-0-009 · 权限模型对照表 · Permission Mode Comparison
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  6 种权限模式 × 6 类工具操作 · 数据来自源码 permissions/
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · 权限模型对照表</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root,[data-theme="dark"]{
+      --bg:#020617;--bg-card:#0f172a;--bg-elv:#1e293b;
+      --border:#1e293b;--text:#f8fafc;--muted:#94a3b8;--subtle:#475569;--footer-c:#334155;
+      --pulse:#22d3ee;
+      --allow-bg:rgba(6,78,59,0.3);  --allow-c:#34d399;
+      --confirm-bg:rgba(120,53,15,0.3);--confirm-c:#fbbf24;
+      --block-bg:rgba(136,19,55,0.3); --block-c:#fb7185;
+      --rec-bg:rgba(34,211,238,0.08); --rec-border:#22d3ee;
+      --hdr-bg:#0f172a;--row-alt:#060d1e;
+      --risk-low-bg:rgba(6,78,59,0.2);--risk-low:#34d399;
+      --risk-med-bg:rgba(120,53,15,0.2);--risk-med:#fbbf24;
+      --risk-hi-bg:rgba(136,19,55,0.2);--risk-hi:#fb7185;
+      --badge-safe-bg:rgba(6,78,59,0.25);--badge-safe:#34d399;
+      --badge-med-bg:rgba(120,53,15,0.25);--badge-med:#fbbf24;
+      --badge-hi-bg:rgba(136,19,55,0.25);--badge-hi:#fb7185;
+      --btn-bg:rgba(15,23,42,0.9);--btn-border:rgba(34,211,238,0.3);
+      --btn-active:#22d3ee;--btn-text:#94a3b8;
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3;--bg-card:#ffffff;--bg-elv:#faf7f2;
+      --border:#e8e0d4;--text:#1a1412;--muted:#6b5a4e;--subtle:#9c8878;--footer-c:#b5a99a;
+      --pulse:#0891b2;
+      --allow-bg:rgba(5,150,105,0.1);  --allow-c:#059669;
+      --confirm-bg:rgba(180,83,9,0.1); --confirm-c:#d97706;
+      --block-bg:rgba(225,29,72,0.1);  --block-c:#e11d48;
+      --rec-bg:rgba(8,145,178,0.06);   --rec-border:#0891b2;
+      --hdr-bg:#faf7f2;--row-alt:#fdf9f5;
+      --risk-low-bg:rgba(5,150,105,0.1);--risk-low:#059669;
+      --risk-med-bg:rgba(180,83,9,0.1);--risk-med:#d97706;
+      --risk-hi-bg:rgba(225,29,72,0.1);--risk-hi:#e11d48;
+      --badge-safe-bg:rgba(5,150,105,0.1);--badge-safe:#059669;
+      --badge-med-bg:rgba(180,83,9,0.1);--badge-med:#d97706;
+      --badge-hi-bg:rgba(225,29,72,0.1);--badge-hi:#e11d48;
+      --btn-bg:rgba(255,255,255,0.95);--btn-border:rgba(8,145,178,0.3);
+      --btn-active:#0891b2;--btn-text:#6b5a4e;
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--bg-card:#f8fafc;--bg-elv:#f1f5f9;
+      --border:#e2e8f0;--text:#0f172a;--muted:#475569;--subtle:#94a3b8;--footer-c:#94a3b8;
+      --pulse:#0ea5e9;
+      --allow-bg:rgba(16,185,129,0.08); --allow-c:#059669;
+      --confirm-bg:rgba(245,158,11,0.08);--confirm-c:#d97706;
+      --block-bg:rgba(244,63,94,0.08);  --block-c:#e11d48;
+      --rec-bg:rgba(14,165,233,0.05);   --rec-border:#0ea5e9;
+      --hdr-bg:#f8fafc;--row-alt:#f8fafc;
+      --risk-low-bg:rgba(16,185,129,0.07);--risk-low:#059669;
+      --risk-med-bg:rgba(245,158,11,0.07);--risk-med:#d97706;
+      --risk-hi-bg:rgba(244,63,94,0.07);--risk-hi:#e11d48;
+      --badge-safe-bg:rgba(16,185,129,0.07);--badge-safe:#059669;
+      --badge-med-bg:rgba(245,158,11,0.07);--badge-med:#d97706;
+      --badge-hi-bg:rgba(244,63,94,0.07);--badge-hi:#e11d48;
+      --btn-bg:rgba(248,250,252,0.95);--btn-border:rgba(14,165,233,0.3);
+      --btn-active:#0ea5e9;--btn-text:#475569;
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);
+      min-height:100vh;padding:24px 28px 32px;transition:background .3s,color .3s;}
+
+    .ctrl{position:fixed;top:16px;right:16px;z-index:999;display:flex;gap:6px;align-items:center;
+      background:var(--btn-bg);border:1px solid var(--btn-border);border-radius:10px;
+      padding:7px 10px;backdrop-filter:blur(12px);}
+    .ctrl button{background:none;border:none;cursor:pointer;font-family:'JetBrains Mono',monospace;
+      font-size:11px;font-weight:600;color:var(--btn-text);padding:4px 8px;border-radius:6px;transition:all .2s;}
+    .ctrl button:hover{color:var(--btn-active);}
+    .ctrl button.active{color:var(--btn-active);}
+    .ctrl-sep{width:1px;height:16px;background:var(--border);margin:0 2px;}
+
+    .header{margin-bottom:22px;padding-bottom:18px;border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:14px;}
+    .pulse{width:10px;height:10px;border-radius:50%;background:var(--pulse);
+      box-shadow:0 0 8px var(--pulse);animation:pulse 2s infinite;flex-shrink:0;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.85);}}
+    .header h1{font-size:21px;font-weight:700;letter-spacing:-0.5px;}
+    .header .sub{color:var(--muted);font-size:12px;margin-top:5px;}
+
+    /* ── Mode Cards ─────────────────────────────── */
+    .modes{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px;}
+    @media(max-width:1100px){.modes{grid-template-columns:repeat(3,1fr);}}
+    .mode-card{
+      background:var(--bg-card);border:1px solid var(--border);border-radius:10px;
+      padding:14px;transition:all .2s;
+    }
+    .mode-card.recommended{border-color:var(--rec-border);background:var(--rec-bg);}
+    .mode-name{font-size:13px;font-weight:700;margin-bottom:4px;}
+    .mode-cli{font-size: 10px;color:var(--muted);margin-bottom:6px;}
+    .mode-desc{font-size:10px;color:var(--muted);line-height:1.6;}
+    .mode-risk{display:inline-block;font-size: 10px;font-weight:600;padding:2px 7px;border-radius:10px;margin-top:6px;}
+    .risk-low{background:var(--risk-low-bg);color:var(--risk-low);}
+    .risk-med{background:var(--risk-med-bg);color:var(--risk-med);}
+    .risk-hi{background:var(--risk-hi-bg);color:var(--risk-hi);}
+    .rec-badge{font-size: 10px;color:var(--pulse);margin-left:6px;font-weight:600;}
+
+    /* ── Table ──────────────────────────────────── */
+    .table-wrap{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:12px;overflow:auto;margin-bottom:16px;
+    }
+    table{width:100%;border-collapse:collapse;min-width:700px;}
+    thead th{
+      background:var(--hdr-bg);border-bottom:1px solid var(--border);
+      padding:12px 14px;font-size:11px;font-weight:700;text-align:center;
+      white-space:nowrap;
+    }
+    thead th:first-child{text-align:left;min-width:200px;}
+    thead th.recommended{border-bottom:2px solid var(--rec-border);}
+    .th-name{font-size:13px;display:block;margin-bottom:3px;}
+    .th-cli{font-size: 10px;color:var(--muted);font-weight:400;font-style:italic;}
+
+    tbody tr:nth-child(even){background:var(--row-alt);}
+    tbody tr:hover{background:var(--bg-elv);}
+    td{padding:12px 14px;border-bottom:1px solid var(--border);font-size:12px;vertical-align:middle;}
+    td:first-child{min-width:200px;}
+
+    .tool-name{font-weight:700;display:block;}
+    .tool-sub{font-size:10px;color:var(--muted);}
+    .sec-badge{display:inline-block;font-size: 10px;font-weight:600;padding:2px 6px;border-radius:8px;margin-top:4px;}
+    .sec-safe{background:var(--badge-safe-bg);color:var(--badge-safe);}
+    .sec-med{background:var(--badge-med-bg);color:var(--badge-med);}
+    .sec-hi{background:var(--badge-hi-bg);color:var(--badge-hi);}
+
+    .cell-allow{background:var(--allow-bg);color:var(--allow-c);text-align:center;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600;}
+    .cell-confirm{background:var(--confirm-bg);color:var(--confirm-c);text-align:center;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600;}
+    .cell-block{background:var(--block-bg);color:var(--block-c);text-align:center;border-radius:6px;padding:6px 4px;font-size:11px;font-weight:600;}
+    td.recommended{border:1px solid var(--rec-border)!important;}
+
+    .icon{margin-right:3px;}
+
+    /* ── Bottom ─────────────────────────────────── */
+    .bottom{display:grid;grid-template-columns:1fr 1fr;gap:12px;}
+    @media(max-width:900px){.bottom{grid-template-columns:1fr;}}
+    .legend,.note{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:16px;}
+    .legend-title,.note-title{font-size:10px;font-weight:700;letter-spacing:0.06em;
+      text-transform:uppercase;color:var(--muted);margin-bottom:10px;}
+    .legend-item{display:flex;align-items:center;gap:8px;font-size:11px;margin-bottom:8px;}
+    .legend-chip{font-size:10px;font-weight:600;padding:3px 10px;border-radius:8px;min-width:60px;text-align:center;}
+    .note{border-left:3px solid var(--pulse);font-size:11px;color:var(--muted);line-height:1.8;}
+    .note strong{color:var(--text);}
+    .note code{background:var(--bg-elv);padding:1px 5px;border-radius:4px;font-size:10px;}
+
+    .footer{margin-top:16px;padding-top:14px;border-top:1px solid var(--border);
+      display:flex;justify-content:space-between;font-size:10px;color:var(--footer-c);}
+
+    html[lang="en"] .lz{display:none;}
+    html[lang="zh"] .le{display:none;}
+  </style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="setTheme('dark')"  id="btn-dark"  class="active"><span class="lz">深色</span><span class="le">Dark</span></button>
+  <button onclick="setTheme('warm')"  id="btn-warm"><span class="lz">暖色</span><span class="le">Warm</span></button>
+  <button onclick="setTheme('light')" id="btn-light"><span class="lz">浅色</span><span class="le">Light</span></button>
+  <div class="ctrl-sep"></div>
+  <button onclick="toggleLang()" id="btn-lang">中·EN</button>
+</div>
+
+<div class="header">
+  <div class="pulse"></div>
+  <div>
+    <h1><span class="lz">权限模型对照表</span><span class="le">Permission Mode Comparison</span></h1>
+    <div class="sub">
+      <span class="lz">6 种权限模式 × 6 类工具操作 · 数据来自 utils/permissions/ 目录</span>
+      <span class="le">6 permission modes × 6 tool categories · Data from utils/permissions/ directory</span>
+    </div>
+  </div>
+</div>
+
+<!-- Mode Cards -->
+<div class="modes">
+  <div class="mode-card">
+    <div class="mode-name">plan</div>
+    <div class="mode-cli">--permission-mode plan</div>
+    <div class="mode-desc lz">只读规划模式。禁止所有写入和执行操作，适合代码审查和安全分析场景。</div>
+    <div class="mode-desc le">Read-only planning. All writes and exec blocked. For code review and analysis.</div>
+    <div class="mode-risk risk-low"><span class="lz">低风险</span><span class="le">Low Risk</span></div>
+  </div>
+  <div class="mode-card recommended">
+    <div class="mode-name">default <span class="rec-badge"><span class="lz">★ 推荐</span><span class="le">★ Recommended</span></span></div>
+    <div class="mode-cli">--permission-mode default</div>
+    <div class="mode-desc lz">日常开发推荐模式。读操作自动执行，写入/执行类操作需用户确认。</div>
+    <div class="mode-desc le">Daily dev recommended. Reads auto-approved; writes/exec require confirmation.</div>
+    <div class="mode-risk risk-med"><span class="lz">中等风险</span><span class="le">Medium Risk</span></div>
+  </div>
+  <div class="mode-card">
+    <div class="mode-name">acceptEdits</div>
+    <div class="mode-cli">--permission-mode acceptEdits</div>
+    <div class="mode-desc lz">自动接受文件编辑，Bash 和 Agent 操作仍需确认。</div>
+    <div class="mode-desc le">Auto-accepts file edits; Bash and Agent ops still need confirmation.</div>
+    <div class="mode-risk risk-med"><span class="lz">中等风险</span><span class="le">Medium Risk</span></div>
+  </div>
+  <div class="mode-card">
+    <div class="mode-name">autoAccept</div>
+    <div class="mode-cli">--permission-mode autoAccept</div>
+    <div class="mode-desc lz">自动接受大部分操作，Bash 仅允许白名单命令。MCP 支持 allowedTools 覆盖。</div>
+    <div class="mode-desc le">Auto-accepts most ops; Bash restricted to whitelist. MCP supports allowedTools override.</div>
+    <div class="mode-risk risk-hi"><span class="lz">高风险</span><span class="le">High Risk</span></div>
+  </div>
+  <div class="mode-card">
+    <div class="mode-name">bypass</div>
+    <div class="mode-cli">--permission-mode bypass</div>
+    <div class="mode-desc lz">无确认对话框，全部自动执行（含 Bash）。适用于 CI/CD 无人值守场景。</div>
+    <div class="mode-desc le">No confirmation dialogs; all ops auto (incl. Bash). For CI/CD unattended pipelines.</div>
+    <div class="mode-risk risk-hi"><span class="lz">极高风险</span><span class="le">Very High Risk</span></div>
+  </div>
+  <div class="mode-card">
+    <div class="mode-name">dontAsk</div>
+    <div class="mode-cli">--permission-mode dontAsk</div>
+    <div class="mode-desc lz">只允许读操作，写/执行禁止（无对话框）。无人值守只读场景。</div>
+    <div class="mode-desc le">Only reads allowed; writes/exec blocked (no dialogs). Unattended read-only.</div>
+    <div class="mode-risk risk-low"><span class="lz">低风险</span><span class="le">Low Risk</span></div>
+  </div>
+</div>
+
+<!-- Permission Matrix Table -->
+<div class="table-wrap">
+  <table>
+    <thead>
+      <tr>
+        <th>
+          <span class="lz">工具类别 / 风险</span>
+          <span class="le">Tool Category / Risk</span>
+        </th>
+        <th><span class="th-name">plan</span><span class="th-cli">--pm plan</span></th>
+        <th class="recommended"><span class="th-name">default ★</span><span class="th-cli">--pm default</span></th>
+        <th><span class="th-name">acceptEdits</span><span class="th-cli">--pm acceptEdits</span></th>
+        <th><span class="th-name">autoAccept</span><span class="th-cli">--pm autoAccept</span></th>
+        <th><span class="th-name">bypass</span><span class="th-cli">--pm bypass</span></th>
+        <th><span class="th-name">dontAsk</span><span class="th-cli">--pm dontAsk</span></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>
+          <span class="tool-name">Read · Glob · Grep</span>
+          <span class="tool-sub">Read-only Tools</span>
+          <span class="sec-badge sec-safe"><span class="lz">安全</span><span class="le">Safe</span></span>
+        </td>
+        <td><div class="cell-allow"><span class="icon">✓</span><span class="lz">自动</span><span class="le">Auto</span></div></td>
+        <td class="recommended"><div class="cell-allow"><span class="icon">✓</span><span class="lz">自动</span><span class="le">Auto</span></div></td>
+        <td><div class="cell-allow"><span class="icon">✓</span><span class="lz">自动</span><span class="le">Auto</span></div></td>
+        <td><div class="cell-allow"><span class="icon">✓</span><span class="lz">自动</span><span class="le">Auto</span></div></td>
+        <td><div class="cell-allow"><span class="icon">✓</span><span class="lz">自动</span><span class="le">Auto</span></div></td>
+        <td><div class="cell-allow"><span class="icon">✓</span><span class="lz">自动</span><span class="le">Auto</span></div></td>
+      </tr>
+      <tr>
+        <td>
+          <span class="tool-name">Edit · Write</span>
+          <span class="tool-sub">File Write Operations</span>
+          <span class="sec-badge sec-med"><span class="lz">中等</span><span class="le">Medium</span></span>
+        </td>
+        <td><div class="cell-block"><span class="icon">✗</span><span class="lz">禁止</span><span class="le">Block</span></div></td>
+        <td class="recommended"><div class="cell-confirm"><span class="icon">⚠</span><span class="lz">确认</span><span class="le">Confirm</span></div></td>
+        <td><div class="cell-allow"><span class="icon">✓</span><span class="lz">自动</span><span class="le">Auto</span></div></td>
+        <td><div class="cell-allow"><span class="icon">✓</span><span class="lz">自动</span><span class="le">Auto</span></div></td>
+        <td><div class="cell-allow"><span class="icon">✓</span><span class="lz">自动</span><span class="le">Auto</span></div></td>
+        <td><div class="cell-block"><span class="icon">✗</span><span class="lz">禁止</span><span class="le">Block</span></div></td>
+      </tr>
+      <tr>
+        <td>
+          <span class="tool-name">NotebookEdit</span>
+          <span class="tool-sub">Notebook Cell Edit</span>
+          <span class="sec-badge sec-med"><span class="lz">中等</span><span class="le">Medium</span></span>
+        </td>
+        <td><div class="cell-block"><span class="icon">✗</span><span class="lz">禁止</span><span class="le">Block</span></div></td>
+        <td class="recommended"><div class="cell-confirm"><span class="icon">⚠</span><span class="lz">确认</span><span class="le">Confirm</span></div></td>
+        <td><div class="cell-allow"><span class="icon">✓</span><span class="lz">自动</span><span class="le">Auto</span></div></td>
+        <td><div class="cell-allow"><span class="icon">✓</span><span class="lz">自动</span><span class="le">Auto</span></div></td>
+        <td><div class="cell-allow"><span class="icon">✓</span><span class="lz">自动</span><span class="le">Auto</span></div></td>
+        <td><div class="cell-block"><span class="icon">✗</span><span class="lz">禁止</span><span class="le">Block</span></div></td>
+      </tr>
+      <tr>
+        <td>
+          <span class="tool-name">Agent</span>
+          <span class="tool-sub">Sub-agent Spawn</span>
+          <span class="sec-badge sec-med"><span class="lz">中等</span><span class="le">Medium</span></span>
+        </td>
+        <td><div class="cell-block"><span class="icon">✗</span><span class="lz">禁止</span><span class="le">Block</span></div></td>
+        <td class="recommended"><div class="cell-confirm"><span class="icon">⚠</span><span class="lz">确认</span><span class="le">Confirm</span></div></td>
+        <td><div class="cell-confirm"><span class="icon">⚠</span><span class="lz">确认</span><span class="le">Confirm</span></div></td>
+        <td><div class="cell-allow"><span class="icon">✓</span><span class="lz">自动</span><span class="le">Auto</span></div></td>
+        <td><div class="cell-allow"><span class="icon">✓</span><span class="lz">自动</span><span class="le">Auto</span></div></td>
+        <td><div class="cell-block"><span class="icon">✗</span><span class="lz">禁止</span><span class="le">Block</span></div></td>
+      </tr>
+      <tr>
+        <td>
+          <span class="tool-name">MCP Tools</span>
+          <span class="tool-sub">External Tool Calls</span>
+          <span class="sec-badge sec-med"><span class="lz">中等</span><span class="le">Medium</span></span>
+        </td>
+        <td><div class="cell-block"><span class="icon">✗</span><span class="lz">禁止</span><span class="le">Block</span></div></td>
+        <td class="recommended"><div class="cell-confirm"><span class="icon">⚠</span><span class="lz">确认</span><span class="le">Confirm</span></div></td>
+        <td><div class="cell-confirm"><span class="icon">⚠</span><span class="lz">确认</span><span class="le">Confirm</span></div></td>
+        <td><div class="cell-allow" style="font-size:10px;"><span class="icon">✓</span><span class="lz">自动*</span><span class="le">Auto*</span></div></td>
+        <td><div class="cell-allow"><span class="icon">✓</span><span class="lz">自动</span><span class="le">Auto</span></div></td>
+        <td><div class="cell-block"><span class="icon">✗</span><span class="lz">禁止</span><span class="le">Block</span></div></td>
+      </tr>
+      <tr>
+        <td>
+          <span class="tool-name">Bash</span>
+          <span class="tool-sub">Command Execution</span>
+          <span class="sec-badge sec-hi"><span class="lz">高风险</span><span class="le">High Risk</span></span>
+        </td>
+        <td><div class="cell-block"><span class="icon">✗</span><span class="lz">禁止</span><span class="le">Block</span></div></td>
+        <td class="recommended"><div class="cell-confirm"><span class="icon">⚠</span><span class="lz">确认</span><span class="le">Confirm</span></div></td>
+        <td><div class="cell-confirm"><span class="icon">⚠</span><span class="lz">确认</span><span class="le">Confirm</span></div></td>
+        <td><div class="cell-confirm" style="font-size:10px;"><span class="icon">⚠</span><span class="lz">白名单</span><span class="le">Whitelist</span></div></td>
+        <td><div class="cell-allow"><span class="icon">✓</span><span class="lz">自动</span><span class="le">Auto</span></div></td>
+        <td><div class="cell-block"><span class="icon">✗</span><span class="lz">禁止</span><span class="le">Block</span></div></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Bottom: Legend + Note -->
+<div class="bottom">
+  <div class="legend">
+    <div class="legend-title"><span class="lz">图例</span><span class="le">Legend</span></div>
+    <div class="legend-item">
+      <div class="legend-chip cell-allow">✓ <span class="lz">自动</span><span class="le">Auto</span></div>
+      <span class="lz">无需用户干预，直接执行</span><span class="le">No user intervention needed</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-chip cell-confirm">⚠ <span class="lz">确认</span><span class="le">Confirm</span></div>
+      <span class="lz">需用户确认后执行</span><span class="le">Requires user confirmation</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-chip cell-block">✗ <span class="lz">禁止</span><span class="le">Block</span></div>
+      <span class="lz">操作被阻止，不会执行</span><span class="le">Operation blocked entirely</span>
+    </div>
+    <div class="legend-item" style="margin-top:4px;">
+      <span style="color:var(--pulse);font-weight:700;">★</span>
+      <span class="lz">推荐模式（default）适合日常开发，平衡安全与效率</span>
+      <span class="le">Recommended (default) balances safety and efficiency for daily dev</span>
+    </div>
+  </div>
+  <div class="note">
+    <div class="note-title"><span class="lz">特殊规则</span><span class="le">Special Rules</span></div>
+    <span class="lz">
+      • <strong>autoAccept 模式</strong>：Bash 仅对白名单命令自动执行，其余需确认<br>
+      • <strong>MCP Tools</strong>：可通过 <code>allowedTools</code> 白名单覆盖默认确认行为<br>
+      • <strong>子 Agent</strong>：继承父 Agent 的权限级别<br>
+      • <strong>源码位置</strong>：utils/permissions/ 目录下 24 个文件 / 9,409 行<br>
+      • <strong>安全相关文件</strong>：621 个（占总 1,902 文件的 32.7%）
+    </span>
+    <span class="le">
+      • <strong>autoAccept</strong>: Bash only auto-executes whitelist commands<br>
+      • <strong>MCP Tools</strong>: <code>allowedTools</code> whitelist overrides default confirm<br>
+      • <strong>Sub-agents</strong>: Inherit parent agent's permission level<br>
+      • <strong>Source</strong>: utils/permissions/ — 24 files / 9,409 lines<br>
+      • <strong>Security files</strong>: 621 of 1,902 total (32.7%)
+    </span>
+  </div>
+</div>
+
+<div class="footer">
+  <span>
+    <span class="lz">数据来源：utils/permissions/ + VIS-0-009 源码分析 · 2026-04-05</span>
+    <span class="le">Source: utils/permissions/ + source analysis · 2026-04-05</span>
+  </span>
+  <span>VIS-0-009 · Claude Code Whitepaper v2</span>
+</div>
+
+<script>
+(function(){
+  function setTheme(t){try{localStorage.setItem('vtheme',t);}catch(e){}
+    document.documentElement.setAttribute('data-theme',t);
+    ['dark','warm','light'].forEach(n=>{document.getElementById('btn-'+n).classList.toggle('active',n===t);});
+  }
+  function toggleLang(){
+    const isZh=document.documentElement.lang==='zh';
+    const next=isZh?'en':'zh';
+    document.documentElement.lang=next;
+    document.getElementById('btn-lang').textContent=isZh?'EN·中':'中·EN';
+    try{localStorage.setItem('vlang',next);}catch(e){}
+  }
+  // cc-restore-on-load
+  try{
+    var _t=localStorage.getItem('vtheme');
+    if(_t==='dark'||_t==='warm'||_t==='light')setTheme(_t);
+    var _l=localStorage.getItem('vlang');
+    if(_l==='en'&&document.documentElement.lang!=='en')toggleLang();
+  }catch(e){}
+  window.setTheme=setTheme;
+  window.toggleLang=toggleLang;
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

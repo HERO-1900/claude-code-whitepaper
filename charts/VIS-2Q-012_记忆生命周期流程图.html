@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>记忆生命周期流程图 · Memory Lifecycle Flow</title>
+<style>
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+*{box-sizing:border-box}
+html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;}
+.wrap{max-width:1080px;margin:0 auto;padding:28px 24px 48px;}
+header{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;margin-bottom:20px;}
+h1{font-size:22px;margin:0 0 6px;font-weight:700;letter-spacing:.2px;}
+.sub{font-size:13px;color:var(--muted);}
+.toolbar{display:flex;gap:8px;}
+.btn{background:var(--card);border:1px solid var(--border);color:var(--text);padding:7px 12px;border-radius:8px;font-size:12px;cursor:pointer;transition:all .15s;}
+.btn:hover{background:var(--subtle);}
+
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px;}
+.stat{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:12px 14px;}
+.stat .v{font-size:20px;font-weight:700;line-height:1.2;}
+.stat .l{font-size:11px;color:var(--muted);margin-top:3px;}
+.stat.c1 .v{color:var(--cyan);}
+.stat.c2 .v{color:var(--violet);}
+.stat.c3 .v{color:var(--emerald);}
+
+.canvas{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:14px;}
+svg{display:block;width:100%;height:auto;}
+
+.legend{display:flex;flex-wrap:wrap;gap:14px;margin-top:14px;padding:12px 14px;background:var(--card);border:1px solid var(--border);border-radius:10px;font-size:11px;color:var(--muted);}
+.legend .lg{display:flex;align-items:center;gap:6px;}
+.legend .sw{width:14px;height:10px;border-radius:3px;}
+
+footer{margin-top:18px;font-size:11px;color:var(--muted);text-align:center;}
+</style>
+</head>
+<body>
+<div class="wrap">
+<header>
+  <div>
+    <h1><span class="lz">记忆生命周期流程图</span><span class="le" style="display:none">Memory Lifecycle Flow</span></h1>
+    <div class="sub">
+      <span class="lz">从创建到持久化或淘汰：一条 .claude/memory/*.md 记忆的完整旅程</span>
+      <span class="le" style="display:none">From creation to persistence or eviction: a memory entry's full journey</span>
+    </div>
+  </div>
+  <div class="toolbar">
+    <button class="btn" onclick="cycleTheme()"><span class="lz">主题</span><span class="le" style="display:none">Theme</span></button>
+    <button class="btn" onclick="toggleLang()"><span class="lz">EN</span><span class="le" style="display:none">中文</span></button>
+  </div>
+</header>
+
+<div class="stats">
+  <div class="stat c1">
+    <div class="v">5</div>
+    <div class="l"><span class="lz">生命周期阶段</span><span class="le" style="display:none">Lifecycle phases</span></div>
+  </div>
+  <div class="stat c2">
+    <div class="v"><span class="lz">云同步可选</span><span class="le" style="display:none">Cloud sync optional</span></div>
+    <div class="l"><span class="lz">团队协作共享记忆</span><span class="le" style="display:none">Team-shared memory</span></div>
+  </div>
+  <div class="stat c3">
+    <div class="v"><span class="lz">永久持久化</span><span class="le" style="display:none">Persistent storage</span></div>
+    <div class="l"><span class="lz">跨会话保留不丢失</span><span class="le" style="display:none">Survives sessions</span></div>
+  </div>
+</div>
+
+<div class="canvas">
+<svg viewBox="0 0 920 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Memory lifecycle flow">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#94a3b8"/>
+    </marker>
+    <marker id="arrCyan" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#22d3ee"/>
+    </marker>
+    <marker id="arrViolet" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8b5cf6"/>
+    </marker>
+    <marker id="arrEmerald" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#10b981"/>
+    </marker>
+    <marker id="arrAmber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/>
+    </marker>
+    <marker id="arrSlate" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#64748b"/>
+    </marker>
+    <marker id="arrBranch" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#f97316"/>
+    </marker>
+
+    <linearGradient id="gCyan" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#22d3ee" stop-opacity=".28"/>
+      <stop offset="100%" stop-color="#22d3ee" stop-opacity=".08"/>
+    </linearGradient>
+    <linearGradient id="gViolet" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#8b5cf6" stop-opacity=".28"/>
+      <stop offset="100%" stop-color="#8b5cf6" stop-opacity=".08"/>
+    </linearGradient>
+    <linearGradient id="gEmerald" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#10b981" stop-opacity=".28"/>
+      <stop offset="100%" stop-color="#10b981" stop-opacity=".08"/>
+    </linearGradient>
+    <linearGradient id="gAmber" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity=".28"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity=".08"/>
+    </linearGradient>
+    <linearGradient id="gSlate" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#64748b" stop-opacity=".30"/>
+      <stop offset="100%" stop-color="#64748b" stop-opacity=".10"/>
+    </linearGradient>
+
+    <style>
+      .ph-label{font:700 14px -apple-system,sans-serif;fill:#f1f5f9}
+      .ph-sub{font:500 11px -apple-system,sans-serif;fill:#e2e8f0;opacity:.85}
+      .ph-ts{font:500 10px "SF Mono",monospace;fill:#cbd5e1;opacity:.75}
+      .dec-t{font:600 11px -apple-system,sans-serif;fill:#f5f5f4}
+      .dec-s{font:500 10px -apple-system,sans-serif;fill:#e7e5e4;opacity:.85}
+      .edge-t{font:600 10px -apple-system,sans-serif;fill:#94a3b8}
+      .edge-y{font:700 10px -apple-system,sans-serif;fill:#10b981}
+      .edge-n{font:700 10px -apple-system,sans-serif;fill:#f43f5e}
+      .branch-t{font:600 10px -apple-system,sans-serif;fill:#f97316}
+      .axis-t{font:600 11px -apple-system,sans-serif;fill:#94a3b8}
+      .stage-num{font:800 11px -apple-system,sans-serif;fill:#0f172a}
+    </style>
+  </defs>
+
+  <!-- title band -->
+  <text x="460" y="24" text-anchor="middle" class="axis-t">
+    <tspan class="lz">主路径：写入 → 存储 → 使用 → 更新 → 归档/删除</tspan>
+    <tspan class="le" display="none">Primary path: Create → Store → Use → Update → Archive/Delete</tspan>
+  </text>
+
+  <!-- timeline axis -->
+  <line x1="40" y1="260" x2="880" y2="260" stroke="#334155" stroke-width="1" stroke-dasharray="2,4" opacity=".5"/>
+  <text x="40" y="278" class="edge-t"><tspan class="lz">时间轴 →</tspan><tspan class="le" display="none">timeline →</tspan></text>
+
+  <!-- PHASE 1: Create -->
+  <g>
+    <rect x="40" y="180" width="140" height="160" rx="12" fill="url(#gCyan)" stroke="#22d3ee" stroke-width="1.5"/>
+    <circle cx="60" cy="200" r="11" fill="#22d3ee"/>
+    <text x="60" y="204" text-anchor="middle" class="stage-num">1</text>
+    <text x="110" y="228" text-anchor="middle" class="ph-label"><tspan class="lz">写入</tspan><tspan class="le" display="none">Create</tspan></text>
+    <text x="110" y="246" text-anchor="middle" class="ph-sub"><tspan class="lz">Claude 记录</tspan><tspan class="le" display="none">Claude writes</tspan></text>
+    <text x="110" y="262" text-anchor="middle" class="ph-sub" opacity=".7"><tspan class="lz">UpdateMemory 工具</tspan><tspan class="le" display="none">UpdateMemory tool</tspan></text>
+    <line x1="58" y1="280" x2="162" y2="280" stroke="#22d3ee" stroke-width=".8" opacity=".4"/>
+    <text x="110" y="298" text-anchor="middle" class="ph-ts">created_at</text>
+    <text x="110" y="312" text-anchor="middle" class="ph-ts">2026-04-15 09:02</text>
+    <text x="110" y="328" text-anchor="middle" class="ph-sub" opacity=".65" font-size="10"><tspan class="lz">新条目 +1</tspan><tspan class="le" display="none">new entry +1</tspan></text>
+  </g>
+
+  <!-- arrow 1 -> 2 -->
+  <line x1="180" y1="260" x2="212" y2="260" stroke="#22d3ee" stroke-width="2.2" marker-end="url(#arrCyan)"/>
+
+  <!-- PHASE 2: Store -->
+  <g>
+    <rect x="212" y="180" width="140" height="160" rx="12" fill="url(#gViolet)" stroke="#8b5cf6" stroke-width="1.5"/>
+    <circle cx="232" cy="200" r="11" fill="#8b5cf6"/>
+    <text x="232" y="204" text-anchor="middle" class="stage-num">2</text>
+    <text x="282" y="228" text-anchor="middle" class="ph-label"><tspan class="lz">存储</tspan><tspan class="le" display="none">Store</tspan></text>
+    <text x="282" y="246" text-anchor="middle" class="ph-sub"><tspan class="lz">持久化到磁盘</tspan><tspan class="le" display="none">Persist to disk</tspan></text>
+    <text x="282" y="262" text-anchor="middle" class="ph-sub" opacity=".7" font-size="10">.claude/memory/*.md</text>
+    <line x1="230" y1="280" x2="334" y2="280" stroke="#8b5cf6" stroke-width=".8" opacity=".4"/>
+    <text x="282" y="298" text-anchor="middle" class="ph-ts">file_size</text>
+    <text x="282" y="312" text-anchor="middle" class="ph-ts">2.4 KB · YAML+MD</text>
+    <text x="282" y="328" text-anchor="middle" class="ph-sub" opacity=".65" font-size="10"><tspan class="lz">原子写入 fsync</tspan><tspan class="le" display="none">atomic write fsync</tspan></text>
+  </g>
+
+  <!-- Decision 1: Auto-sync? (after Store) -->
+  <g transform="translate(410,170)">
+    <polygon points="0,40 55,0 110,40 55,80" fill="#1e293b" stroke="#f97316" stroke-width="1.4"/>
+    <text x="55" y="34" text-anchor="middle" class="dec-t"><tspan class="lz">自动同步?</tspan><tspan class="le" display="none">Auto-sync?</tspan></text>
+    <text x="55" y="50" text-anchor="middle" class="dec-s"><tspan class="lz">团队云?</tspan><tspan class="le" display="none">team cloud?</tspan></text>
+  </g>
+
+  <!-- Store -> Decision1 -->
+  <line x1="352" y1="230" x2="408" y2="210" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrViolet)"/>
+
+  <!-- Decision1 Yes -> Cloud (upward branch) -->
+  <path d="M 465 170 Q 465 120 520 110" fill="none" stroke="#f97316" stroke-width="1.8" stroke-dasharray="4,3" marker-end="url(#arrBranch)"/>
+  <text x="478" y="138" class="edge-y">Yes</text>
+  <g>
+    <rect x="520" y="78" width="120" height="60" rx="10" fill="#1e293b" stroke="#f97316" stroke-width="1.2" stroke-dasharray="3,2"/>
+    <text x="580" y="102" text-anchor="middle" class="dec-t" fill="#f97316"><tspan class="lz">☁ 团队云</tspan><tspan class="le" display="none">☁ Team cloud</tspan></text>
+    <text x="580" y="118" text-anchor="middle" class="dec-s"><tspan class="lz">共享同步</tspan><tspan class="le" display="none">shared sync</tspan></text>
+    <text x="580" y="131" text-anchor="middle" class="edge-t" font-size="10">git / S3 / vault</text>
+  </g>
+  <!-- cloud back hint arrow: optional, omit to keep linear -->
+
+  <!-- Decision1 No -> continue right -->
+  <line x1="520" y1="210" x2="552" y2="210" stroke="#64748b" stroke-width="1.6" stroke-dasharray="4,3" opacity=".6"/>
+
+  <!-- arrow Decision1 -> Phase 3 (main path, below) -->
+  <path d="M 465 250 Q 465 290 500 290 L 552 290" fill="none" stroke="#8b5cf6" stroke-width="2" marker-end="url(#arrViolet)"/>
+  <text x="478" y="282" class="edge-t"><tspan class="lz">本地</tspan><tspan class="le" display="none">local</tspan></text>
+
+  <!-- PHASE 3: Use -->
+  <g>
+    <rect x="552" y="210" width="140" height="160" rx="12" fill="url(#gEmerald)" stroke="#10b981" stroke-width="1.5"/>
+    <circle cx="572" cy="230" r="11" fill="#10b981"/>
+    <text x="572" y="234" text-anchor="middle" class="stage-num">3</text>
+    <text x="622" y="258" text-anchor="middle" class="ph-label"><tspan class="lz">使用</tspan><tspan class="le" display="none">Use</tspan></text>
+    <text x="622" y="276" text-anchor="middle" class="ph-sub"><tspan class="lz">未来会话召回</tspan><tspan class="le" display="none">Recall in session</tspan></text>
+    <text x="622" y="292" text-anchor="middle" class="ph-sub" opacity=".7" font-size="10"><tspan class="lz">注入上下文窗口</tspan><tspan class="le" display="none">injected to context</tspan></text>
+    <line x1="570" y1="310" x2="674" y2="310" stroke="#10b981" stroke-width=".8" opacity=".4"/>
+    <text x="622" y="328" text-anchor="middle" class="ph-ts">last_access</text>
+    <text x="622" y="342" text-anchor="middle" class="ph-ts">2026-04-15 14:37</text>
+    <text x="622" y="358" text-anchor="middle" class="ph-sub" opacity=".65" font-size="10"><tspan class="lz">命中次数 +12</tspan><tspan class="le" display="none">hits +12</tspan></text>
+  </g>
+
+  <!-- Decision 2: Still relevant? (after Use) -->
+  <g transform="translate(712,230)">
+    <polygon points="0,40 55,0 110,40 55,80" fill="#1e293b" stroke="#10b981" stroke-width="1.4"/>
+    <text x="55" y="34" text-anchor="middle" class="dec-t"><tspan class="lz">仍然相关?</tspan><tspan class="le" display="none">Still relevant?</tspan></text>
+    <text x="55" y="50" text-anchor="middle" class="dec-s"><tspan class="lz">保留判断</tspan><tspan class="le" display="none">keep check</tspan></text>
+  </g>
+
+  <!-- Use -> Decision2 -->
+  <line x1="692" y1="290" x2="712" y2="270" stroke="#10b981" stroke-width="2" marker-end="url(#arrEmerald)"/>
+
+  <!-- Decision2 No -> archive (down branch) -->
+  <path d="M 767 310 Q 767 380 700 420" fill="none" stroke="#f43f5e" stroke-width="1.8" stroke-dasharray="4,3" marker-end="url(#arrBranch)"/>
+  <text x="778" y="352" class="edge-n">No</text>
+  <text x="745" y="372" class="branch-t"><tspan class="lz">→ 归档</tspan><tspan class="le" display="none">→ archive</tspan></text>
+
+  <!-- Decision2 Yes -> loop back to Use top -->
+  <path d="M 767 230 Q 767 170 670 170 Q 570 170 572 210" fill="none" stroke="#10b981" stroke-width="1.6" stroke-dasharray="4,3" marker-end="url(#arrEmerald)"/>
+  <text x="685" y="164" class="edge-y">Yes</text>
+  <text x="625" y="164" class="edge-t"><tspan class="lz">(保留循环使用)</tspan><tspan class="le" display="none">(keep & reuse)</tspan></text>
+
+  <!-- PHASE 4: Update -->
+  <g>
+    <rect x="40" y="400" width="140" height="120" rx="12" fill="url(#gAmber)" stroke="#f59e0b" stroke-width="1.5"/>
+    <circle cx="60" cy="420" r="11" fill="#f59e0b"/>
+    <text x="60" y="424" text-anchor="middle" class="stage-num">4</text>
+    <text x="110" y="446" text-anchor="middle" class="ph-label"><tspan class="lz">更新</tspan><tspan class="le" display="none">Update</tspan></text>
+    <text x="110" y="462" text-anchor="middle" class="ph-sub"><tspan class="lz">修改与精炼</tspan><tspan class="le" display="none">Modify & refine</tspan></text>
+    <line x1="58" y1="476" x2="162" y2="476" stroke="#f59e0b" stroke-width=".8" opacity=".4"/>
+    <text x="110" y="492" text-anchor="middle" class="ph-ts">last_update</text>
+    <text x="110" y="506" text-anchor="middle" class="ph-ts">2026-04-15 16:08 · v3</text>
+  </g>
+
+  <!-- Use -> Update (primary flow going down-left) -->
+  <path d="M 572 370 Q 300 395 180 450" fill="none" stroke="#10b981" stroke-width="1.6" stroke-dasharray="3,3" opacity=".55"/>
+  <text x="300" y="390" class="edge-t" text-anchor="middle"><tspan class="lz">使用中触发更新</tspan><tspan class="le" display="none">use triggers update</tspan></text>
+
+  <!-- Decision 3: Conflict? (after Update) -->
+  <g transform="translate(210,420)">
+    <polygon points="0,40 55,0 110,40 55,80" fill="#1e293b" stroke="#f97316" stroke-width="1.4"/>
+    <text x="55" y="34" text-anchor="middle" class="dec-t"><tspan class="lz">冲突?</tspan><tspan class="le" display="none">Conflict?</tspan></text>
+    <text x="55" y="50" text-anchor="middle" class="dec-s"><tspan class="lz">版本分歧</tspan><tspan class="le" display="none">version diff</tspan></text>
+  </g>
+
+  <!-- Update -> Decision3 -->
+  <line x1="180" y1="460" x2="210" y2="460" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrAmber)"/>
+
+  <!-- Decision3 branches: Merge (up) or Fork (down) -->
+  <path d="M 265 420 Q 265 390 310 390" fill="none" stroke="#f97316" stroke-width="1.6" stroke-dasharray="3,3" marker-end="url(#arrBranch)"/>
+  <text x="278" y="408" class="branch-t"><tspan class="lz">Merge 合并</tspan><tspan class="le" display="none">Merge</tspan></text>
+  <g>
+    <rect x="310" y="372" width="92" height="36" rx="8" fill="#1e293b" stroke="#f97316" stroke-width="1" stroke-dasharray="3,2"/>
+    <text x="356" y="388" text-anchor="middle" class="dec-s" fill="#f97316">⬥ merge</text>
+    <text x="356" y="401" text-anchor="middle" class="edge-t" font-size="10"><tspan class="lz">三路合并</tspan><tspan class="le" display="none">3-way merge</tspan></text>
+  </g>
+
+  <path d="M 265 500 Q 265 530 310 530" fill="none" stroke="#f97316" stroke-width="1.6" stroke-dasharray="3,3" marker-end="url(#arrBranch)"/>
+  <text x="278" y="524" class="branch-t"><tspan class="lz">Fork 分叉</tspan><tspan class="le" display="none">Fork</tspan></text>
+  <g>
+    <rect x="310" y="512" width="92" height="36" rx="8" fill="#1e293b" stroke="#f97316" stroke-width="1" stroke-dasharray="3,2"/>
+    <text x="356" y="528" text-anchor="middle" class="dec-s" fill="#f97316">⬥ fork</text>
+    <text x="356" y="541" text-anchor="middle" class="edge-t" font-size="10"><tspan class="lz">新分支</tspan><tspan class="le" display="none">new branch</tspan></text>
+  </g>
+
+  <!-- arrow Update/Decision3 -> Phase 5 (main continues right) -->
+  <path d="M 320 460 L 552 460" fill="none" stroke="#f59e0b" stroke-width="2" marker-end="url(#arrAmber)"/>
+  <text x="436" y="452" text-anchor="middle" class="edge-t"><tspan class="lz">解决后 → 归档</tspan><tspan class="le" display="none">resolved → archive</tspan></text>
+
+  <!-- PHASE 5: Archive/Delete -->
+  <g>
+    <rect x="552" y="400" width="160" height="120" rx="12" fill="url(#gSlate)" stroke="#64748b" stroke-width="1.5"/>
+    <circle cx="572" cy="420" r="11" fill="#64748b"/>
+    <text x="572" y="424" text-anchor="middle" class="stage-num">5</text>
+    <text x="632" y="446" text-anchor="middle" class="ph-label"><tspan class="lz">归档 / 删除</tspan><tspan class="le" display="none">Archive / Delete</tspan></text>
+    <text x="632" y="462" text-anchor="middle" class="ph-sub"><tspan class="lz">清理过期记忆</tspan><tspan class="le" display="none">Cleanup stale</tspan></text>
+    <line x1="570" y1="476" x2="694" y2="476" stroke="#64748b" stroke-width=".8" opacity=".4"/>
+    <text x="632" y="492" text-anchor="middle" class="ph-ts">archived_at</text>
+    <text x="632" y="506" text-anchor="middle" class="ph-ts">→ .claude/archive/</text>
+  </g>
+
+  <!-- archive path from Use (when no longer relevant) -->
+  <path d="M 700 420 Q 640 430 632 400" fill="none" stroke="#f43f5e" stroke-width="1.4" stroke-dasharray="3,3" opacity=".75" marker-end="url(#arrSlate)"/>
+
+  <!-- End terminator -->
+  <g transform="translate(740,440)">
+    <circle cx="30" cy="30" r="26" fill="none" stroke="#64748b" stroke-width="1.4" stroke-dasharray="2,3"/>
+    <circle cx="30" cy="30" r="16" fill="#64748b" opacity=".25"/>
+    <text x="30" y="34" text-anchor="middle" class="dec-t" font-size="10">END</text>
+  </g>
+
+  <!-- Legend blocks (bottom axis labels) -->
+  <g>
+    <text x="880" y="535" text-anchor="end" class="edge-t" font-size="10">
+      <tspan class="lz">实线=主路径  虚线=分支路径</tspan>
+      <tspan class="le" display="none">solid = primary · dashed = branch</tspan>
+    </text>
+  </g>
+
+  <!-- side annotation: store -->
+  <text x="282" y="172" text-anchor="middle" class="edge-t" font-size="10">
+    <tspan class="lz">原子提交</tspan><tspan class="le" display="none">atomic commit</tspan>
+  </text>
+</svg>
+</div>
+
+<div class="legend">
+  <div class="lg"><span class="sw" style="background:#22d3ee"></span><span><span class="lz">写入 Create</span><span class="le" style="display:none">Create</span></span></div>
+  <div class="lg"><span class="sw" style="background:#8b5cf6"></span><span><span class="lz">存储 Store</span><span class="le" style="display:none">Store</span></span></div>
+  <div class="lg"><span class="sw" style="background:#10b981"></span><span><span class="lz">使用 Use</span><span class="le" style="display:none">Use</span></span></div>
+  <div class="lg"><span class="sw" style="background:#f59e0b"></span><span><span class="lz">更新 Update</span><span class="le" style="display:none">Update</span></span></div>
+  <div class="lg"><span class="sw" style="background:#64748b"></span><span><span class="lz">归档/删除 Archive</span><span class="le" style="display:none">Archive/Delete</span></span></div>
+  <div class="lg"><span class="sw" style="background:#f97316"></span><span><span class="lz">决策分支 Decision</span><span class="le" style="display:none">Decision</span></span></div>
+  <div class="lg"><span class="sw" style="background:#f43f5e"></span><span><span class="lz">淘汰路径 Eviction</span><span class="le" style="display:none">Eviction</span></span></div>
+</div>
+
+<footer>
+  <span class="lz">VIS-2Q-012 · 记忆生命周期 · .claude/memory/*.md 持久化规范</span>
+  <span class="le" style="display:none">VIS-2Q-012 · Memory Lifecycle · .claude/memory/*.md persistence spec</span>
+</footer>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<!--
+  VIS-2Q-007 · Swarm 拓扑图 · Multi-Agent Swarm Topology
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  Orchestrator + 4 Workers + Scratchpad + Completion Queue
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · Swarm 拓扑图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+    :root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+    :root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+    :root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:2rem;transition:background .25s,color .25s;}
+    .container{max-width:1100px;margin:0 auto;}
+
+    .controls{position:fixed;top:1rem;right:1rem;display:flex;gap:5px;z-index:100;
+      background:var(--panel);border:1px solid var(--border);border-radius:10px;
+      padding:5px 7px;backdrop-filter:blur(8px);}
+    .cb{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;padding:4px 9px;
+      border-radius:5px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+    .cb:hover{color:var(--text);border-color:var(--border);}
+    .cb.active{border-color:var(--cyan);color:var(--text);}
+    .cdiv{width:1px;background:var(--border);margin:2px;}
+
+    .header{margin-bottom:1.5rem;}
+    .header-row{display:flex;align-items:center;gap:.875rem;margin-bottom:.375rem;}
+    .pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--cyan);animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
+    h1{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;}
+    .subtitle{font-size:.75rem;color:var(--muted);letter-spacing:.06em;}
+
+    .chart-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;
+      padding:1.25rem;margin-bottom:1.25rem;overflow:hidden;}
+    .chart-wrap svg{display:block;width:100%;height:auto;}
+
+    /* Stats row */
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1.25rem;}
+    .stat-card{background:var(--card);border:1px solid var(--border);border-radius:10px;
+      padding:.9rem 1rem;display:flex;align-items:center;gap:.75rem;}
+    .stat-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+    .stat-label{font-size:.68rem;color:var(--muted);letter-spacing:.05em;text-transform:uppercase;margin-bottom:.15rem;}
+    .stat-value{font-size:.95rem;font-weight:700;color:var(--text);}
+
+    /* Concept table */
+    .concept-section{margin-bottom:1.25rem;}
+    .concept-title{font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;
+      letter-spacing:.06em;margin-bottom:.75rem;display:flex;align-items:center;gap:.5rem;}
+    .concept-title::before{content:'';width:12px;height:2px;background:var(--violet);border-radius:1px;}
+    .concept-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:.6rem;}
+    @media(max-width:800px){.concept-grid{grid-template-columns:repeat(2,1fr);}}
+    .concept-card{background:var(--card);border:1px solid var(--border);border-radius:8px;
+      padding:.7rem .8rem;}
+    .concept-card .term{font-size:.75rem;font-weight:700;color:var(--cyan);margin-bottom:.35rem;}
+    .concept-card .def{font-size:.68rem;color:var(--muted);line-height:1.5;}
+    .concept-card .analogy{font-size:.65rem;color:var(--muted);margin-top:.3rem;
+      border-top:1px solid var(--border);padding-top:.3rem;opacity:.85;}
+
+    .footer{text-align:center;font-size:.65rem;color:var(--muted);letter-spacing:.05em;
+      padding-top:.75rem;border-top:1px solid var(--border);opacity:.8;}
+
+    /* SVG animations */
+    @keyframes flow {
+      0%   { offset-distance: 0%;   opacity: 0; }
+      10%  { opacity: 1; }
+      90%  { opacity: 1; }
+      100% { offset-distance: 100%; opacity: 0; }
+    }
+    .particle{animation: flow 3s linear infinite;}
+    .particle.p2{animation-delay: 0.75s;}
+    .particle.p3{animation-delay: 1.5s;}
+    .particle.p4{animation-delay: 2.25s;}
+
+    @keyframes dashFlow {
+      to { stroke-dashoffset: -24; }
+    }
+    .flow-line { stroke-dasharray: 6 6; animation: dashFlow 1.6s linear infinite; }
+
+    @keyframes glow {
+      0%,100% { opacity: .85; }
+      50%     { opacity: 1; }
+    }
+    .glow { animation: glow 2.4s ease-in-out infinite; }
+  </style>
+</head>
+<body>
+<div class="controls">
+  <button class="cb" onclick="cycleTheme()"><span class="lz">主题</span><span class="le">Theme</span></button>
+  <div class="cdiv"></div>
+  <button class="cb" onclick="toggleLang()"><span class="lz">EN</span><span class="le">中</span></button>
+</div>
+
+<div class="container">
+  <div class="header">
+    <div class="header-row">
+      <div class="pulse-dot"></div>
+      <h1><span class="lz">Swarm 拓扑图</span><span class="le">Swarm Topology</span></h1>
+    </div>
+    <div class="subtitle">
+      <span class="lz">VIS-2Q-007 · Multi-Agent Swarm · 1 Orchestrator + 4 Workers + Scratchpad + Completion Queue</span>
+      <span class="le">VIS-2Q-007 · Multi-Agent Swarm · 1 Orchestrator + 4 Workers + Scratchpad + Completion Queue</span>
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats">
+    <div class="stat-card">
+      <div class="stat-dot" style="background:var(--violet);"></div>
+      <div>
+        <div class="stat-label"><span class="lz">架构模式</span><span class="le">Topology</span></div>
+        <div class="stat-value"><span class="lz">1+N 架构</span><span class="le">1+N Pattern</span></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-dot" style="background:var(--cyan);"></div>
+      <div>
+        <div class="stat-label"><span class="lz">并发上限</span><span class="le">Concurrency Cap</span></div>
+        <div class="stat-value"><span class="lz">最大 10 worker</span><span class="le">Max 10 Workers</span></div>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-dot" style="background:var(--amber);"></div>
+      <div>
+        <div class="stat-label"><span class="lz">通信机制</span><span class="le">Communication</span></div>
+        <div class="stat-value"><span class="lz">共享 scratchpad</span><span class="le">Shared Scratchpad</span></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chart-wrap">
+    <svg viewBox="0 0 920 520" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <!-- Grid -->
+        <pattern id="swarmGrid" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--border)" stroke-width="0.5"/>
+        </pattern>
+
+        <!-- Arrow markers -->
+        <marker id="arrOut" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+          <polygon points="0 0, 10 4, 0 8" fill="var(--violet)"/>
+        </marker>
+        <marker id="arrIn" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+          <polygon points="0 0, 10 4, 0 8" fill="var(--cyan)"/>
+        </marker>
+        <marker id="arrQ" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+          <polygon points="0 0, 10 4, 0 8" fill="var(--emerald)"/>
+        </marker>
+        <marker id="arrAmber" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+          <polygon points="0 0, 10 4, 0 8" fill="var(--amber)"/>
+        </marker>
+
+        <!-- Radial gradients -->
+        <radialGradient id="gOrch" cx="50%" cy="50%" r="60%">
+          <stop offset="0%"  stop-color="#8b5cf6" stop-opacity="0.55"/>
+          <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.08"/>
+        </radialGradient>
+        <radialGradient id="gWkr" cx="50%" cy="50%" r="60%">
+          <stop offset="0%"  stop-color="#22d3ee" stop-opacity="0.35"/>
+          <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.06"/>
+        </radialGradient>
+        <radialGradient id="gScratch" cx="50%" cy="50%" r="60%">
+          <stop offset="0%"  stop-color="#f59e0b" stop-opacity="0.32"/>
+          <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.06"/>
+        </radialGradient>
+        <radialGradient id="gQueue" cx="50%" cy="50%" r="60%">
+          <stop offset="0%"  stop-color="#10b981" stop-opacity="0.32"/>
+          <stop offset="100%" stop-color="#10b981" stop-opacity="0.06"/>
+        </radialGradient>
+
+        <!-- Orchestrator glow -->
+        <filter id="glowBlur" x="-50%" y="-50%" width="200%" height="200%">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+
+        <!-- Path definitions for particle flows -->
+        <!-- Worker paths (orch center ~ 460,260; workers: top 460,90 / right 720,260 / bottom 460,430 / left 200,260) -->
+        <path id="pathTop"    d="M 460,260 Q 430,175 460,130" fill="none"/>
+        <path id="pathTop2"   d="M 460,130 Q 490,175 460,260" fill="none"/>
+        <path id="pathRight"  d="M 460,260 Q 580,230 680,260" fill="none"/>
+        <path id="pathRight2" d="M 680,260 Q 580,290 460,260" fill="none"/>
+        <path id="pathBot"    d="M 460,260 Q 490,345 460,390" fill="none"/>
+        <path id="pathBot2"   d="M 460,390 Q 430,345 460,260" fill="none"/>
+        <path id="pathLeft"   d="M 460,260 Q 340,290 240,260" fill="none"/>
+        <path id="pathLeft2"  d="M 240,260 Q 340,230 460,260" fill="none"/>
+      </defs>
+
+      <!-- Background -->
+      <rect width="920" height="520" fill="var(--bg)"/>
+      <rect width="920" height="520" fill="url(#swarmGrid)"/>
+
+      <!-- Title band -->
+      <text x="30" y="32" fill="var(--text)" font-size="13" font-weight="700" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">Swarm 拓扑 · 1 个编排者 + 4 个 Worker</tspan>
+        <tspan class="le">Swarm Topology · 1 Orchestrator + 4 Workers</tspan>
+      </text>
+      <text x="30" y="50" fill="var(--muted)" font-size="11" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">钻石阵列 · 双向通信 · 共享白板 · 完成队列</tspan>
+        <tspan class="le">Diamond layout · bidirectional IPC · shared scratchpad · completion queue</tspan>
+      </text>
+
+      <!-- ══ Bidirectional connection lines (drawn first, under nodes) ══ -->
+      <!-- Orchestrator ↔ Worker A (top) -->
+      <path d="M 460,260 Q 430,175 460,130" fill="none" stroke="var(--violet)" stroke-width="2" opacity="0.75" marker-end="url(#arrOut)"/>
+      <path d="M 460,130 Q 490,175 460,260" fill="none" stroke="var(--cyan)"  stroke-width="2" opacity="0.75" marker-end="url(#arrIn)"/>
+
+      <!-- Orchestrator ↔ Worker B (right) -->
+      <path d="M 460,260 Q 580,230 680,260" fill="none" stroke="var(--violet)" stroke-width="2" opacity="0.75" marker-end="url(#arrOut)"/>
+      <path d="M 680,260 Q 580,290 460,260" fill="none" stroke="var(--cyan)"  stroke-width="2" opacity="0.75" marker-end="url(#arrIn)"/>
+
+      <!-- Orchestrator ↔ Worker C (bottom) -->
+      <path d="M 460,260 Q 490,345 460,390" fill="none" stroke="var(--violet)" stroke-width="2" opacity="0.75" marker-end="url(#arrOut)"/>
+      <path d="M 460,390 Q 430,345 460,260" fill="none" stroke="var(--cyan)"  stroke-width="2" opacity="0.75" marker-end="url(#arrIn)"/>
+
+      <!-- Orchestrator ↔ Worker D (left) -->
+      <path d="M 460,260 Q 340,290 240,260" fill="none" stroke="var(--violet)" stroke-width="2" opacity="0.75" marker-end="url(#arrOut)"/>
+      <path d="M 240,260 Q 340,230 460,260" fill="none" stroke="var(--cyan)"  stroke-width="2" opacity="0.75" marker-end="url(#arrIn)"/>
+
+      <!-- Orchestrator → Scratchpad (amber dashed) -->
+      <line x1="460" y1="310" x2="460" y2="470" stroke="var(--amber)" stroke-width="1.8" stroke-dasharray="5,4" opacity="0.7"/>
+      <text x="468" y="385" fill="var(--amber)" font-size="10" font-family="JetBrains Mono,monospace" opacity="0.85">
+        <tspan class="lz">读/写</tspan><tspan class="le">R/W</tspan>
+      </text>
+
+      <!-- Workers → Scratchpad (thin amber dashed) -->
+      <line x1="240" y1="290" x2="400" y2="478" stroke="var(--amber)" stroke-width="1" stroke-dasharray="4,4" opacity="0.45"/>
+      <line x1="680" y1="290" x2="520" y2="478" stroke="var(--amber)" stroke-width="1" stroke-dasharray="4,4" opacity="0.45"/>
+      <line x1="460" y1="390" x2="460" y2="470" stroke="var(--amber)" stroke-width="1" stroke-dasharray="4,4" opacity="0.45"/>
+
+      <!-- Orchestrator → Queue (emerald) -->
+      <path d="M 510,260 Q 680,200 820,180" fill="none" stroke="var(--emerald)" stroke-width="1.8" stroke-dasharray="5,4" opacity="0.7" marker-end="url(#arrQ)"/>
+      <text x="700" y="210" fill="var(--emerald)" font-size="10" font-family="JetBrains Mono,monospace" opacity="0.85">
+        <tspan class="lz">完成通知</tspan><tspan class="le">done()</tspan>
+      </text>
+
+      <!-- Animated flow lines on top of connectors (cyan pulses in) -->
+      <path d="M 460,130 Q 490,175 460,260" fill="none" stroke="var(--cyan)" stroke-width="2" opacity="0.85" class="flow-line"/>
+      <path d="M 680,260 Q 580,290 460,260" fill="none" stroke="var(--cyan)" stroke-width="2" opacity="0.85" class="flow-line"/>
+      <path d="M 460,390 Q 430,345 460,260" fill="none" stroke="var(--cyan)" stroke-width="2" opacity="0.85" class="flow-line"/>
+      <path d="M 240,260 Q 340,230 460,260" fill="none" stroke="var(--cyan)" stroke-width="2" opacity="0.85" class="flow-line"/>
+
+      <!-- Animated particles (SMIL) -->
+      <!-- Top link -->
+      <circle r="3" fill="var(--violet)">
+        <animateMotion dur="2.4s" repeatCount="indefinite" path="M 460,260 Q 430,175 460,130"/>
+      </circle>
+      <circle r="3" fill="var(--cyan)">
+        <animateMotion dur="2.4s" repeatCount="indefinite" begin="1.2s" path="M 460,130 Q 490,175 460,260"/>
+      </circle>
+      <!-- Right link -->
+      <circle r="3" fill="var(--violet)">
+        <animateMotion dur="2.4s" repeatCount="indefinite" begin="0.3s" path="M 460,260 Q 580,230 680,260"/>
+      </circle>
+      <circle r="3" fill="var(--cyan)">
+        <animateMotion dur="2.4s" repeatCount="indefinite" begin="1.5s" path="M 680,260 Q 580,290 460,260"/>
+      </circle>
+      <!-- Bottom link -->
+      <circle r="3" fill="var(--violet)">
+        <animateMotion dur="2.4s" repeatCount="indefinite" begin="0.6s" path="M 460,260 Q 490,345 460,390"/>
+      </circle>
+      <circle r="3" fill="var(--cyan)">
+        <animateMotion dur="2.4s" repeatCount="indefinite" begin="1.8s" path="M 460,390 Q 430,345 460,260"/>
+      </circle>
+      <!-- Left link -->
+      <circle r="3" fill="var(--violet)">
+        <animateMotion dur="2.4s" repeatCount="indefinite" begin="0.9s" path="M 460,260 Q 340,290 240,260"/>
+      </circle>
+      <circle r="3" fill="var(--cyan)">
+        <animateMotion dur="2.4s" repeatCount="indefinite" begin="2.1s" path="M 240,260 Q 340,230 460,260"/>
+      </circle>
+      <!-- Orch -> Queue particle -->
+      <circle r="3" fill="var(--emerald)">
+        <animateMotion dur="3s" repeatCount="indefinite" path="M 510,260 Q 680,200 820,180"/>
+      </circle>
+      <!-- Scratchpad IPC particles -->
+      <circle r="2.5" fill="var(--amber)">
+        <animateMotion dur="2s" repeatCount="indefinite" path="M 460,310 L 460,470"/>
+      </circle>
+      <circle r="2.5" fill="var(--amber)">
+        <animateMotion dur="2s" repeatCount="indefinite" begin="1s" path="M 460,470 L 460,310"/>
+      </circle>
+
+      <!-- ══ Worker A — TOP (Search Agent) ══ -->
+      <g>
+        <circle cx="460" cy="110" r="42" fill="url(#gWkr)" stroke="var(--cyan)" stroke-width="2"/>
+        <text x="460" y="102" fill="var(--text)" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">Worker A</tspan>
+          <tspan class="le">Worker A</tspan>
+        </text>
+        <text x="460" y="118" fill="var(--cyan)" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">搜索 Agent</tspan>
+          <tspan class="le">Search Agent</tspan>
+        </text>
+        <text x="460" y="132" fill="var(--muted)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">WebSearch · Grep</text>
+      </g>
+
+      <!-- ══ Worker B — RIGHT (Edit Agent) ══ -->
+      <g>
+        <circle cx="720" cy="260" r="42" fill="url(#gWkr)" stroke="var(--cyan)" stroke-width="2"/>
+        <text x="720" y="252" fill="var(--text)" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">Worker B</tspan>
+          <tspan class="le">Worker B</tspan>
+        </text>
+        <text x="720" y="268" fill="var(--cyan)" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">编辑 Agent</tspan>
+          <tspan class="le">Edit Agent</tspan>
+        </text>
+        <text x="720" y="282" fill="var(--muted)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">Read · Write · Edit</text>
+      </g>
+
+      <!-- ══ Worker C — BOTTOM (Shell Agent) ══ -->
+      <g>
+        <circle cx="460" cy="410" r="42" fill="url(#gWkr)" stroke="var(--cyan)" stroke-width="2"/>
+        <text x="460" y="402" fill="var(--text)" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">Worker C</tspan>
+          <tspan class="le">Worker C</tspan>
+        </text>
+        <text x="460" y="418" fill="var(--cyan)" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">Shell Agent</tspan>
+          <tspan class="le">Shell Agent</tspan>
+        </text>
+        <text x="460" y="432" fill="var(--muted)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">Bash · exec</text>
+      </g>
+
+      <!-- ══ Worker D — LEFT (Analysis Agent) ══ -->
+      <g>
+        <circle cx="200" cy="260" r="42" fill="url(#gWkr)" stroke="var(--cyan)" stroke-width="2"/>
+        <text x="200" y="252" fill="var(--text)" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">Worker D</tspan>
+          <tspan class="le">Worker D</tspan>
+        </text>
+        <text x="200" y="268" fill="var(--cyan)" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">分析 Agent</tspan>
+          <tspan class="le">Analysis Agent</tspan>
+        </text>
+        <text x="200" y="282" fill="var(--muted)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">复审 · 去重</tspan>
+          <tspan class="le">review · dedup</tspan>
+        </text>
+      </g>
+
+      <!-- ══ CENTRAL ORCHESTRATOR ══ -->
+      <g class="glow">
+        <circle cx="460" cy="260" r="54" fill="url(#gOrch)" opacity="0.7"/>
+        <circle cx="460" cy="260" r="50" fill="url(#gOrch)" stroke="var(--violet)" stroke-width="2.5" filter="url(#glowBlur)"/>
+      </g>
+      <!-- Orchestrator badge -->
+      <rect x="430" y="222" width="60" height="16" rx="8" fill="var(--violet)" opacity="0.95"/>
+      <text x="460" y="234" fill="#fff" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">ORCH</text>
+      <text x="460" y="256" fill="var(--text)" font-size="13" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">中央编排者</tspan>
+        <tspan class="le">Orchestrator</tspan>
+      </text>
+      <text x="460" y="274" fill="var(--text)" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace" opacity="0.85">
+        <tspan class="lz">主 Claude Agent</tspan>
+        <tspan class="le">Main Claude Agent</tspan>
+      </text>
+      <text x="460" y="290" fill="var(--muted)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+        <tspan class="lz">任务协调者</tspan>
+        <tspan class="le">Task Coordinator</tspan>
+      </text>
+
+      <!-- ══ SHARED SCRATCHPAD (bottom rectangle) ══ -->
+      <g>
+        <rect x="260" y="468" width="400" height="38" rx="8" fill="url(#gScratch)" stroke="var(--amber)" stroke-width="2"/>
+        <text x="460" y="484" fill="var(--amber)" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">共享白板 Scratchpad</tspan>
+          <tspan class="le">Shared Scratchpad</tspan>
+        </text>
+        <text x="460" y="499" fill="var(--muted)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">所有 Agent 共享状态 · IPC 内存</tspan>
+          <tspan class="le">Shared state across all Agents · IPC memory</tspan>
+        </text>
+      </g>
+
+      <!-- ══ COMPLETION QUEUE (right side vertical list) ══ -->
+      <g>
+        <rect x="760" y="62" width="140" height="300" rx="10" fill="url(#gQueue)" stroke="var(--emerald)" stroke-width="2"/>
+        <text x="830" y="84" fill="var(--emerald)" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">完成队列</tspan>
+          <tspan class="le">Completion Queue</tspan>
+        </text>
+        <line x1="772" y1="94" x2="888" y2="94" stroke="var(--emerald)" stroke-width="1" opacity="0.4"/>
+
+        <!-- Queue entries -->
+        <g transform="translate(772,108)">
+          <rect x="0" y="0" width="116" height="32" rx="5" fill="var(--panel)" stroke="var(--emerald)" stroke-width="1" opacity="0.85"/>
+          <circle cx="12" cy="16" r="4" fill="var(--emerald)"/>
+          <text x="24" y="14" fill="var(--text)" font-size="10" font-weight="600" font-family="JetBrains Mono,monospace">#1 A.done</text>
+          <text x="24" y="26" fill="var(--muted)" font-size="10" font-family="JetBrains Mono,monospace">search · 12 hits</text>
+        </g>
+        <g transform="translate(772,146)">
+          <rect x="0" y="0" width="116" height="32" rx="5" fill="var(--panel)" stroke="var(--emerald)" stroke-width="1" opacity="0.85"/>
+          <circle cx="12" cy="16" r="4" fill="var(--emerald)"/>
+          <text x="24" y="14" fill="var(--text)" font-size="10" font-weight="600" font-family="JetBrains Mono,monospace">#2 B.done</text>
+          <text x="24" y="26" fill="var(--muted)" font-size="10" font-family="JetBrains Mono,monospace">edit · 3 files</text>
+        </g>
+        <g transform="translate(772,184)">
+          <rect x="0" y="0" width="116" height="32" rx="5" fill="var(--panel)" stroke="var(--amber)" stroke-width="1" opacity="0.85"/>
+          <circle cx="12" cy="16" r="4" fill="var(--amber)"/>
+          <text x="24" y="14" fill="var(--text)" font-size="10" font-weight="600" font-family="JetBrains Mono,monospace">#3 C.run</text>
+          <text x="24" y="26" fill="var(--muted)" font-size="10" font-family="JetBrains Mono,monospace">bash · exec</text>
+        </g>
+        <g transform="translate(772,222)">
+          <rect x="0" y="0" width="116" height="32" rx="5" fill="var(--panel)" stroke="var(--slate)" stroke-width="1" opacity="0.85"/>
+          <circle cx="12" cy="16" r="4" fill="var(--slate)"/>
+          <text x="24" y="14" fill="var(--text)" font-size="10" font-weight="600" font-family="JetBrains Mono,monospace">#4 D.wait</text>
+          <text x="24" y="26" fill="var(--muted)" font-size="10" font-family="JetBrains Mono,monospace">analysis · queued</text>
+        </g>
+        <g transform="translate(772,260)">
+          <rect x="0" y="0" width="116" height="32" rx="5" fill="var(--panel)" stroke="var(--slate)" stroke-width="1" opacity="0.55" stroke-dasharray="3,3"/>
+          <text x="58" y="20" fill="var(--muted)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+            <tspan class="lz">…更多槽位</tspan>
+            <tspan class="le">…more slots</tspan>
+          </text>
+        </g>
+
+        <!-- Queue footer -->
+        <text x="830" y="340" fill="var(--muted)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">FIFO · 最大 10</tspan>
+          <tspan class="le">FIFO · max 10</tspan>
+        </text>
+        <text x="830" y="354" fill="var(--muted)" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">聚合 → 主循环</tspan>
+          <tspan class="le">aggregate → loop</tspan>
+        </text>
+      </g>
+
+      <!-- ══ Legend ══ -->
+      <g transform="translate(30,470)">
+        <rect x="0" y="0" width="210" height="38" rx="8" fill="var(--panel)" stroke="var(--border)" stroke-width="1" opacity="0.9"/>
+        <circle cx="14" cy="12" r="4" fill="var(--violet)"/>
+        <text x="24" y="15" fill="var(--text)" font-size="10" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">派发</tspan><tspan class="le">dispatch</tspan>
+        </text>
+        <circle cx="72" cy="12" r="4" fill="var(--cyan)"/>
+        <text x="82" y="15" fill="var(--text)" font-size="10" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">回报</tspan><tspan class="le">report</tspan>
+        </text>
+        <circle cx="128" cy="12" r="4" fill="var(--amber)"/>
+        <text x="138" y="15" fill="var(--text)" font-size="10" font-family="JetBrains Mono,monospace">IPC</text>
+        <circle cx="170" cy="12" r="4" fill="var(--emerald)"/>
+        <text x="180" y="15" fill="var(--text)" font-size="10" font-family="JetBrains Mono,monospace">done</text>
+        <text x="14" y="32" fill="var(--muted)" font-size="10" font-family="JetBrains Mono,monospace">
+          <tspan class="lz">双向箭头 · 流动粒子 = 运行中消息</tspan>
+          <tspan class="le">Bidirectional arrows · particles = live msgs</tspan>
+        </text>
+      </g>
+    </svg>
+  </div>
+
+  <!-- Concept Cards -->
+  <div class="concept-section">
+    <div class="concept-title">
+      <span class="lz">6 个核心概念</span><span class="le">6 Core Concepts</span>
+    </div>
+    <div class="concept-grid">
+      <div class="concept-card">
+        <div class="term">Orchestrator</div>
+        <div class="def">
+          <span class="lz">中央编排者 · 主 Claude Agent，拆分任务并分配给 Worker。</span>
+          <span class="le">Central coordinator — the main Claude agent that decomposes and dispatches tasks.</span>
+        </div>
+        <div class="analogy">
+          <span class="lz">💡 通俗理解：项目经理派活</span>
+          <span class="le">Analogy: Project manager assigning tasks</span>
+        </div>
+      </div>
+      <div class="concept-card">
+        <div class="term">Worker Swarm</div>
+        <div class="def">
+          <span class="lz">4 个 Worker 组成"蜂群"，并行执行：搜索 / 编辑 / Shell / 分析。</span>
+          <span class="le">4 workers form a swarm running in parallel: Search / Edit / Shell / Analysis.</span>
+        </div>
+        <div class="analogy">
+          <span class="lz">💡 通俗理解：四个专岗同事同时开工</span>
+          <span class="le">Analogy: Four specialists working in parallel</span>
+        </div>
+      </div>
+      <div class="concept-card">
+        <div class="term">Scratchpad</div>
+        <div class="def">
+          <span class="lz">共享白板 · 所有 Agent 读写的中间状态存储区。</span>
+          <span class="le">Shared memory area all agents read/write intermediate state.</span>
+        </div>
+        <div class="analogy">
+          <span class="lz">💡 通俗理解：办公室公共白板</span>
+          <span class="le">Analogy: Office shared whiteboard</span>
+        </div>
+      </div>
+      <div class="concept-card">
+        <div class="term">Completion Queue</div>
+        <div class="def">
+          <span class="lz">完成队列 · Worker 汇报结果按 FIFO 排队，编排者逐个聚合。</span>
+          <span class="le">FIFO queue of worker results; orchestrator aggregates them in order.</span>
+        </div>
+        <div class="analogy">
+          <span class="lz">💡 通俗理解：银行叫号窗口</span>
+          <span class="le">Analogy: Bank teller's ticketing queue</span>
+        </div>
+      </div>
+      <div class="concept-card">
+        <div class="term">1 + N Pattern</div>
+        <div class="def">
+          <span class="lz">1 个编排者 + N 个 Worker，N 最大为 10，防止上下文爆炸。</span>
+          <span class="le">One orchestrator + N workers (max 10) to bound context growth.</span>
+        </div>
+        <div class="analogy">
+          <span class="lz">💡 通俗理解：领班 + 小队的固定编制</span>
+          <span class="le">Analogy: Foreman + fixed-size crew</span>
+        </div>
+      </div>
+      <div class="concept-card">
+        <div class="term">Bidirectional IPC</div>
+        <div class="def">
+          <span class="lz">双向通信 · 派发 (紫) 与回报 (青) 各走一条路径，带动画粒子。</span>
+          <span class="le">Two-way comm — violet dispatch + cyan report lanes with animated particles.</span>
+        </div>
+        <div class="analogy">
+          <span class="lz">💡 通俗理解：对讲机双工通话</span>
+          <span class="le">Analogy: Full-duplex walkie-talkie</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    VIS-2Q-007 · <span class="lz">Swarm 拓扑图</span><span class="le">Swarm Topology</span>
+    · Claude Code 2.1.88 · Orchestrator + 4 Workers + Scratchpad + Queue
+    · <span class="lz">紫=派发 · 青=回报 · 琥珀=IPC · 翠绿=完成</span>
+    <span class="le">violet=dispatch · cyan=report · amber=IPC · emerald=done</span>
+    · v2 2026-04-15
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>
