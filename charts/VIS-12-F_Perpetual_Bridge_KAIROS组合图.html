@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<title>Perpetual Bridge + KAIROS 组合图</title>
+<style>
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  background:var(--bg);color:var(--text);
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  min-height:100vh;padding:24px;
+  transition:background .3s,color .3s;
+}
+.wrap{max-width:1000px;margin:0 auto}
+.hdr{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:12px;flex-wrap:wrap}
+.title-group h1{font-size:20px;font-weight:700;color:var(--text);margin-bottom:4px}
+.title-group .sub{font-size:12px;color:var(--muted)}
+.controls{display:flex;gap:8px}
+.btn{
+  background:var(--panel);color:var(--text);border:1px solid var(--border);
+  padding:7px 14px;border-radius:8px;cursor:pointer;font-size:12px;
+  transition:all .2s;font-weight:500;
+}
+.btn:hover{background:var(--subtle)}
+.panel{
+  background:var(--panel);border:1px solid var(--border);border-radius:14px;
+  padding:18px;overflow:hidden;
+}
+svg{display:block;width:100%;height:auto}
+
+/* SVG theming */
+.svg-txt-w { fill: #f1f5f9; }
+html[data-theme="light"] .svg-txt-w { fill: var(--text); }
+
+.svg-txt-m { fill: #94a3b8; }
+html[data-theme="light"] .svg-txt-m { fill: #475569; }
+
+.fc-bg { fill: #0f172a; fill-opacity: 0.45; }
+html[data-theme="light"] .fc-bg { fill: var(--subtle); fill-opacity: 0.5; }
+
+/* Benefits grid */
+.benefits{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:14px}
+.benefit{
+  background:var(--card);border:1px solid var(--border);border-radius:12px;
+  padding:14px;
+}
+.benefit .bh{font-size:13px;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+.benefit .bh .dot{width:10px;height:10px;border-radius:50%}
+.benefit .bd{font-size:11px;color:var(--muted);line-height:1.55}
+.benefit.latency .bh{color:var(--cyan)}
+.benefit.latency .bh .dot{background:var(--cyan)}
+.benefit.bw .bh{color:var(--amber)}
+.benefit.bw .bh .dot{background:var(--amber)}
+.benefit.rel .bh{color:var(--violet)}
+.benefit.rel .bh .dot{background:var(--violet)}
+
+/* Use cases */
+.usecases{margin-top:14px;padding:14px;background:var(--card);border:1px solid var(--border);border-radius:12px}
+.usecases .uh{font-size:13px;font-weight:700;color:var(--text);margin-bottom:10px}
+.usecases .uc-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.usecases .uc{
+  padding:10px;background:var(--panel);border:1px solid var(--border);
+  border-radius:10px;font-size:11px;color:var(--muted);line-height:1.5;
+}
+.usecases .uc .uc-t{color:var(--text);font-weight:600;font-size:12px;margin-bottom:4px}
+
+/* Footer credit */
+.credit{margin-top:14px;text-align:center;font-size:10px;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hdr">
+    <div class="title-group">
+      <h1>
+        <span class="lz">Perpetual Bridge + KAIROS 组合图</span>
+        <span class="le" style="display:none">Perpetual Bridge + KAIROS Combined</span>
+      </h1>
+      <div class="sub">
+        <span class="lz">持久连接 + 机会式时机 = 最优同步策略</span>
+        <span class="le" style="display:none">Always-on connectivity + opportunistic timing = optimal sync</span>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn" onclick="cycleTheme()">
+        <span class="lz">主题</span><span class="le" style="display:none">Theme</span>
+      </button>
+      <button class="btn" onclick="toggleLang()">
+        <span class="lz">EN</span><span class="le" style="display:none">中文</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <svg viewBox="0 0 920 540" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Perpetual Bridge + KAIROS combination diagram">
+      <defs>
+        <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="6" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow-amber" x="-20%" y="-20%" width="140%" height="140%">
+          <feGaussianBlur stdDeviation="6" result="b"/>
+          <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <linearGradient id="gCyan" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.04"/>
+        </linearGradient>
+        <linearGradient id="gAmber" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.04"/>
+        </linearGradient>
+        <radialGradient id="gVio" cx="50%" cy="50%" r="50%">
+          <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.28"/>
+          <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.06"/>
+        </radialGradient>
+        <marker id="arC" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#22d3ee"/>
+        </marker>
+        <marker id="arA" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#f59e0b"/>
+        </marker>
+        <marker id="arV" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+          <path d="M0,0 L10,5 L0,10 z" fill="#8b5cf6"/>
+        </marker>
+      </defs>
+
+      <!-- Title strip -->
+      <text x="460" y="24" text-anchor="middle" font-size="14" font-weight="700" class="lz svg-txt-w">两大机制的互补与协同</text>
+      <text x="460" y="24" text-anchor="middle" font-size="14" font-weight="700" class="le svg-txt-w" display="none">Complementary Mechanisms in Synergy</text>
+
+      <!-- ========== LEFT: PERPETUAL BRIDGE ========== -->
+      <ellipse cx="260" cy="250" rx="220" ry="170" fill="url(#gCyan)" stroke="#22d3ee" stroke-width="2" stroke-opacity="0.55"/>
+      <!-- Module title -->
+      <rect x="130" y="70" width="260" height="44" rx="10" fill="#22d3ee" fill-opacity="0.15" stroke="#22d3ee" stroke-width="1.5"/>
+      <circle cx="158" cy="92" r="11" fill="#22d3ee" fill-opacity="0.25" stroke="#22d3ee" stroke-width="1.5"/>
+      <circle cx="158" cy="92" r="4" fill="#22d3ee"/>
+      <text x="180" y="89" fill="#22d3ee" font-size="13" font-weight="700" class="lz">Perpetual Bridge</text>
+      <text x="180" y="89" fill="#22d3ee" font-size="13" font-weight="700" class="le" display="none">Perpetual Bridge</text>
+      <text x="180" y="105" fill="#22d3ee" font-size="10.5" opacity="0.9" class="lz">持久连接模块</text>
+      <text x="180" y="105" fill="#22d3ee" font-size="10.5" opacity="0.9" class="le" display="none">Always-On Module</text>
+
+      <!-- Perpetual feature cards -->
+      <g>
+        <rect x="140" y="128" width="240" height="48" rx="8" class="fc-bg" stroke="#22d3ee" stroke-width="1" stroke-opacity="0.45"/>
+        <circle cx="158" cy="152" r="5" fill="#22d3ee"/>
+        <text x="172" y="148" font-size="12" font-weight="600" class="lz svg-txt-w">持久连接</text>
+        <text x="172" y="148" font-size="12" font-weight="600" class="le svg-txt-w" display="none">Always-on Connection</text>
+        <text x="172" y="164" font-size="10" class="lz svg-txt-m">transport 永不关闭，保持活跃</text>
+        <text x="172" y="164" font-size="10" class="le svg-txt-m" display="none">Transport never closes, stays alive</text>
+      </g>
+      <g>
+        <rect x="140" y="184" width="240" height="48" rx="8" class="fc-bg" stroke="#22d3ee" stroke-width="1" stroke-opacity="0.45"/>
+        <circle cx="158" cy="208" r="5" fill="#22d3ee"/>
+        <text x="172" y="204" font-size="12" font-weight="600" class="lz svg-txt-w">心跳保活</text>
+        <text x="172" y="204" font-size="12" font-weight="600" class="le svg-txt-w" display="none">Heartbeat</text>
+        <text x="172" y="220" font-size="10" class="lz svg-txt-m">周期 ping/pong 探活，防止断连</text>
+        <text x="172" y="220" font-size="10" class="le svg-txt-m" display="none">Periodic ping/pong keepalive</text>
+      </g>
+      <g>
+        <rect x="140" y="240" width="240" height="48" rx="8" class="fc-bg" stroke="#22d3ee" stroke-width="1" stroke-opacity="0.45"/>
+        <circle cx="158" cy="264" r="5" fill="#22d3ee"/>
+        <text x="172" y="260" font-size="12" font-weight="600" class="lz svg-txt-w">自动重连</text>
+        <text x="172" y="260" font-size="12" font-weight="600" class="le svg-txt-w" display="none">Auto-reconnect</text>
+        <text x="172" y="276" font-size="10" class="lz svg-txt-m">网络抖动时指数退避自动恢复</text>
+        <text x="172" y="276" font-size="10" class="le svg-txt-m" display="none">Exponential backoff on failure</text>
+      </g>
+      <g>
+        <rect x="140" y="296" width="240" height="48" rx="8" class="fc-bg" stroke="#22d3ee" stroke-width="1" stroke-opacity="0.45"/>
+        <circle cx="158" cy="320" r="5" fill="#22d3ee"/>
+        <text x="172" y="316" font-size="12" font-weight="600" class="lz svg-txt-w">零延迟启动</text>
+        <text x="172" y="316" font-size="12" font-weight="600" class="le svg-txt-w" display="none">Zero-latency Start</text>
+        <text x="172" y="332" font-size="10" class="lz svg-txt-m">新任务到达即发送，无建连开销</text>
+        <text x="172" y="332" font-size="10" class="le svg-txt-m" display="none">No handshake overhead</text>
+      </g>
+
+      <text x="260" y="402" text-anchor="middle" fill="#22d3ee" font-size="11" font-weight="600" class="lz">提供: 可靠性 + 即时触达</text>
+      <text x="260" y="402" text-anchor="middle" fill="#22d3ee" font-size="11" font-weight="600" class="le" display="none">Provides: reliability + instant reach</text>
+
+      <!-- ========== RIGHT: KAIROS ========== -->
+      <ellipse cx="660" cy="250" rx="220" ry="170" fill="url(#gAmber)" stroke="#f59e0b" stroke-width="2" stroke-opacity="0.55"/>
+      <rect x="530" y="70" width="260" height="44" rx="10" fill="#f59e0b" fill-opacity="0.15" stroke="#f59e0b" stroke-width="1.5"/>
+      <circle cx="558" cy="92" r="11" fill="#f59e0b" fill-opacity="0.25" stroke="#f59e0b" stroke-width="1.5"/>
+      <path d="M558,86 L558,92 L562,95" stroke="#f59e0b" stroke-width="2" fill="none" stroke-linecap="round"/>
+      <text x="580" y="89" fill="#f59e0b" font-size="13" font-weight="700" class="lz">KAIROS 机会式</text>
+      <text x="580" y="89" fill="#f59e0b" font-size="13" font-weight="700" class="le" display="none">KAIROS Opportunistic</text>
+      <text x="580" y="105" fill="#f59e0b" font-size="10.5" opacity="0.9" class="lz">时机智能模块</text>
+      <text x="580" y="105" fill="#f59e0b" font-size="10.5" opacity="0.9" class="le" display="none">Timing Intelligence</text>
+
+      <!-- KAIROS feature cards -->
+      <g>
+        <rect x="540" y="128" width="240" height="48" rx="8" class="fc-bg" stroke="#f59e0b" stroke-width="1" stroke-opacity="0.45"/>
+        <circle cx="558" cy="152" r="5" fill="#f59e0b"/>
+        <text x="572" y="148" font-size="12" font-weight="600" class="lz svg-txt-w">时机识别</text>
+        <text x="572" y="148" font-size="12" font-weight="600" class="le svg-txt-w" display="none">Opportune Timing</text>
+        <text x="572" y="164" font-size="10" class="lz svg-txt-m">识别最佳执行窗口，避开峰值</text>
+        <text x="572" y="164" font-size="10" class="le svg-txt-m" display="none">Detect optimal windows, avoid peaks</text>
+      </g>
+      <g>
+        <rect x="540" y="184" width="240" height="48" rx="8" class="fc-bg" stroke="#f59e0b" stroke-width="1" stroke-opacity="0.45"/>
+        <circle cx="558" cy="208" r="5" fill="#f59e0b"/>
+        <text x="572" y="204" font-size="12" font-weight="600" class="lz svg-txt-w">批量合并</text>
+        <text x="572" y="204" font-size="12" font-weight="600" class="le svg-txt-w" display="none">Batch Merge</text>
+        <text x="572" y="220" font-size="10" class="lz svg-txt-m">聚合小请求，减少往返次数</text>
+        <text x="572" y="220" font-size="10" class="le svg-txt-m" display="none">Aggregate to reduce round-trips</text>
+      </g>
+      <g>
+        <rect x="540" y="240" width="240" height="48" rx="8" class="fc-bg" stroke="#f59e0b" stroke-width="1" stroke-opacity="0.45"/>
+        <circle cx="558" cy="264" r="5" fill="#f59e0b"/>
+        <text x="572" y="260" font-size="12" font-weight="600" class="lz svg-txt-w">低优先级延后</text>
+        <text x="572" y="260" font-size="12" font-weight="600" class="le svg-txt-w" display="none">Defer Low-priority</text>
+        <text x="572" y="276" font-size="10" class="lz svg-txt-m">非关键任务推迟到空闲期</text>
+        <text x="572" y="276" font-size="10" class="le svg-txt-m" display="none">Push non-critical to idle periods</text>
+      </g>
+      <g>
+        <rect x="540" y="296" width="240" height="48" rx="8" class="fc-bg" stroke="#f59e0b" stroke-width="1" stroke-opacity="0.45"/>
+        <circle cx="558" cy="320" r="5" fill="#f59e0b"/>
+        <text x="572" y="316" font-size="12" font-weight="600" class="lz svg-txt-w">事件驱动</text>
+        <text x="572" y="316" font-size="12" font-weight="600" class="le svg-txt-w" display="none">Event-driven</text>
+        <text x="572" y="332" font-size="10" class="lz svg-txt-m">由信号触发执行，而非轮询</text>
+        <text x="572" y="332" font-size="10" class="le svg-txt-m" display="none">Signal-triggered, not polled</text>
+      </g>
+
+      <text x="660" y="402" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="600" class="lz">提供: 高效率 + 智能批处理</text>
+      <text x="660" y="402" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="600" class="le" display="none">Provides: efficiency + smart batching</text>
+
+      <!-- ========== CENTER OVERLAP ZONE ========== -->
+      <ellipse cx="460" cy="250" rx="90" ry="130" fill="url(#gVio)" stroke="#8b5cf6" stroke-width="2.5"/>
+
+      <!-- Combination header -->
+      <rect x="392" y="140" width="136" height="28" rx="8" fill="#8b5cf6" fill-opacity="0.25" stroke="#8b5cf6" stroke-width="1.5"/>
+      <text x="460" y="158" text-anchor="middle" font-size="12" font-weight="700" class="lz svg-txt-w">组合区</text>
+      <text x="460" y="158" text-anchor="middle" font-size="12" font-weight="700" class="le svg-txt-w" display="none">Combined</text>
+
+      <text x="460" y="188" text-anchor="middle" font-size="11" font-weight="700" class="lz svg-txt-w">最优同步</text>
+      <text x="460" y="188" text-anchor="middle" font-size="11" font-weight="700" class="le svg-txt-w" display="none">Optimal Sync</text>
+
+      <text x="460" y="208" text-anchor="middle" font-size="10" class="lz svg-txt-w">持久基础设施</text>
+      <text x="460" y="208" text-anchor="middle" font-size="10" class="le svg-txt-w" display="none">Always-on Infra</text>
+      <text x="460" y="222" text-anchor="middle" font-size="10" class="lz svg-txt-w">+</text>
+      <text x="460" y="222" text-anchor="middle" font-size="10" class="le svg-txt-w" display="none">+</text>
+      <text x="460" y="236" text-anchor="middle" font-size="10" class="lz svg-txt-w">自适应负载调度</text>
+      <text x="460" y="236" text-anchor="middle" font-size="10" class="le svg-txt-w" display="none">Adaptive Workload</text>
+
+      <!-- Core outcome in center -->
+      <circle cx="460" cy="272" r="20" fill="#8b5cf6" fill-opacity="0.35" stroke="#8b5cf6" stroke-width="2"/>
+      <text x="460" y="269" text-anchor="middle" font-size="10" font-weight="700" class="lz svg-txt-w">协同</text>
+      <text x="460" y="269" text-anchor="middle" font-size="10" font-weight="700" class="le svg-txt-w" display="none">Sync</text>
+      <text x="460" y="284" text-anchor="middle" font-size="10" font-weight="700" class="lz svg-txt-w">效应</text>
+      <text x="460" y="284" text-anchor="middle" font-size="10" font-weight="700" class="le svg-txt-w" display="none">Effect</text>
+
+      <!-- Outcome chips below circle -->
+      <rect x="400" y="302" width="120" height="22" rx="6" fill="#8b5cf6" fill-opacity="0.15" stroke="#8b5cf6" stroke-width="1"/>
+      <text x="460" y="317" text-anchor="middle" font-size="10" class="lz svg-txt-w">低延迟 · 省带宽</text>
+      <text x="460" y="317" text-anchor="middle" font-size="10" class="le svg-txt-w" display="none">Low-latency · Efficient</text>
+
+      <rect x="400" y="328" width="120" height="22" rx="6" fill="#8b5cf6" fill-opacity="0.15" stroke="#8b5cf6" stroke-width="1"/>
+      <text x="460" y="343" text-anchor="middle" font-size="10" class="lz svg-txt-w">稳定 · 智能</text>
+      <text x="460" y="343" text-anchor="middle" font-size="10" class="le svg-txt-w" display="none">Stable · Smart</text>
+
+      <!-- Interplay arrows -->
+      <path d="M 380 250 C 400 250, 410 250, 430 250" fill="none" stroke="#22d3ee" stroke-width="1.8" stroke-dasharray="4,3" marker-end="url(#arV)" opacity="0.75"/>
+      <path d="M 540 250 C 520 250, 510 250, 490 250" fill="none" stroke="#f59e0b" stroke-width="1.8" stroke-dasharray="4,3" marker-end="url(#arV)" opacity="0.75"/>
+
+      <!-- ========== BOTTOM STATS ROW ========== -->
+      <g transform="translate(0,430)">
+        <!-- Stat 1 -->
+        <rect x="60" y="0" width="240" height="76" rx="12" fill="#22d3ee" fill-opacity="0.08" stroke="#22d3ee" stroke-width="1.2"/>
+        <text x="180" y="26" text-anchor="middle" fill="#22d3ee" font-size="22" font-weight="700">2</text>
+        <text x="180" y="48" text-anchor="middle" font-size="12" font-weight="600" class="lz svg-txt-w">互补模块</text>
+        <text x="180" y="48" text-anchor="middle" font-size="12" font-weight="600" class="le svg-txt-w" display="none">Complementary Modules</text>
+        <text x="180" y="64" text-anchor="middle" font-size="10" class="lz svg-txt-m">Perpetual + KAIROS 协作</text>
+        <text x="180" y="64" text-anchor="middle" font-size="10" class="le svg-txt-m" display="none">Perpetual + KAIROS together</text>
+
+        <!-- Stat 2 -->
+        <rect x="340" y="0" width="240" height="76" rx="12" fill="#8b5cf6" fill-opacity="0.08" stroke="#8b5cf6" stroke-width="1.2"/>
+        <text x="460" y="28" text-anchor="middle" fill="#8b5cf6" font-size="17" font-weight="700">Perpetual + KAIROS</text>
+        <text x="460" y="48" text-anchor="middle" font-size="12" font-weight="600" class="lz svg-txt-w">组合策略</text>
+        <text x="460" y="48" text-anchor="middle" font-size="12" font-weight="600" class="le svg-txt-w" display="none">Combined Strategy</text>
+        <text x="460" y="64" text-anchor="middle" font-size="10" class="lz svg-txt-m">基础层 + 调度层 叠加</text>
+        <text x="460" y="64" text-anchor="middle" font-size="10" class="le svg-txt-m" display="none">Infra layer + scheduling layer</text>
+
+        <!-- Stat 3 -->
+        <rect x="620" y="0" width="240" height="76" rx="12" fill="#f59e0b" fill-opacity="0.08" stroke="#f59e0b" stroke-width="1.2"/>
+        <text x="740" y="28" text-anchor="middle" fill="#f59e0b" font-size="18" font-weight="700" class="lz">最优组合</text>
+        <text x="740" y="28" text-anchor="middle" fill="#f59e0b" font-size="18" font-weight="700" class="le" display="none">Optimal Combo</text>
+        <text x="740" y="48" text-anchor="middle" font-size="12" font-weight="600" class="lz svg-txt-w">同步策略</text>
+        <text x="740" y="48" text-anchor="middle" font-size="12" font-weight="600" class="le svg-txt-w" display="none">Sync Strategy</text>
+        <text x="740" y="64" text-anchor="middle" font-size="10" class="lz svg-txt-m">低延迟 + 高吞吐 + 高可靠</text>
+        <text x="740" y="64" text-anchor="middle" font-size="10" class="le svg-txt-m" display="none">Low-lat + high-thru + reliable</text>
+      </g>
+
+      <!-- Bottom caption -->
+      <text x="460" y="528" text-anchor="middle" fill="#64748b" font-size="10" class="lz">Venn 式组合视图 · 左右模块独立工作，中心区呈现叠加红利</text>
+      <text x="460" y="528" text-anchor="middle" fill="#64748b" font-size="10" class="le" display="none">Venn-style view · Independent modules with overlapping synergy</text>
+    </svg>
+  </div>
+
+  <!-- Benefits grid -->
+  <div class="benefits">
+    <div class="benefit latency">
+      <div class="bh"><span class="dot"></span>
+        <span class="lz">延迟 Latency</span>
+        <span class="le" style="display:none">Latency</span>
+      </div>
+      <div class="bd">
+        <span class="lz">接近零延迟（Perpetual 保持连接）+ 最优时机（KAIROS 选择发送窗口），首字节响应从建连期压缩到毫秒级。</span>
+        <span class="le" style="display:none">Near-zero latency (Perpetual keeps connection) + optimal timing (KAIROS picks windows). First-byte time drops from handshake-scale to milliseconds.</span>
+      </div>
+    </div>
+    <div class="benefit bw">
+      <div class="bh"><span class="dot"></span>
+        <span class="lz">带宽 Bandwidth</span>
+        <span class="le" style="display:none">Bandwidth</span>
+      </div>
+      <div class="bd">
+        <span class="lz">KAIROS 批量合并减少小包往返，Perpetual 复用稳定连接避免重复 TLS 握手，整体带宽利用率显著上升。</span>
+        <span class="le" style="display:none">KAIROS batching reduces small round-trips, Perpetual reuses stable connection to avoid repeated TLS handshakes — overall bandwidth efficiency rises sharply.</span>
+      </div>
+    </div>
+    <div class="benefit rel">
+      <div class="bh"><span class="dot"></span>
+        <span class="lz">可靠性 Reliability</span>
+        <span class="le" style="display:none">Reliability</span>
+      </div>
+      <div class="bd">
+        <span class="lz">Perpetual 保证"永远在线可达"，KAIROS 在网络降级时优雅延后低优先级任务，系统整体抗抖动能力提升。</span>
+        <span class="le" style="display:none">Perpetual guarantees always-on reachability, KAIROS gracefully defers low-priority tasks during degradation — overall jitter tolerance improves.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Use cases -->
+  <div class="usecases">
+    <div class="uh">
+      <span class="lz">典型应用场景</span>
+      <span class="le" style="display:none">Representative Use Cases</span>
+    </div>
+    <div class="uc-grid">
+      <div class="uc">
+        <div class="uc-t">
+          <span class="lz">团队实时同步</span>
+          <span class="le" style="display:none">Team Sync</span>
+        </div>
+        <span class="lz">多端状态即时同步，Perpetual 保证到达，KAIROS 合并相近变更。</span>
+        <span class="le" style="display:none">Real-time multi-client sync — Perpetual ensures delivery, KAIROS merges nearby changes.</span>
+      </div>
+      <div class="uc">
+        <div class="uc-t">
+          <span class="lz">后台索引</span>
+          <span class="le" style="display:none">Background Indexing</span>
+        </div>
+        <span class="lz">大规模索引任务推迟到空闲期批量执行，连接常驻避免重建开销。</span>
+        <span class="le" style="display:none">Large indexing jobs deferred to idle windows in batches, persistent connection avoids rebuild cost.</span>
+      </div>
+      <div class="uc">
+        <div class="uc-t">
+          <span class="lz">推测预取</span>
+          <span class="le" style="display:none">Speculative Prefetch</span>
+        </div>
+        <span class="lz">基于用户行为预测，KAIROS 在空闲时预取数据，Perpetual 确保低延迟送达。</span>
+        <span class="le" style="display:none">Behavior-predicted prefetch — KAIROS fetches during idle, Perpetual ensures low-latency delivery.</span>
+      </div>
+      <div class="uc">
+        <div class="uc-t">
+          <span class="lz">遥测上报</span>
+          <span class="le" style="display:none">Telemetry</span>
+        </div>
+        <span class="lz">Metric/Log 聚合后批量上报，既不挤占热路径，又保证不丢数据。</span>
+        <span class="le" style="display:none">Aggregated metric/log batches uploaded without blocking hot path, while guaranteeing no data loss.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="credit">
+    <span class="lz">VIS-12-F · Perpetual Bridge + KAIROS · 源码依据: replBridge.ts · initReplBridge.ts · KAIROS 出现 190 次 / 61 文件</span>
+    <span class="le" style="display:none">VIS-12-F · Perpetual Bridge + KAIROS · Source: replBridge.ts · initReplBridge.ts · KAIROS appears 190 times / 61 files</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

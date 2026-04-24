@@ -1,0 +1,616 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Bare Git Repo 攻击与防御流程图 · VIS-3-010</title>
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<style>
+  :root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;--divider:rgba(255,255,255,.12);--divider-text:rgba(255,255,255,.3);}
+  :root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;--divider:rgba(255,255,255,.12);--divider-text:rgba(255,255,255,.3);}
+  :root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;--divider:rgba(15,23,42,.15);--divider-text:rgba(15,23,42,.35);}
+  :root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+  *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+  html,body{width:100%;min-height:100vh;background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;transition:background .25s,color .25s;}
+
+  .page-wrap{max-width:980px;margin:0 auto;padding:24px 20px 40px;}
+
+  /* Header */
+  .header{display:flex;align-items:flex-start;justify-content:space-between;gap:16px;margin-bottom:20px;}
+  .header-left{}
+  .badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.08em;padding:3px 9px;border-radius:4px;background:var(--rose);color:#fff;margin-bottom:8px;}
+  .title{font-size:22px;font-weight:700;line-height:1.3;color:var(--text);}
+  .subtitle{font-size:13px;color:var(--muted);margin-top:4px;}
+  .controls{display:flex;gap:8px;flex-shrink:0;margin-top:4px;}
+  .btn{display:inline-flex;align-items:center;gap:6px;padding:7px 14px;border-radius:8px;border:1px solid var(--border);background:var(--panel);color:var(--text);font-size:13px;font-weight:500;cursor:pointer;transition:background .15s,border-color .15s;}
+  .btn:hover{background:var(--subtle);border-color:rgba(255,255,255,.15);}
+  :root[data-theme="light"] .btn:hover{border-color:rgba(0,0,0,.15);}
+
+  /* SVG wrapper */
+  .svg-wrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;overflow:hidden;}
+  svg{display:block;width:100%;height:auto;}
+
+  /* Legend */
+  .legend{display:flex;gap:24px;flex-wrap:wrap;margin-top:14px;padding:12px 16px;background:var(--panel);border:1px solid var(--border);border-radius:10px;}
+  .legend-item{display:flex;align-items:center;gap:7px;font-size:12px;color:var(--muted);}
+  .legend-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0;}
+
+  /* Tooltip */
+  .tooltip{position:fixed;pointer-events:none;background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-size:12px;color:var(--text);max-width:220px;line-height:1.5;box-shadow:0 8px 24px rgba(0,0,0,.35);opacity:0;transition:opacity .15s;z-index:999;}
+  .tooltip.show{opacity:1;}
+
+  /* Animations */
+  @keyframes dash-flow {
+    to { stroke-dashoffset: -24; }
+  }
+  @keyframes pulse-glow {
+    0%,100%{opacity:.6;} 50%{opacity:1;}
+  }
+
+  .attack-arrow-animated {
+    stroke-dasharray: 8 4;
+    animation: dash-flow .7s linear infinite;
+  }
+
+  /* Node hover */
+  .node-group{cursor:pointer;}
+  .node-group .node-rect,.node-group .node-circle{transition:transform .18s ease;}
+  .node-group:hover .node-rect{filter:brightness(1.18);}
+  .node-group:hover .node-badge{transform:scale(1.12);}
+
+  /* Responsive */
+  @media(max-width:640px){
+    .title{font-size:17px;}
+    .controls{flex-direction:column;}
+  }
+</style>
+</head>
+<body>
+<div class="page-wrap">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-left">
+      <div class="badge">VIS-3-010</div>
+      <div class="title">
+        <span class="lz">Bare Git Repo 攻击与防御流程图</span>
+        <span class="le" style="display:none">Bare Git Repo Attack &amp; Defense Flow</span>
+      </div>
+      <div class="subtitle">
+        <span class="lz">恶意 Prompt 如何利用裸仓库检测逻辑实施攻击，以及三层防御机制</span>
+        <span class="le" style="display:none">How a malicious prompt exploits bare git repo detection, and three defense layers</span>
+      </div>
+    </div>
+    <div class="controls">
+      <button class="btn" onclick="cycleTheme()">🎨 <span class="lz">主题</span><span class="le" style="display:none">Theme</span></button>
+      <button class="btn" onclick="toggleLang()">🌐 <span class="lz">EN/中</span><span class="le" style="display:none">中/EN</span></button>
+    </div>
+  </div>
+
+  <!-- SVG -->
+  <div class="svg-wrap">
+    <svg viewBox="0 0 920 580" xmlns="http://www.w3.org/2000/svg" aria-label="Bare Git Repo Attack and Defense Flow Diagram">
+      <defs>
+        <!-- Arrow markers -->
+        <marker id="arrow-red" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L9,3 z" fill="#f43f5e"/>
+        </marker>
+        <marker id="arrow-green" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L9,3 z" fill="#10b981"/>
+        </marker>
+        <marker id="arrow-muted" markerWidth="9" markerHeight="9" refX="8" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L9,3 z" fill="#64748b"/>
+        </marker>
+
+        <!-- Glows -->
+        <filter id="glow-red" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow-green" x="-40%" y="-40%" width="180%" height="180%">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="shadow" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="2" stdDeviation="4" flood-color="rgba(0,0,0,.35)"/>
+        </filter>
+
+        <!-- Gradient fills -->
+        <linearGradient id="grad-attack-1" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f43f5e" stop-opacity=".25"/>
+          <stop offset="100%" stop-color="#f43f5e" stop-opacity=".08"/>
+        </linearGradient>
+        <linearGradient id="grad-attack-hot" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f43f5e" stop-opacity=".4"/>
+          <stop offset="100%" stop-color="#f43f5e" stop-opacity=".15"/>
+        </linearGradient>
+        <linearGradient id="grad-defense" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#10b981" stop-opacity=".25"/>
+          <stop offset="100%" stop-color="#10b981" stop-opacity=".08"/>
+        </linearGradient>
+
+        <!-- Zone background gradients -->
+        <linearGradient id="zone-attack-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#f43f5e" stop-opacity=".07"/>
+          <stop offset="100%" stop-color="#f43f5e" stop-opacity=".01"/>
+        </linearGradient>
+        <linearGradient id="zone-defense-bg" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#10b981" stop-opacity=".07"/>
+          <stop offset="100%" stop-color="#10b981" stop-opacity=".01"/>
+        </linearGradient>
+      </defs>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- ZONE BACKGROUNDS -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <rect x="10" y="42" width="900" height="272" rx="12" fill="url(#zone-attack-bg)" stroke="#f43f5e" stroke-width="1" stroke-opacity=".2"/>
+      <rect x="10" y="328" width="900" height="218" rx="12" fill="url(#zone-defense-bg)" stroke="#10b981" stroke-width="1" stroke-opacity=".2"/>
+
+      <!-- Zone labels -->
+      <text x="26" y="64" font-size="12" font-weight="700" fill="#f43f5e" opacity=".9" letter-spacing=".06em">
+        <tspan class="lz">攻击面  Attack Surface</tspan>
+        <tspan class="le" display="none">Attack Surface</tspan>
+      </text>
+
+      <text x="26" y="352" font-size="12" font-weight="700" fill="#10b981" opacity=".9" letter-spacing=".06em">
+        <tspan class="lz">防御面  Defense Surface</tspan>
+        <tspan class="le" display="none">Defense Surface</tspan>
+      </text>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- DIVIDER -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <line x1="20" y1="320" x2="900" y2="320" stroke="var(--divider)" stroke-width="1.5" stroke-dasharray="6 4"/>
+      <text x="460" y="316" text-anchor="middle" font-size="10" fill="var(--divider-text)" letter-spacing=".05em">
+        <tspan class="lz">── 攻防边界 ──</tspan>
+        <tspan class="le" display="none">── Attack / Defense Boundary ──</tspan>
+      </text>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- ATTACK ARROWS (animated dashed red) -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- A1→A2 -->
+      <line x1="174" y1="178" x2="194" y2="178" stroke="#f43f5e" stroke-width="2.2" stroke-opacity=".85"
+            class="attack-arrow-animated" marker-end="url(#arrow-red)" style="animation-delay:0s"/>
+      <!-- A2→A3 -->
+      <line x1="358" y1="178" x2="378" y2="178" stroke="#f43f5e" stroke-width="2.2" stroke-opacity=".85"
+            class="attack-arrow-animated" marker-end="url(#arrow-red)" style="animation-delay:.15s"/>
+      <!-- A3→A4 -->
+      <line x1="542" y1="178" x2="562" y2="178" stroke="#f43f5e" stroke-width="2.2" stroke-opacity=".85"
+            class="attack-arrow-animated" marker-end="url(#arrow-red)" style="animation-delay:.3s"/>
+      <!-- A4→A5 -->
+      <line x1="726" y1="178" x2="746" y2="178" stroke="#f43f5e" stroke-width="2.2" stroke-opacity=".85"
+            class="attack-arrow-animated" marker-end="url(#arrow-red)" style="animation-delay:.45s"/>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- DOWN ARROWS: Attack→Defense (vertical connectors) -->
+      <!-- A1 → D1 -->
+      <path d="M 92 248 L 92 288 Q 92 300 102 300 L 218 300 Q 228 300 228 310 L 228 348"
+            fill="none" stroke="#64748b" stroke-width="1.5" stroke-opacity=".5" stroke-dasharray="4 3"
+            marker-end="url(#arrow-muted)"/>
+      <!-- A5 → D3 -->
+      <path d="M 828 248 L 828 288 Q 828 300 818 300 L 742 300 Q 732 300 732 310 L 732 348"
+            fill="none" stroke="#64748b" stroke-width="1.5" stroke-opacity=".5" stroke-dasharray="4 3"
+            marker-end="url(#arrow-muted)"/>
+
+      <!-- Defense arrows (between defense nodes) -->
+      <!-- D1→D2 -->
+      <line x1="338" y1="430" x2="392" y2="430" stroke="#10b981" stroke-width="2" stroke-opacity=".8"
+            stroke-dasharray="5 3" marker-end="url(#arrow-green)"/>
+      <!-- D2→D3 -->
+      <line x1="558" y1="430" x2="614" y2="430" stroke="#10b981" stroke-width="2" stroke-opacity=".8"
+            stroke-dasharray="5 3" marker-end="url(#arrow-green)"/>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- ATTACK NODE 1 — 攻击者诱导 -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <g class="node-group" data-tip="attack-1" transform="translate(10,100)">
+        <rect class="node-rect" x="0" y="0" width="164" height="148" rx="12"
+              fill="url(#grad-attack-1)" stroke="#f43f5e" stroke-width="1.8"/>
+        <!-- Number badge -->
+        <circle cx="16" cy="16" r="12" fill="#f43f5e" class="node-badge"/>
+        <text x="16" y="21" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">1</text>
+        <!-- Icon area -->
+        <text x="82" y="52" text-anchor="middle" font-size="26">🎯</text>
+        <!-- Title ZH -->
+        <text x="82" y="76" text-anchor="middle" font-size="11" font-weight="700" fill="#f43f5e">
+          <tspan class="lz">攻击者诱导</tspan>
+          <tspan class="le" display="none">Malicious Prompt</tspan>
+        </text>
+        <!-- Subtitle EN on separate line (shown only EN) -->
+        <text x="82" y="91" text-anchor="middle" font-size="10" fill="#f43f5e" opacity=".7" class="le" display="none">Prompt Injection</text>
+        <!-- Subtitle ZH -->
+        <text x="82" y="91" text-anchor="middle" font-size="10" fill="#f43f5e" opacity=".7" class="lz">Malicious Prompt</text>
+        <!-- Detail -->
+        <foreignObject x="8" y="100" width="148" height="40">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-size:10px;color:var(--muted);text-align:center;line-height:1.4">
+            <span class="lz">恶意指令 / Prompt Injection</span>
+            <span class="le" style="display:none">Injects malicious instruction</span>
+          </div>
+        </foreignObject>
+      </g>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- ATTACK NODE 2 — Claude 创建文件 -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <g class="node-group" data-tip="attack-2" transform="translate(194,100)">
+        <rect class="node-rect" x="0" y="0" width="164" height="148" rx="12"
+              fill="url(#grad-attack-1)" stroke="#f43f5e" stroke-width="1.8"/>
+        <circle cx="16" cy="16" r="12" fill="#f43f5e" class="node-badge"/>
+        <text x="16" y="21" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">2</text>
+        <text x="82" y="52" text-anchor="middle" font-size="26">📁</text>
+        <text x="82" y="76" text-anchor="middle" font-size="11" font-weight="700" fill="#f43f5e">
+          <tspan class="lz">Claude 创建文件</tspan>
+          <tspan class="le" display="none">Create Files</tspan>
+        </text>
+        <text x="82" y="91" text-anchor="middle" font-size="10" fill="#f43f5e" opacity=".7" class="lz">HEAD / objects / refs</text>
+        <text x="82" y="91" text-anchor="middle" font-size="10" fill="#f43f5e" opacity=".7" class="le" display="none">HEAD / objects / refs</text>
+        <foreignObject x="8" y="100" width="148" height="40">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-size:10px;color:var(--muted);text-align:center;line-height:1.4">
+            <span class="lz">在 CWD 植入关键文件</span>
+            <span class="le" style="display:none">Plants key files in CWD</span>
+          </div>
+        </foreignObject>
+      </g>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- ATTACK NODE 3 — Git 检测触发 -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <g class="node-group" data-tip="attack-3" transform="translate(378,100)">
+        <rect class="node-rect" x="0" y="0" width="164" height="148" rx="12"
+              fill="url(#grad-attack-hot)" stroke="#f43f5e" stroke-width="2.2" filter="url(#glow-red)"/>
+        <circle cx="16" cy="16" r="12" fill="#f43f5e" class="node-badge"/>
+        <text x="16" y="21" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">3</text>
+        <text x="82" y="52" text-anchor="middle" font-size="26">🔍</text>
+        <text x="82" y="76" text-anchor="middle" font-size="11" font-weight="700" fill="#f43f5e">
+          <tspan class="lz">Git 检测触发</tspan>
+          <tspan class="le" display="none">Detection Triggered</tspan>
+        </text>
+        <text x="82" y="91" text-anchor="middle" font-size="10" fill="#f43f5e" opacity=".8" class="lz">is_git_directory()</text>
+        <text x="82" y="91" text-anchor="middle" font-size="10" fill="#f43f5e" opacity=".8" class="le" display="none">is_git_directory()</text>
+        <foreignObject x="8" y="100" width="148" height="40">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-size:10px;color:var(--muted);text-align:center;line-height:1.4">
+            <span class="lz">检测到 HEAD + objects + refs</span>
+            <span class="le" style="display:none">Detects HEAD + objects + refs</span>
+          </div>
+        </foreignObject>
+      </g>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- ATTACK NODE 4 — 误判为 Bare Repo -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <g class="node-group" data-tip="attack-4" transform="translate(562,100)">
+        <rect class="node-rect" x="0" y="0" width="164" height="148" rx="12"
+              fill="url(#grad-attack-hot)" stroke="#f43f5e" stroke-width="2.2" filter="url(#glow-red)"/>
+        <circle cx="16" cy="16" r="12" fill="#f43f5e" class="node-badge"/>
+        <text x="16" y="21" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">4</text>
+        <text x="82" y="52" text-anchor="middle" font-size="26">⚠️</text>
+        <text x="82" y="76" text-anchor="middle" font-size="11" font-weight="700" fill="#f43f5e">
+          <tspan class="lz">误判 Bare Repo</tspan>
+          <tspan class="le" display="none">Misidentified as Bare</tspan>
+        </text>
+        <text x="82" y="91" text-anchor="middle" font-size="10" fill="#f43f5e" opacity=".7" class="lz">目录身份被欺骗</text>
+        <text x="82" y="91" text-anchor="middle" font-size="10" fill="#f43f5e" opacity=".7" class="le" display="none">Directory identity spoofed</text>
+        <foreignObject x="8" y="100" width="148" height="40">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-size:10px;color:var(--muted);text-align:center;line-height:1.4">
+            <span class="lz">Git thinks CWD is bare repo</span>
+            <span class="le" style="display:none">Git treats CWD as bare repo</span>
+          </div>
+        </foreignObject>
+      </g>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- ATTACK NODE 5 — 执行恶意操作 -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <g class="node-group" data-tip="attack-5" transform="translate(746,100)">
+        <rect class="node-rect" x="0" y="0" width="164" height="148" rx="12"
+              fill="url(#grad-attack-hot)" stroke="#f43f5e" stroke-width="2.5" filter="url(#glow-red)"/>
+        <circle cx="16" cy="16" r="12" fill="#f43f5e" class="node-badge"/>
+        <text x="16" y="21" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">5</text>
+        <text x="82" y="52" text-anchor="middle" font-size="26">💀</text>
+        <text x="82" y="76" text-anchor="middle" font-size="11" font-weight="700" fill="#f43f5e">
+          <tspan class="lz">执行恶意操作</tspan>
+          <tspan class="le" display="none">Execute Malicious Ops</tspan>
+        </text>
+        <text x="82" y="91" text-anchor="middle" font-size="10" fill="#f43f5e" opacity=".7" class="lz">Hooks / Config 注入</text>
+        <text x="82" y="91" text-anchor="middle" font-size="10" fill="#f43f5e" opacity=".7" class="le" display="none">Hooks / Config injection</text>
+        <foreignObject x="8" y="100" width="148" height="40">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-size:10px;color:var(--muted);text-align:center;line-height:1.4">
+            <span class="lz">Hooks execution / Config injection</span>
+            <span class="le" style="display:none">Hooks execution &amp; Config injection</span>
+          </div>
+        </foreignObject>
+      </g>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- DEFENSE NODE 1 — 路径标准化校验 -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <g class="node-group" data-tip="defense-1" transform="translate(90,358)">
+        <rect class="node-rect" x="0" y="0" width="248" height="148" rx="12"
+              fill="url(#grad-defense)" stroke="#10b981" stroke-width="1.8" filter="url(#glow-green)"/>
+        <circle cx="16" cy="16" r="12" fill="#10b981" class="node-badge"/>
+        <text x="16" y="21" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">1</text>
+        <!-- Shield icon -->
+        <text x="124" y="52" text-anchor="middle" font-size="22">🛡️</text>
+        <text x="124" y="76" text-anchor="middle" font-size="11" font-weight="700" fill="#10b981">
+          <tspan class="lz">路径标准化校验</tspan>
+          <tspan class="le" display="none">Path Normalization Check</tspan>
+        </text>
+        <text x="124" y="91" text-anchor="middle" font-size="10" fill="#10b981" opacity=".7" class="le" display="none">Blocks relative path injection</text>
+        <text x="124" y="91" text-anchor="middle" font-size="10" fill="#10b981" opacity=".7" class="lz">Path Normalization Check</text>
+        <foreignObject x="10" y="102" width="228" height="40">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-size:10px;color:var(--muted);text-align:center;line-height:1.4">
+            <span class="lz">规范化处理路径，阻断相对路径注入</span>
+            <span class="le" style="display:none">Normalizes paths, blocks relative path injection</span>
+          </div>
+        </foreignObject>
+      </g>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- DEFENSE NODE 2 — CLAUDE.md 信任验证 -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <g class="node-group" data-tip="defense-2" transform="translate(392,358)">
+        <rect class="node-rect" x="0" y="0" width="166" height="148" rx="12"
+              fill="url(#grad-defense)" stroke="#10b981" stroke-width="1.8" filter="url(#glow-green)"/>
+        <circle cx="16" cy="16" r="12" fill="#10b981" class="node-badge"/>
+        <text x="16" y="21" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">2</text>
+        <text x="83" y="52" text-anchor="middle" font-size="22">✅</text>
+        <text x="83" y="76" text-anchor="middle" font-size="11" font-weight="700" fill="#10b981">
+          <tspan class="lz">CLAUDE.md 验证</tspan>
+          <tspan class="le" display="none">Trust Verification</tspan>
+        </text>
+        <text x="83" y="91" text-anchor="middle" font-size="10" fill="#10b981" opacity=".7" class="le" display="none">Explicit repo authorization</text>
+        <text x="83" y="91" text-anchor="middle" font-size="10" fill="#10b981" opacity=".7" class="lz">Trust Verification</text>
+        <foreignObject x="10" y="102" width="146" height="40">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-size:10px;color:var(--muted);text-align:center;line-height:1.4">
+            <span class="lz">只信任显式授权仓库的 CLAUDE.md</span>
+            <span class="le" style="display:none">Only trusts explicitly authorized repos</span>
+          </div>
+        </foreignObject>
+      </g>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- DEFENSE NODE 3 — Workspace 隔离 -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <g class="node-group" data-tip="defense-3" transform="translate(614,358)">
+        <rect class="node-rect" x="0" y="0" width="248" height="148" rx="12"
+              fill="url(#grad-defense)" stroke="#10b981" stroke-width="1.8" filter="url(#glow-green)"/>
+        <circle cx="16" cy="16" r="12" fill="#10b981" class="node-badge"/>
+        <text x="16" y="21" text-anchor="middle" font-size="12" font-weight="800" fill="#fff">3</text>
+        <text x="124" y="52" text-anchor="middle" font-size="22">🔒</text>
+        <text x="124" y="76" text-anchor="middle" font-size="11" font-weight="700" fill="#10b981">
+          <tspan class="lz">Workspace 隔离</tspan>
+          <tspan class="le" display="none">Workspace Isolation</tspan>
+        </text>
+        <text x="124" y="91" text-anchor="middle" font-size="10" fill="#10b981" opacity=".7" class="le" display="none">Per-Agent sandbox</text>
+        <text x="124" y="91" text-anchor="middle" font-size="10" fill="#10b981" opacity=".7" class="lz">Workspace Isolation</text>
+        <foreignObject x="10" y="102" width="228" height="40">
+          <div xmlns="http://www.w3.org/1999/xhtml" style="font-size:10px;color:var(--muted);text-align:center;line-height:1.4">
+            <span class="lz">每个 Agent 独立沙箱，阻断横向移动</span>
+            <span class="le" style="display:none">Per-Agent sandbox, blocks lateral movement</span>
+          </div>
+        </foreignObject>
+      </g>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- Blocking label over attack arrows 3→4 (critical path) -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <g transform="translate(209,282)">
+        <rect x="0" y="0" width="68" height="22" rx="6" fill="#10b981" fill-opacity=".15" stroke="#10b981" stroke-width="1.2"/>
+        <text x="34" y="15" text-anchor="middle" font-size="10" font-weight="700" fill="#10b981">
+          <tspan class="lz">防御拦截</tspan>
+          <tspan class="le" display="none">BLOCKED</tspan>
+        </text>
+      </g>
+      <g transform="translate(696,282)">
+        <rect x="0" y="0" width="68" height="22" rx="6" fill="#10b981" fill-opacity=".15" stroke="#10b981" stroke-width="1.2"/>
+        <text x="34" y="15" text-anchor="middle" font-size="10" font-weight="700" fill="#10b981">
+          <tspan class="lz">沙箱阻断</tspan>
+          <tspan class="le" display="none">SANDBOXED</tspan>
+        </text>
+      </g>
+
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <!-- Footer source label -->
+      <!-- ═══════════════════════════════════════════════════════ -->
+      <text x="460" y="572" text-anchor="middle" font-size="10" fill="rgba(148,163,184,.5)">
+        Source: Claude Code Source · is_git_directory() · VIS-3-010
+      </text>
+    </svg>
+  </div>
+
+  <!-- Legend -->
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#f43f5e"></div>
+      <span class="lz">攻击节点（动态红色箭头 = 攻击推进）</span>
+      <span class="le" style="display:none">Attack node (animated red arrows = attack progression)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#10b981"></div>
+      <span class="lz">防御节点（绿色箭头 = 拦截层）</span>
+      <span class="le" style="display:none">Defense node (green arrows = interception layer)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#64748b"></div>
+      <span class="lz">灰色虚线 = 攻防触发关系</span>
+      <span class="le" style="display:none">Gray dashed = attack-triggers-defense relation</span>
+    </div>
+    <div class="legend-item" style="margin-left:auto;font-size:11px;color:var(--muted)">
+      <span class="lz">⑤节点高亮 = 核心风险</span>
+      <span class="le" style="display:none">Glowing node = critical risk</span>
+    </div>
+  </div>
+
+</div>
+
+<!-- Tooltip -->
+<div class="tooltip" id="tip"></div>
+
+<script>
+(function(){
+  var tips = {
+    'attack-1': {
+      zh: '攻击者通过精心构造的 Prompt 诱导 Claude 在当前工作目录创建特定文件，触发后续攻击链。',
+      en: 'Attacker crafts a prompt to make Claude create specific files in the CWD, triggering the exploit chain.'
+    },
+    'attack-2': {
+      zh: 'Claude 被欺骗后在 CWD 创建 HEAD、objects/、refs/ 三个关键文件/目录，这正是 bare git repo 的特征文件。',
+      en: 'Claude is tricked into creating HEAD, objects/, refs/ — the three signature files of a bare git repo.'
+    },
+    'attack-3': {
+      zh: 'is_git_directory() 函数检测到 HEAD + objects + refs 同时存在，判定当前目录为 Git 仓库。',
+      en: 'is_git_directory() finds HEAD + objects + refs co-present and marks the CWD as a Git repository.'
+    },
+    'attack-4': {
+      zh: '由于特征文件完整，Git 工具链将 CWD 误判为 bare repo，接受对该目录的 Git 操作权限。',
+      en: 'With all signature files present, the Git toolchain misidentifies CWD as a bare repo and grants Git operation rights.'
+    },
+    'attack-5': {
+      zh: '攻击者通过误判的 bare repo 身份执行 hooks 或注入 config，实现持久化或代码执行。',
+      en: 'Attacker uses the spoofed bare repo identity to execute hooks or inject config, achieving persistence or code execution.'
+    },
+    'defense-1': {
+      zh: '对所有输入路径进行规范化处理（resolve symlinks、消除 ../ 序列），在文件系统操作前拦截路径注入。',
+      en: 'Normalizes all input paths (resolve symlinks, eliminate ../ sequences) to intercept path injection before filesystem ops.'
+    },
+    'defense-2': {
+      zh: 'CLAUDE.md 只从显式授权的仓库根加载，防止攻击者通过植入 CLAUDE.md 劫持 AI 行为。',
+      en: 'CLAUDE.md is only loaded from explicitly authorized repo roots, preventing hijack via injected CLAUDE.md.'
+    },
+    'defense-3': {
+      zh: '每个 Agent 实例运行在独立 Workspace 沙箱中，即使单节点被攻破也无法横向移动到其他工作区。',
+      en: 'Each Agent instance runs in an isolated Workspace sandbox — even if one is compromised, lateral movement to other workspaces is blocked.'
+    }
+  };
+
+  var lang = localStorage.getItem('vlang') || 'zh';
+  var tip = document.getElementById('tip');
+
+  function showTip(el, key) {
+    lang = localStorage.getItem('vlang') || 'zh';
+    var data = tips[key];
+    if (!data) return;
+    tip.textContent = data[lang] || data['zh'];
+    tip.classList.add('show');
+  }
+
+  function moveTip(e) {
+    tip.style.left = (e.clientX + 14) + 'px';
+    tip.style.top = (e.clientY + 14) + 'px';
+  }
+
+  function hideTip() {
+    tip.classList.remove('show');
+  }
+
+  document.querySelectorAll('.node-group').forEach(function(g) {
+    var key = g.getAttribute('data-tip');
+    g.addEventListener('mouseenter', function(e) { showTip(g, key); });
+    g.addEventListener('mousemove', moveTip);
+    g.addEventListener('mouseleave', hideTip);
+  });
+
+  // Clamp tooltip within viewport
+  document.addEventListener('mousemove', function(e) {
+    if (!tip.classList.contains('show')) return;
+    var tw = tip.offsetWidth, th = tip.offsetHeight;
+    var vw = window.innerWidth, vh = window.innerHeight;
+    var x = e.clientX + 14, y = e.clientY + 14;
+    if (x + tw > vw - 8) x = e.clientX - tw - 10;
+    if (y + th > vh - 8) y = e.clientY - th - 10;
+    tip.style.left = x + 'px';
+    tip.style.top = y + 'px';
+  });
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

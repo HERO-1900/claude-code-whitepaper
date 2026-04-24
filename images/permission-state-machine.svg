@@ -1,0 +1,206 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 1100" width="800" height="1100">
+  <defs>
+    <style>
+      text { font-family: system-ui, -apple-system, sans-serif; }
+    </style>
+    <marker id="arrowDown" markerWidth="8" markerHeight="6" refX="4" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#8b949e"/>
+    </marker>
+    <marker id="arrowGreen" markerWidth="8" markerHeight="6" refX="4" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#3fb950"/>
+    </marker>
+    <marker id="arrowRed" markerWidth="8" markerHeight="6" refX="4" refY="3" orient="auto">
+      <path d="M0,0 L8,3 L0,6 Z" fill="#f85149"/>
+    </marker>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+    <filter id="glowGreen">
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#3fb950" flood-opacity="0.3"/>
+    </filter>
+    <filter id="glowRed">
+      <feDropShadow dx="0" dy="0" stdDeviation="4" flood-color="#f85149" flood-opacity="0.3"/>
+    </filter>
+    <linearGradient id="headerGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#388bfd" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#bc8cff" stop-opacity="0.15"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="1100" fill="#0d1117" rx="12"/>
+
+  <!-- Header area -->
+  <rect x="0" y="0" width="800" height="80" fill="url(#headerGrad)" rx="12"/>
+  <rect x="0" y="40" width="800" height="40" fill="url(#headerGrad)"/>
+  <text x="400" y="38" fill="#ffffff" font-size="22" font-weight="700" text-anchor="middle">Permission Check Flow</text>
+  <text x="400" y="62" fill="#8b949e" font-size="13" text-anchor="middle">9-Step Sequential Evaluation Pipeline</text>
+
+  <!-- Layout constants: box at x=200, w=260, step height ~100 -->
+  <!-- Branch arrows go right to x=560 -->
+
+  <!-- ==================== STEP 1: Bypass-Immune Check ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="200" y="100" width="260" height="52" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+    <rect x="200" y="100" width="4" height="52" rx="2" fill="#58a6ff"/>
+  </g>
+  <text x="218" y="121" fill="#58a6ff" font-size="11" font-weight="700">STEP 1</text>
+  <text x="218" y="140" fill="#e6edf3" font-size="14" font-weight="600">Bypass-Immune Check</text>
+  <!-- Arrow down -->
+  <line x1="330" y1="152" x2="330" y2="192" stroke="#8b949e" stroke-width="1.5" marker-end="url(#arrowDown)"/>
+  <!-- Branch right: Denied -->
+  <path d="M460,126 L540,126" fill="none" stroke="#f85149" stroke-width="1.5" marker-end="url(#arrowRed)"/>
+  <rect x="548" y="112" width="100" height="28" rx="6" fill="#f8514915" stroke="#f85149" stroke-width="1" filter="url(#glowRed)"/>
+  <text x="598" y="131" fill="#f85149" font-size="12" font-weight="600" text-anchor="middle">Denied</text>
+
+  <!-- ==================== STEP 2: Mode Check ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="200" y="200" width="260" height="52" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+    <rect x="200" y="200" width="4" height="52" rx="2" fill="#58a6ff"/>
+  </g>
+  <text x="218" y="221" fill="#58a6ff" font-size="11" font-weight="700">STEP 2</text>
+  <text x="218" y="240" fill="#e6edf3" font-size="14" font-weight="600">Mode Check</text>
+  <!-- Arrow down -->
+  <line x1="330" y1="252" x2="330" y2="292" stroke="#8b949e" stroke-width="1.5" marker-end="url(#arrowDown)"/>
+  <!-- Branch right: Allowed -->
+  <path d="M460,226 L540,226" fill="none" stroke="#3fb950" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+  <rect x="548" y="212" width="100" height="28" rx="6" fill="#3fb95015" stroke="#3fb950" stroke-width="1" filter="url(#glowGreen)"/>
+  <text x="598" y="231" fill="#3fb950" font-size="12" font-weight="600" text-anchor="middle">Allowed</text>
+
+  <!-- ==================== STEP 3: Policy Check ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="200" y="300" width="260" height="52" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+    <rect x="200" y="300" width="4" height="52" rx="2" fill="#58a6ff"/>
+  </g>
+  <text x="218" y="321" fill="#58a6ff" font-size="11" font-weight="700">STEP 3</text>
+  <text x="218" y="340" fill="#e6edf3" font-size="14" font-weight="600">Policy Check</text>
+  <!-- Arrow down -->
+  <line x1="330" y1="352" x2="330" y2="392" stroke="#8b949e" stroke-width="1.5" marker-end="url(#arrowDown)"/>
+  <!-- Branch right: Denied -->
+  <path d="M460,326 L540,326" fill="none" stroke="#f85149" stroke-width="1.5" marker-end="url(#arrowRed)"/>
+  <rect x="548" y="312" width="100" height="28" rx="6" fill="#f8514915" stroke="#f85149" stroke-width="1" filter="url(#glowRed)"/>
+  <text x="598" y="331" fill="#f85149" font-size="12" font-weight="600" text-anchor="middle">Denied</text>
+
+  <!-- ==================== STEP 4: Deny-List Check ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="200" y="400" width="260" height="52" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+    <rect x="200" y="400" width="4" height="52" rx="2" fill="#d29922"/>
+  </g>
+  <text x="218" y="421" fill="#d29922" font-size="11" font-weight="700">STEP 4</text>
+  <text x="218" y="440" fill="#e6edf3" font-size="14" font-weight="600">Deny-List Check</text>
+  <!-- Arrow down -->
+  <line x1="330" y1="452" x2="330" y2="492" stroke="#8b949e" stroke-width="1.5" marker-end="url(#arrowDown)"/>
+  <!-- Branch right: Denied -->
+  <path d="M460,426 L540,426" fill="none" stroke="#f85149" stroke-width="1.5" marker-end="url(#arrowRed)"/>
+  <rect x="548" y="412" width="100" height="28" rx="6" fill="#f8514915" stroke="#f85149" stroke-width="1" filter="url(#glowRed)"/>
+  <text x="598" y="431" fill="#f85149" font-size="12" font-weight="600" text-anchor="middle">Denied</text>
+
+  <!-- ==================== STEP 5: Allow-List Check ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="200" y="500" width="260" height="52" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+    <rect x="200" y="500" width="4" height="52" rx="2" fill="#d29922"/>
+  </g>
+  <text x="218" y="521" fill="#d29922" font-size="11" font-weight="700">STEP 5</text>
+  <text x="218" y="540" fill="#e6edf3" font-size="14" font-weight="600">Allow-List Check</text>
+  <!-- Arrow down -->
+  <line x1="330" y1="552" x2="330" y2="592" stroke="#8b949e" stroke-width="1.5" marker-end="url(#arrowDown)"/>
+  <!-- Branch right: Allowed -->
+  <path d="M460,526 L540,526" fill="none" stroke="#3fb950" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+  <rect x="548" y="512" width="100" height="28" rx="6" fill="#3fb95015" stroke="#3fb950" stroke-width="1" filter="url(#glowGreen)"/>
+  <text x="598" y="531" fill="#3fb950" font-size="12" font-weight="600" text-anchor="middle">Allowed</text>
+
+  <!-- ==================== STEP 6: Cached Decision ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="200" y="600" width="260" height="52" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+    <rect x="200" y="600" width="4" height="52" rx="2" fill="#58a6ff"/>
+  </g>
+  <text x="218" y="621" fill="#58a6ff" font-size="11" font-weight="700">STEP 6</text>
+  <text x="218" y="640" fill="#e6edf3" font-size="14" font-weight="600">Cached Decision</text>
+  <!-- Arrow down -->
+  <line x1="330" y1="652" x2="330" y2="692" stroke="#8b949e" stroke-width="1.5" marker-end="url(#arrowDown)"/>
+  <!-- Branch right: Allowed/Denied -->
+  <path d="M460,620 L540,620" fill="none" stroke="#3fb950" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+  <rect x="548" y="606" width="100" height="28" rx="6" fill="#3fb95015" stroke="#3fb950" stroke-width="1" filter="url(#glowGreen)"/>
+  <text x="598" y="625" fill="#3fb950" font-size="12" font-weight="600" text-anchor="middle">Cached</text>
+
+  <!-- ==================== STEP 7: Risk Assessment ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="200" y="700" width="260" height="52" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+    <rect x="200" y="700" width="4" height="52" rx="2" fill="#d29922"/>
+  </g>
+  <text x="218" y="721" fill="#d29922" font-size="11" font-weight="700">STEP 7</text>
+  <text x="218" y="740" fill="#e6edf3" font-size="14" font-weight="600">Risk Assessment</text>
+  <!-- Arrow down -->
+  <line x1="330" y1="752" x2="330" y2="792" stroke="#8b949e" stroke-width="1.5" marker-end="url(#arrowDown)"/>
+  <!-- Annotation -->
+  <text x="470" y="732" fill="#8b949e" font-size="11" font-style="italic">low / medium / high</text>
+
+  <!-- ==================== STEP 8: User Prompt ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="200" y="800" width="260" height="52" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+    <rect x="200" y="800" width="4" height="52" rx="2" fill="#bc8cff"/>
+  </g>
+  <text x="218" y="821" fill="#bc8cff" font-size="11" font-weight="700">STEP 8</text>
+  <text x="218" y="840" fill="#e6edf3" font-size="14" font-weight="600">User Prompt</text>
+  <!-- Arrow down -->
+  <line x1="330" y1="852" x2="330" y2="892" stroke="#8b949e" stroke-width="1.5" marker-end="url(#arrowDown)"/>
+  <!-- Branch right: Allow -->
+  <path d="M460,818 L540,818" fill="none" stroke="#3fb950" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+  <rect x="548" y="804" width="100" height="28" rx="6" fill="#3fb95015" stroke="#3fb950" stroke-width="1" filter="url(#glowGreen)"/>
+  <text x="598" y="823" fill="#3fb950" font-size="12" font-weight="600" text-anchor="middle">Allowed</text>
+  <!-- Branch right: Deny -->
+  <path d="M460,838 L540,838" fill="none" stroke="#f85149" stroke-width="1.5" marker-end="url(#arrowRed)"/>
+  <rect x="548" y="838" width="100" height="28" rx="6" fill="#f8514915" stroke="#f85149" stroke-width="1" filter="url(#glowRed)"/>
+  <text x="598" y="857" fill="#f85149" font-size="12" font-weight="600" text-anchor="middle">Denied</text>
+
+  <!-- ==================== STEP 9: Cache Result ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="200" y="900" width="260" height="52" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+    <rect x="200" y="900" width="4" height="52" rx="2" fill="#3fb950"/>
+  </g>
+  <text x="218" y="921" fill="#3fb950" font-size="11" font-weight="700">STEP 9</text>
+  <text x="218" y="940" fill="#e6edf3" font-size="14" font-weight="600">Cache Result</text>
+
+  <!-- "Continue" label on main flow arrows -->
+  <text x="345" y="178" fill="#8b949e" font-size="10">continue</text>
+  <text x="345" y="278" fill="#8b949e" font-size="10">continue</text>
+  <text x="345" y="378" fill="#8b949e" font-size="10">continue</text>
+  <text x="345" y="478" fill="#8b949e" font-size="10">continue</text>
+  <text x="345" y="578" fill="#8b949e" font-size="10">continue</text>
+  <text x="345" y="678" fill="#8b949e" font-size="10">miss</text>
+  <text x="345" y="778" fill="#8b949e" font-size="10">evaluate</text>
+  <text x="345" y="878" fill="#8b949e" font-size="10">store</text>
+
+  <!-- Decorative vertical guide line (subtle) -->
+  <line x1="190" y1="100" x2="190" y2="952" stroke="#30363d" stroke-width="1" stroke-dasharray="4,4" opacity="0.5"/>
+
+  <!-- Legend -->
+  <rect x="50" y="990" width="700" height="80" rx="8" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="80" y="1018" fill="#e6edf3" font-size="13" font-weight="600">Legend</text>
+
+  <!-- Blue = check -->
+  <rect x="80" y="1035" width="20" height="4" rx="2" fill="#58a6ff"/>
+  <text x="108" y="1042" fill="#8b949e" font-size="11">Check step</text>
+
+  <!-- Orange = decision -->
+  <rect x="210" y="1035" width="20" height="4" rx="2" fill="#d29922"/>
+  <text x="238" y="1042" fill="#8b949e" font-size="11">Decision step</text>
+
+  <!-- Purple = user interaction -->
+  <rect x="360" y="1035" width="20" height="4" rx="2" fill="#bc8cff"/>
+  <text x="388" y="1042" fill="#8b949e" font-size="11">User interaction</text>
+
+  <!-- Green = resolution -->
+  <rect x="530" y="1035" width="20" height="4" rx="2" fill="#3fb950"/>
+  <text x="558" y="1042" fill="#8b949e" font-size="11">Resolution</text>
+
+  <!-- Arrow labels -->
+  <line x1="80" y1="1058" x2="100" y2="1058" stroke="#3fb950" stroke-width="1.5" marker-end="url(#arrowGreen)"/>
+  <text x="112" y="1062" fill="#8b949e" font-size="11">Short-circuit allow</text>
+
+  <line x1="280" y1="1058" x2="300" y2="1058" stroke="#f85149" stroke-width="1.5" marker-end="url(#arrowRed)"/>
+  <text x="312" y="1062" fill="#8b949e" font-size="11">Short-circuit deny</text>
+
+  <line x1="480" y1="1058" x2="500" y2="1058" stroke="#8b949e" stroke-width="1.5" marker-end="url(#arrowDown)"/>
+  <text x="512" y="1062" fill="#8b949e" font-size="11">Continue to next step</text>
+</svg>

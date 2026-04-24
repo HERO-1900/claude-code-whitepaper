@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VIS-3-012 OpenTelemetry Span 层级关系图</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+
+:root[data-theme="dark"]{--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.12);--text:#f8fafc;--muted:#cbd5e1;--subtle:#334155;--bar-text-dark:#0f172a;--bar-text-light:#ffffff;}
+:root[data-theme="warm"]{--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.12);--text:#faf5ef;--muted:#d6d3d1;--subtle:#3c3835;--bar-text-dark:#1c1917;--bar-text-light:#ffffff;}
+:root[data-theme="light"]{--bg:#f8fafc;--panel:#ffffff;--card:#ffffff;--border:rgba(15,23,42,.15);--text:#0f172a;--muted:#475569;--subtle:#e2e8f0;--bar-text-dark:#0f172a;--bar-text-light:#ffffff;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+html,body{
+  background:var(--bg);
+  color:var(--text);
+  font-family:'Inter',system-ui,-apple-system,sans-serif;
+  min-height:100vh;
+  transition:background .25s,color .25s;
+}
+
+/* ── top bar ── */
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 22px;
+  background:var(--panel);
+  border-bottom:1px solid var(--border);
+}
+.topbar-title{font-size:15px;font-weight:700;color:var(--text);letter-spacing:.3px;}
+.topbar-sub{font-size:12px;color:var(--muted);margin-top:3px;}
+.topbar-btns{display:flex;gap:10px;}
+.btn{
+  padding:7px 14px;font-size:13px;font-weight:600;
+  border:1px solid var(--border);border-radius:6px;
+  background:var(--subtle);color:var(--text);cursor:pointer;
+  transition:opacity .15s;white-space:nowrap;
+}
+.btn:hover{opacity:.8;}
+
+/* ── main card ── */
+.main{padding:26px 20px;}
+.card{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:12px;
+  padding:22px;
+  max-width:1100px;
+  margin:0 auto;
+}
+.card-header{
+  display:flex;align-items:flex-start;justify-content:space-between;
+  margin-bottom:20px;
+  gap:12px;
+}
+.card-title{font-size:18px;font-weight:700;color:var(--text);}
+.card-desc{font-size:13px;color:var(--muted);margin-top:5px;line-height:1.5;}
+.badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:5px 10px;font-size:12px;font-weight:700;
+  border-radius:5px;background:rgba(139,92,246,.18);color:var(--violet);
+  border:1px solid rgba(139,92,246,.4);
+  white-space:nowrap;
+}
+
+/* ── SVG container ── */
+.viz-wrap{
+  overflow-x:auto;
+  border-radius:8px;
+  border:1px solid var(--border);
+  background:var(--card);
+}
+svg.diagram{
+  display:block;
+  width:100%;
+  height:auto;
+  min-width:980px;
+}
+:root[data-theme="light"] svg.diagram .tree-line{opacity:.7}
+:root[data-theme="light"] svg.diagram .grid-line{opacity:.5 !important}
+
+/* ── legend ── */
+.legend{
+  display:flex;flex-wrap:wrap;gap:14px 18px;
+  margin-top:18px;padding-top:16px;
+  border-top:1px solid var(--border);
+}
+.legend-item{
+  display:flex;align-items:center;gap:8px;
+  font-size:13px;color:var(--text);
+  font-weight:500;
+}
+.legend-dot{
+  width:14px;height:14px;border-radius:3px;flex-shrink:0;
+}
+
+/* ── footer ── */
+.footer{
+  text-align:center;padding:16px 0 8px;
+  font-size:12px;color:var(--muted);letter-spacing:.5px;
+}
+</style>
+</head>
+<body>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+
+<div class="topbar">
+  <div>
+    <div class="topbar-title">
+      <span class="lz">VIS-3-012 · OpenTelemetry Span 层级关系图</span>
+      <span class="le" style="display:none">VIS-3-012 · OpenTelemetry Span Hierarchy</span>
+    </div>
+    <div class="topbar-sub">
+      <span class="lz">Gantt 风格分布式追踪 · Trace 结构可视化</span>
+      <span class="le" style="display:none">Gantt-style Distributed Tracing · Trace Structure Visualization</span>
+    </div>
+  </div>
+  <div class="topbar-btns">
+    <button class="btn" onclick="cycleTheme()">
+      <span class="lz">切换主题</span><span class="le" style="display:none">Theme</span>
+    </button>
+    <button class="btn" onclick="toggleLang()">
+      <span class="lz">EN</span><span class="le" style="display:none">中文</span>
+    </button>
+  </div>
+</div>
+
+<div class="main">
+<div class="card">
+
+  <div class="card-header">
+    <div>
+      <div class="card-title">
+        <span class="lz">OpenTelemetry Span 层级关系图</span>
+        <span class="le" style="display:none">OpenTelemetry Span Hierarchy Diagram</span>
+      </div>
+      <div class="card-desc">
+        <span class="lz">根 Span → 子 Span → 孙 Span 的树形时间线结构，展示 Trace 上下文传播与工具执行链路</span>
+        <span class="le" style="display:none">Root → Child → Grandchild span tree timeline showing trace context propagation and tool execution chain</span>
+      </div>
+    </div>
+    <div class="badge">OTel Trace</div>
+  </div>
+
+  <div class="viz-wrap">
+    <!--
+      Layout geometry (v4, enlarged):
+        viewBox: 0 0 1100 600
+        Ruler band: 0-70
+        Timeline origin: x_origin=240, x_end=1060 → width=820px
+        Time range: 0-950ms → scale = 820/950 ≈ 0.8632 px/ms
+        Row bar height: 34, row pitch: 86
+        Rows (y top of bar):
+          R0 interaction:     y=96
+          R1 llm_request:     y=182
+          R2 tool:            y=268
+          R3 blocked_on_user: y=354
+          R4 execution:       y=440
+          R5 hook:            y=526
+
+        px for ms: x = 240 + ms * 0.8632
+          0   → 240
+          100 → 326.3
+          120 → 343.6
+          150 → 369.5
+          245 → 451.5
+          300 → 499.0
+          350 → 542.1
+          380 → 568.0
+          420 → 602.5
+          450 → 628.4
+          600 → 757.9
+          750 → 887.4
+          900 → 1016.9
+          950 → 1060
+    -->
+    <svg class="diagram" viewBox="0 0 1100 600" xmlns="http://www.w3.org/2000/svg" role="img"
+         aria-label="OpenTelemetry Span hierarchy Gantt diagram">
+      <defs>
+        <style>
+          .svg-bg   { fill: var(--card); }
+          .ruler-bg { fill: var(--subtle); }
+          .grid-line{ stroke: var(--border); stroke-width:1; }
+          .tick-label{ font-family:inherit; font-size:14px; fill:var(--muted); font-weight:600; }
+          .span-label{ font-family:inherit; font-size:15px; font-weight:700; fill:var(--text); }
+          .attr-label{ font-family:inherit; font-size:13px; fill:var(--muted); font-weight:500; }
+          .tree-line { stroke: var(--muted); stroke-width:1.5; stroke-dasharray:4 3; fill:none; opacity:.6; }
+          .ttft-line { stroke: var(--amber); stroke-width:2; stroke-dasharray:5 3; }
+          .arrow     { fill:var(--muted); }
+          .ruler-line{ stroke:var(--muted); stroke-width:1.2; opacity:.7; }
+          .depth-label{ font-family:inherit; font-size:12px; fill:var(--muted); font-weight:600; opacity:.7; }
+        </style>
+
+        <filter id="glow-violet" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#8b5cf6" flood-opacity=".4"/>
+        </filter>
+        <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#22d3ee" flood-opacity=".35"/>
+        </filter>
+        <filter id="glow-emerald" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="0" stdDeviation="3" flood-color="#10b981" flood-opacity=".35"/>
+        </filter>
+        <filter id="glow-amber" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="#f59e0b" flood-opacity=".35"/>
+        </filter>
+        <filter id="glow-orange" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="#f97316" flood-opacity=".35"/>
+        </filter>
+        <filter id="glow-rose" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="#f43f5e" flood-opacity=".35"/>
+        </filter>
+      </defs>
+
+      <!-- background -->
+      <rect width="1100" height="600" class="svg-bg" rx="8"/>
+
+      <!-- ruler band -->
+      <rect x="0" y="0" width="1100" height="70" class="ruler-bg" opacity=".45" rx="8"/>
+      <line x1="0" y1="70" x2="1100" y2="70" class="grid-line" opacity=".7"/>
+
+      <!-- vertical grid lines (timeline origin=240; step 150ms ≈ 129.5px) -->
+      <line x1="240"   y1="70" x2="240"   y2="582" class="grid-line" opacity=".55"/>
+      <line x1="369.5" y1="70" x2="369.5" y2="582" class="grid-line" opacity=".3"/>
+      <line x1="499"   y1="70" x2="499"   y2="582" class="grid-line" opacity=".3"/>
+      <line x1="628.5" y1="70" x2="628.5" y2="582" class="grid-line" opacity=".3"/>
+      <line x1="758"   y1="70" x2="758"   y2="582" class="grid-line" opacity=".3"/>
+      <line x1="887.4" y1="70" x2="887.4" y2="582" class="grid-line" opacity=".3"/>
+      <line x1="1016.9" y1="70" x2="1016.9" y2="582" class="grid-line" opacity=".3"/>
+
+      <!-- ruler tick labels -->
+      <text x="240"    y="28" class="tick-label" text-anchor="middle">0</text>
+      <text x="369.5"  y="28" class="tick-label" text-anchor="middle">150</text>
+      <text x="499"    y="28" class="tick-label" text-anchor="middle">300</text>
+      <text x="628.5"  y="28" class="tick-label" text-anchor="middle">450</text>
+      <text x="758"    y="28" class="tick-label" text-anchor="middle">600</text>
+      <text x="887.4"  y="28" class="tick-label" text-anchor="middle">750</text>
+      <text x="1016.9" y="28" class="tick-label" text-anchor="middle">900</text>
+      <text x="1086" y="28" class="tick-label" text-anchor="end" font-size="12">ms</text>
+
+      <!-- tick marks -->
+      <line x1="240"   y1="58" x2="240"   y2="70" class="ruler-line"/>
+      <line x1="369.5" y1="60" x2="369.5" y2="70" class="ruler-line"/>
+      <line x1="499"   y1="60" x2="499"   y2="70" class="ruler-line"/>
+      <line x1="628.5" y1="60" x2="628.5" y2="70" class="ruler-line"/>
+      <line x1="758"   y1="60" x2="758"   y2="70" class="ruler-line"/>
+      <line x1="887.4" y1="60" x2="887.4" y2="70" class="ruler-line"/>
+      <line x1="1016.9" y1="60" x2="1016.9" y2="70" class="ruler-line"/>
+
+      <!-- ruler header label -->
+      <text x="120" y="28" class="tick-label" text-anchor="middle" font-size="14" font-weight="700">
+        <tspan class="lz">时间轴</tspan><tspan class="le" display="none">Timeline</tspan>
+      </text>
+      <text x="120" y="50" class="tick-label" text-anchor="middle" font-size="12" font-weight="500">Span / Trace</text>
+
+      <!-- ═══════════════════════════════════════════════════
+           ROW 0: interaction (root) — violet
+           bar: 0-950ms → x=240, width=820
+           ═══════════════════════════════════════════════════ -->
+      <polygon points="45,102 51,110 57,102" fill="var(--muted)" opacity=".75"/>
+      <text x="66" y="115" class="span-label">interaction</text>
+
+      <rect x="240" y="96" width="820" height="34" rx="6"
+            fill="#8b5cf6" fill-opacity=".88" filter="url(#glow-violet)"/>
+      <rect x="240" y="96" width="820" height="17" rx="6" fill="white" fill-opacity=".08"/>
+
+      <text x="250" y="118" font-family="inherit" font-size="14" font-weight="700" fill="white">
+        claude_code.interaction · seq=42 · SPAN_TTL=30min
+      </text>
+
+      <text x="240" y="148" class="attr-label">
+        <tspan class="lz">根 Span · 总时长 950ms</tspan><tspan class="le" display="none">Root Span · total 950ms</tspan>
+      </text>
+
+      <!-- tree: interaction → llm_request & tool  (stem at x=72) -->
+      <line x1="72" y1="130" x2="72" y2="285" class="tree-line"/>
+      <line x1="72" y1="199" x2="84" y2="199" class="tree-line"/>
+      <line x1="72" y1="285" x2="84" y2="285" class="tree-line"/>
+
+      <!-- ═══════════════════════════════════════════════════
+           ROW 1: llm_request — cyan
+           bar: 0-600ms → x=240, w=517.9
+           ═══════════════════════════════════════════════════ -->
+      <polygon points="78,188 84,196 90,188" fill="var(--muted)" opacity=".7"/>
+      <text x="99" y="201" class="span-label">llm_request</text>
+
+      <rect x="240" y="182" width="518" height="34" rx="6"
+            fill="#22d3ee" fill-opacity=".88" filter="url(#glow-cyan)"/>
+      <rect x="240" y="182" width="518" height="17" rx="6" fill="white" fill-opacity=".12"/>
+
+      <text x="250" y="204" font-family="inherit" font-size="14" font-weight="700" fill="#0f172a">
+        model=claude-4 · in=4.2k · out=1.8k · cache=+12%
+      </text>
+
+      <!-- TTFT marker at 245ms → x=451.5 -->
+      <line x1="451.5" y1="174" x2="451.5" y2="224" class="ttft-line"/>
+      <text x="456" y="172" font-family="inherit" font-size="13" fill="#f59e0b" font-weight="700">ttft=245ms</text>
+
+      <text x="240" y="234" class="attr-label">
+        <tspan class="lz">0–600ms · 首 token 延迟 245ms</tspan><tspan class="le" display="none">0–600ms · Time to first token 245ms</tspan>
+      </text>
+
+      <!-- ═══════════════════════════════════════════════════
+           ROW 2: tool — emerald
+           bar: 0-450ms → x=240, w=388.4
+           ═══════════════════════════════════════════════════ -->
+      <polygon points="78,274 84,282 90,274" fill="var(--muted)" opacity=".7"/>
+      <text x="99" y="287" class="span-label">
+        <tspan class="lz">tool (工具执行)</tspan><tspan class="le" display="none">tool</tspan>
+      </text>
+
+      <rect x="240" y="268" width="388" height="34" rx="6"
+            fill="#10b981" fill-opacity=".88" filter="url(#glow-emerald)"/>
+      <rect x="240" y="268" width="388" height="17" rx="6" fill="white" fill-opacity=".10"/>
+
+      <text x="250" y="290" font-family="inherit" font-size="14" font-weight="700" fill="white">
+        <tspan class="lz">工具执行 · 0–450ms</tspan><tspan class="le" display="none">Tool Execution · 0–450ms</tspan>
+      </text>
+
+      <text x="240" y="320" class="attr-label">
+        <tspan class="lz">0–450ms · 含等待 + 执行 + Hook</tspan><tspan class="le" display="none">0–450ms · incl. wait + exec + hook</tspan>
+      </text>
+
+      <!-- tree: tool → 3 children (stem at x=108) -->
+      <line x1="108" y1="302" x2="108" y2="543" class="tree-line"/>
+      <line x1="108" y1="371" x2="120" y2="371" class="tree-line"/>
+      <line x1="108" y1="457" x2="120" y2="457" class="tree-line"/>
+      <line x1="108" y1="543" x2="120" y2="543" class="tree-line"/>
+
+      <!-- ═══════════════════════════════════════════════════
+           ROW 3: blocked_on_user — amber
+           bar: 0-120ms → x=240, w=103.6
+           ═══════════════════════════════════════════════════ -->
+      <polygon points="114,360 120,368 126,360" fill="var(--muted)" opacity=".65"/>
+      <text x="135" y="373" class="span-label" font-size="14">blocked_on_user</text>
+
+      <rect x="240" y="354" width="104" height="34" rx="6"
+            fill="#f59e0b" fill-opacity=".9" filter="url(#glow-amber)"/>
+      <rect x="240" y="354" width="104" height="17" rx="6" fill="white" fill-opacity=".15"/>
+
+      <circle cx="334" cy="371" r="5" fill="#f59e0b" opacity=".95">
+        <animate attributeName="opacity" values="0.95;0.3;0.95" dur="1.4s" repeatCount="indefinite"/>
+        <animate attributeName="r" values="5;7;5" dur="1.4s" repeatCount="indefinite"/>
+      </circle>
+
+      <text x="250" y="376" font-family="inherit" font-size="13" font-weight="700" fill="#1c1917">waiting…</text>
+
+      <text x="240" y="406" class="attr-label">
+        <tspan class="lz">0–120ms · decision=approved · source=user_click</tspan>
+        <tspan class="le" display="none">0–120ms · decision=approved · source=user_click</tspan>
+      </text>
+
+      <!-- ═══════════════════════════════════════════════════
+           ROW 4: execution — orange
+           bar: 100-380ms → x=326.3, w=241.7
+           ═══════════════════════════════════════════════════ -->
+      <polygon points="114,446 120,454 126,446" fill="var(--muted)" opacity=".65"/>
+      <text x="135" y="459" class="span-label" font-size="14">execution</text>
+
+      <rect x="326.3" y="440" width="241.7" height="34" rx="6"
+            fill="#f97316" fill-opacity=".9" filter="url(#glow-orange)"/>
+      <rect x="326.3" y="440" width="241.7" height="17" rx="6" fill="white" fill-opacity=".10"/>
+
+      <text x="336" y="462" font-family="inherit" font-size="14" font-weight="700" fill="white">
+        <tspan class="lz">exec · success=true · duration=280ms</tspan>
+        <tspan class="le" display="none">exec · success=true · duration=280ms</tspan>
+      </text>
+
+      <text x="326.3" y="492" class="attr-label">
+        <tspan class="lz">100–380ms · 实际执行窗口</tspan>
+        <tspan class="le" display="none">100–380ms · actual execution window</tspan>
+      </text>
+
+      <!-- ═══════════════════════════════════════════════════
+           ROW 5: hook — rose
+           bar: 350-420ms → x=542.1, w=60.4
+           ═══════════════════════════════════════════════════ -->
+      <polygon points="114,532 120,540 126,532" fill="var(--muted)" opacity=".65"/>
+      <text x="135" y="545" class="span-label" font-size="14">hook</text>
+
+      <rect x="542.1" y="526" width="60.4" height="34" rx="6"
+            fill="#f43f5e" fill-opacity=".9" filter="url(#glow-rose)"/>
+      <rect x="542.1" y="526" width="60.4" height="17" rx="6" fill="white" fill-opacity=".10"/>
+
+      <text x="610" y="548" font-family="inherit" font-size="13" font-weight="700" fill="var(--text)">
+        <tspan class="lz">PostToolUse</tspan>
+        <tspan class="le" display="none">PostToolUse</tspan>
+      </text>
+
+      <text x="542.1" y="578" class="attr-label">
+        <tspan class="lz">350–420ms · Hook 回调 · 70ms</tspan>
+        <tspan class="le" display="none">350–420ms · Hook callback · 70ms</tspan>
+      </text>
+
+      <!-- Depth labels on left margin -->
+      <text x="22" y="115" class="depth-label" transform="rotate(-90,22,115)" text-anchor="middle">L0</text>
+      <text x="22" y="201" class="depth-label" transform="rotate(-90,22,201)" text-anchor="middle">L1</text>
+      <text x="22" y="287" class="depth-label" transform="rotate(-90,22,287)" text-anchor="middle">L1</text>
+      <text x="22" y="373" class="depth-label" transform="rotate(-90,22,373)" text-anchor="middle" opacity=".55">L2</text>
+      <text x="22" y="459" class="depth-label" transform="rotate(-90,22,459)" text-anchor="middle" opacity=".55">L2</text>
+      <text x="22" y="545" class="depth-label" transform="rotate(-90,22,545)" text-anchor="middle" opacity=".55">L2</text>
+
+      <!-- Trace ID watermark -->
+      <text x="1088" y="90" font-family="'Courier New',monospace" font-size="12" fill="var(--muted)" opacity=".55" text-anchor="end">
+        trace_id: a3f2…9c1d
+      </text>
+
+    </svg>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#8b5cf6;"></div>
+      <span>
+        <span class="lz">interaction (根 Span)</span>
+        <span class="le" style="display:none">interaction (Root Span)</span>
+      </span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#22d3ee;"></div>
+      <span>
+        <span class="lz">llm_request (LLM 调用)</span>
+        <span class="le" style="display:none">llm_request (LLM Call)</span>
+      </span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#10b981;"></div>
+      <span>
+        <span class="lz">tool (工具执行)</span>
+        <span class="le" style="display:none">tool (Tool Execution)</span>
+      </span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#f59e0b;"></div>
+      <span>
+        <span class="lz">blocked_on_user (用户等待)</span>
+        <span class="le" style="display:none">blocked_on_user (User Wait)</span>
+      </span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#f97316;"></div>
+      <span>
+        <span class="lz">execution (实际执行)</span>
+        <span class="le" style="display:none">execution (Actual Exec)</span>
+      </span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#f43f5e;"></div>
+      <span>
+        <span class="lz">hook (Hook 回调)</span>
+        <span class="le" style="display:none">hook (Hook Callback)</span>
+      </span>
+    </div>
+    <div class="legend-item" style="margin-left:auto;">
+      <div class="legend-dot" style="background:transparent;border:1px dashed var(--muted);"></div>
+      <span>
+        <span class="lz">树状连接线</span>
+        <span class="le" style="display:none">Tree connector</span>
+      </span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:transparent;border-top:2px dashed #f59e0b;height:0;"></div>
+      <span style="color:#f59e0b;">
+        <span class="lz">TTFT 标记</span>
+        <span class="le" style="display:none">TTFT marker</span>
+      </span>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<div class="footer">
+  <span class="lz">VIS-3-012 · CC Research · OpenTelemetry Span Hierarchy · 2026</span>
+  <span class="le" style="display:none">VIS-3-012 · CC Research · OpenTelemetry Span Hierarchy · 2026</span>
+</div>
+<script>
+/* v2-embed-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-2A-007 系统提示词三明治分层图 — Claude Code 白皮书</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--bg2:#0f172a;--bg3:#1e293b;--txt:#f1f5f9;--txt2:#cbd5e1;--txt3:#64748b;--brd:rgba(148,163,184,0.15);--card-bg:rgba(15,23,42,0.85);--ctrl-bg:rgba(30,41,59,0.9);--node-bg:#020617;--grid-stroke:#1e293b;
+ --c-cyan:#22d3ee;--c-emerald:#34d399;--c-amber:#fbbf24;--c-orange:#f97316;--c-violet:#a78bfa;--c-rose:#fb7185;
+ --cyan-fill:rgba(8,51,68,0.9);--emerald-fill:rgba(6,78,59,0.9);--amber-fill:rgba(120,83,15,0.9);--orange-fill:rgba(124,45,18,0.7);--violet-fill:rgba(76,29,149,0.7);--rose-fill:rgba(136,19,55,0.6);
+ --cyan-text:#22d3ee;--emerald-text:#34d399;--amber-text:#fbbf24;--orange-text:#f97316;--violet-text:#a78bfa;--rose-text:#fb7185;
+ --num-text:#ffffff;
+ --layer-title-text:#f1f5f9;--layer-meta-text:#cbd5e1;
+ --pct-bg-cyan:rgba(34,211,238,0.15);--pct-bg-emerald:rgba(52,211,153,0.15);--pct-bg-amber:rgba(251,191,36,0.15);--pct-bg-orange:rgba(249,115,22,0.12);--pct-bg-violet:rgba(167,139,250,0.12);--pct-bg-rose:rgba(251,113,133,0.12);
+ --cached-zone-bg:rgba(34,211,238,0.04);--cached-zone-brd:rgba(34,211,238,0.3);
+ --nocache-zone-bg:rgba(251,113,133,0.04);--nocache-zone-brd:rgba(251,113,133,0.25);
+}
+[data-theme="warm"]{--bg:#f8f6f3;--bg2:#f1ede8;--bg3:#e8e2d9;--txt:#1e293b;--txt2:#334155;--txt3:#64748b;--brd:rgba(100,116,139,0.2);--card-bg:rgba(241,237,232,0.9);--ctrl-bg:rgba(241,237,232,0.95);--node-bg:#f8f6f3;--grid-stroke:#e0d8cc;
+ --c-cyan:#0891b2;--c-emerald:#059669;--c-amber:#b45309;--c-orange:#c2410c;--c-violet:#6d28d9;--c-rose:#be123c;
+ --cyan-fill:rgba(207,240,247,0.95);--emerald-fill:rgba(209,240,227,0.95);--amber-fill:rgba(249,230,196,0.95);--orange-fill:rgba(252,223,202,0.9);--violet-fill:rgba(229,217,250,0.9);--rose-fill:rgba(250,215,225,0.9);
+ --cyan-text:#0e7490;--emerald-text:#047857;--amber-text:#92400e;--orange-text:#9a3412;--violet-text:#5b21b6;--rose-text:#9f1239;
+ --num-text:#0f172a;
+ --layer-title-text:#1e293b;--layer-meta-text:#475569;
+ --pct-bg-cyan:rgba(8,145,178,0.12);--pct-bg-emerald:rgba(5,150,105,0.12);--pct-bg-amber:rgba(180,83,9,0.12);--pct-bg-orange:rgba(194,65,12,0.1);--pct-bg-violet:rgba(109,40,217,0.1);--pct-bg-rose:rgba(190,18,60,0.1);
+ --cached-zone-bg:rgba(8,145,178,0.05);--cached-zone-brd:rgba(8,145,178,0.4);
+ --nocache-zone-bg:rgba(190,18,60,0.05);--nocache-zone-brd:rgba(190,18,60,0.35);
+}
+[data-theme="light"]{--bg:#ffffff;--bg2:#f8fafc;--bg3:#f1f5f9;--txt:#0f172a;--txt2:#334155;--txt3:#64748b;--brd:rgba(100,116,139,0.18);--card-bg:rgba(248,250,252,0.95);--ctrl-bg:rgba(248,250,252,0.95);--node-bg:#ffffff;--grid-stroke:#e2e8f0;
+ --c-cyan:#0891b2;--c-emerald:#059669;--c-amber:#b45309;--c-orange:#c2410c;--c-violet:#6d28d9;--c-rose:#be123c;
+ --cyan-fill:rgba(207,250,254,0.95);--emerald-fill:rgba(209,250,229,0.95);--amber-fill:rgba(254,243,199,0.95);--orange-fill:rgba(255,237,213,0.95);--violet-fill:rgba(237,233,254,0.95);--rose-fill:rgba(255,228,230,0.95);
+ --cyan-text:#0e7490;--emerald-text:#047857;--amber-text:#92400e;--orange-text:#9a3412;--violet-text:#5b21b6;--rose-text:#9f1239;
+ --num-text:#0f172a;
+ --layer-title-text:#0f172a;--layer-meta-text:#475569;
+ --pct-bg-cyan:rgba(8,145,178,0.1);--pct-bg-emerald:rgba(5,150,105,0.1);--pct-bg-amber:rgba(180,83,9,0.1);--pct-bg-orange:rgba(194,65,12,0.08);--pct-bg-violet:rgba(109,40,217,0.08);--pct-bg-rose:rgba(190,18,60,0.08);
+ --cached-zone-bg:rgba(8,145,178,0.04);--cached-zone-brd:rgba(8,145,178,0.35);
+ --nocache-zone-bg:rgba(190,18,60,0.04);--nocache-zone-brd:rgba(190,18,60,0.3);
+}
+[lang="en"] .lz{display:none}*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--txt);min-height:100vh;transition:background .3s,color .3s}
+.page{max-width:1080px;margin:0 auto;padding:32px 20px}
+.hdr{display:flex;align-items:flex-start;gap:12px;margin-bottom:24px}
+.pulse{width:10px;height:10px;border-radius:50%;background:var(--c-cyan);animation:pulse 2s infinite;flex-shrink:0;margin-top:5px}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.85)}}
+h1{font-size:22px;font-weight:700;color:var(--txt)}
+.subtitle{font-size:12px;color:var(--txt2);margin-top:4px;line-height:1.6}
+.diagram-card{background:var(--card-bg);border:1px solid var(--brd);border-radius:14px;padding:22px 18px;margin-bottom:18px;overflow:hidden}
+.svg-bg{fill:var(--bg)}.grid-line{stroke:var(--grid-stroke)}.node-bg{fill:var(--node-bg)}
+.layer-title{fill:var(--layer-title-text)}
+.layer-meta{fill:var(--layer-meta-text)}
+.side-label-cyan{fill:var(--cyan-text)}
+.side-label-emerald{fill:var(--emerald-text)}
+.side-label-amber{fill:var(--amber-text)}
+.side-label-orange{fill:var(--orange-text)}
+.side-label-violet{fill:var(--violet-text)}
+.side-label-rose{fill:var(--rose-text)}
+.side-scope{fill:var(--txt3)}
+.num-white{fill:var(--num-text)}
+.pct-cyan{fill:var(--cyan-text)}
+.pct-emerald{fill:var(--emerald-text)}
+.pct-amber{fill:var(--amber-text)}
+.pct-orange{fill:var(--orange-text)}
+.pct-violet{fill:var(--violet-text)}
+.pct-rose{fill:var(--rose-text)}
+.cached-zone{fill:var(--cached-zone-bg);stroke:var(--cached-zone-brd)}
+.nocache-zone{fill:var(--nocache-zone-bg);stroke:var(--nocache-zone-brd)}
+.zone-badge-cached{fill:var(--cyan-text)}
+.zone-badge-nocache{fill:var(--rose-text)}
+.total-bg{fill:var(--bg3);fill-opacity:.35;stroke:var(--txt3);stroke-opacity:.35}
+.total-title{fill:var(--txt)}
+.total-sub{fill:var(--txt2)}
+.divider-line{stroke:var(--txt3);stroke-opacity:.5}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+.card{background:var(--card-bg);border:1px solid var(--brd);border-radius:10px;padding:16px}
+.card-hdr{display:flex;align-items:center;gap:8px;margin-bottom:12px}
+.dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.card h3{font-size:12px;font-weight:600;color:var(--txt)}
+.card ul{list-style:none;font-size:11px;color:var(--txt2);line-height:2}
+.card li::before{content:"• ";color:var(--txt3)}
+footer{margin-top:18px;text-align:center;font-size:11px;color:var(--txt3)}
+.controls{position:fixed;top:14px;right:14px;display:flex;flex-direction:column;gap:6px;z-index:100}
+.ctrl{background:var(--ctrl-bg);border:1px solid var(--brd);border-radius:6px;padding:6px 12px;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--txt);cursor:pointer;transition:all .2s}
+.ctrl:hover{border-color:var(--c-cyan);color:var(--c-cyan)}
+@media(max-width:768px){.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="controls">
+  <button class="ctrl" onclick="window.cycleTheme()">Theme</button>
+  <button class="ctrl" onclick="window.toggleLang()">EN/中</button>
+</div>
+<div class="page">
+  <div class="hdr">
+    <div class="pulse"></div>
+    <div>
+      <h1><span class="lz">系统提示词三明治分层图</span><span class="le">System Prompt Sandwich Layers</span></h1>
+      <p class="subtitle"><span class="lz">6层结构 · 总计约20,000–34,000 tokens · 前3层可缓存，后3层每请求重新生成</span><span class="le">6-layer structure · 20,000–34,000 tokens total · Layers 1-3 cached, 4-6 rebuilt per request</span></p>
+    </div>
+  </div>
+  <div class="diagram-card">
+    <svg viewBox="0 0 1040 560" width="100%" style="display:block" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="g2a7" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" class="grid-line" stroke-width="0.5"/>
+        </pattern>
+      </defs>
+      <rect width="1040" height="560" class="svg-bg"/>
+      <rect width="1040" height="560" fill="url(#g2a7)"/>
+
+      <!-- Cached zone background (layers 1-3) -->
+      <rect x="180" y="28" width="850" height="240" rx="10" class="cached-zone" stroke-width="1.2"/>
+      <rect x="188" y="14" width="118" height="22" rx="5" class="node-bg" stroke="var(--cached-zone-brd)" stroke-width="1"/>
+      <text x="247" y="29" class="zone-badge-cached" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">可缓存层 1-3</tspan><tspan class="le">Cached 1-3</tspan></text>
+
+      <!-- Not-cached zone (layers 4-6) -->
+      <rect x="180" y="280" width="850" height="240" rx="10" class="nocache-zone" stroke-width="1.2" stroke-dasharray="6,4"/>
+      <rect x="188" y="266" width="134" height="22" rx="5" class="node-bg" stroke="var(--nocache-zone-brd)" stroke-width="1"/>
+      <text x="255" y="281" class="zone-badge-nocache" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">每次重建层 4-6</tspan><tspan class="le">Per-Request 4-6</tspan></text>
+
+      <!-- LAYER 1: Default System Prompt (cyan) y=42 -->
+      <text x="12" y="62" class="side-label-cyan" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">① 默认系统</tspan><tspan class="le">① Default Sys</tspan></text>
+      <text x="12" y="78" class="side-label-cyan" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">   提示词</tspan><tspan class="le">   Prompt</tspan></text>
+      <text x="12" y="94" class="side-scope" font-size="10" font-family="JetBrains Mono,monospace">scope: global</text>
+
+      <rect x="180" y="42" width="700" height="70" rx="8" fill="var(--cyan-fill)" stroke="var(--c-cyan)" stroke-width="1.5"/>
+      <rect x="180" y="42" width="437.5" height="70" rx="8" fill="var(--c-cyan)" fill-opacity="0.35"/>
+      <text x="202" y="85" class="num-white" font-size="22" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">1</text>
+      <text x="240" y="68" class="layer-title" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">角色定义 / 行为规范 / 环境信息</tspan><tspan class="le">Role definition / behavior rules / env info</tspan></text>
+      <text x="240" y="88" class="layer-meta" font-size="11" font-family="JetBrains Mono,monospace"><tspan class="lz">跨组织可缓存</tspan><tspan class="le">Cached cross-org</tspan></text>
+      <text x="240" y="104" class="layer-meta" font-size="11" font-family="JetBrains Mono,monospace">5,000–8,000 tokens</text>
+
+      <rect x="895" y="48" width="128" height="58" rx="8" fill="var(--pct-bg-cyan)" stroke="var(--c-cyan)" stroke-width="1"/>
+      <text x="959" y="78" class="pct-cyan" font-size="22" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">25%</text>
+      <text x="959" y="96" class="layer-meta" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">of total</text>
+
+      <!-- LAYER 2: Tool Schema (emerald) y=122 -->
+      <text x="12" y="142" class="side-label-emerald" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">② 工具Schema</tspan><tspan class="le">② Tool Schema</tspan></text>
+      <text x="12" y="158" class="side-label-emerald" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">   描述</tspan><tspan class="le">   Desc.</tspan></text>
+      <text x="12" y="174" class="side-scope" font-size="10" font-family="JetBrains Mono,monospace">scope: org</text>
+
+      <rect x="180" y="122" width="700" height="70" rx="8" fill="var(--emerald-fill)" stroke="var(--c-emerald)" stroke-width="1.5"/>
+      <rect x="180" y="122" width="700" height="70" rx="8" fill="var(--c-emerald)" fill-opacity="0.35"/>
+      <text x="202" y="165" class="num-white" font-size="22" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">2</text>
+      <text x="240" y="148" class="layer-title" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">30个工具的 name / description / 参数 Schema</tspan><tspan class="le">30 tools: name / description / parameter schema</tspan></text>
+      <text x="240" y="168" class="layer-meta" font-size="11" font-family="JetBrains Mono,monospace"><tspan class="lz">组织内可缓存（最大层）</tspan><tspan class="le">Cached within org (largest layer)</tspan></text>
+      <text x="240" y="184" class="layer-meta" font-size="11" font-family="JetBrains Mono,monospace">8,000–15,000 tokens</text>
+
+      <rect x="895" y="128" width="128" height="58" rx="8" fill="var(--pct-bg-emerald)" stroke="var(--c-emerald)" stroke-width="1"/>
+      <text x="959" y="158" class="pct-emerald" font-size="22" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">40%</text>
+      <text x="959" y="176" class="layer-meta" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">of total</text>
+
+      <!-- LAYER 3: CLAUDE.md (amber) y=202 -->
+      <text x="12" y="222" class="side-label-amber" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace">③ CLAUDE.md</text>
+      <text x="12" y="238" class="side-label-amber" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">   内容</tspan><tspan class="le">   Content</tspan></text>
+      <text x="12" y="254" class="side-scope" font-size="10" font-family="JetBrains Mono,monospace">scope: org</text>
+
+      <rect x="180" y="202" width="700" height="70" rx="8" fill="var(--amber-fill)" stroke="var(--c-amber)" stroke-width="1.5"/>
+      <rect x="180" y="202" width="262.5" height="70" rx="8" fill="var(--c-amber)" fill-opacity="0.35"/>
+      <text x="202" y="245" class="num-white" font-size="22" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">3</text>
+      <text x="240" y="228" class="layer-title" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">5 种来源组装：Project/Local/User/Managed/Upstream</tspan><tspan class="le">5 sources: Project/Local/User/Managed/Upstream</tspan></text>
+      <text x="240" y="248" class="layer-meta" font-size="11" font-family="JetBrains Mono,monospace"><tspan class="lz">按项目上下文不同</tspan><tspan class="le">Varies by project context</tspan></text>
+      <text x="240" y="264" class="layer-meta" font-size="11" font-family="JetBrains Mono,monospace">1,000–5,000 tokens</text>
+
+      <rect x="895" y="208" width="128" height="58" rx="8" fill="var(--pct-bg-amber)" stroke="var(--c-amber)" stroke-width="1"/>
+      <text x="959" y="238" class="pct-amber" font-size="22" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">15%</text>
+      <text x="959" y="256" class="layer-meta" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">of total</text>
+
+      <!-- Divider between cached/non-cached -->
+      <line x1="10" y1="275" x2="1030" y2="275" class="divider-line" stroke-width="1" stroke-dasharray="6,4"/>
+
+      <!-- LAYER 4: Permission Instructions (orange) y=294 -->
+      <text x="12" y="314" class="side-label-orange" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">④ 权限相关</tspan><tspan class="le">④ Permission</tspan></text>
+      <text x="12" y="330" class="side-label-orange" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">   说明</tspan><tspan class="le">   Instructions</tspan></text>
+      <text x="12" y="346" class="side-scope" font-size="10" font-family="JetBrains Mono,monospace">scope: request</text>
+
+      <rect x="180" y="294" width="700" height="70" rx="8" fill="var(--orange-fill)" stroke="var(--c-orange)" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <rect x="180" y="294" width="87.5" height="70" rx="8" fill="var(--c-orange)" fill-opacity="0.35"/>
+      <text x="202" y="337" class="num-white" font-size="22" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">4</text>
+      <text x="240" y="320" class="layer-title" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">当前权限模式 / 已批准规则 / 沙箱状态</tspan><tspan class="le">Current permission mode / approved rules / sandbox state</tspan></text>
+      <text x="240" y="340" class="layer-meta" font-size="11" font-family="JetBrains Mono,monospace"><tspan class="lz">每次请求重建，确保安全上下文准确</tspan><tspan class="le">Rebuilt per request for accurate security context</tspan></text>
+      <text x="240" y="356" class="layer-meta" font-size="11" font-family="JetBrains Mono,monospace">500–1,000 tokens</text>
+
+      <rect x="895" y="300" width="128" height="58" rx="8" fill="var(--pct-bg-orange)" stroke="var(--c-orange)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="959" y="330" class="pct-orange" font-size="22" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">5%</text>
+      <text x="959" y="348" class="layer-meta" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">of total</text>
+
+      <!-- LAYER 5: Extension Injections (violet) y=374 -->
+      <text x="12" y="394" class="side-label-violet" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">⑤ 扩展注入</tspan><tspan class="le">⑤ Extension</tspan></text>
+      <text x="12" y="410" class="side-label-violet" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">   (MCP/Skill)</tspan><tspan class="le">   Injections</tspan></text>
+      <text x="12" y="426" class="side-scope" font-size="10" font-family="JetBrains Mono,monospace">scope: request</text>
+
+      <rect x="180" y="374" width="700" height="70" rx="8" fill="var(--violet-fill)" stroke="var(--c-violet)" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <rect x="180" y="374" width="175" height="70" rx="8" fill="var(--c-violet)" fill-opacity="0.35"/>
+      <text x="202" y="417" class="num-white" font-size="22" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">5</text>
+      <text x="240" y="400" class="layer-title" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">MCP instructions / Skill 描述 / Coordinator 上下文</tspan><tspan class="le">MCP instructions / Skill whenToUse / Coordinator context</tspan></text>
+      <text x="240" y="420" class="layer-meta" font-size="11" font-family="JetBrains Mono,monospace">DANGEROUS_uncachedSystemPromptSection</text>
+      <text x="240" y="436" class="layer-meta" font-size="11" font-family="JetBrains Mono,monospace">500–3,000 tokens</text>
+
+      <rect x="895" y="380" width="128" height="58" rx="8" fill="var(--pct-bg-violet)" stroke="var(--c-violet)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="959" y="410" class="pct-violet" font-size="22" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">10%</text>
+      <text x="959" y="428" class="layer-meta" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">of total</text>
+
+      <!-- LAYER 6: User Append (rose) y=454 -->
+      <text x="12" y="474" class="side-label-rose" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">⑥ 用户追加</tspan><tspan class="le">⑥ User Append</tspan></text>
+      <text x="12" y="490" class="side-label-rose" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">   提示词</tspan><tspan class="le">   Prompt</tspan></text>
+      <text x="12" y="506" class="side-scope" font-size="10" font-family="JetBrains Mono,monospace">scope: request</text>
+
+      <rect x="180" y="454" width="700" height="70" rx="8" fill="var(--rose-fill)" stroke="var(--c-rose)" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <rect x="180" y="454" width="87.5" height="70" rx="8" fill="var(--c-rose)" fill-opacity="0.35"/>
+      <text x="202" y="497" class="num-white" font-size="22" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">6</text>
+      <text x="240" y="480" class="layer-title" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">用户/企业通过设置追加，最易变化的部分</tspan><tspan class="le">User/enterprise append via settings — most variable</tspan></text>
+      <text x="240" y="500" class="layer-meta" font-size="11" font-family="JetBrains Mono,monospace"><tspan class="lz">每次请求可能不同</tspan><tspan class="le">May differ every request</tspan></text>
+      <text x="240" y="516" class="layer-meta" font-size="11" font-family="JetBrains Mono,monospace">0–2,000 tokens</text>
+
+      <rect x="895" y="460" width="128" height="58" rx="8" fill="var(--pct-bg-rose)" stroke="var(--c-rose)" stroke-width="1" stroke-dasharray="4,3"/>
+      <text x="959" y="490" class="pct-rose" font-size="22" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">5%</text>
+      <text x="959" y="508" class="layer-meta" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace">of total</text>
+
+      <!-- Total indicator -->
+      <rect x="180" y="532" width="843" height="22" rx="6" class="total-bg"/>
+      <text x="601" y="543" class="total-title" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">总计：20,000–34,000 tokens / 请求</tspan><tspan class="le">Total: 20,000–34,000 tokens / request</tspan></text>
+      <text x="601" y="552" class="total-sub" font-size="10" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">前3层首次请求后缓存 · 后3层每次请求重新构建</tspan><tspan class="le">Layers 1-3 cached after first request · Layers 4-6 rebuilt every request</tspan></text>
+    </svg>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-hdr"><div class="dot" style="background:var(--c-cyan)"></div><h3><span class="lz">缓存层（1-3）</span><span class="le">Cached Layers (1-3)</span></h3></div>
+      <ul>
+        <li><span class="lz">Layer 1 默认提示词：5,000-8,000 tokens，全局缓存</span><span class="le">Layer 1 default prompt: 5-8K tokens, global cache</span></li>
+        <li><span class="lz">Layer 2 工具Schema：8,000-15,000 tokens，最大层，组织级缓存</span><span class="le">Layer 2 tool schema: 8-15K tokens, largest, org-level cache</span></li>
+        <li><span class="lz">Layer 3 CLAUDE.md：1,000-5,000 tokens，按项目变化</span><span class="le">Layer 3 CLAUDE.md: 1-5K tokens, varies by project</span></li>
+        <li><span class="lz">三层合计约80%的token，均可被Prompt Cache命中</span><span class="le">3 layers = ~80% of tokens, all eligible for Prompt Cache</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="dot" style="background:var(--c-orange)"></div><h3><span class="lz">重建层（4-6）</span><span class="le">Per-Request Layers (4-6)</span></h3></div>
+      <ul>
+        <li><span class="lz">Layer 4 权限说明：每次请求必须准确反映当前安全状态</span><span class="le">Layer 4 permission: must reflect current security state per request</span></li>
+        <li><span class="lz">Layer 5 扩展注入：标记为DANGEROUS_uncached，禁止缓存</span><span class="le">Layer 5 extensions: marked DANGEROUS_uncached, never cached</span></li>
+        <li><span class="lz">Layer 6 用户追加：每次请求可能不同，不可缓存</span><span class="le">Layer 6 user append: may differ each request, not cacheable</span></li>
+        <li><span class="lz">三层合计约20%的token，每次请求重新构建</span><span class="le">3 layers = ~20% of tokens, rebuilt every request</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="dot" style="background:var(--c-violet)"></div><h3><span class="lz">Token经济学意义</span><span class="le">Token Economics</span></h3></div>
+      <ul>
+        <li><span class="lz">Layer 2（工具Schema）占40%是最大成本中心</span><span class="le">Layer 2 tool schema at 40% is the biggest cost center</span></li>
+        <li><span class="lz">Prompt Cache命中可将前3层的成本降低90%以上</span><span class="le">Prompt Cache hit reduces layers 1-3 cost by 90%+</span></li>
+        <li><span class="lz">缓存未命中时（首次请求）总成本最高达34K tokens</span><span class="le">Cold request (no cache hit) costs up to 34K input tokens</span></li>
+        <li><span class="lz">设计哲学：让高频不变的层尽量靠前以命中缓存</span><span class="le">Design: place stable high-frequency content early for cache hits</span></li>
+      </ul>
+    </div>
+  </div>
+  <footer><span class="lz">VIS-2A-007 · Claude Code 2.1.88 白皮书 · 系统提示词三明治分层图 · v6.0</span><span class="le">VIS-2A-007 · Claude Code 2.1.88 Whitepaper · System Prompt Sandwich Layers · v6.0</span></footer>
+</div>
+<script>
+(function(){
+  var themes=['dark','warm','light'],i=0;
+  var stored=localStorage.getItem('vtheme');
+  if(stored){i=themes.indexOf(stored);if(i<0)i=0;}
+  document.documentElement.setAttribute('data-theme',themes[i]);
+  window.cycleTheme=function(){i=(i+1)%3;var t=themes[i];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  var lang=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('lang',lang);
+  window.toggleLang=function(){lang=lang==='zh'?'en':'zh';document.documentElement.setAttribute('lang',lang);localStorage.setItem('vlang',lang);};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { }
+})();
+</script>
+</body>
+</html>

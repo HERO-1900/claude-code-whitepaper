@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>VIS-3-004 Channel Permission Relay 数据流图</title>
+<style>
+:root[data-theme="dark"]  {
+  --bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);
+  --text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;
+  --node-fill:#1e293b;--legend-fill:rgba(30,41,59,.35);--label-fill:rgba(15,23,42,.9);
+  --grid-stroke:rgba(255,255,255,.04);
+}
+:root[data-theme="warm"]  {
+  --bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);
+  --text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;
+  --node-fill:#292524;--legend-fill:rgba(41,37,36,.35);--label-fill:rgba(28,25,23,.9);
+  --grid-stroke:rgba(255,255,255,.04);
+}
+:root[data-theme="light"] {
+  --bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.10);
+  --text:#0f172a;--muted:#475569;--subtle:#e2e8f0;
+  --node-fill:#ffffff;--legend-fill:rgba(248,250,252,.75);--label-fill:rgba(255,255,255,.95);
+  --grid-stroke:rgba(0,0,0,.05);
+}
+:root{--amber:#f59e0b;--cyan:#0891b2;--cyan2:#22d3ee;--violet:#7c3aed;--violet2:#8b5cf6;--emerald:#059669;--emerald2:#10b981;--rose:#e11d48;--rose2:#f43f5e;--slate:#64748b;--orange:#ea580c;--orange2:#f97316;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'Inter',system-ui,sans-serif;min-height:100vh;padding:28px;transition:background .3s,color .3s}
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:99}
+.ctrl button{background:var(--panel);border:1px solid var(--border);color:var(--text);padding:8px 14px;border-radius:6px;cursor:pointer;font-size:13px;transition:background .2s}
+.ctrl button:hover{background:var(--subtle)}
+.header{text-align:center;margin-bottom:24px}
+.header h1{font-size:24px;font-weight:700;margin-bottom:8px}
+.header p{color:var(--muted);font-size:14px}
+.diagram-card{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:28px;max-width:1000px;margin:0 auto}
+svg{width:100%;height:auto;display:block}
+.stat-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:18px;max-width:1000px;margin-left:auto;margin-right:auto}
+.stat-card{background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:16px;text-align:center}
+.stat-val{font-size:20px;font-weight:700;color:var(--cyan2)}
+:root[data-theme="light"] .stat-val{color:var(--cyan)}
+.stat-lbl{font-size:13px;color:var(--muted);margin-top:6px}
+</style>
+</head>
+<body>
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+
+<div class="ctrl">
+  <button onclick="cycleTheme()">Theme</button>
+  <button onclick="toggleLang()">EN/中</button>
+</div>
+
+<div class="header">
+  <h1><span class="lz">Channel Permission Relay 数据流图</span><span class="le" style="display:none">Channel Permission Relay Data Flow</span></h1>
+  <p><span class="lz">MCP 权限中继流程 · 零信任授权架构</span><span class="le" style="display:none">MCP Permission Relay · Zero-Trust Authorization</span></p>
+</div>
+
+<div class="diagram-card">
+<svg viewBox="0 0 960 580" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <defs>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0L0 0 0 40" fill="none" stroke="var(--grid-stroke)" stroke-width="0.5"/>
+    </pattern>
+
+    <marker id="arrow-cyan" markerWidth="12" markerHeight="9" refX="10" refY="4.5" orient="auto">
+      <polygon points="0 0, 12 4.5, 0 9" fill="#22d3ee"/>
+    </marker>
+    <marker id="arrow-emerald" markerWidth="12" markerHeight="9" refX="10" refY="4.5" orient="auto">
+      <polygon points="0 0, 12 4.5, 0 9" fill="#10b981"/>
+    </marker>
+    <marker id="arrow-rose" markerWidth="12" markerHeight="9" refX="10" refY="4.5" orient="auto">
+      <polygon points="0 0, 12 4.5, 0 9" fill="#f43f5e"/>
+    </marker>
+
+    <path id="path-fwd-12" d="M195,240 L245,240"/>
+    <path id="path-fwd-2g" d="M415,240 L425,240"/>
+    <path id="path-fwd-g3" d="M475,240 L485,240"/>
+    <path id="path-fwd-34" d="M655,240 L705,240"/>
+    <path id="path-ret-yes" d="M790,310 L790,345 L115,345 L115,310"/>
+    <path id="path-ret-no" d="M450,265 L450,420 L115,420 L115,310"/>
+  </defs>
+
+  <rect width="960" height="580" fill="url(#grid)"/>
+
+  <!-- ==================== FORWARD FLOW LABEL (top) ==================== -->
+  <rect x="380" y="120" width="200" height="28" rx="8" fill="#22d3ee" fill-opacity="0.12" stroke="#22d3ee" stroke-opacity="0.35" stroke-width="1"/>
+  <text x="480" y="139" text-anchor="middle" font-size="13" fill="#0891b2" font-weight="700" class="lz">→ 请求转发流 Request Flow</text>
+  <text x="480" y="139" text-anchor="middle" font-size="13" fill="#0891b2" font-weight="700" class="le" display="none">→ Request Forward Flow</text>
+
+  <!-- ==================== RETURN YES ARROW (green dashed, approved) ==================== -->
+  <path d="M790,310 L790,345 L130,345" fill="none" stroke="#10b981" stroke-width="2.5" stroke-dasharray="8,5"/>
+  <path d="M130,345 L115,345 L115,312" fill="none" stroke="#10b981" stroke-width="2.5" stroke-dasharray="8,5" marker-end="url(#arrow-emerald)"/>
+
+  <!-- ==================== RETURN NO ARROW (rose dashed, denied) ==================== -->
+  <path d="M450,265 L450,420 L130,420" fill="none" stroke="#f43f5e" stroke-width="2.5" stroke-dasharray="8,5"/>
+  <path d="M130,420 L115,420 L115,312" fill="none" stroke="#f43f5e" stroke-width="2.5" stroke-dasharray="8,5" marker-end="url(#arrow-rose)"/>
+
+  <!-- ==================== FORWARD ARROWS (cyan solid) ==================== -->
+  <line x1="195" y1="240" x2="243" y2="240" stroke="#22d3ee" stroke-width="3" marker-end="url(#arrow-cyan)"/>
+  <line x1="415" y1="240" x2="424" y2="240" stroke="#22d3ee" stroke-width="3" marker-end="url(#arrow-cyan)"/>
+  <line x1="475" y1="240" x2="484" y2="240" stroke="#22d3ee" stroke-width="3" marker-end="url(#arrow-cyan)"/>
+  <line x1="655" y1="240" x2="703" y2="240" stroke="#22d3ee" stroke-width="3" marker-end="url(#arrow-cyan)"/>
+
+  <!-- ==================== STEP LABELS on arrow segments ==================== -->
+  <rect x="200" y="212" width="42" height="20" rx="4" fill="var(--label-fill)" stroke="#22d3ee" stroke-opacity="0.4" stroke-width="1"/>
+  <text x="221" y="226" text-anchor="middle" font-size="12" fill="#0891b2" font-weight="700" class="lz">①请求</text>
+  <text x="221" y="226" text-anchor="middle" font-size="11" fill="#0891b2" font-weight="700" class="le" display="none">①Req</text>
+
+  <rect x="658" y="212" width="42" height="20" rx="4" fill="var(--label-fill)" stroke="#22d3ee" stroke-opacity="0.4" stroke-width="1"/>
+  <text x="679" y="226" text-anchor="middle" font-size="12" fill="#0891b2" font-weight="700" class="lz">④推送</text>
+  <text x="679" y="226" text-anchor="middle" font-size="11" fill="#0891b2" font-weight="700" class="le" display="none">④Push</text>
+
+  <text x="420" y="200" text-anchor="middle" font-size="12" fill="#0891b2" font-weight="700" class="lz">②验权</text>
+  <text x="420" y="200" text-anchor="middle" font-size="11" fill="#0891b2" font-weight="700" class="le" display="none">②Auth</text>
+
+  <text x="480" y="200" text-anchor="middle" font-size="12" fill="#0891b2" font-weight="700" class="lz">③转发</text>
+  <text x="480" y="200" text-anchor="middle" font-size="11" fill="#0891b2" font-weight="700" class="le" display="none">③Relay</text>
+
+  <!-- ==================== NODE 1: Claude Agent ==================== -->
+  <rect x="25" y="170" width="170" height="140" rx="12" fill="var(--node-fill)" stroke="#22d3ee" stroke-width="2.5"/>
+  <rect x="25" y="170" width="170" height="40" rx="12" fill="#22d3ee" fill-opacity="0.15"/>
+  <rect x="25" y="198" width="170" height="12" fill="#22d3ee" fill-opacity="0.15"/>
+  <text x="110" y="196" text-anchor="middle" font-size="18" fill="#22d3ee">⚡</text>
+  <text x="110" y="232" text-anchor="middle" font-size="15" fill="var(--text)" font-weight="700" class="lz">Claude Agent</text>
+  <text x="110" y="232" text-anchor="middle" font-size="15" fill="var(--text)" font-weight="700" class="le" display="none">Claude Agent</text>
+  <text x="110" y="253" text-anchor="middle" font-size="12" fill="var(--muted)" class="lz">执行敏感工具</text>
+  <text x="110" y="253" text-anchor="middle" font-size="12" fill="var(--muted)" class="le" display="none">Sensitive Tool Exec</text>
+  <rect x="60" y="272" width="100" height="24" rx="6" fill="#22d3ee" fill-opacity="0.18" stroke="#22d3ee" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="110" y="289" text-anchor="middle" font-size="12" fill="#0891b2" font-weight="700">Node 1</text>
+
+  <!-- ==================== NODE 2: Permission System ==================== -->
+  <rect x="245" y="170" width="170" height="140" rx="12" fill="var(--node-fill)" stroke="#8b5cf6" stroke-width="2.5"/>
+  <rect x="245" y="170" width="170" height="40" rx="12" fill="#8b5cf6" fill-opacity="0.15"/>
+  <rect x="245" y="198" width="170" height="12" fill="#8b5cf6" fill-opacity="0.15"/>
+  <text x="330" y="196" text-anchor="middle" font-size="18" fill="#8b5cf6">🔐</text>
+  <text x="330" y="232" text-anchor="middle" font-size="15" fill="var(--text)" font-weight="700" class="lz">权限系统</text>
+  <text x="330" y="232" text-anchor="middle" font-size="15" fill="var(--text)" font-weight="700" class="le" display="none">Permission System</text>
+  <text x="330" y="251" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="ui-monospace,monospace">tengu_harbor_ledger</text>
+  <text x="330" y="267" text-anchor="middle" font-size="12" fill="var(--muted)" class="lz">本地权限校验</text>
+  <text x="330" y="267" text-anchor="middle" font-size="12" fill="var(--muted)" class="le" display="none">Local Auth Check</text>
+  <rect x="280" y="278" width="100" height="22" rx="6" fill="#8b5cf6" fill-opacity="0.18" stroke="#8b5cf6" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="330" y="293" text-anchor="middle" font-size="12" fill="#7c3aed" font-weight="700">Node 2</text>
+
+  <!-- ==================== PERMISSION GATE DIAMOND ==================== -->
+  <polygon points="450,215 475,240 450,265 425,240" fill="var(--node-fill)" stroke="#8b5cf6" stroke-width="2.5"/>
+  <text x="450" y="244" text-anchor="middle" font-size="10" fill="#7c3aed" font-weight="800">✓?</text>
+
+  <!-- ==================== NODE 3: Channel Server ==================== -->
+  <rect x="485" y="170" width="170" height="140" rx="12" fill="var(--node-fill)" stroke="#f97316" stroke-width="2.5"/>
+  <rect x="485" y="170" width="170" height="40" rx="12" fill="#f97316" fill-opacity="0.15"/>
+  <rect x="485" y="198" width="170" height="12" fill="#f97316" fill-opacity="0.15"/>
+  <text x="570" y="196" text-anchor="middle" font-size="18" fill="#f97316">📡</text>
+  <text x="570" y="232" text-anchor="middle" font-size="15" fill="var(--text)" font-weight="700" class="lz">Channel Server</text>
+  <text x="570" y="232" text-anchor="middle" font-size="15" fill="var(--text)" font-weight="700" class="le" display="none">Channel Server</text>
+  <text x="570" y="253" text-anchor="middle" font-size="12" fill="var(--muted)" class="lz">MCP Protocol</text>
+  <text x="570" y="253" text-anchor="middle" font-size="12" fill="var(--muted)" class="le" display="none">MCP Protocol</text>
+  <text x="570" y="269" text-anchor="middle" font-size="12" fill="var(--muted)" class="lz">Telegram Bot</text>
+  <text x="570" y="269" text-anchor="middle" font-size="12" fill="var(--muted)" class="le" display="none">Telegram Bot</text>
+  <rect x="520" y="278" width="100" height="22" rx="6" fill="#f97316" fill-opacity="0.18" stroke="#f97316" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="570" y="293" text-anchor="middle" font-size="12" fill="#ea580c" font-weight="700">Node 3</text>
+
+  <!-- ==================== NODE 4: Mobile App ==================== -->
+  <rect x="705" y="170" width="170" height="140" rx="12" fill="var(--node-fill)" stroke="#10b981" stroke-width="2.5"/>
+  <rect x="705" y="170" width="170" height="40" rx="12" fill="#10b981" fill-opacity="0.15"/>
+  <rect x="705" y="198" width="170" height="12" fill="#10b981" fill-opacity="0.15"/>
+  <text x="790" y="196" text-anchor="middle" font-size="18" fill="#10b981">📱</text>
+  <text x="790" y="232" text-anchor="middle" font-size="15" fill="var(--text)" font-weight="700" class="lz">Mobile App</text>
+  <text x="790" y="232" text-anchor="middle" font-size="15" fill="var(--text)" font-weight="700" class="le" display="none">Mobile App</text>
+  <text x="790" y="253" text-anchor="middle" font-size="12" fill="var(--muted)" class="lz">用户确认</text>
+  <text x="790" y="253" text-anchor="middle" font-size="12" fill="var(--muted)" class="le" display="none">User Confirm</text>
+  <text x="790" y="269" text-anchor="middle" font-size="12" fill="var(--muted)" class="lz">推送通知</text>
+  <text x="790" y="269" text-anchor="middle" font-size="12" fill="var(--muted)" class="le" display="none">Push Notify</text>
+  <rect x="740" y="278" width="100" height="22" rx="6" fill="#10b981" fill-opacity="0.18" stroke="#10b981" stroke-opacity="0.3" stroke-width="1"/>
+  <text x="790" y="293" text-anchor="middle" font-size="12" fill="#059669" font-weight="700">Node 4</text>
+
+  <!-- ==================== RETURN YES LABEL ==================== -->
+  <rect x="390" y="333" width="180" height="24" rx="6" fill="var(--label-fill)" stroke="#10b981" stroke-opacity="0.4" stroke-width="1"/>
+  <text x="480" y="350" text-anchor="middle" font-size="13" fill="#059669" font-weight="700" class="lz">✓ 已授权 · 继续执行</text>
+  <text x="480" y="350" text-anchor="middle" font-size="13" fill="#059669" font-weight="700" class="le" display="none">✓ Authorized · Continue</text>
+
+  <!-- ==================== RETURN NO LABEL ==================== -->
+  <rect x="390" y="408" width="180" height="24" rx="6" fill="var(--label-fill)" stroke="#f43f5e" stroke-opacity="0.4" stroke-width="1"/>
+  <text x="480" y="425" text-anchor="middle" font-size="13" fill="#e11d48" font-weight="700" class="lz">✗ 已拒绝 · 中断调用</text>
+  <text x="480" y="425" text-anchor="middle" font-size="13" fill="#e11d48" font-weight="700" class="le" display="none">✗ Denied · Abort Call</text>
+
+  <!-- ==================== LEGEND ==================== -->
+  <rect x="25" y="470" width="910" height="90" rx="10" fill="var(--legend-fill)" stroke="var(--border)" stroke-width="1"/>
+  <text x="42" y="493" font-size="13" fill="var(--text)" font-weight="700" class="lz">图例 Legend</text>
+  <text x="42" y="493" font-size="13" fill="var(--text)" font-weight="700" class="le" display="none">Legend</text>
+
+  <line x1="42" y1="516" x2="92" y2="516" stroke="#22d3ee" stroke-width="3" marker-end="url(#arrow-cyan)"/>
+  <text x="104" y="521" font-size="13" fill="var(--text)" class="lz">请求转发（前向流）</text>
+  <text x="104" y="521" font-size="13" fill="var(--text)" class="le" display="none">Request Forward Flow</text>
+
+  <line x1="42" y1="544" x2="92" y2="544" stroke="#10b981" stroke-width="2.5" stroke-dasharray="8,5" marker-end="url(#arrow-emerald)"/>
+  <text x="104" y="549" font-size="13" fill="var(--text)" class="lz">授权返回（已批准）</text>
+  <text x="104" y="549" font-size="13" fill="var(--text)" class="le" display="none">Authorized Return (Approved)</text>
+
+  <line x1="340" y1="544" x2="390" y2="544" stroke="#f43f5e" stroke-width="2.5" stroke-dasharray="8,5" marker-end="url(#arrow-rose)"/>
+  <text x="402" y="549" font-size="13" fill="var(--text)" class="lz">拒绝路径（权限网关拦截）</text>
+  <text x="402" y="549" font-size="13" fill="var(--text)" class="le" display="none">Denied Path (Gate Intercept)</text>
+
+  <polygon points="680,544 700,530 720,544 700,558" fill="var(--node-fill)" stroke="#8b5cf6" stroke-width="2"/>
+  <text x="730" y="549" font-size="13" fill="var(--text)" class="lz">权限决策网关</text>
+  <text x="730" y="549" font-size="13" fill="var(--text)" class="le" display="none">Permission Decision Gate</text>
+
+  <!-- ==================== ANIMATED PARTICLES ==================== -->
+  <circle r="5" fill="#22d3ee">
+    <animateMotion dur="3s" repeatCount="indefinite" begin="0s">
+      <mpath xlink:href="#path-fwd-12"/>
+    </animateMotion>
+  </circle>
+  <circle r="5" fill="#22d3ee">
+    <animateMotion dur="3s" repeatCount="indefinite" begin="0.5s">
+      <mpath xlink:href="#path-fwd-2g"/>
+    </animateMotion>
+  </circle>
+  <circle r="5" fill="#22d3ee">
+    <animateMotion dur="3s" repeatCount="indefinite" begin="0.75s">
+      <mpath xlink:href="#path-fwd-g3"/>
+    </animateMotion>
+  </circle>
+  <circle r="5" fill="#22d3ee">
+    <animateMotion dur="3s" repeatCount="indefinite" begin="1s">
+      <mpath xlink:href="#path-fwd-34"/>
+    </animateMotion>
+  </circle>
+  <circle r="4" fill="#10b981">
+    <animateMotion dur="4s" repeatCount="indefinite" begin="1.5s">
+      <mpath xlink:href="#path-ret-yes"/>
+    </animateMotion>
+  </circle>
+  <circle r="4" fill="#f43f5e">
+    <animateMotion dur="3s" repeatCount="indefinite" begin="2s">
+      <mpath xlink:href="#path-ret-no"/>
+    </animateMotion>
+  </circle>
+</svg>
+</div>
+
+<div class="stat-row">
+  <div class="stat-card">
+    <div class="stat-val"><span class="lz">4 节点</span><span class="le" style="display:none">4 Nodes</span></div>
+    <div class="stat-lbl"><span class="lz">Agent → 权限 → Channel → 移动端</span><span class="le" style="display:none">Agent → Permission → Channel → Mobile</span></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val"><span class="lz">2 返回路径</span><span class="le" style="display:none">2 Return Paths</span></div>
+    <div class="stat-lbl"><span class="lz">授权绿色 · 拒绝红色</span><span class="le" style="display:none">Approved Green · Denied Rose</span></div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-val"><span class="lz">Zero-trust 设计</span><span class="le" style="display:none">Zero-trust Design</span></div>
+    <div class="stat-lbl"><span class="lz">每次操作经权限网关独立验证</span><span class="le" style="display:none">Every action verified by permission gate</span></div>
+  </div>
+</div>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,520 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>后台任务触发时序图 — Claude Code v5</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root {
+  --bg: #020617; --bg-card: #0f172a; --bg-card2: #1e293b;
+  --txt: #f1f5f9; --txt2: #94a3b8; --txt3: #64748b; --border: #1e293b;
+  --grid-stroke: #1e293b;
+  --svg-bg: #020617;
+  --label-bg: #020617;
+  --lane-tint: 255,255,255;
+  --idle-text: #94a3b8;
+  --axis-line: #334155;
+  --axis-tick: #475569;
+  --legend-bg: rgba(30,41,59,0.5);
+  --mainbar-text: #0f172a;
+}
+[data-theme="warm"] {
+  --bg: #f8f6f3; --bg-card: #ffffff; --bg-card2: #f1f5f9;
+  --txt: #1e293b; --txt2: #475569; --txt3: #94a3b8; --border: #e2e8f0;
+  --grid-stroke: #e2e8f0;
+  --svg-bg: #ffffff;
+  --label-bg: #ffffff;
+  --lane-tint: 15,23,42;
+  --idle-text: #64748b;
+  --axis-line: #cbd5e1;
+  --axis-tick: #94a3b8;
+  --legend-bg: rgba(241,245,249,0.8);
+  --mainbar-text: #0f172a;
+}
+[data-theme="light"] {
+  --bg: #ffffff; --bg-card: #f8fafc; --bg-card2: #f1f5f9;
+  --txt: #0f172a; --txt2: #334155; --txt3: #94a3b8; --border: #e2e8f0;
+  --grid-stroke: #e2e8f0;
+  --svg-bg: #f8fafc;
+  --label-bg: #ffffff;
+  --lane-tint: 15,23,42;
+  --idle-text: #475569;
+  --axis-line: #cbd5e1;
+  --axis-tick: #94a3b8;
+  --legend-bg: rgba(241,245,249,0.8);
+  --mainbar-text: #0f172a;
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg); color: var(--txt);
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; padding: 48px 24px;
+  transition: background 0.3s, color 0.3s;
+}
+.header { text-align: center; margin-bottom: 32px; }
+.vis-id { font-size: 12px; color: var(--txt3); letter-spacing: 2px; margin-bottom: 8px; }
+.title { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
+.subtitle { font-size: 13px; color: var(--txt2); }
+.diagram-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 24px;
+  max-width: 1280px; width: 100%;
+}
+.diagram-card svg { display: block; width: 100%; height: auto; }
+.cards-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 12px; max-width: 1280px; width: 100%; margin-top: 14px;
+}
+.card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 14px;
+}
+.card-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; flex-shrink: 0; }
+.card h3 { font-size: 12px; font-weight: 600; color: var(--txt); margin-bottom: 6px; display: flex; align-items: center; }
+.card p { font-size: 11px; color: var(--txt2); line-height: 1.6; }
+.controls {
+  position: fixed; top: 20px; right: 20px;
+  display: flex; gap: 8px; z-index: 100;
+}
+.ctrl-btn {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 12px; font-size: 12px;
+  font-family: inherit; color: var(--txt); cursor: pointer;
+}
+.ctrl-btn:hover { background: var(--bg-card2); }
+
+/* SVG theme-aware overrides */
+.svg-bg { fill: var(--svg-bg); }
+.svg-grid-path { stroke: var(--grid-stroke); }
+.svg-arr { fill: var(--txt3); }
+.svg-lane-bg-alt { fill: rgba(var(--lane-tint), 0.03); }
+.svg-idle-bg { fill: rgba(var(--lane-tint), 0.05); }
+.svg-idle-text { fill: var(--idle-text); }
+.svg-axis-line { stroke: var(--axis-line); }
+.svg-axis-tick { stroke: var(--axis-tick); }
+.svg-axis-label { fill: var(--txt2); }
+.svg-sublabel { fill: var(--txt3); }
+.svg-memory-sub { fill: var(--txt2); }
+.svg-legend-bg { fill: var(--legend-bg); }
+.svg-legend-text { fill: var(--txt2); }
+.svg-mainbar-text { fill: var(--mainbar-text); }
+.svg-token-bg { fill: var(--label-bg); }
+.svg-dot-event { fill: var(--txt); opacity: 0.75; }
+
+/* Theme-aware lane labels */
+.lane-cyan { fill: #22d3ee; }
+.lane-green { fill: #34d399; }
+.lane-yellow { fill: #fbbf24; }
+.lane-purple { fill: #a78bfa; }
+.lane-red { fill: #fb7185; }
+.lane-gray { fill: #94a3b8; }
+[data-theme="warm"] .lane-cyan, [data-theme="light"] .lane-cyan { fill: #0e7490; }
+[data-theme="warm"] .lane-green, [data-theme="light"] .lane-green { fill: #047857; }
+[data-theme="warm"] .lane-yellow, [data-theme="light"] .lane-yellow { fill: #b45309; }
+[data-theme="warm"] .lane-purple, [data-theme="light"] .lane-purple { fill: #7c3aed; }
+[data-theme="warm"] .lane-red, [data-theme="light"] .lane-red { fill: #be123c; }
+[data-theme="warm"] .lane-gray, [data-theme="light"] .lane-gray { fill: #475569; }
+
+/* Theme-aware bar text */
+.bar-text-green { fill: #34d399; }
+.bar-text-yellow { fill: #fbbf24; }
+.bar-text-purple { fill: #a78bfa; }
+.bar-text-red { fill: #fb7185; }
+.bar-text-gray { fill: #94a3b8; }
+[data-theme="warm"] .bar-text-green, [data-theme="light"] .bar-text-green { fill: #065f46; }
+[data-theme="warm"] .bar-text-yellow, [data-theme="light"] .bar-text-yellow { fill: #92400e; }
+[data-theme="warm"] .bar-text-purple, [data-theme="light"] .bar-text-purple { fill: #5b21b6; }
+[data-theme="warm"] .bar-text-red, [data-theme="light"] .bar-text-red { fill: #9f1239; }
+[data-theme="warm"] .bar-text-gray, [data-theme="light"] .bar-text-gray { fill: #334155; }
+
+/* Token label */
+.svg-token-text { fill: #fbbf24; }
+[data-theme="warm"] .svg-token-text, [data-theme="light"] .svg-token-text { fill: #92400e; }
+
+/* Session End */
+.session-end-line { stroke: #a78bfa; }
+.session-end-text { fill: #a78bfa; }
+[data-theme="warm"] .session-end-line, [data-theme="light"] .session-end-line { stroke: #7c3aed; }
+[data-theme="warm"] .session-end-text, [data-theme="light"] .session-end-text { fill: #7c3aed; }
+
+/* t2 axis elements */
+.t2-axis-label { fill: #ef4444; }
+.t2-axis-tick { stroke: #ef4444; }
+[data-theme="warm"] .t2-axis-label, [data-theme="light"] .t2-axis-label { fill: #dc2626; }
+[data-theme="warm"] .t2-axis-tick, [data-theme="light"] .t2-axis-tick { stroke: #dc2626; }
+
+/* t2 block label */
+.t2-block-label { fill: #ef4444; }
+[data-theme="warm"] .t2-block-label, [data-theme="light"] .t2-block-label { fill: #dc2626; }
+
+@media (max-width: 640px) {
+  .cards-grid { grid-template-columns: 1fr; }
+}
+
+[lang="en"] .lz { display: none; }
+[lang="en"] .le { display: inline; }</style>
+</head>
+<body>
+<div class="controls">
+  <button class="ctrl-btn" onclick="window.toggleLang()">EN/中</button>
+  <button class="ctrl-btn" onclick="window.setTheme('dark')"><span class="lz">暗</span><span class="le">Dark</span></button>
+  <button class="ctrl-btn" onclick="window.setTheme('warm')"><span class="lz">暖</span><span class="le">Warm</span></button>
+  <button class="ctrl-btn" onclick="window.setTheme('light')"><span class="lz">亮</span><span class="le">Light</span></button>
+</div>
+
+<div class="header">
+  <div class="vis-id">VIS-1-008 · CLAUDE CODE ARCHITECTURE</div>
+  <div class="title">
+    <span class="lz">后台任务触发时序图</span>
+    <span class="le">Background Task Timing Sequence</span>
+  </div>
+  <div class="subtitle">
+    <span class="lz">主循环空闲期间自动触发的 5 类并行后台任务</span>
+    <span class="le">5 background task types triggered automatically during main loop idle periods</span>
+  </div>
+</div>
+
+<div class="diagram-card">
+<svg viewBox="0 0 960 540" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <pattern id="grid8" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path class="svg-grid-path" d="M 40 0 L 0 0 0 40" fill="none" stroke-width="0.5"/>
+  </pattern>
+  <marker id="arr8" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+    <polygon class="svg-arr" points="0 0,8 3,0 6"/>
+  </marker>
+  <marker id="arr8c" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+    <polygon points="0 0,8 3,0 6" fill="#22d3ee"/>
+  </marker>
+  <marker id="arr8-red" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+    <polygon points="0 0,8 3,0 6" fill="#ef4444"/>
+  </marker>
+  <marker id="arr8-purple" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+    <polygon points="0 0,8 3,0 6" fill="#a78bfa"/>
+  </marker>
+</defs>
+
+<!-- Background -->
+<rect class="svg-bg" width="960" height="540"/>
+<rect width="960" height="540" fill="url(#grid8)" opacity="0.35"/>
+
+<!-- Lane backgrounds (alternating) -->
+<rect x="120" y="72" width="820" height="46" fill="rgba(34,211,238,0.06)" rx="4"/>
+<rect x="120" y="127" width="820" height="40" fill="rgba(52,211,153,0.06)" rx="4"/>
+<rect x="120" y="176" width="820" height="40" fill="rgba(251,191,36,0.06)" rx="4"/>
+<rect x="120" y="225" width="820" height="40" fill="rgba(167,139,250,0.06)" rx="4"/>
+<rect x="120" y="274" width="820" height="40" fill="rgba(251,113,133,0.06)" rx="4"/>
+<rect x="120" y="323" width="820" height="40" fill="rgba(148,163,184,0.08)" rx="4"/>
+
+<!-- Idle period highlights (between t1-t2 and t3-t4) -->
+<rect class="svg-idle-bg" x="286" y="68" width="162" height="300" rx="4"/>
+<text class="svg-idle-text" x="367" y="62" text-anchor="middle" font-size="11" font-family="JetBrains Mono,monospace"><tspan class="lz">← 空闲期 / Idle →</tspan><tspan class="le">← Idle Period →</tspan></text>
+<rect class="svg-idle-bg" x="614" y="68" width="162" height="300" rx="4"/>
+<text class="svg-idle-text" x="695" y="62" text-anchor="middle" font-size="11" font-family="JetBrains Mono,monospace"><tspan class="lz">← 空闲期 / Idle →</tspan><tspan class="le">← Idle Period →</tspan></text>
+
+<!-- Session End line (aligned with t5) -->
+<line x1="940" y1="68" x2="940" y2="395" class="session-end-line" stroke-width="1" stroke-dasharray="5,4" opacity="0.6"/>
+<text x="940" y="64" text-anchor="middle" class="session-end-text" font-size="11" font-family="JetBrains Mono,monospace">Session End</text>
+
+<!-- Lane labels -->
+<text x="116" y="101" text-anchor="end" class="lane-cyan" font-size="12" font-weight="600" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">主循环</tspan><tspan class="le">Main Loop</tspan>
+</text>
+<text class="svg-sublabel" x="116" y="114" text-anchor="end" font-size="13" font-family="JetBrains Mono,monospace">QueryEngine</text>
+
+<text x="116" y="151" text-anchor="end" class="lane-green" font-size="12" font-weight="600" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">投机执行</tspan><tspan class="le">Speculative</tspan>
+</text>
+<text class="svg-sublabel" x="116" y="164" text-anchor="end" font-size="13" font-family="JetBrains Mono,monospace">Pre-read</text>
+
+<text x="116" y="200" text-anchor="end" class="lane-yellow" font-size="12" font-weight="600" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">上下文压缩</tspan><tspan class="le">Compaction</tspan>
+</text>
+<text class="svg-sublabel" x="116" y="213" text-anchor="end" font-size="13" font-family="JetBrains Mono,monospace">Context Compaction</text>
+
+<text x="116" y="249" text-anchor="end" class="lane-purple" font-size="12" font-weight="600" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">记忆整理</tspan><tspan class="le">Memory Dream</tspan>
+</text>
+<text class="svg-sublabel" x="116" y="262" text-anchor="end" font-size="13" font-family="JetBrains Mono,monospace">Save CLAUDE.md</text>
+
+<text x="116" y="298" text-anchor="end" class="lane-red" font-size="12" font-weight="600" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">文档维护</tspan><tspan class="le">MagicDocs</tspan>
+</text>
+<text class="svg-sublabel" x="116" y="311" text-anchor="end" font-size="13" font-family="JetBrains Mono,monospace">Docs Update</text>
+
+<text x="116" y="347" text-anchor="end" class="lane-gray" font-size="12" font-weight="600" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">延迟预取</tspan><tspan class="le">Prefetch</tspan>
+</text>
+<text class="svg-sublabel" x="116" y="360" text-anchor="end" font-size="13" font-family="JetBrains Mono,monospace">OAuth / Config</text>
+
+<!-- ======= MAIN LOOP BAR ======= -->
+<rect x="120" y="80" width="820" height="30" rx="4" fill="rgba(34,211,238,0.85)"/>
+<text class="svg-mainbar-text" x="210" y="100" font-size="12" font-weight="700" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">QueryEngine 主查询循环（持续运行）</tspan>
+  <tspan class="le">QueryEngine Main Query Loop (continuous)</tspan>
+</text>
+
+<!-- Event dots on main loop (t0-t5) — reduced radius + half-opacity so they don't cover text -->
+<circle class="svg-dot-event" cx="120" cy="95" r="3" fill-opacity="0.5"/>
+<circle class="svg-dot-event" cx="286" cy="95" r="3" fill-opacity="0.5"/>
+<circle cx="448" cy="95" r="4" fill="#ef4444" fill-opacity="0.6"/>
+<circle class="svg-dot-event" cx="614" cy="95" r="3" fill-opacity="0.5"/>
+<circle class="svg-dot-event" cx="776" cy="95" r="3" fill-opacity="0.5"/>
+<circle class="svg-dot-event" cx="940" cy="95" r="3" fill-opacity="0.5"/>
+
+<!-- Compaction blocking markers on main loop -->
+<rect x="447" y="80" width="4" height="30" fill="#ef4444" opacity="0.9"/>
+<rect x="570" y="80" width="4" height="30" fill="#ef4444" opacity="0.9"/>
+
+<!-- ======= SPECULATIVE EXECUTION ======= -->
+<rect x="300" y="133" width="136" height="28" rx="3"
+      fill="rgba(52,211,153,0.25)" stroke="#34d399" stroke-width="1" stroke-dasharray="5,3"/>
+<text x="310" y="151" class="bar-text-green" font-size="11" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">预测 · 预读</tspan><tspan class="le">Predict &amp; Pre-read</tspan>
+</text>
+<rect x="628" y="133" width="136" height="28" rx="3"
+      fill="rgba(52,211,153,0.25)" stroke="#34d399" stroke-width="1" stroke-dasharray="5,3"/>
+<text x="638" y="151" class="bar-text-green" font-size="11" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">预测 · 预读</tspan><tspan class="le">Predict &amp; Pre-read</tspan>
+</text>
+
+<!-- ======= CONTEXT COMPACTION ======= -->
+<rect x="451" y="182" width="122" height="28" rx="3"
+      fill="rgba(251,191,36,0.3)" stroke="#fbbf24" stroke-width="1.5"/>
+<text x="461" y="200" class="bar-text-yellow" font-size="11" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">Compaction 压缩</tspan><tspan class="le">Compaction</tspan>
+</text>
+<!-- Blocking lines from main to compaction -->
+<line x1="451" y1="110" x2="451" y2="182" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,2"/>
+<line x1="574" y1="110" x2="574" y2="182" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="4,2"/>
+<!-- token limit label -->
+<rect class="svg-token-bg" x="472" y="148" width="92" height="18" rx="3" opacity="0.95"/>
+<text x="518" y="161" text-anchor="middle" class="svg-token-text" font-size="11" font-family="JetBrains Mono,monospace">token&gt;softLimit</text>
+
+<!-- ======= MEMORY DREAM ======= -->
+<rect x="800" y="231" width="124" height="30" rx="3"
+      fill="rgba(167,139,250,0.28)" stroke="#a78bfa" stroke-width="1"/>
+<text x="810" y="249" class="bar-text-purple" font-size="11" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">Memory Dream</tspan><tspan class="le">Memory Dream</tspan>
+</text>
+<text class="svg-memory-sub" x="810" y="257" font-size="12" font-family="JetBrains Mono,monospace">→ CLAUDE.md</text>
+
+<!-- ======= MAGICDOCS ======= -->
+<rect x="308" y="280" width="78" height="28" rx="3"
+      fill="rgba(251,113,133,0.25)" stroke="#fb7185" stroke-width="1"/>
+<text x="318" y="298" class="bar-text-red" font-size="11" font-family="JetBrains Mono,monospace">MagicDocs</text>
+<rect x="656" y="280" width="78" height="28" rx="3"
+      fill="rgba(251,113,133,0.25)" stroke="#fb7185" stroke-width="1"/>
+<text x="666" y="298" class="bar-text-red" font-size="11" font-family="JetBrains Mono,monospace">MagicDocs</text>
+
+<!-- ======= DEFERRED PREFETCH ======= -->
+<rect x="128" y="329" width="150" height="28" rx="3"
+      fill="rgba(148,163,184,0.2)" stroke="#94a3b8" stroke-width="1"/>
+<text x="138" y="347" class="bar-text-gray" font-size="11" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">延迟预取 OAuth</tspan><tspan class="le">Deferred Prefetch OAuth</tspan>
+</text>
+
+<!-- ======= TRIGGER ARROWS ======= -->
+<!-- t1(286,110) → Speculative(300,133) -->
+<path d="M 286,110 Q 286,122 300,133" fill="none" class="svg-axis-line" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#arr8)"/>
+<!-- t2(448,110) → Compaction(451,182) -->
+<path d="M 448,110 Q 448,146 451,182" fill="none" stroke="#ef4444" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#arr8-red)"/>
+<!-- t3(614,110) → Speculative2(628,133) -->
+<path d="M 614,110 Q 614,122 628,133" fill="none" class="svg-axis-line" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#arr8)"/>
+<!-- t4(776,110) → Memory(800,231) -->
+<path d="M 776,110 Q 776,190 800,231" fill="none" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#arr8-purple)"/>
+<!-- t0(120,110) → Prefetch(128,329) -->
+<path d="M 120,110 Q 120,240 128,329" fill="none" stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#arr8)"/>
+
+<!-- ======= TIME AXIS ======= -->
+<line class="svg-axis-line" x1="120" y1="400" x2="940" y2="400" stroke-width="1.5"/>
+<text class="svg-axis-label" x="120" y="420" text-anchor="middle" font-size="11" font-family="JetBrains Mono,monospace">t0</text>
+<text class="svg-axis-label" x="286" y="420" text-anchor="middle" font-size="11" font-family="JetBrains Mono,monospace">t1</text>
+<text x="448" y="420" text-anchor="middle" class="t2-axis-label" font-size="11" font-family="JetBrains Mono,monospace">t2</text>
+<text class="svg-axis-label" x="614" y="420" text-anchor="middle" font-size="11" font-family="JetBrains Mono,monospace">t3</text>
+<text class="svg-axis-label" x="776" y="420" text-anchor="middle" font-size="11" font-family="JetBrains Mono,monospace">t4</text>
+<text class="svg-axis-label" x="940" y="420" text-anchor="middle" font-size="11" font-family="JetBrains Mono,monospace">t5</text>
+<!-- Tick marks -->
+<line class="svg-axis-tick" x1="120" y1="397" x2="120" y2="403" stroke-width="1.5"/>
+<line class="svg-axis-tick" x1="286" y1="397" x2="286" y2="403" stroke-width="1.5"/>
+<line x1="448" y1="397" x2="448" y2="403" class="t2-axis-tick" stroke-width="1.5"/>
+<line class="svg-axis-tick" x1="614" y1="397" x2="614" y2="403" stroke-width="1.5"/>
+<line class="svg-axis-tick" x1="776" y1="397" x2="776" y2="403" stroke-width="1.5"/>
+<line class="svg-axis-tick" x1="940" y1="397" x2="940" y2="403" stroke-width="1.5"/>
+
+<!-- t2 compaction block label -->
+<text x="448" y="436" text-anchor="middle" class="t2-block-label" font-size="11" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">压缩阻塞</tspan><tspan class="le">Block</tspan>
+</text>
+
+<!-- ======= LEGEND ======= -->
+<rect class="svg-legend-bg" x="120" y="458" width="820" height="68" rx="6"/>
+<text class="svg-legend-text" x="136" y="477" font-size="11" font-family="JetBrains Mono,monospace">Legend:</text>
+<rect x="194" y="467" width="20" height="12" rx="2" fill="rgba(34,211,238,0.85)"/>
+<text class="svg-legend-text" x="218" y="478" font-size="11" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">主循环</tspan><tspan class="le">Main Loop</tspan>
+</text>
+<rect x="300" y="467" width="20" height="12" rx="2" fill="rgba(52,211,153,0.25)" stroke="#34d399" stroke-width="1" stroke-dasharray="4,2"/>
+<text class="svg-legend-text" x="324" y="478" font-size="11" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">投机执行</tspan><tspan class="le">Speculative</tspan>
+</text>
+<rect x="420" y="467" width="20" height="12" rx="2" fill="rgba(251,191,36,0.3)" stroke="#fbbf24" stroke-width="1"/>
+<text class="svg-legend-text" x="444" y="478" font-size="11" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">上下文压缩（阻塞）</tspan><tspan class="le">Compaction (blocking)</tspan>
+</text>
+<rect x="610" y="467" width="20" height="12" rx="2" fill="rgba(167,139,250,0.28)" stroke="#a78bfa" stroke-width="1"/>
+<text class="svg-legend-text" x="634" y="478" font-size="11" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">记忆整理</tspan><tspan class="le">Memory Dream</tspan>
+</text>
+<rect x="750" y="467" width="20" height="12" rx="2" fill="rgba(251,113,133,0.25)" stroke="#fb7185" stroke-width="1"/>
+<text class="svg-legend-text" x="774" y="478" font-size="11" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">文档维护</tspan><tspan class="le">MagicDocs</tspan>
+</text>
+<rect x="136" y="500" width="4" height="12" fill="#ef4444" opacity="0.8"/>
+<text class="svg-legend-text" x="148" y="511" font-size="11" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">阻塞标记（红色竖线）</tspan><tspan class="le">Blocking marker (red bars)</tspan>
+</text>
+<rect x="370" y="500" width="20" height="12" rx="2" fill="rgba(148,163,184,0.2)" stroke="#94a3b8" stroke-width="1"/>
+<text class="svg-legend-text" x="394" y="511" font-size="11" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">延迟预取</tspan><tspan class="le">Deferred Prefetch</tspan>
+</text>
+<rect class="svg-idle-bg" x="510" y="500" width="20" height="12" rx="2"/>
+<text class="svg-legend-text" x="534" y="511" font-size="11" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">空闲期（灰色区域）</tspan><tspan class="le">Idle period (gray zone)</tspan>
+</text>
+
+</svg>
+</div>
+
+<div class="cards-grid">
+  <div class="card">
+    <h3><span class="card-dot" style="background:#34d399"></span>
+      <span class="lz">投机执行 Speculative</span><span class="le">Speculative Execution</span></h3>
+    <p><span class="lz">主循环空闲时提前预测并预读文件。若命中则跳过 IO 等待；若未命中则丢弃（最多 1 个工具）。</span>
+       <span class="le">Pre-reads files during idle periods. Cache hit = skip IO wait; miss = discard (max 1 tool).</span></p>
+  </div>
+  <div class="card">
+    <h3><span class="card-dot" style="background:#fbbf24"></span>
+      <span class="lz">上下文压缩 Compaction</span><span class="le">Context Compaction</span></h3>
+    <p><span class="lz">token 超过 softLimit 时触发，阻塞主循环，将长对话压缩成摘要。压缩期间 UI 显示"正在整理记忆"。</span>
+       <span class="le">Triggered when tokens exceed softLimit. Blocks main loop. Compresses long history into summary.</span></p>
+  </div>
+  <div class="card">
+    <h3><span class="card-dot" style="background:#a78bfa"></span>
+      <span class="lz">记忆整理 Memory Dream</span><span class="le">Memory Dream</span></h3>
+    <p><span class="lz">会话结束时（t4 后）触发，将关键事实写入 CLAUDE.md 实现跨会话记忆持久化。</span>
+       <span class="le">Triggered at session end (after t4). Writes key facts to CLAUDE.md for cross-session persistence.</span></p>
+  </div>
+  <div class="card">
+    <h3><span class="card-dot" style="background:#fb7185"></span>
+      <span class="lz">文档维护 MagicDocs</span><span class="le">MagicDocs</span></h3>
+    <p><span class="lz">自动检测文档变更并更新相关引用，保持文档与代码同步。</span>
+       <span class="le">Auto-detects doc changes and updates references, keeping docs in sync with code.</span></p>
+  </div>
+  <div class="card">
+    <h3><span class="card-dot" style="background:#94a3b8"></span>
+      <span class="lz">延迟预取 Prefetch</span><span class="le">Deferred Prefetch</span></h3>
+    <p><span class="lz">在后台延迟加载 OAuth 凭证、配置等低频变更资源，减少首次请求延迟。</span>
+       <span class="le">Lazily loads OAuth tokens, configs, and other infrequently changed resources in background.</span></p>
+  </div>
+</div>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('vtheme') || 'dark';
+  var lang = localStorage.getItem('vlang') || 'zh';
+  document.documentElement.setAttribute('data-theme', theme);
+  document.documentElement.setAttribute('lang', lang === 'en' ? 'en' : 'zh-CN');
+  window.setTheme = function(t) {
+    theme = t; localStorage.setItem('vtheme', t);
+    document.documentElement.setAttribute('data-theme', t);
+  };
+  window.toggleLang = function() {
+    lang = lang === 'en' ? 'zh' : 'en';
+    localStorage.setItem('vlang', lang);
+    document.documentElement.setAttribute('lang', lang === 'en' ? 'en' : 'zh-CN');
+  };
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

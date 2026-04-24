@@ -1,0 +1,667 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-3-008 | CLAUDE.md 多层级搜索链路图</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v3-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+:root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px 48px}
+
+/* Controls */
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:100}
+.ctrl button{font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:background .2s,border-color .2s}
+.ctrl button:hover{border-color:var(--violet)}
+
+/* Header */
+header{text-align:center;margin-bottom:24px;max-width:960px;width:100%}
+.vid{font-size:10px;color:var(--muted);letter-spacing:.14em;margin-bottom:6px;text-transform:uppercase}
+h1{font-size:20px;font-weight:700;color:var(--text);letter-spacing:-.01em;line-height:1.35;margin-bottom:8px}
+.subtitle{font-size:11px;color:var(--muted);line-height:1.7}
+
+/* Main layout: left SVG panel + right tree panel */
+.main-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;width:100%;max-width:960px;margin-bottom:16px}
+@media (max-width:720px){.main-grid{grid-template-columns:1fr}}
+
+/* Chart wrap */
+.chart-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;padding:4px}
+.chart-wrap svg{display:block;width:100%;height:auto}
+
+/* Grid theme adaptation */
+#grid3008 path{stroke:rgba(255,255,255,.04)}
+:root[data-theme="light"] #grid3008 path{stroke:rgba(0,0,0,.05)}
+
+/* Right: monorepo tree panel */
+.tree-panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:20px 18px;display:flex;flex-direction:column;gap:14px}
+.tree-panel-title{font-size:11px;font-weight:700;color:var(--muted);letter-spacing:.1em;text-transform:uppercase;padding-bottom:10px;border-bottom:1px solid var(--border)}
+
+.tree-root{font-size:11px;line-height:1.9;color:var(--text);font-family:'JetBrains Mono',monospace}
+.tree-root .t-dir{color:var(--muted)}
+.tree-root .t-file{color:var(--cyan)}
+.tree-root .t-rules{color:var(--emerald)}
+.tree-root .t-global{color:var(--cyan)}
+.tree-root .t-project{color:var(--violet)}
+.tree-root .t-badge{display:inline-block;font-size: 10px;padding:1px 6px;border-radius:4px;font-weight:600;vertical-align:middle;margin-left:4px}
+.tree-root .b-cyan{background:rgba(34,211,238,.15);color:var(--cyan);border:1px solid rgba(34,211,238,.3)}
+.tree-root .b-violet{background:rgba(139,92,246,.15);color:var(--violet);border:1px solid rgba(139,92,246,.3)}
+.tree-root .b-emerald{background:rgba(16,185,129,.15);color:var(--emerald);border:1px solid rgba(16,185,129,.3)}
+.tree-root .b-slate{background:rgba(100,116,139,.15);color:var(--slate);border:1px solid rgba(100,116,139,.3)}
+
+/* Callout */
+.callout{width:100%;max-width:960px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 18px;display:flex;align-items:center;gap:12px;margin-bottom:16px}
+.callout-icon{font-size:18px;flex-shrink:0}
+.callout-body{flex:1}
+.callout-title{font-size:12px;font-weight:700;color:var(--cyan);margin-bottom:4px}
+.callout-desc{font-size:11px;color:var(--muted);line-height:1.65}
+
+/* Bottom arrow bar */
+.concat-bar{width:100%;max-width:960px;background:var(--panel);border:1px solid var(--border);border-radius:10px;padding:14px 20px;display:flex;align-items:center;gap:16px;margin-bottom:16px}
+.concat-segments{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.seg{display:flex;align-items:center;gap:4px;font-size:10px;font-weight:600}
+.seg-dot{width:10px;height:10px;border-radius:3px;flex-shrink:0}
+.concat-arrow{font-size:13px;color:var(--muted)}
+.concat-result{margin-left:auto;background:rgba(139,92,246,.1);border:1px solid rgba(139,92,246,.35);border-radius:6px;padding:6px 14px;font-size:11px;font-weight:600;color:var(--violet)}
+
+/* Info cards */
+.cards{display:flex;gap:12px;width:100%;max-width:960px;flex-wrap:wrap;margin-bottom:16px}
+.card{flex:1;min-width:240px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:14px 16px}
+.card-head{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.card-dot{width:9px;height:9px;border-radius:50%;flex-shrink:0}
+.card-title{font-size:12px;font-weight:600;color:var(--text)}
+.card-body{font-size:11px;color:var(--muted);line-height:1.65}
+
+/* Footer */
+footer{font-size:10px;color:var(--muted);text-align:center;border-top:1px solid var(--border);padding-top:12px;width:100%;max-width:960px}
+
+[data-lang="en"] .lz{display:none}
+[data-lang="en"] .le{display:inline}
+</style>
+</head>
+<body>
+
+<!-- IIFE — exact as specified -->
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.documentElement.setAttribute('data-lang', l);
+  };
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+  var themes=['dark','warm','light'];
+  var ti=themes.indexOf(t);
+  if(ti<0)ti=0;
+  window.cycleTheme=function(){
+    ti=(ti+1)%themes.length;
+    t=themes[ti];
+    document.documentElement.setAttribute('data-theme',t);
+    localStorage.setItem('vtheme',t);
+  };
+})();
+</script>
+
+<div class="ctrl">
+  <button onclick="window.cycleTheme()">Theme</button>
+  <button onclick="window.toggleLang()">EN/中</button>
+</div>
+
+<header>
+  <div class="vid">VIS-3-008 · Claude Code 2.1.88</div>
+  <h1>
+    <span class="lz">CLAUDE.md 多层级搜索链路图</span>
+    <span class="le">CLAUDE.md Multi-Level Search Chain</span>
+  </h1>
+  <div class="subtitle">
+    <span class="lz">系统如何在六个层级中发现并拼接 CLAUDE.md 文件，最终注入 System Prompt</span>
+    <span class="le">How the system discovers and concatenates CLAUDE.md files across 6 levels into the System Prompt</span>
+  </div>
+</header>
+
+<!-- Main 2-column grid -->
+<div class="main-grid">
+
+  <!-- LEFT: SVG Search Chain Diagram -->
+  <div class="chart-wrap">
+    <svg viewBox="0 0 460 670" xmlns="http://www.w3.org/2000/svg" aria-label="CLAUDE.md 搜索链路图">
+    <defs>
+      <!-- Grid pattern -->
+      <pattern id="grid3008" width="20" height="20" patternUnits="userSpaceOnUse">
+        <path d="M 20 0 L 0 0 0 20" fill="none" stroke-width="0.5"/>
+      </pattern>
+
+      <!-- Glow filters -->
+      <filter id="glow-cyan" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="glow-violet" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="2.5" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+
+      <!-- Arrow markers -->
+      <marker id="arr-down" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="rgba(148,163,184,0.7)"/>
+      </marker>
+      <marker id="arr-cyan" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#22d3ee"/>
+      </marker>
+      <marker id="arr-violet" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+        <polygon points="0 0,8 3,0 6" fill="#8b5cf6"/>
+      </marker>
+
+      <!-- Level gradient fills -->
+      <linearGradient id="grad-cyan" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="rgba(34,211,238,0.18)"/>
+        <stop offset="100%" stop-color="rgba(34,211,238,0.04)"/>
+      </linearGradient>
+      <linearGradient id="grad-violet" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="rgba(139,92,246,0.18)"/>
+        <stop offset="100%" stop-color="rgba(139,92,246,0.04)"/>
+      </linearGradient>
+      <linearGradient id="grad-slate" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="rgba(100,116,139,0.18)"/>
+        <stop offset="100%" stop-color="rgba(100,116,139,0.04)"/>
+      </linearGradient>
+      <linearGradient id="grad-emerald" x1="0" y1="0" x2="1" y2="0">
+        <stop offset="0%" stop-color="rgba(16,185,129,0.18)"/>
+        <stop offset="100%" stop-color="rgba(16,185,129,0.04)"/>
+      </linearGradient>
+    </defs>
+
+    <!-- Background -->
+    <rect width="460" height="670" fill="var(--panel,#1e293b)" rx="11"/>
+    <rect width="460" height="670" fill="url(#grid3008)" rx="11"/>
+
+    <!-- Panel title -->
+    <text x="20" y="22" fill="var(--muted,#94a3b8)" font-size="10" font-weight="600" font-family="JetBrains Mono,monospace" letter-spacing="0.08em"><tspan class="lz">SEARCH ORDER · 搜索顺序</tspan><tspan class="le">SEARCH ORDER</tspan></text>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- LEVEL 1: ~/.claude/CLAUDE.md — User Global    -->
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- Level label -->
+    <text x="20" y="44" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" letter-spacing="0.05em" class="lz">① 用户全局</text>
+    <text x="20" y="44" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" letter-spacing="0.05em" class="le">① User Global</text>
+
+    <!-- Level 1 rect -->
+    <rect x="20" y="50" width="420" height="64" rx="6" fill="url(#grad-cyan)" stroke="#22d3ee" stroke-width="1.5" filter="url(#glow-cyan)"/>
+
+    <!-- Path text -->
+    <text x="32" y="71" fill="#22d3ee" font-size="11" font-weight="600" font-family="JetBrains Mono,monospace">~/.claude/CLAUDE.md</text>
+    <!-- Level name -->
+    <text x="32" y="89" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" class="lz">用户全局层</text>
+    <text x="32" y="89" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" class="le">User Global Layer</text>
+
+    <!-- Trust badge -->
+    <rect x="312" y="60" width="118" height="22" rx="11" fill="rgba(34,211,238,0.15)" stroke="#22d3ee" stroke-width="1"/>
+    <text x="371" y="74" fill="#22d3ee" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+      <tspan class="lz">完全信任</tspan><tspan class="le">FULL TRUST</tspan>
+    </text>
+
+    <!-- ── Arrow 1→2 with animated dot ── -->
+    <line x1="230" y1="114" x2="230" y2="130" stroke="rgba(148,163,184,0.5)" stroke-width="2" marker-end="url(#arr-down)"/>
+    <!-- Animated discovery dot -->
+    <circle r="4" fill="#22d3ee" opacity="0.9">
+      <animateMotion dur="3s" repeatCount="indefinite" begin="0s">
+        <mpath href="#path-1-2"/>
+      </animateMotion>
+      <animate attributeName="opacity" values="0;1;1;0" dur="3s" repeatCount="indefinite" begin="0s"/>
+    </circle>
+    <path id="path-1-2" d="M 230 114 L 230 130" fill="none" visibility="hidden"/>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- LEVEL 2: <git-root>/CLAUDE.md — Project Root  -->
+    <!-- ══════════════════════════════════════════════ -->
+    <text x="20" y="148" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" letter-spacing="0.05em" class="lz">② 项目根目录</text>
+    <text x="20" y="148" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" letter-spacing="0.05em" class="le">② Project Root</text>
+
+    <rect x="20" y="154" width="420" height="64" rx="6" fill="url(#grad-violet)" stroke="#8b5cf6" stroke-width="1.5" filter="url(#glow-violet)"/>
+    <text x="32" y="175" fill="#8b5cf6" font-size="11" font-weight="600" font-family="JetBrains Mono,monospace">&lt;git-root&gt;/CLAUDE.md</text>
+    <text x="32" y="193" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" class="lz">项目根目录层</text>
+    <text x="32" y="193" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" class="le">Project Root Layer</text>
+
+    <!-- Trust badge -->
+    <rect x="298" y="164" width="132" height="22" rx="11" fill="rgba(139,92,246,0.15)" stroke="#8b5cf6" stroke-width="1"/>
+    <text x="364" y="178" fill="#8b5cf6" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">LIMITED TRUST</text>
+
+    <!-- ── Arrow 2→3 ── -->
+    <line x1="230" y1="218" x2="230" y2="234" stroke="rgba(148,163,184,0.5)" stroke-width="2" marker-end="url(#arr-down)"/>
+    <circle r="4" fill="#8b5cf6" opacity="0.9">
+      <animateMotion dur="3s" repeatCount="indefinite" begin="0.5s">
+        <mpath href="#path-2-3"/>
+      </animateMotion>
+      <animate attributeName="opacity" values="0;1;1;0" dur="3s" repeatCount="indefinite" begin="0.5s"/>
+    </circle>
+    <path id="path-2-3" d="M 230 218 L 230 234" fill="none" visibility="hidden"/>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- LEVEL 3: <git-root>/.claude/CLAUDE.md — .claude Dir  -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <text x="20" y="252" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" letter-spacing="0.05em" class="lz">③ 项目 .claude 子目录</text>
+    <text x="20" y="252" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" letter-spacing="0.05em" class="le">③ Project .claude Dir</text>
+
+    <rect x="20" y="258" width="420" height="64" rx="6" fill="url(#grad-slate)" stroke="#64748b" stroke-width="1.5"/>
+    <text x="32" y="279" fill="var(--text,#f1f5f9)" font-size="11" font-weight="600" font-family="JetBrains Mono,monospace">&lt;git-root&gt;/.claude/CLAUDE.md</text>
+    <text x="32" y="297" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" class="lz">项目 .claude 子目录层</text>
+    <text x="32" y="297" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" class="le">Project .claude Sub-dir Layer</text>
+
+    <!-- Trust badge -->
+    <rect x="318" y="268" width="112" height="22" rx="11" fill="rgba(100,116,139,0.2)" stroke="#64748b" stroke-width="1"/>
+    <text x="374" y="282" fill="#94a3b8" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">UNTRUSTED</text>
+
+    <!-- ── Arrow 3→4 ── -->
+    <line x1="230" y1="322" x2="230" y2="338" stroke="rgba(148,163,184,0.5)" stroke-width="2" marker-end="url(#arr-down)"/>
+    <circle r="4" fill="#10b981" opacity="0.9">
+      <animateMotion dur="3s" repeatCount="indefinite" begin="1s">
+        <mpath href="#path-3-4"/>
+      </animateMotion>
+      <animate attributeName="opacity" values="0;1;1;0" dur="3s" repeatCount="indefinite" begin="1s"/>
+    </circle>
+    <path id="path-3-4" d="M 230 322 L 230 338" fill="none" visibility="hidden"/>
+
+    <!-- ══════════════════════════════════════════════ -->
+    <!-- LEVEL 4: .claude/rules/*.md — Rules Files     -->
+    <!-- ══════════════════════════════════════════════ -->
+    <text x="20" y="356" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" letter-spacing="0.05em" class="lz">④ 规则文件（按字母序加载）</text>
+    <text x="20" y="356" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" letter-spacing="0.05em" class="le">④ Rules Files (alphabetical order)</text>
+
+    <rect x="20" y="362" width="420" height="64" rx="6" fill="url(#grad-emerald)" stroke="#10b981" stroke-width="1.5"/>
+    <text x="32" y="383" fill="#10b981" font-size="11" font-weight="600" font-family="JetBrains Mono,monospace">.claude/rules/*.md</text>
+    <text x="32" y="401" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" class="lz">按字母序加载 · alphabetical</text>
+    <text x="32" y="401" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" class="le">Loaded alphabetically</text>
+
+    <!-- Trust badge (emerald, custom text) -->
+    <rect x="302" y="372" width="128" height="22" rx="11" fill="rgba(16,185,129,0.15)" stroke="#10b981" stroke-width="1"/>
+    <text x="366" y="386" fill="#10b981" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace" class="lz">α→z 顺序加载</text>
+    <text x="366" y="386" fill="#10b981" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace" class="le">α→z ORDER</text>
+
+    <!-- ── Arrow 4→5 ── -->
+    <line x1="230" y1="426" x2="230" y2="442" stroke="rgba(148,163,184,0.5)" stroke-width="2" marker-end="url(#arr-down)"/>
+    <circle r="4" fill="#8b5cf6" opacity="0.9">
+      <animateMotion dur="3s" repeatCount="indefinite" begin="1.5s">
+        <mpath href="#path-4-5"/>
+      </animateMotion>
+      <animate attributeName="opacity" values="0;1;1;0" dur="3s" repeatCount="indefinite" begin="1.5s"/>
+    </circle>
+    <path id="path-4-5" d="M 230 426 L 230 442" fill="none" visibility="hidden"/>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- LEVEL 5: 中间目录层 — Monorepo Sub-package Layers     -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <text x="20" y="460" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" letter-spacing="0.05em" class="lz">⑤ 中间目录层（Monorepo 子包）</text>
+    <text x="20" y="460" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" letter-spacing="0.05em" class="le">⑤ Intermediate Dirs (Monorepo Sub-packages)</text>
+
+    <rect x="20" y="466" width="420" height="64" rx="6" fill="url(#grad-violet)" stroke="#8b5cf6" stroke-width="1.2" stroke-dasharray="5,3"/>
+    <text x="32" y="487" fill="#8b5cf6" font-size="11" font-weight="600" font-family="JetBrains Mono,monospace" class="lz">中间目录层 CLAUDE.md</text>
+    <text x="32" y="487" fill="#8b5cf6" font-size="11" font-weight="600" font-family="JetBrains Mono,monospace" class="le">Intermediate Dir CLAUDE.md</text>
+    <text x="32" y="505" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" class="lz">Monorepo 子包层 · 按目录深度顺序</text>
+    <text x="32" y="505" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" class="le">Monorepo sub-package layers · depth order</text>
+
+    <!-- Trust badge -->
+    <rect x="308" y="476" width="122" height="22" rx="11" fill="rgba(139,92,246,0.15)" stroke="#8b5cf6" stroke-width="1"/>
+    <text x="369" y="490" fill="#8b5cf6" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">LIMITED TRUST</text>
+
+    <!-- ── Arrow 5→6 ── -->
+    <line x1="230" y1="530" x2="230" y2="566" stroke="rgba(148,163,184,0.5)" stroke-width="2" marker-end="url(#arr-down)"/>
+    <circle r="4" fill="#8b5cf6" opacity="0.9">
+      <animateMotion dur="3s" repeatCount="indefinite" begin="2s">
+        <mpath href="#path-5-6"/>
+      </animateMotion>
+      <animate attributeName="opacity" values="0;1;1;0" dur="3s" repeatCount="indefinite" begin="2s"/>
+    </circle>
+    <path id="path-5-6" d="M 230 530 L 230 566" fill="none" visibility="hidden"/>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- LEVEL 6: 当前工作目录 — CWD (Highest Priority)        -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <text x="20" y="564" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" letter-spacing="0.05em" class="lz">⑥ 当前工作目录（最高优先级）</text>
+    <text x="20" y="564" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" letter-spacing="0.05em" class="le">⑥ Current Working Directory (Most Specific)</text>
+
+    <rect x="20" y="570" width="420" height="64" rx="6" fill="url(#grad-cyan)" stroke="#22d3ee" stroke-width="1.5" filter="url(#glow-cyan)"/>
+    <text x="32" y="591" fill="#22d3ee" font-size="11" font-weight="600" font-family="JetBrains Mono,monospace">&lt;cwd&gt;/CLAUDE.md</text>
+    <text x="32" y="609" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" class="lz">当前工作目录层 · 最高优先级</text>
+    <text x="32" y="609" fill="var(--muted,#94a3b8)" font-size="10" font-family="JetBrains Mono,monospace" class="le">Current Working Directory Layer · Highest Priority</text>
+
+    <!-- Trust badge -->
+    <rect x="312" y="580" width="118" height="22" rx="11" fill="rgba(34,211,238,0.15)" stroke="#22d3ee" stroke-width="1"/>
+    <text x="371" y="594" fill="#22d3ee" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">
+      <tspan class="lz">完全信任</tspan><tspan class="le">FULL TRUST</tspan>
+    </text>
+
+    <!-- ── Arrow 6→end (strong, shows culmination) ── -->
+    <line x1="230" y1="634" x2="230" y2="650" stroke="#22d3ee" stroke-width="2.5" marker-end="url(#arr-cyan)"/>
+    <circle r="5" fill="#22d3ee" opacity="0.95">
+      <animateMotion dur="3s" repeatCount="indefinite" begin="2.5s">
+        <mpath href="#path-6-end"/>
+      </animateMotion>
+      <animate attributeName="opacity" values="0;1;1;0" dur="3s" repeatCount="indefinite" begin="2.5s"/>
+    </circle>
+    <path id="path-6-end" d="M 230 634 L 230 650" fill="none" visibility="hidden"/>
+
+    <!-- ══════════════════════════════════════════════════════ -->
+    <!-- Termination label at bottom                             -->
+    <!-- ══════════════════════════════════════════════════════ -->
+    <text x="230" y="657" fill="var(--muted,#94a3b8)" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace" class="lz">⬇ 全部拼接注入 System Prompt</text>
+    <text x="230" y="657" fill="var(--muted,#94a3b8)" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace" class="le">⬇ All concatenated → System Prompt</text>
+
+    </svg>
+  </div>
+
+  <!-- RIGHT: Monorepo example tree + Level 6 detail -->
+  <div class="tree-panel">
+    <div class="tree-panel-title">
+      <span class="lz">Monorepo 示例目录树</span>
+      <span class="le">Monorepo Example Tree</span>
+    </div>
+
+    <!-- LEVEL 6 highlight card -->
+    <div style="background:rgba(34,211,238,0.07);border:1.5px solid #22d3ee;border-radius:8px;padding:12px 14px;">
+      <div style="font-size: 10px;font-weight:700;color:#22d3ee;letter-spacing:.08em;margin-bottom:6px;">
+        <span class="lz">⑥ 当前工作目录（最高优先级）</span>
+        <span class="le">⑥ Current Working Directory (Most Specific)</span>
+      </div>
+      <div style="font-size:12px;font-weight:600;color:var(--text);font-family:'JetBrains Mono',monospace;margin-bottom:4px;">&lt;cwd&gt;/CLAUDE.md</div>
+      <div style="font-size:10px;color:var(--muted);line-height:1.6;">
+        <span class="lz">最后加载 · 覆盖上层 · 完全信任</span>
+        <span class="le">Loaded last · Overrides parents · FULL TRUST</span>
+      </div>
+      <div style="margin-top:8px;">
+        <span style="display:inline-block;background:rgba(34,211,238,0.15);border:1px solid rgba(34,211,238,.4);border-radius:8px;font-size: 10px;font-weight:700;color:#22d3ee;padding:2px 10px;">
+          <span class="lz">完全信任</span>
+          <span class="le">FULL TRUST</span>
+        </span>
+      </div>
+    </div>
+
+    <!-- Tree diagram -->
+    <div class="tree-root">
+      <div><span class="t-dir">~/monorepo/</span> <span style="font-size: 10px;color:var(--muted);" class="lz">← git root</span><span style="font-size: 10px;color:var(--muted);" class="le">← git root</span></div>
+      <div style="padding-left:8px;">
+        <span class="t-file">CLAUDE.md</span>
+        <span class="t-badge b-violet"><span class="lz">② 项目根</span><span class="le">② Root</span></span>
+      </div>
+      <div style="padding-left:8px;">
+        <span class="t-dir">.claude/</span>
+      </div>
+      <div style="padding-left:20px;">
+        <span class="t-file">CLAUDE.md</span>
+        <span class="t-badge b-slate"><span class="lz">③ .claude</span><span class="le">③ .claude</span></span>
+      </div>
+      <div style="padding-left:20px;">
+        <span class="t-dir">rules/</span>
+        <span class="t-badge b-emerald"><span class="lz">④ α→z</span><span class="le">④ α→z</span></span>
+      </div>
+      <div style="padding-left:34px;">
+        <span class="t-rules">01-style.md</span>
+      </div>
+      <div style="padding-left:34px;">
+        <span class="t-rules">02-security.md</span>
+      </div>
+      <div style="padding-left:34px;">
+        <span class="t-rules">03-testing.md</span>
+      </div>
+      <div style="padding-left:8px;">
+        <span class="t-dir">packages/</span>
+      </div>
+      <div style="padding-left:20px;">
+        <span class="t-dir">core/</span>
+      </div>
+      <div style="padding-left:34px;">
+        <span class="t-file">CLAUDE.md</span>
+        <span class="t-badge b-violet"><span class="lz">⑤ 子包层</span><span class="le">⑤ Sub-pkg</span></span>
+      </div>
+      <div style="padding-left:20px;">
+        <span class="t-dir">ui/</span>
+      </div>
+      <div style="padding-left:34px;">
+        <span class="t-file">CLAUDE.md</span>
+        <span class="t-badge b-violet"><span class="lz">⑤ 子包层</span><span class="le">⑤ Sub-pkg</span></span>
+      </div>
+      <div style="padding-left:20px;margin-top:6px;">
+        <span class="t-dir" style="color:#22d3ee;font-weight:600;">api/ ← CWD</span>
+      </div>
+      <div style="padding-left:34px;background:rgba(34,211,238,0.07);border-left:2px solid #22d3ee;padding-top:2px;padding-bottom:2px;">
+        <span class="t-file" style="color:#22d3ee;font-weight:700;">CLAUDE.md</span>
+        <span class="t-badge b-cyan"><span class="lz">⑥ 最高优先级</span><span class="le">⑥ Highest</span></span>
+      </div>
+    </div>
+
+    <!-- User global reference -->
+    <div style="background:rgba(34,211,238,0.05);border:1px solid rgba(34,211,238,0.2);border-radius:6px;padding:10px 12px;margin-top:4px;">
+      <div style="font-size: 10px;color:var(--muted);margin-bottom:4px;font-weight:600;">
+        <span class="lz">系统范围（始终加载，优先于项目层之前）</span>
+        <span class="le">System-wide (always loaded, before project layers)</span>
+      </div>
+      <div style="font-size:10px;font-family:'JetBrains Mono',monospace;">
+        <div>
+          <span class="t-global">~/.claude/CLAUDE.md</span>
+          <span class="t-badge b-cyan"><span class="lz">① 全局</span><span class="le">① Global</span></span>
+        </div>
+        <div style="margin-top:4px;">
+          <span style="color:var(--muted);">~/.claude/rules/*.md</span>
+          <span class="t-badge b-emerald"><span class="lz">全局规则</span><span class="le">Global rules</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Merge behavior summary -->
+    <div style="background:rgba(139,92,246,0.07);border:1px solid rgba(139,92,246,0.25);border-radius:6px;padding:10px 12px;">
+      <div style="font-size: 10px;color:#8b5cf6;font-weight:700;letter-spacing:.06em;margin-bottom:6px;">
+        <span class="lz">合并行为</span>
+        <span class="le">MERGE BEHAVIOR</span>
+      </div>
+      <div style="font-size:10px;color:var(--muted);line-height:1.75;">
+        <div>✦ <span class="lz">全部拼接，非覆盖（Concatenate, not override）</span><span class="le">Concatenate all, not override</span></div>
+        <div>✦ <span class="lz">祖先目录先加载 → CWD 最后</span><span class="le">Ancestors load first → CWD last</span></div>
+        <div>✦ <span class="lz">CWD 文件优先级最高（最后出现）</span><span class="le">CWD file has highest precedence (last)</span></div>
+        <div>✦ <span class="lz">结果注入 System Prompt 前缀</span><span class="le">Result injected as System Prompt prefix</span></div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /main-grid -->
+
+<!-- Concatenation Arrow Bar -->
+<div class="concat-bar">
+  <div class="concat-segments">
+    <div class="seg">
+      <div class="seg-dot" style="background:#22d3ee"></div>
+      <span style="color:#22d3ee;">
+        <span class="lz">① 全局</span><span class="le">① Global</span>
+      </span>
+    </div>
+    <span class="concat-arrow">+</span>
+    <div class="seg">
+      <div class="seg-dot" style="background:#8b5cf6"></div>
+      <span style="color:#8b5cf6;">
+        <span class="lz">② 项目根</span><span class="le">② Root</span>
+      </span>
+    </div>
+    <span class="concat-arrow">+</span>
+    <div class="seg">
+      <div class="seg-dot" style="background:#64748b"></div>
+      <span style="color:#64748b;">
+        <span class="lz">③ .claude</span><span class="le">③ .claude</span>
+      </span>
+    </div>
+    <span class="concat-arrow">+</span>
+    <div class="seg">
+      <div class="seg-dot" style="background:#10b981"></div>
+      <span style="color:#10b981;">
+        <span class="lz">④ rules α→z</span><span class="le">④ rules α→z</span>
+      </span>
+    </div>
+    <span class="concat-arrow">+</span>
+    <div class="seg">
+      <div class="seg-dot" style="background:#8b5cf6;opacity:.6"></div>
+      <span style="color:#8b5cf6;opacity:.8;">
+        <span class="lz">⑤ 中间层</span><span class="le">⑤ Intermediate</span>
+      </span>
+    </div>
+    <span class="concat-arrow">+</span>
+    <div class="seg">
+      <div class="seg-dot" style="background:#22d3ee"></div>
+      <span style="color:#22d3ee;font-weight:700;">
+        <span class="lz">⑥ CWD</span><span class="le">⑥ CWD</span>
+      </span>
+    </div>
+    <span class="concat-arrow" style="margin:0 4px;">→</span>
+  </div>
+  <div class="concat-result">
+    <span class="lz">全部拼接 · 非覆盖 · 注入 System Prompt</span>
+    <span class="le">Concatenate All → System Prompt</span>
+  </div>
+</div>
+
+<!-- Key Insight Callout -->
+<div class="callout">
+  <div class="callout-icon">🔍</div>
+  <div class="callout-body">
+    <div class="callout-title">
+      <span class="lz">搜索终点：系统提示注入</span>
+      <span class="le">Search result: System Prompt injection</span>
+    </div>
+    <div class="callout-desc">
+      <span class="lz">所有发现的 CLAUDE.md 文件按层级顺序<strong style="color:var(--cyan)">拼接（Concatenate）</strong>，而非覆盖（Override）。前缀标记为 <code style="color:var(--violet);">"IMPORTANT: These instructions OVERRIDE any default behavior and you MUST follow them exactly as written."</code>，随后整体注入 System Prompt 的 <strong style="color:var(--amber)">CLAUDE.md 插槽</strong>，在每轮对话前生效。</span>
+      <span class="le">All discovered CLAUDE.md files are <strong style="color:var(--cyan)">concatenated</strong> (not overridden) in layer order. A prefix is added: <code style="color:var(--violet);">"IMPORTANT: These instructions OVERRIDE any default behavior..."</code>, then the whole block is injected into the <strong style="color:var(--amber)">CLAUDE.md slot</strong> of the System Prompt, applied before every turn.</span>
+    </div>
+  </div>
+</div>
+
+<!-- Info Cards -->
+<div class="cards">
+  <div class="card">
+    <div class="card-head">
+      <div class="card-dot" style="background:#22d3ee"></div>
+      <span class="card-title">
+        <span class="lz">第①⑥层 — 完全信任</span>
+        <span class="le">Levels ①⑥ — Full Trust</span>
+      </span>
+    </div>
+    <div class="card-body">
+      <span class="lz">用户主目录 <code>~/.claude/CLAUDE.md</code> 和当前工作目录 <code>&lt;cwd&gt;/CLAUDE.md</code> 均为完全信任层。用户直接控制，无需额外确认。CWD 层最后加载，故优先级最高。</span>
+      <span class="le">User home dir <code>~/.claude/CLAUDE.md</code> and current working dir <code>&lt;cwd&gt;/CLAUDE.md</code> are both FULL TRUST. The CWD layer loads last, giving it the highest effective priority.</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-dot" style="background:#10b981"></div>
+      <span class="card-title">
+        <span class="lz">第④层 — Rules 文件按字母序</span>
+        <span class="le">Level ④ — Rules: Alphabetical Load</span>
+      </span>
+    </div>
+    <div class="card-body">
+      <span class="lz"><code>.claude/rules/*.md</code> 中的所有文件按<strong>字母排序</strong>依次加载。命名约定如 <code>01-style.md</code>、<code>02-security.md</code> 可精确控制加载顺序，后加载的文件在拼接位置靠后（语境优先级更高）。</span>
+      <span class="le">All files in <code>.claude/rules/*.md</code> load in <strong>alphabetical order</strong>. Naming convention like <code>01-style.md</code>, <code>02-security.md</code> precisely controls load order; later-loaded files appear later in the concatenated prompt.</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <div class="card-dot" style="background:#f59e0b"></div>
+      <span class="card-title">
+        <span class="lz">拼接 vs 覆盖 — 关键区别</span>
+        <span class="le">Concatenate vs Override — Key Distinction</span>
+      </span>
+    </div>
+    <div class="card-body">
+      <span class="lz">CC 采用<strong>拼接</strong>策略：所有层级的内容均保留，最终整合成一段超长指令块注入 System Prompt。这意味着低层级文件不会被高层级覆盖——每层都起效，仅顺序影响 LLM 对冲突指令的解析权重。</span>
+      <span class="le">CC uses a <strong>concatenation</strong> strategy: all layers are preserved and merged into one long instruction block in the System Prompt. Lower levels are NOT overridden by higher ones—every layer is active; only order affects how the LLM resolves conflicting instructions.</span>
+    </div>
+  </div>
+</div>
+
+<footer>
+  VIS-3-008 · Claude Code 2.1.88 · getProjectRules() · getGlobalRules() ·
+  <span class="lz">CLAUDE.md 多层级搜索链路图 · v3 生产版</span>
+  <span class="le">CLAUDE.md Multi-Level Search Chain · v3 Production</span>
+</footer>
+
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName.toLowerCase() === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName.toLowerCase() === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

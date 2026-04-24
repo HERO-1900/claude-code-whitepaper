@@ -1,0 +1,367 @@
+{
+  "version": "1.0",
+  "generated": "2026-04-05",
+  "description": "全书术语表 — 基于文科生审读报告中的术语不懂清单编制",
+  "terms": [
+    {
+      "term": "Agent",
+      "aka": ["智能体", "代理"],
+      "definition": "能自主决策和行动的AI程序。不是简单的问答机器人，而是能理解任务、制定计划、调用工具来完成目标的AI实例。",
+      "analogy": "像一个能独立工作的实习生——你给他一个任务描述，他自己决定怎么完成。",
+      "first_appears": "part0/00_序章",
+      "category": "core"
+    },
+    {
+      "term": "子Agent",
+      "aka": ["Sub-agent", "子智能体"],
+      "definition": "由主Agent创建的独立AI实例，用于并行处理子任务。子Agent有自己的执行环境，完成后把结果报告给父Agent。",
+      "analogy": "主管把项目拆成几个小任务，分别交给不同的下属去做。每个下属独立工作，完成后向主管汇报。",
+      "first_appears": "part3/01_权限系统",
+      "category": "core"
+    },
+    {
+      "term": "Token",
+      "aka": ["令牌"],
+      "definition": "AI模型处理文本的基本单位。1,000 token ≈ 750个英文单词 ≈ 500-600个中文字 ≈ 一页A4纸。每个token都要收费，所以token消耗直接关系到使用成本。",
+      "analogy": "像手机话费的计费单位——每发一条消息、每说一句话都要消耗token，token用完了就需要续费。",
+      "first_appears": "part1/03_概念",
+      "category": "core"
+    },
+    {
+      "term": "工具调用",
+      "aka": ["Tool Call", "Tool Use"],
+      "definition": "AI请求执行某个具体操作的行为，比如读文件、执行命令、编辑代码。AI不能直接操作你的电脑，必须通过'工具调用'来请求系统执行操作。",
+      "analogy": "像在餐厅点菜——AI是顾客，工具是菜单上的菜品，AI选好要什么操作（点菜），系统去执行（厨房做菜）。",
+      "first_appears": "part3/01_权限系统",
+      "category": "core"
+    },
+    {
+      "term": "MCP",
+      "aka": ["Model Context Protocol", "模型上下文协议"],
+      "definition": "Anthropic设计的开放协议，让AI能连接到外部服务（数据库、浏览器、Telegram等）。就像USB统一了外设接口，MCP统一了AI连接外部工具的方式。",
+      "analogy": "万能充电头/USB转接口——Claude只有一个标准接口，通过不同的'转接头'（MCP服务器）连接到各种外部服务。",
+      "first_appears": "part3/03_MCP",
+      "category": "protocol"
+    },
+    {
+      "term": "传输协议",
+      "aka": ["Transport Protocol"],
+      "definition": "数据在两个程序之间传递的方式。就像信件可以走邮政、快递、电子邮件等不同渠道，程序之间也有不同的数据传输方式（stdio、HTTP、SSE（服务端推送）、UDS（Unix Domain Socket）、WebSocket 等）。Claude Code 里 MCP 走 stdio/HTTP；Bridge 走 HTTP + SSE；Peer 发现层走 UDS。",
+      "analogy": "不同的信息传递渠道——打电话（实时双向）、发邮件（非实时）、广播（一对多）。",
+      "first_appears": "part3/03_MCP",
+      "category": "network"
+    },
+    {
+      "term": "Hooks",
+      "aka": ["钩子", "生命周期钩子"],
+      "definition": "用户可以在AI执行过程的特定时刻插入自定义逻辑的机制。比如在AI执行命令前先检查是否安全，或在AI完成任务后自动发通知。",
+      "analogy": "快递通知设置——你可以设定'包裹到达时自动短信通知'、'签收前验证身份'。",
+      "first_appears": "part3/04_Hooks",
+      "category": "system"
+    },
+    {
+      "term": "退出码",
+      "aka": ["Exit Code"],
+      "definition": "程序运行结束时返回的数字，告诉系统执行结果。exit 0 = 成功，exit 2 = 需要阻断，其他 = 出错但不阻断。",
+      "analogy": "交通信号灯——绿灯（0）放行，红灯（2）拦停，黄灯闪烁（其他）表示异常但不阻断。",
+      "first_appears": "part3/04_Hooks",
+      "category": "programming"
+    },
+    {
+      "term": "供应链攻击",
+      "aka": ["Supply Chain Attack"],
+      "definition": "攻击者不直接攻击你，而是在你信任的'上游'资源（如开源代码库、第三方包）中埋下恶意代码，等你使用时自动中招。",
+      "analogy": "在超市的食品供应链中投毒——不攻击消费者，而是污染食品原材料。",
+      "first_appears": "part3/04_Hooks",
+      "category": "security"
+    },
+    {
+      "term": "原子操作",
+      "aka": ["Atomic Operation", "原子性"],
+      "definition": "一个操作要么完全执行成功，要么完全不执行，不会出现'做了一半'的中间状态。'原子'取'不可分割'之意。",
+      "analogy": "银行转账——要么钱从A账户成功转到B账户，要么转账失败两边都不变。不会出现'A扣了钱但B没收到'的情况。",
+      "first_appears": "part3/03_MCP",
+      "category": "programming"
+    },
+    {
+      "term": "CCR",
+      "aka": ["Claude Code Remote"],
+      "definition": "Anthropic的远程运行环境，让你可以在云端服务器上运行Claude Code，而不是只在自己的电脑上。",
+      "analogy": "远程桌面——在公司的电脑上操作家里的电脑。",
+      "first_appears": "part3/03_MCP",
+      "category": "infrastructure"
+    },
+    {
+      "term": "Prompt Cache",
+      "aka": ["提示词缓存"],
+      "definition": "把AI之前处理过的输入内容'记住'，下次遇到相同内容时直接复用，不用重新处理。可以节省大量token费用。",
+      "analogy": "预制菜系统——把常用的食材提前备好半成品，客人点单时直接加热出餐，不用从头做。",
+      "first_appears": "part4/02_token",
+      "category": "optimization"
+    },
+    {
+      "term": "分布式",
+      "aka": ["Distributed"],
+      "definition": "把一个大任务拆成多个小任务，分配给多个独立的工作者同时执行。",
+      "analogy": "大公司把项目拆给不同部门并行推进，每个部门独立工作，最后汇总成果。",
+      "first_appears": "part3/10_Agent",
+      "category": "architecture"
+    },
+    {
+      "term": "并发",
+      "aka": ["Concurrent", "Concurrency"],
+      "definition": "多个任务同时进行。不一定真的同一时刻执行（那叫'并行'），但它们的执行时间有重叠。",
+      "analogy": "一个人同时煮饭、洗衣服、拖地——虽然你只有一双手，但利用等待时间交替做不同的事。",
+      "first_appears": "part3/10_Agent",
+      "category": "programming"
+    },
+    {
+      "term": "Worktree",
+      "aka": ["Git Worktree", "工作树"],
+      "definition": "Git提供的'平行工作目录'，让你可以在同一个代码仓库的不同分支上同时工作，互不干扰。",
+      "analogy": "同一本书的不同手抄副本——每人拿一份副本各自修改，最后合并。",
+      "first_appears": "part3/10_Agent",
+      "category": "tool"
+    },
+    {
+      "term": "类型系统",
+      "aka": ["Type System"],
+      "definition": "给代码里的每样东西贴标签（'这是数字'、'这是文本'），贴错标签系统就报错。目的是在写代码时就发现错误，而不是等运行出事才知道。",
+      "analogy": "超市货架分类标签——水果区不能放肉类，如果你把牛肉放到水果区，系统会立刻提醒你放错了。",
+      "first_appears": "part5/02_重新设计",
+      "category": "programming"
+    },
+    {
+      "term": "Shell命令",
+      "aka": ["Shell Command", "终端命令"],
+      "definition": "在终端（命令行）里输入的文字指令，用来操作电脑。比如列出文件、删除文件、安装软件等。",
+      "analogy": "文字版的鼠标操作——用鼠标双击打开文件夹，用shell命令就是输入'ls'来列出文件。",
+      "first_appears": "part5/02_重新设计",
+      "category": "programming"
+    },
+    {
+      "term": "Lint",
+      "aka": ["Lint规则", "代码检查"],
+      "definition": "自动检查代码是否符合规范的工具。不检查代码能不能运行，而是检查代码写得'好不好'（格式、风格、潜在问题）。",
+      "analogy": "Word的拼写和语法检查——帮你发现打字错误和语法问题，但不管你写的内容对不对。",
+      "first_appears": "part5/02_重新设计",
+      "category": "tool"
+    },
+    {
+      "term": "Magic Number",
+      "aka": ["魔术数字", "硬编码常量"],
+      "definition": "代码中凭空出现的数字，没有解释为什么是这个值。程序员看到就想问'这个10000是怎么来的？'。",
+      "analogy": "考试答案只写了'42'但没有解题过程——对但不知道为什么对。",
+      "first_appears": "part4/05_可观测性",
+      "category": "programming"
+    },
+    {
+      "term": "抽象泄漏",
+      "aka": ["Leaky Abstraction"],
+      "definition": "框架号称帮你屏蔽了底层复杂性，但实际使用中底层问题总是'漏'出来，你还是得自己处理。",
+      "analogy": "买了全自动洗碗机，结果发现老是要手动预洗才能洗干净——'自动'的承诺泄漏了。",
+      "first_appears": "part5/03_实践",
+      "category": "architecture"
+    },
+    {
+      "term": "可观测性",
+      "aka": ["Observability"],
+      "definition": "系统对外暴露自身运行状态的能力——让你不用猜，就能知道系统内部正在发生什么。包括日志、指标、追踪三大支柱。",
+      "analogy": "汽车仪表盘——油量（token用量）、车速（响应延迟）、发动机温度（缓存命中率）、导航状态（AI正在做什么）。",
+      "first_appears": "part4/05_可观测性",
+      "category": "engineering"
+    },
+    {
+      "term": "Killswitch",
+      "aka": ["远程关闭开关", "紧急制动"],
+      "definition": "Anthropic服务器保留的远程权限控制能力——一旦发现安全问题，可以远程收回所有用户的特定权限。",
+      "analogy": "物业公司总部的'远程锁门'权力——发现安全隐患时，可以远程收回所有住户的万能钥匙。",
+      "first_appears": "part3/01_权限系统",
+      "category": "security"
+    },
+    {
+      "term": "DFS",
+      "aka": ["Depth-First Search", "深度优先搜索"],
+      "definition": "一种遍历方式：沿着一条路一直走到底，走不动了再回头试另一条路。",
+      "analogy": "走迷宫的策略——选一条路一直走到死胡同，然后回头试下一个岔路口。",
+      "first_appears": "part3/05_插件系统",
+      "category": "algorithm"
+    },
+    {
+      "term": "Scope",
+      "aka": ["作用域", "配置来源"],
+      "definition": "表示'这条配置是谁设的'。不同来源的配置有不同的优先级，就像公司总部的通知比部门通知优先级高。",
+      "analogy": "法律的层级——宪法>法律>法规>部门规章，冲突时高层级优先。",
+      "first_appears": "part3/03_MCP",
+      "category": "system"
+    },
+    {
+      "term": "CLAUDE.md",
+      "aka": ["项目规则文件"],
+      "definition": "放在项目目录中的配置文件，用来告诉Claude'在这个项目里你应该遵守哪些规则'。类似于给新入职的员工一份'部门须知'。",
+      "analogy": "公司的《员工手册》——每次上班前先看看手册里的规定，确保行为符合要求。",
+      "first_appears": "part3/记忆系统",
+      "category": "system"
+    },
+    {
+      "term": "Dream整合",
+      "aka": ["Dream Consolidation", "autoDream"],
+      "definition": "Claude Code的后台记忆整理机制——趁你不用的时候，自动把散乱的记忆笔记整理、去重、归类。",
+      "analogy": "秘书在周末整理本周的会议笔记——把重复的删掉，把相关的合并，把过时的标注。",
+      "first_appears": "part3/记忆系统",
+      "category": "system"
+    },
+    {
+      "term": "Feature Flag",
+      "aka": ["功能开关", "特性标志"],
+      "definition": "一种远程控制机制，让开发者可以在不发布新版本的情况下，远程打开或关闭某个功能。",
+      "analogy": "电灯开关——功能代码已经装好了（电路已铺），但开关在远程服务器上，随时可以开或关。",
+      "first_appears": "part5/01_代价",
+      "category": "engineering"
+    },
+    {
+      "term": "一等公民",
+      "aka": ["First-class Citizen"],
+      "definition": "编程术语，意思是'享受最高待遇的核心对象'。当说'token是一等公民'时，意味着系统的每个环节都要优先考虑token的消耗。",
+      "analogy": "VIP会员——走哪里都有专属通道和优先待遇。",
+      "first_appears": "part4/02_token",
+      "category": "programming"
+    },
+    {
+      "term": "No-op",
+      "aka": ["空操作"],
+      "definition": "一个什么都不做的操作。故意让某个功能'装作在工作但实际啥也没干'，通常用于禁用子Agent的某些能力。",
+      "analogy": "安保人员站在门口但不检查任何人——职位还在，但功能被'架空'了。",
+      "first_appears": "part4/03_乐高",
+      "category": "programming"
+    },
+    {
+      "term": "副作用",
+      "aka": ["Side Effect"],
+      "definition": "在编程中，指一个操作除了返回结果之外，还改变了外部状态（写文件、发网络请求、修改全局变量）。这些改变往往不可撤销。",
+      "analogy": "吃药的副作用——治好了感冒（主要功能），但可能犯困（副作用）。副作用不是bug，但需要注意管理。",
+      "first_appears": "part4/01_等待时间",
+      "category": "programming"
+    },
+    {
+      "term": "Bridge",
+      "aka": ["远程桥", "Remote Bridge"],
+      "definition": "Claude Code 的本地暴露层——让 claude.ai Web 端或手机 App 能够 attach 到你本地终端正在运行的 Claude Code 会话，实现远程查看和控制。",
+      "analogy": "家里装的远程摄像头——外面（Web端）可以看到家里（本地终端）正在发生什么，还能通过对讲机（发消息）互动。",
+      "first_appears": "part3/12_Bridge",
+      "category": "infrastructure"
+    },
+    {
+      "term": "Teleport",
+      "aka": ["会话传送"],
+      "definition": "Claude Code 的恢复协议层——在 crash 或断线后，通过 bridge-pointer.json 找回上一次会话并接续工作。也用于将本地代码打包（Git Bundle）送到远端执行。",
+      "analogy": "游戏的存档点——停电断线后从最近的存档继续，不用从头开始。",
+      "first_appears": "part3/远程Agent管理",
+      "category": "infrastructure"
+    },
+    {
+      "term": "viewerOnly",
+      "aka": ["观察者模式"],
+      "definition": "一种远程接入语义——不是简单的'只读'开关，而是角色重定义：关掉控制端能力（interrupt/watchdog/title ownership），保留消息收发和工具结果渲染。",
+      "analogy": "会议室里的'列席代表'——不能投票决策，但可以旁听、记录、提问。",
+      "first_appears": "part3/12_Bridge",
+      "category": "infrastructure"
+    },
+    {
+      "term": "Task",
+      "aka": ["任务容器"],
+      "definition": "Claude Code 中管理 Agent 生命周期的托管容器。和 Tool（做什么）不同，Task 关注的是怎么管理执行：状态保存、前后台切换、停止/恢复。共有七种类型（LocalShell/LocalAgent/RemoteAgent/InProcess/Dream/Background/Foreground）。",
+      "analogy": "快递的物流跟踪系统——不是包裹本身，而是管理包裹从发出到签收全过程的系统（在途/到站/派送中/已签收）。",
+      "first_appears": "part3/10_Agent",
+      "category": "core"
+    },
+    {
+      "term": "Tool Pool",
+      "aka": ["工具池"],
+      "definition": "当前这一轮 query 中，模型实际可见的工具子集。每次 query 调用时由 assembleToolPool() 重新装配，取决于权限模式、feature gate、MCP 连接状态等动态条件。不等于系统全部已注册的工具。",
+      "analogy": "餐厅今日菜单——厨房会做100道菜（完整注册表），但今天供应的只有30道（当前 tool pool），因为有些食材没到货（MCP 未连接）、有些菜被禁售了（权限限制）。",
+      "first_appears": "part2/05_工具运行时",
+      "category": "core"
+    },
+    {
+      "term": "querySource",
+      "aka": ["查询来源标识"],
+      "definition": "标记当前 query 调用来自谁的运行时控制键。不是简单的日志标签——它决定了缓存策略、重试行为、压缩路径等关键行为。常见值：repl_main_thread（主线程）、compact（压缩）、agent（子Agent）、sdk（SDK调用）。",
+      "analogy": "外卖订单上的'来源'标签（美团/饿了么/电话下单）——后厨根据不同来源决定优先级和出餐方式。",
+      "first_appears": "part4/03_乐高",
+      "category": "system"
+    },
+    {
+      "term": "ListPeers",
+      "aka": ["对等端列表", "可发送地址簿"],
+      "definition": "用于发现本机上所有可通信的 Claude Code 会话的工具。产出的是可直接用于 SendMessage 的地址字面量（uds:/path 或 bridge:session_xxx），不是富会话对象。",
+      "analogy": "手机通讯录——只存电话号码和姓名，不存对方的生活细节。你需要打电话时翻通讯录找号码。",
+      "first_appears": "part3/Peer发现层",
+      "category": "system"
+    },
+    {
+      "term": "UDS Inbox",
+      "aka": ["Unix Domain Socket 收件箱"],
+      "definition": "本地消息注入与唤醒底座——外部消息（跨会话消息、Teammate 消息）通过 UDS 进入主循环。是跨会话通信和 Swarm 协作的基础传输层。",
+      "analogy": "公司的内部邮件系统——同事（其他 Claude 实例）把消息投进你的收件箱，你在空闲时处理。",
+      "first_appears": "part3/远程Agent管理",
+      "category": "infrastructure"
+    },
+    {
+      "term": "Coordinator Mode",
+      "aka": ["协调者模式"],
+      "definition": "把主线程 Claude 降格为项目经理角色的特殊工作模式。Coordinator 自己不写代码，而是通过 Agent 工具把任务分配给 worker 子Agent，并审查他们的结果。",
+      "analogy": "乐队指挥——自己不演奏任何乐器，但指导每个乐手什么时候演奏什么。",
+      "first_appears": "part3/协调器模式",
+      "category": "core"
+    },
+    {
+      "term": "Companion Observer",
+      "aka": ["伴侣观察器"],
+      "definition": "Buddy 系统中负责观察对话内容并生成 companionReaction（伴侣反应）的组件。调用位在 REPL.tsx，但定义宿主（src/buddy/observer.ts）在当前源码快照中缺失。",
+      "analogy": "宠物狗观察主人的情绪——虽然我们看得到狗的反应（开心摇尾巴），但'狗是怎么判断主人情绪的'那部分逻辑是个黑盒。",
+      "first_appears": "part3/13_Buddy",
+      "category": "system"
+    },
+    {
+      "term": "Pointer",
+      "aka": ["Bridge Pointer", "会话指针"],
+      "definition": "轻量级的持久化指针文件（bridge-pointer.json），保存上一次 bridge 会话的 sessionId 和 environmentId。crash 后系统通过读取 pointer 文件恢复会话，而不是重建。有 4 小时 TTL，基于文件 mtime 判定新鲜度。",
+      "analogy": "书签——不保存整本书的内容，只记住你读到哪一页，下次打开直接翻到那页。",
+      "first_appears": "part3/12_Bridge",
+      "category": "infrastructure"
+    },
+    {
+      "term": "Sidecar",
+      "aka": ["伴随元数据"],
+      "definition": "与远程任务一起落盘的元数据文件，记录任务的身份信息（sessionId、environmentId、workerType），用于断线恢复时重新 attach。",
+      "analogy": "快递包裹上贴的运单——包裹（远程任务）和运单（sidecar）绑在一起，丢了运单就不知道包裹要送去哪。",
+      "first_appears": "part3/远程Agent管理",
+      "category": "infrastructure"
+    },
+    {
+      "term": "KAIROS",
+      "aka": ["Assistant Mode Feature Gate"],
+      "definition": "Claude Code 内部的 feature gate 代号，控制 assistant 模式（claude assistant 命令）的启用。开启后 bridge 进入 perpetual 模式（不因 teardown 而断开），worker_type 变成 claude_code_assistant。",
+      "analogy": "电影院的'包场模式'——普通观众看完就走（普通 bridge），KAIROS 模式是包了整个影厅（perpetual），随时可以继续看。",
+      "first_appears": "part3/12_Bridge",
+      "category": "system"
+    },
+    {
+      "term": "TOKEN_BUDGET",
+      "aka": ["+500k", "Token 预算继续策略"],
+      "definition": "用户通过在消息末尾附加 +500k 等语法设定的 token 预算。当模型 turn 结束但 token 使用未达 90% 时，系统注入一条隐形 meta user message 推动模型继续工作。与 API 层的 taskBudget 是不同概念。",
+      "analogy": "马拉松的补给站——跑了一段（一个 turn）后，系统看你还有体力（token 预算），就递水给你让你继续跑，直到你真的跑够了或开始原地踏步（diminishing returns）。",
+      "first_appears": "part2/04_查询循环",
+      "category": "system"
+    },
+    {
+      "term": "dropText",
+      "aka": ["丢弃文本", "Brief dropText 语义"],
+      "definition": "Brief 工具发消息时触发的一种语义：Claude 在当前 turn 已经生成的回复文字会被丢弃，用户通过 Brief 发来的新消息替换那段回复。只对 Brief 生效，SendUserFile 发送附件时不触发 dropText（保留 assistant 上下文）。这个不对称是产品语义的刻意区分——文本发送假设'我改主意了'，文件发送假设'我补充资料'。",
+      "analogy": "微信的'撤回 + 重发'——你发了一条消息，对方刚要回你时你按了撤回，对方刚打的半句回复消失，你发的新消息替换那段。Brief 的 dropText 就是这个感觉。",
+      "first_appears": "part3/25_Brief通信家族",
+      "category": "system"
+    }
+  ]
+}

@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIS-2A-008 CLAUDE.md 向上遍历发现图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root{
+      --bg:#020617;--panel:#0f172a;--card:#0f172a;--border:#1e293b;
+      --text:#e2e8f0;--text-strong:#f8fafc;--muted:#94a3b8;--subtle:#334155;
+      --amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#f97316;
+      /* tinted fills */
+      --fill-amber:rgba(251,191,36,0.18);--fill-amber-strong:rgba(251,191,36,0.28);
+      --fill-cyan:rgba(34,211,238,0.16);--fill-cyan-strong:rgba(34,211,238,0.26);
+      --fill-violet:rgba(167,139,250,0.18);--fill-violet-strong:rgba(167,139,250,0.32);
+      --fill-emerald:rgba(52,211,153,0.18);--fill-emerald-strong:rgba(52,211,153,0.32);
+      --fill-neutral:rgba(148,163,184,0.14);
+      --txt-amber:#fcd34d;--txt-cyan:#67e8f9;--txt-violet:#c4b5fd;--txt-emerald:#6ee7b7;--txt-neutral:#94a3b8;
+    }
+    [data-theme="warm"]{
+      --bg:#f4ede0;--panel:#fffaf0;--card:#fdf6e3;--border:#c9b896;
+      --text:#1c1917;--text-strong:#0c0a09;--muted:#57534e;--subtle:#a8a29e;
+      --fill-amber:rgba(217,119,6,0.18);--fill-amber-strong:rgba(217,119,6,0.32);
+      --fill-cyan:rgba(8,145,178,0.16);--fill-cyan-strong:rgba(8,145,178,0.28);
+      --fill-violet:rgba(124,58,237,0.16);--fill-violet-strong:rgba(124,58,237,0.30);
+      --fill-emerald:rgba(5,150,105,0.16);--fill-emerald-strong:rgba(5,150,105,0.30);
+      --fill-neutral:rgba(87,83,78,0.10);
+      --amber:#b45309;--cyan:#0e7490;--violet:#6d28d9;--emerald:#047857;
+      --txt-amber:#92400e;--txt-cyan:#155e75;--txt-violet:#5b21b6;--txt-emerald:#065f46;--txt-neutral:#44403c;
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--panel:#f1f5f9;--card:#f8fafc;--border:#94a3b8;
+      --text:#0f172a;--text-strong:#020617;--muted:#475569;--subtle:#cbd5e1;
+      --fill-amber:rgba(217,119,6,0.16);--fill-amber-strong:rgba(217,119,6,0.30);
+      --fill-cyan:rgba(8,145,178,0.14);--fill-cyan-strong:rgba(8,145,178,0.26);
+      --fill-violet:rgba(124,58,237,0.14);--fill-violet-strong:rgba(124,58,237,0.28);
+      --fill-emerald:rgba(5,150,105,0.14);--fill-emerald-strong:rgba(5,150,105,0.28);
+      --fill-neutral:rgba(71,85,105,0.10);
+      --amber:#b45309;--cyan:#0e7490;--violet:#6d28d9;--emerald:#047857;
+      --txt-amber:#92400e;--txt-cyan:#155e75;--txt-violet:#5b21b6;--txt-emerald:#065f46;--txt-neutral:#334155;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;padding:22px 26px 36px}
+    /* SVG theme-reactive fills */
+    .svg-bg{fill:var(--bg)}
+    .node-bg{fill:var(--panel)}
+    .grid-line{stroke:var(--border)}
+    .node-meta{fill:var(--muted)}
+    .text-strong{fill:var(--text-strong)}
+    .text-base{fill:var(--text)}
+    .text-mute{fill:var(--muted)}
+    /* zone fills */
+    .zone-amber{fill:var(--fill-amber);stroke:var(--amber);stroke-width:1.6}
+    .zone-amber-strong{fill:var(--fill-amber-strong);stroke:var(--amber);stroke-width:1}
+    .zone-cyan{fill:var(--fill-cyan);stroke:var(--cyan);stroke-width:1.6}
+    .zone-cyan-strong{fill:var(--fill-cyan-strong);stroke:var(--cyan);stroke-width:1}
+    .zone-violet{fill:var(--fill-violet);stroke:var(--violet);stroke-width:1.6}
+    .zone-violet-strong{fill:var(--fill-violet-strong);stroke:var(--violet);stroke-width:1}
+    .zone-emerald{fill:var(--fill-emerald);stroke:var(--emerald);stroke-width:1.6}
+    .zone-emerald-strong{fill:var(--fill-emerald-strong);stroke:var(--emerald);stroke-width:1}
+    .zone-neutral{fill:var(--fill-neutral);stroke:var(--subtle);stroke-width:0.8}
+    .badge-bg{fill:var(--card);stroke:var(--subtle);stroke-width:0.8}
+    .txt-amber{fill:var(--txt-amber)}
+    .txt-cyan{fill:var(--txt-cyan)}
+    .txt-violet{fill:var(--txt-violet)}
+    .txt-emerald{fill:var(--txt-emerald)}
+    .txt-neutral{fill:var(--txt-neutral)}
+    .arr-violet{stroke:var(--violet)}
+    /* header */
+    .vis-header{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+    .vis-dot{width:12px;height:12px;border-radius:50%;background:var(--violet);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+    .vis-title{font-size:20px;font-weight:700;color:var(--text-strong);letter-spacing:.02em}
+    .vis-sub{font-size:13px;color:var(--muted);margin-left:4px}
+    /* SVG card */
+    .svg-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:18px;overflow-x:auto}
+    /* info cards */
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px}
+    .card-hd{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .card-dot{width:10px;height:10px;border-radius:50%}
+    .card-hd h3{font-size:14px;font-weight:700;color:var(--text-strong)}
+    .card ul{list-style:none;font-size:12.5px;color:var(--text);line-height:1.85}
+    /* footer */
+    .vis-footer{font-size:12px;color:var(--muted);text-align:center;border-top:1px solid var(--border);padding-top:12px}
+    /* floating controls */
+    .ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:999}
+    .ctrl button{background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:600;padding:7px 14px;border-radius:7px;cursor:pointer}
+    .ctrl button:hover{border-color:var(--violet);color:var(--violet)}
+  </style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="window.cycleTheme()">Theme</button>
+  <button onclick="window.toggleLang()">EN/中</button>
+</div>
+
+<div class="vis-header">
+  <div class="vis-dot"></div>
+  <div class="vis-title">
+    <span class="lz">CLAUDE.md 向上遍历发现图</span>
+    <span class="le" style="display:none">CLAUDE.md Upward Traversal Discovery</span>
+  </div>
+  <div class="vis-sub">VIS-2A-008 · <span class="lz">四层发现机制 · 合并优先级</span><span class="le" style="display:none">4-Layer Discovery · Merge Priority</span></div>
+</div>
+
+<div class="svg-wrap">
+<svg viewBox="0 0 1100 620" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+<defs>
+  <pattern id="g08" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" class="grid-line" stroke-width="0.5"/>
+  </pattern>
+  <marker id="arr-v" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+    <polygon points="0 0,10 3.5,0 7" fill="currentColor"/>
+  </marker>
+</defs>
+
+<!-- background -->
+<rect width="1100" height="620" class="svg-bg"/>
+<rect width="1100" height="620" fill="url(#g08)" opacity="0.35"/>
+
+<!-- ======================== LEFT PANEL: 4 Source Cards ======================== -->
+
+<!-- Panel label -->
+<text x="16" y="20" class="text-mute lz" font-size="13" font-weight="700" letter-spacing="0.10em">DISCOVERY SOURCES · 发现来源</text>
+<text x="16" y="20" class="text-mute le" font-size="13" font-weight="700" letter-spacing="0.10em" display="none">DISCOVERY SOURCES</text>
+
+<!-- ── Card 1: MANAGED (amber) ── -->
+<rect x="14" y="30" width="510" height="92" rx="8" class="node-bg"/>
+<rect x="14" y="30" width="510" height="92" rx="8" class="zone-amber"/>
+<text x="26" y="52" class="text-strong" font-size="13" font-weight="700" letter-spacing="0.06em" >
+  <tspan class="lz">① MANAGED 托管层</tspan><tspan class="le" display="none">① MANAGED Layer</tspan>
+</text>
+<text x="26" y="76" class="text-base" font-size="13.5" font-weight="600">/etc/claude-code/CLAUDE.md</text>
+<text x="26" y="98" class="text-mute" font-size="12.5">/etc/claude-code/.claude/rules/*.md</text>
+<!-- badge -->
+<rect x="396" y="40" width="118" height="22" rx="11" class="zone-amber-strong"/>
+<text x="455" y="55" class="txt-amber" font-size="12" text-anchor="middle" font-weight="700">
+  <tspan class="lz">始终加载</tspan><tspan class="le" display="none">Always Loaded</tspan>
+</text>
+
+<!-- ── Card 2: USER (cyan) ── -->
+<rect x="14" y="132" width="510" height="92" rx="8" class="node-bg"/>
+<rect x="14" y="132" width="510" height="92" rx="8" class="zone-cyan"/>
+<text x="26" y="154" class="text-strong" font-size="13" font-weight="700" letter-spacing="0.06em">
+  <tspan class="lz">② USER 用户层</tspan><tspan class="le" display="none">② USER Layer</tspan>
+</text>
+<text x="26" y="178" class="text-base" font-size="13.5" font-weight="600">~/.claude/CLAUDE.md</text>
+<text x="26" y="200" class="text-mute" font-size="12.5">~/.claude/rules/*.md</text>
+<!-- badge -->
+<rect x="376" y="142" width="138" height="22" rx="11" class="zone-cyan-strong"/>
+<text x="445" y="157" class="txt-cyan" font-size="12" text-anchor="middle" font-weight="700">
+  <tspan class="lz">userSettings 启用</tspan><tspan class="le" display="none">userSettings Enabled</tspan>
+</text>
+
+<!-- ── Card 3: PROJECT (violet) ── -->
+<rect x="14" y="234" width="510" height="206" rx="8" class="node-bg"/>
+<rect x="14" y="234" width="510" height="206" rx="8" class="zone-violet"/>
+<text x="26" y="256" class="text-strong" font-size="13" font-weight="700" letter-spacing="0.06em">
+  <tspan class="lz">③ PROJECT 项目层 · 向上遍历</tspan><tspan class="le" display="none">③ PROJECT Layer · Upward Walk</tspan>
+</text>
+
+<!-- mini tree inside -->
+<text x="36" y="280" class="text-mute" font-size="12.5">/ (root)</text>
+<text x="320" y="280" class="text-mute" font-size="12.5">
+  <tspan class="lz">— 未发现</tspan><tspan class="le" display="none">— Not Found</tspan>
+</text>
+
+<text x="50" y="302" class="text-mute" font-size="12.5">└── /Users/</text>
+<text x="320" y="302" class="text-mute" font-size="12.5">
+  <tspan class="lz">— 未发现</tspan><tspan class="le" display="none">— Not Found</tspan>
+</text>
+
+<text x="64" y="324" class="text-mute" font-size="12.5">└── /Users/USERNAME/</text>
+<text x="320" y="324" class="text-mute" font-size="12.5">
+  <tspan class="lz">— 未发现</tspan><tspan class="le" display="none">— Not Found</tspan>
+</text>
+
+<text x="78" y="346" class="txt-violet" font-size="12.5" font-weight="600">└── /Users/USERNAME/project/</text>
+<rect x="316" y="335" width="62" height="16" rx="4" class="zone-violet-strong"/>
+<text x="347" y="346" class="txt-violet" font-size="11.5" text-anchor="middle" font-weight="700">
+  <tspan class="lz">✓ 发现</tspan><tspan class="le" display="none">✓ Found</tspan>
+</text>
+<text x="386" y="346" class="text-mute" font-size="11.5">CLAUDE.md + rules/</text>
+
+<text x="92" y="370" class="txt-violet" font-size="12.5" font-weight="700">└── /Users/USERNAME/project/core/  ← CWD</text>
+<rect x="316" y="359" width="62" height="16" rx="4" class="zone-violet-strong"/>
+<text x="347" y="370" class="txt-violet" font-size="11.5" text-anchor="middle" font-weight="700">
+  <tspan class="lz">✓ 发现</tspan><tspan class="le" display="none">✓ Found</tspan>
+</text>
+<text x="386" y="370" class="text-mute" font-size="11.5">.claude/CLAUDE.md</text>
+
+<!-- tree connecting lines -->
+<line x1="40" y1="284" x2="40" y2="368" class="grid-line" stroke="currentColor" stroke-width="0.8" style="stroke:var(--subtle)"/>
+<line x1="40" y1="299" x2="48" y2="299" style="stroke:var(--subtle)" stroke-width="0.8"/>
+<line x1="40" y1="321" x2="62" y2="321" style="stroke:var(--subtle)" stroke-width="0.8"/>
+<line x1="40" y1="343" x2="76" y2="343" style="stroke:var(--subtle)" stroke-width="0.8"/>
+<line x1="40" y1="367" x2="90" y2="367" style="stroke:var(--subtle)" stroke-width="0.8"/>
+
+<!-- traversal direction note -->
+<g style="color:var(--violet)">
+  <line x1="26" y1="402" x2="26" y2="382" stroke="currentColor" stroke-width="2" marker-end="url(#arr-v)" stroke-dasharray="3,2"/>
+</g>
+<text x="38" y="398" class="txt-violet" font-size="12" font-weight="600">
+  <tspan class="lz">向上遍历方向</tspan><tspan class="le" display="none">Upward Direction</tspan>
+</text>
+<!-- merge note -->
+<text x="26" y="420" class="text-mute" font-size="11.5">
+  <tspan class="lz">加载顺序：祖先目录先加载 → CWD 最后（优先级最高）</tspan>
+  <tspan class="le" display="none">Load order: ancestors first → CWD last (highest priority)</tspan>
+</text>
+<text x="26" y="436" class="text-mute" font-size="11.5">
+  <tspan class="lz">主要文件：CLAUDE.md · .claude/CLAUDE.md · .claude/rules/*.md</tspan>
+  <tspan class="le" display="none">Files: CLAUDE.md · .claude/CLAUDE.md · .claude/rules/*.md</tspan>
+</text>
+
+<!-- ── Card 4: LOCAL (emerald) ── -->
+<rect x="14" y="450" width="510" height="92" rx="8" class="node-bg"/>
+<rect x="14" y="450" width="510" height="92" rx="8" class="zone-emerald"/>
+<text x="26" y="472" class="text-strong" font-size="13" font-weight="700" letter-spacing="0.06em">
+  <tspan class="lz">④ LOCAL 本地层</tspan><tspan class="le" display="none">④ LOCAL Layer</tspan>
+</text>
+<text x="26" y="496" class="text-base" font-size="13.5" font-weight="600">.claude/CLAUDE.local.md</text>
+<text x="26" y="518" class="text-mute" font-size="12">
+  <tspan class="lz">各目录均可 · 个人覆盖 · .gitignore 保护 · 优先级最高</tspan>
+  <tspan class="le" display="none">Any dir · Personal override · .gitignore protected · Highest priority</tspan>
+</text>
+<!-- badge -->
+<rect x="386" y="460" width="128" height="22" rx="11" class="zone-emerald-strong"/>
+<text x="450" y="475" class="txt-emerald" font-size="12" text-anchor="middle" font-weight="700">
+  <tspan class="lz">.gitignore 保护</tspan><tspan class="le" display="none">.gitignore Protected</tspan>
+</text>
+
+<!-- ── Merge result bar ── -->
+<rect x="14" y="552" width="510" height="50" rx="8" class="node-bg"/>
+<rect x="14" y="552" width="510" height="50" rx="8" fill="none" stroke="var(--subtle)" stroke-width="1"/>
+<rect x="22" y="562" width="22" height="30" rx="4" class="zone-amber-strong"/>
+<rect x="48" y="562" width="22" height="30" rx="4" class="zone-cyan-strong"/>
+<rect x="74" y="562" width="34" height="30" rx="4" class="zone-violet-strong"/>
+<rect x="112" y="562" width="22" height="30" rx="4" class="zone-emerald-strong"/>
+<text x="146" y="574" class="text-base" font-size="13" font-weight="700">
+  <tspan class="lz">合并注入 System Prompt</tspan><tspan class="le" display="none">Merged into System Prompt</tspan>
+</text>
+<text x="146" y="592" class="text-mute" font-size="11.5">
+  <tspan class="lz">前缀: "These instructions OVERRIDE default behavior..."</tspan>
+  <tspan class="le" display="none">Prefix: "These instructions OVERRIDE default behavior..."</tspan>
+</text>
+
+<!-- ======================== DIVIDER ======================== -->
+<line x1="540" y1="20" x2="540" y2="608" style="stroke:var(--border)" stroke-width="1" stroke-dasharray="4,4"/>
+
+<!-- ======================== RIGHT PANEL: Traversal Detail ======================== -->
+
+<!-- Panel title -->
+<text x="556" y="20" class="text-mute lz" font-size="13" font-weight="700" letter-spacing="0.10em">TRAVERSAL DETAIL · 遍历路径详情</text>
+<text x="556" y="20" class="text-mute le" font-size="13" font-weight="700" letter-spacing="0.10em" display="none">TRAVERSAL DETAIL · Path Details</text>
+
+<!-- Column headers -->
+<text x="556" y="48" class="text-mute" font-size="12" font-weight="600">
+  <tspan class="lz">目录路径</tspan><tspan class="le" display="none">Dir Path</tspan>
+</text>
+<text x="848" y="48" class="text-mute" font-size="12" font-weight="600">CLAUDE.md</text>
+<text x="952" y="48" class="text-mute" font-size="12" font-weight="600">rules/</text>
+<text x="1024" y="48" class="text-mute" font-size="12" font-weight="600">LOCAL</text>
+<line x1="554" y1="54" x2="1086" y2="54" style="stroke:var(--border)" stroke-width="1"/>
+
+<!-- ── Level: MANAGED (amber zone) ── -->
+<rect x="554" y="62" width="532" height="58" rx="6" class="zone-amber"/>
+<text x="566" y="82" class="text-strong" font-size="13" font-weight="700">MANAGED ZONE</text>
+<text x="566" y="104" class="text-base" font-size="12.5">/etc/claude-code/</text>
+<rect x="844" y="74" width="86" height="20" rx="4" class="zone-amber-strong"/>
+<text x="887" y="88" class="txt-amber" font-size="11.5" text-anchor="middle" font-weight="700">✓ CLAUDE.md</text>
+<rect x="940" y="74" width="64" height="20" rx="4" class="zone-amber-strong"/>
+<text x="972" y="88" class="txt-amber" font-size="11.5" text-anchor="middle" font-weight="700">✓ *.md</text>
+<rect x="1014" y="74" width="58" height="20" rx="4" class="zone-neutral"/>
+<text x="1043" y="88" class="txt-neutral" font-size="12" text-anchor="middle" font-weight="600">—</text>
+
+<!-- ── Level: USER (cyan zone) ── -->
+<rect x="554" y="128" width="532" height="58" rx="6" class="zone-cyan"/>
+<text x="566" y="148" class="text-strong" font-size="13" font-weight="700">USER ZONE</text>
+<text x="566" y="170" class="text-base" font-size="12.5">~/.claude/   (/Users/USERNAME/.claude/)</text>
+<rect x="844" y="140" width="86" height="20" rx="4" class="zone-cyan-strong"/>
+<text x="887" y="154" class="txt-cyan" font-size="11.5" text-anchor="middle" font-weight="700">✓ CLAUDE.md</text>
+<rect x="940" y="140" width="64" height="20" rx="4" class="zone-cyan-strong"/>
+<text x="972" y="154" class="txt-cyan" font-size="11.5" text-anchor="middle" font-weight="700">✓ *.md</text>
+<rect x="1014" y="140" width="58" height="20" rx="4" class="zone-neutral"/>
+<text x="1043" y="154" class="txt-neutral" font-size="12" text-anchor="middle" font-weight="600">—</text>
+
+<!-- ── Level: PROJECT traversal rows ── -->
+<rect x="554" y="194" width="532" height="252" rx="6" class="zone-violet"/>
+<text x="566" y="214" class="text-strong" font-size="13" font-weight="700">
+  <tspan class="lz">PROJECT ZONE · 向上遍历 (CWD → /)</tspan>
+  <tspan class="le" display="none">PROJECT ZONE · Upward Walk (CWD → /)</tspan>
+</text>
+
+<!-- Level A: / root -->
+<text x="572" y="240" class="text-mute" font-size="12.5">/</text>
+<rect x="844" y="228" width="50" height="18" rx="4" class="zone-neutral"/>
+<text x="869" y="241" class="txt-neutral" font-size="12" text-anchor="middle" font-weight="600">—</text>
+<rect x="940" y="228" width="42" height="18" rx="4" class="zone-neutral"/>
+<text x="961" y="241" class="txt-neutral" font-size="12" text-anchor="middle" font-weight="600">—</text>
+<rect x="1014" y="228" width="42" height="18" rx="4" class="zone-neutral"/>
+<text x="1035" y="241" class="txt-neutral" font-size="12" text-anchor="middle" font-weight="600">—</text>
+
+<!-- Level B: /Users -->
+<text x="582" y="266" class="text-mute" font-size="12.5">└── /Users/</text>
+<rect x="844" y="254" width="50" height="18" rx="4" class="zone-neutral"/>
+<text x="869" y="267" class="txt-neutral" font-size="12" text-anchor="middle" font-weight="600">—</text>
+<rect x="940" y="254" width="42" height="18" rx="4" class="zone-neutral"/>
+<text x="961" y="267" class="txt-neutral" font-size="12" text-anchor="middle" font-weight="600">—</text>
+<rect x="1014" y="254" width="42" height="18" rx="4" class="zone-neutral"/>
+<text x="1035" y="267" class="txt-neutral" font-size="12" text-anchor="middle" font-weight="600">—</text>
+
+<!-- Level C: /Users/USERNAME -->
+<text x="594" y="292" class="text-mute" font-size="12.5">└── /Users/USERNAME/</text>
+<rect x="844" y="280" width="50" height="18" rx="4" class="zone-neutral"/>
+<text x="869" y="293" class="txt-neutral" font-size="12" text-anchor="middle" font-weight="600">—</text>
+<rect x="940" y="280" width="42" height="18" rx="4" class="zone-neutral"/>
+<text x="961" y="293" class="txt-neutral" font-size="12" text-anchor="middle" font-weight="600">—</text>
+<rect x="1014" y="280" width="42" height="18" rx="4" class="zone-neutral"/>
+<text x="1035" y="293" class="txt-neutral" font-size="12" text-anchor="middle" font-weight="600">—</text>
+
+<!-- Level D: /Users/USERNAME/project (FOUND) -->
+<rect x="558" y="306" width="524" height="28" rx="5" class="zone-violet-strong" opacity="0.55"/>
+<text x="606" y="324" class="txt-violet" font-size="12.5" font-weight="700">└── /Users/USERNAME/project/</text>
+<rect x="844" y="310" width="86" height="20" rx="4" class="zone-violet-strong"/>
+<text x="887" y="324" class="txt-violet" font-size="11.5" text-anchor="middle" font-weight="700">✓ CLAUDE.md</text>
+<rect x="940" y="310" width="64" height="20" rx="4" class="zone-violet-strong"/>
+<text x="972" y="324" class="txt-violet" font-size="11.5" text-anchor="middle" font-weight="700">✓ *.md</text>
+<rect x="1014" y="310" width="58" height="20" rx="4" class="zone-emerald-strong"/>
+<text x="1043" y="324" class="txt-emerald" font-size="11" text-anchor="middle" font-weight="700">LOCAL</text>
+
+<!-- Level E: /Users/USERNAME/project/core (CWD, FOUND) -->
+<rect x="558" y="344" width="524" height="32" rx="5" class="zone-violet-strong" stroke="var(--violet)" stroke-width="1.4"/>
+<text x="618" y="364" class="text-strong" font-size="13.5" font-weight="700">└── /Users/USERNAME/project/core/</text>
+<text x="828" y="363" class="txt-violet" font-size="12" font-weight="700">← CWD</text>
+<rect x="844" y="350" width="86" height="22" rx="4" class="zone-violet-strong" stroke="var(--violet)" stroke-width="1"/>
+<text x="887" y="365" class="txt-violet" font-size="11.5" text-anchor="middle" font-weight="700">✓ CLAUDE.md</text>
+<rect x="940" y="350" width="64" height="22" rx="4" class="zone-violet-strong" stroke="var(--violet)" stroke-width="1"/>
+<text x="972" y="365" class="txt-violet" font-size="11.5" text-anchor="middle" font-weight="700">✓ *.md</text>
+<rect x="1014" y="350" width="58" height="22" rx="4" class="zone-emerald-strong" stroke="var(--emerald)" stroke-width="1"/>
+<text x="1043" y="365" class="txt-emerald" font-size="11" text-anchor="middle" font-weight="700">LOCAL</text>
+
+<!-- note -->
+<text x="566" y="402" class="txt-violet" font-size="12" font-weight="600">
+  <tspan class="lz">CWD 的 CLAUDE.md 在项目层中优先级最高（最后加载 = 覆盖祖先）</tspan>
+  <tspan class="le" display="none">CWD CLAUDE.md has highest priority in project scope (last loaded = overrides ancestors)</tspan>
+</text>
+<text x="566" y="424" class="text-mute" font-size="11.5">
+  <tspan class="lz">每级目录均检查：CLAUDE.md / .claude/CLAUDE.md / .claude/rules/*.md / .claude/CLAUDE.local.md</tspan>
+  <tspan class="le" display="none">Each level checks: CLAUDE.md / .claude/CLAUDE.md / .claude/rules/*.md / .claude/CLAUDE.local.md</tspan>
+</text>
+
+<!-- traversal direction arrow (upward) -->
+<g style="color:var(--violet)">
+  <line x1="1086" y1="370" x2="1086" y2="220" stroke="currentColor" stroke-width="2" marker-end="url(#arr-v)" stroke-dasharray="4,3"/>
+</g>
+<text x="1090" y="300" class="txt-violet" font-size="12" font-weight="600" writing-mode="tb">
+  <tspan class="lz">向上遍历</tspan><tspan class="le" display="none">Upward</tspan>
+</text>
+
+<!-- ── Priority stack bar ── -->
+<rect x="554" y="456" width="532" height="60" rx="8" class="node-bg"/>
+<rect x="554" y="456" width="532" height="60" rx="8" fill="none" stroke="var(--subtle)" stroke-width="1"/>
+<text x="566" y="476" class="text-base" font-size="12.5" font-weight="700">
+  <tspan class="lz">合并优先级（低 → 高）</tspan>
+  <tspan class="le" display="none">Merge Priority (Low → High)</tspan>
+</text>
+<rect x="566" y="484" width="108" height="24" rx="4" class="zone-amber-strong"/>
+<text x="620" y="500" class="txt-amber" font-size="12" text-anchor="middle" font-weight="700">① Managed</text>
+<text x="680" y="500" class="text-mute" font-size="13" font-weight="700">→</text>
+<rect x="694" y="484" width="92" height="24" rx="4" class="zone-cyan-strong"/>
+<text x="740" y="500" class="txt-cyan" font-size="12" text-anchor="middle" font-weight="700">② User</text>
+<text x="792" y="500" class="text-mute" font-size="13" font-weight="700">→</text>
+<rect x="806" y="484" width="138" height="24" rx="4" class="zone-violet-strong"/>
+<text x="875" y="500" class="txt-violet" font-size="12" text-anchor="middle" font-weight="700">③ Project (CWD)</text>
+<text x="950" y="500" class="text-mute" font-size="13" font-weight="700">→</text>
+<rect x="964" y="484" width="112" height="24" rx="4" class="zone-emerald-strong" stroke="var(--emerald)" stroke-width="1.4"/>
+<text x="1020" y="500" class="txt-emerald" font-size="12" text-anchor="middle" font-weight="700">④ Local ★</text>
+
+<!-- ── Token summary bar ── -->
+<rect x="554" y="524" width="532" height="50" rx="8" class="node-bg"/>
+<rect x="554" y="524" width="532" height="50" rx="8" fill="none" stroke="var(--subtle)" stroke-width="1"/>
+<text x="566" y="544" class="text-base" font-size="12.5" font-weight="700">
+  <tspan class="lz">合并后注入 System Prompt · 命中 prompt cache（层 1–3）</tspan>
+  <tspan class="le" display="none">Merged into System Prompt · Hits prompt cache (layers 1–3)</tspan>
+</text>
+<text x="566" y="564" class="text-mute" font-size="11.5">
+  <tspan class="lz">总量约 20,000–34,000 tokens · 前缀: "IMPORTANT: These instructions OVERRIDE..."</tspan>
+  <tspan class="le" display="none">~20,000–34,000 tokens total · Prefix: "IMPORTANT: These instructions OVERRIDE..."</tspan>
+</text>
+
+<!-- ── Legend ── -->
+<rect x="554" y="582" width="532" height="30" rx="6" class="node-bg"/>
+<rect x="554" y="582" width="532" height="30" rx="6" fill="none" stroke="var(--subtle)" stroke-width="0.8"/>
+<text x="566" y="601" class="text-mute" font-size="11.5" font-weight="700">
+  <tspan class="lz">图例</tspan><tspan class="le" display="none">Legend</tspan>
+</text>
+<rect x="600" y="591" width="22" height="14" rx="3" class="zone-amber-strong"/>
+<text x="628" y="602" class="text-base" font-size="11.5" font-weight="600">Managed</text>
+<rect x="694" y="591" width="22" height="14" rx="3" class="zone-cyan-strong"/>
+<text x="722" y="602" class="text-base" font-size="11.5" font-weight="600">User</text>
+<rect x="772" y="591" width="22" height="14" rx="3" class="zone-violet-strong"/>
+<text x="800" y="602" class="text-base" font-size="11.5" font-weight="600">Project</text>
+<rect x="858" y="591" width="22" height="14" rx="3" class="zone-emerald-strong"/>
+<text x="886" y="602" class="text-base" font-size="11.5" font-weight="600">Local</text>
+<text x="950" y="602" class="text-mute" font-size="11.5" font-weight="600">
+  <tspan class="lz">✓=发现  —=未发现</tspan>
+  <tspan class="le" display="none">✓=Found  —=Not Found</tspan>
+</text>
+
+</svg>
+</div>
+
+<!-- Info Cards -->
+<div class="cards">
+  <div class="card">
+    <div class="card-hd"><div class="card-dot" style="background:var(--amber)"></div><h3><span class="lz">MANAGED + USER 层</span><span class="le" style="display:none">MANAGED + USER Layers</span></h3></div>
+    <ul>
+      <li>• <span class="lz">Managed: 系统级托管，始终加载，无用户控制</span><span class="le" style="display:none">Managed: System-level, always loaded, no user control</span></li>
+      <li>• <span class="lz">User: 家目录层，需 userSettings 配置启用</span><span class="le" style="display:none">User: Home dir layer, requires userSettings config</span></li>
+      <li>• <span class="lz">来源: getGlobalRules() + getManagedRules()</span><span class="le" style="display:none">Source: getGlobalRules() + getManagedRules()</span></li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-hd"><div class="card-dot" style="background:var(--violet)"></div><h3><span class="lz">PROJECT 向上遍历</span><span class="le" style="display:none">PROJECT Upward Traversal</span></h3></div>
+    <ul>
+      <li>• <span class="lz">从 CWD 向上遍历至文件系统根 /</span><span class="le" style="display:none">Traverse from CWD upward to filesystem root /</span></li>
+      <li>• <span class="lz">每级查找: CLAUDE.md · .claude/CLAUDE.md · .claude/rules/*.md</span><span class="le" style="display:none">Each level: CLAUDE.md · .claude/CLAUDE.md · .claude/rules/*.md</span></li>
+      <li>• <span class="lz">加载顺序: 祖先先 → CWD 最后（优先级最高）</span><span class="le" style="display:none">Load order: ancestors first → CWD last (highest priority)</span></li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-hd"><div class="card-dot" style="background:var(--emerald)"></div><h3><span class="lz">LOCAL 本地层 · 合并机制</span><span class="le" style="display:none">LOCAL Layer · Merge Mechanism</span></h3></div>
+    <ul>
+      <li>• <span class="lz">LOCAL: .claude/CLAUDE.local.md 已 gitignore</span><span class="le" style="display:none">LOCAL: .claude/CLAUDE.local.md is gitignored</span></li>
+      <li>• <span class="lz">合并前缀: "IMPORTANT: These instructions OVERRIDE..."</span><span class="le" style="display:none">Merge prefix: "IMPORTANT: These instructions OVERRIDE..."</span></li>
+      <li>• <span class="lz">总量约 20k–34k tokens · 层 1–3 命中 prompt cache</span><span class="le" style="display:none">~20k–34k tokens total · Layers 1–3 hit prompt cache</span></li>
+    </ul>
+  </div>
+</div>
+
+<div class="vis-footer">
+  VIS-2A-008 · Claude Code 2.1.88 · getProjectRules() · getGlobalRules() · getManagedRules() · <span class="lz">v4 生产版</span><span class="le" style="display:none">v4 Production</span>
+</div>
+
+<script>
+(function(){
+  const THEME_KEY='vtheme',LANG_KEY='vlang';
+  const themes=['dark','warm','light'];
+  let ti=themes.indexOf(localStorage.getItem(THEME_KEY)||'dark');
+  let isEn=localStorage.getItem(LANG_KEY)==='en';
+  function applyTheme(){document.documentElement.setAttribute('data-theme',themes[ti]);localStorage.setItem(THEME_KEY,themes[ti])}
+  function applyLang(){
+    const h=document.documentElement;
+    const setVis=(sel,show)=>{document.querySelectorAll(sel).forEach(e=>{const v=show?'':'none';e.style.display=v;e.setAttribute('display',v);})};
+    if(isEn){h.setAttribute('lang','en');setVis('.lz',false);setVis('.le',true);}
+    else{h.setAttribute('lang','zh-CN');setVis('.lz',true);setVis('.le',false);}
+    localStorage.setItem(LANG_KEY,isEn?'en':'zh')
+  }
+  window.cycleTheme=function(){ti=(ti+1)%themes.length;applyTheme()};
+  window.toggleLang=function(){isEn=!isEn;applyLang()};
+  applyTheme();applyLang();
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

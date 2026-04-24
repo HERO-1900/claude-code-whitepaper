@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<!--
+  VIS-0-006 · Claude Code 安全模型全景图 · Security Model Panorama
+  CC 白皮书 v4 图表体系 · 全主题 + 双语
+  4 层纵深防御 × 3 种威胁向量 · Defense in Depth Architecture
+  v4 修复：stats 行改为 6 列 grid，避免最后一个指标独占一行
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · 安全模型全景图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* v4-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    :root,[data-theme="dark"]{
+      --bg:#020617; --bg-card:#0f172a; --bg-elv:#1e293b; --bg-cell:#060d1e;
+      --border:#1e293b; --border-sub:#0f172a;
+      --text:#f8fafc; --muted:#94a3b8; --subtle:#475569; --footer-c:#334155;
+      --pulse:#22d3ee;
+      --c-strong:#34d399; --c-strong-bg:rgba(6,78,59,0.25);
+      --c-medium:#fbbf24; --c-medium-bg:rgba(120,53,15,0.25);
+      --c-weak:#fb7185;   --c-weak-bg:rgba(136,19,55,0.25);
+      --c-accent:#22d3ee;
+      --hdr-threat-bg:rgba(15,23,42,0.8);
+      --hdr-layer-bg:rgba(8,26,60,0.6);
+      --source-ref:#64748b;
+      --btn-bg:rgba(15,23,42,0.9); --btn-border:rgba(34,211,238,0.3);
+      --btn-active:#22d3ee; --btn-text:#94a3b8;
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3; --bg-card:#ffffff; --bg-elv:#faf7f2; --bg-cell:#fdfcf9;
+      --border:#e8e0d4; --border-sub:#f0e8dc;
+      --text:#1a1412; --muted:#5a4a3e; --subtle:#8c7868; --footer-c:#8c7868;
+      --pulse:#0891b2;
+      --c-strong:#047857; --c-strong-bg:rgba(6,78,59,0.08);
+      --c-medium:#b45309; --c-medium-bg:rgba(180,83,9,0.08);
+      --c-weak:#be123c;   --c-weak-bg:rgba(136,19,55,0.08);
+      --c-accent:#0891b2;
+      --hdr-threat-bg:rgba(255,255,255,0.9);
+      --hdr-layer-bg:rgba(240,248,255,0.6);
+      --source-ref:#8c7868;
+      --btn-bg:rgba(255,255,255,0.95); --btn-border:rgba(8,145,178,0.3);
+      --btn-active:#0891b2; --btn-text:#5a4a3e;
+    }
+    [data-theme="light"]{
+      --bg:#ffffff; --bg-card:#f8fafc; --bg-elv:#f1f5f9; --bg-cell:#fafafa;
+      --border:#e2e8f0; --border-sub:#f1f5f9;
+      --text:#0f172a; --muted:#334155; --subtle:#64748b; --footer-c:#64748b;
+      --pulse:#0284c7;
+      --c-strong:#047857; --c-strong-bg:rgba(16,185,129,0.09);
+      --c-medium:#b45309; --c-medium-bg:rgba(245,158,11,0.09);
+      --c-weak:#be123c;   --c-weak-bg:rgba(244,63,94,0.09);
+      --c-accent:#0284c7;
+      --hdr-threat-bg:rgba(248,250,252,0.95);
+      --hdr-layer-bg:rgba(240,249,255,0.7);
+      --source-ref:#64748b;
+      --btn-bg:rgba(248,250,252,0.95); --btn-border:rgba(2,132,199,0.3);
+      --btn-active:#0284c7; --btn-text:#334155;
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      font-family:'JetBrains Mono',monospace;
+      background:var(--bg);color:var(--text);
+      min-height:100vh;padding:24px 28px 32px;
+      transition:background .3s,color .3s;
+    }
+
+    /* ── Floating Controls ─────────────────────── */
+    .ctrl{
+      position:fixed;top:16px;right:16px;z-index:999;
+      display:flex;gap:6px;align-items:center;
+      background:var(--btn-bg);border:1px solid var(--btn-border);
+      border-radius:10px;padding:7px 10px;backdrop-filter:blur(12px);
+    }
+    .ctrl button{
+      background:none;border:none;cursor:pointer;
+      font-family:'JetBrains Mono',monospace;
+      font-size:12px;font-weight:600;color:var(--btn-text);
+      padding:4px 8px;border-radius:6px;transition:all .2s;
+    }
+    .ctrl button:hover{color:var(--btn-active);}
+    .ctrl button.active{color:var(--btn-active);}
+    .ctrl-sep{width:1px;height:16px;background:var(--border);margin:0 2px;}
+
+    /* ── Header ────────────────────────────────── */
+    .header{
+      margin-bottom:22px;padding-bottom:18px;
+      border-bottom:1px solid var(--border);
+      display:flex;align-items:center;gap:14px;
+    }
+    .pulse{
+      width:10px;height:10px;border-radius:50%;
+      background:var(--pulse);box-shadow:0 0 8px var(--pulse);
+      animation:pulse 2s infinite;flex-shrink:0;
+    }
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.85);}}
+    .header h1{font-size:22px;font-weight:700;letter-spacing:-0.5px;}
+    .header .sub{color:var(--muted);font-size:12.5px;margin-top:5px;}
+
+    /* ── Stats Row ── v4：6 列等宽 grid，任何视口下都不折行到单独 ───── */
+    .stats-row{
+      display:grid;
+      grid-template-columns:repeat(6, minmax(0, 1fr));
+      gap:10px;
+      margin-bottom:20px;
+    }
+    .stat{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:10px;padding:14px 14px;
+      min-width:0;
+    }
+    .stat-num{font-size:24px;font-weight:700;line-height:1;}
+    .stat-lbl{font-size:11.5px;color:var(--muted);margin-top:6px;line-height:1.4;}
+    /* 窄屏优雅降级：3 列 → 2 列，始终整齐，不出现"末位独占一行" */
+    @media (max-width: 1100px){
+      .stats-row{grid-template-columns:repeat(3, minmax(0, 1fr));}
+    }
+    @media (max-width: 640px){
+      .stats-row{grid-template-columns:repeat(2, minmax(0, 1fr));}
+    }
+
+    /* ── Security Matrix ───────────────────────── */
+    .matrix-wrap{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:12px;overflow:hidden;
+    }
+    .matrix{
+      display:grid;
+      grid-template-columns:210px repeat(3,1fr);
+    }
+
+    /* Header cells */
+    .hdr-corner{
+      background:var(--bg-elv);
+      border-bottom:1px solid var(--border);
+      border-right:1px solid var(--border);
+      padding:18px;
+      display:flex;align-items:center;justify-content:center;
+    }
+    .hdr-corner .logo{
+      font-size:11px;font-weight:700;letter-spacing:0.08em;
+      color:var(--c-accent);opacity:0.85;text-align:center;line-height:1.5;
+    }
+
+    .hdr-threat{
+      background:var(--hdr-threat-bg);
+      border-bottom:1px solid var(--border);
+      border-right:1px solid var(--border-sub);
+      padding:18px 14px;text-align:center;
+    }
+    .hdr-threat:last-of-type{border-right:none;}
+    .threat-icon{font-size:24px;margin-bottom:8px;}
+    .threat-name{font-size:13.5px;font-weight:700;color:var(--text);}
+    .threat-name-en{font-size:10.5px;color:var(--muted);margin-top:4px;}
+
+    /* Layer header */
+    .layer-hdr{
+      background:var(--hdr-layer-bg);
+      border-bottom:1px solid var(--border-sub);
+      border-right:1px solid var(--border);
+      padding:18px 16px;
+      display:flex;align-items:center;gap:12px;
+    }
+    .layer-badge{
+      width:38px;height:38px;border-radius:8px;
+      background:var(--bg-elv);border:1px solid var(--border);
+      display:flex;align-items:center;justify-content:center;
+      font-size:18px;flex-shrink:0;
+    }
+    .layer-label{font-size:13.5px;font-weight:700;color:var(--text);}
+    .layer-label-en{font-size:10.5px;color:var(--muted);margin-top:3px;}
+    .layer-num{font-size:10.5px;color:var(--c-accent);margin-bottom:2px;font-weight:600;}
+
+    /* Cell */
+    .cell{
+      background:var(--bg-cell);
+      border-bottom:1px solid var(--border-sub);
+      border-right:1px solid var(--border-sub);
+      padding:16px;
+      transition:background .2s;
+    }
+    .cell:last-child,.matrix>.cell:nth-child(4n){border-right:none;}
+    .cell:hover{background:var(--bg-elv);}
+
+    .cell-hdr{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;gap:10px;}
+    .cell-title{font-size:12.5px;font-weight:700;color:var(--text);}
+    .cell-title-en{font-size:10.5px;color:var(--muted);margin-top:3px;}
+
+    .strength{
+      display:flex;align-items:center;gap:5px;
+      font-size:10.5px;font-weight:700;white-space:nowrap;
+      padding:3px 9px;border-radius:12px;
+      flex-shrink:0;
+    }
+    .strength-dot{width:6px;height:6px;border-radius:50%;}
+
+    .strength.strong{color:var(--c-strong);background:var(--c-strong-bg);}
+    .strength.strong .strength-dot{background:var(--c-strong);}
+    .strength.medium{color:var(--c-medium);background:var(--c-medium-bg);}
+    .strength.medium .strength-dot{background:var(--c-medium);}
+    .strength.weak{color:var(--c-weak);background:var(--c-weak-bg);}
+    .strength.weak .strength-dot{background:var(--c-weak);}
+
+    .cell-desc{font-size:11.5px;color:var(--muted);line-height:1.75;margin-bottom:9px;}
+    .source-ref{
+      font-size:10.5px;color:var(--source-ref);
+      font-style:italic;line-height:1.5;
+    }
+
+    /* ── Legend + Footer ───────────────────────── */
+    .bottom-row{
+      display:grid;grid-template-columns:1fr 1fr;
+      gap:12px;margin-top:16px;
+    }
+    @media (max-width: 900px){
+      .bottom-row{grid-template-columns:1fr;}
+    }
+    .legend{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-radius:10px;padding:14px 18px;
+    }
+    .legend-title{
+      font-size:10.5px;font-weight:700;letter-spacing:0.06em;
+      text-transform:uppercase;color:var(--muted);margin-bottom:10px;
+    }
+    .legend-item{
+      display:flex;align-items:center;gap:10px;
+      font-size:11.5px;color:var(--muted);margin-bottom:8px;line-height:1.5;
+    }
+    .legend-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+
+    .note-box{
+      background:var(--bg-card);border:1px solid var(--border);
+      border-left:3px solid var(--c-accent);
+      border-radius:10px;padding:14px 18px;
+      font-size:11.5px;color:var(--muted);line-height:1.8;
+    }
+    .note-box strong{color:var(--text);}
+
+    .footer{
+      margin-top:16px;padding-top:14px;
+      border-top:1px solid var(--border);
+      display:flex;justify-content:space-between;
+      font-size:10.5px;color:var(--footer-c);
+      flex-wrap:wrap;gap:8px;
+    }
+  </style>
+</head>
+<body>
+
+<!-- Floating Controls -->
+<div class="ctrl">
+  <button onclick="setTheme('dark')"  id="btn-dark"  class="active"><span class="lz">深色</span><span class="le">Dark</span></button>
+  <button onclick="setTheme('warm')"  id="btn-warm"><span class="lz">暖色</span><span class="le">Warm</span></button>
+  <button onclick="setTheme('light')" id="btn-light"><span class="lz">浅色</span><span class="le">Light</span></button>
+  <div class="ctrl-sep"></div>
+  <button onclick="toggleLang()" id="btn-lang">中·EN</button>
+</div>
+
+<!-- Header -->
+<div class="header">
+  <div class="pulse"></div>
+  <div>
+    <h1>
+      <span class="lz">安全模型全景图</span>
+      <span class="le">Security Model Panorama</span>
+    </h1>
+    <div class="sub">
+      <span class="lz">四层纵深防御 × 三种威胁向量 · Defense in Depth Architecture</span>
+      <span class="le">4-layer defense × 3 threat vectors · Defense in Depth Architecture</span>
+    </div>
+  </div>
+</div>
+
+<!-- Stats Row · v4：6 等宽列 grid -->
+<div class="stats-row">
+  <div class="stat">
+    <div class="stat-num" style="color:var(--c-strong)">4</div>
+    <div class="stat-lbl">
+      <span class="lz">防御层数</span>
+      <span class="le">Defense Layers</span>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-num" style="color:var(--c-medium)">3</div>
+    <div class="stat-lbl">
+      <span class="lz">威胁向量</span>
+      <span class="le">Threat Vectors</span>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-num" style="color:var(--c-accent)">12</div>
+    <div class="stat-lbl">
+      <span class="lz">防御措施 4×3</span>
+      <span class="le">Measures 4×3</span>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-num" style="color:var(--c-strong)">8</div>
+    <div class="stat-lbl">
+      <span class="lz">强防御单元</span>
+      <span class="le">Strong cells</span>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-num" style="color:var(--c-medium)">4</div>
+    <div class="stat-lbl">
+      <span class="lz">中防御单元</span>
+      <span class="le">Medium cells</span>
+    </div>
+  </div>
+  <div class="stat">
+    <div class="stat-num" style="color:var(--c-weak)">0</div>
+    <div class="stat-lbl">
+      <span class="lz">无防御空白</span>
+      <span class="le">Undefended gaps</span>
+    </div>
+  </div>
+</div>
+
+<!-- Security Matrix -->
+<div class="matrix-wrap">
+  <div class="matrix">
+
+    <!-- Corner -->
+    <div class="hdr-corner">
+      <div class="logo">
+        <span class="lz">防御层 ↓<br>威胁向量 →</span>
+        <span class="le">Layer ↓<br>Threat →</span>
+      </div>
+    </div>
+
+    <!-- Column Headers: 3 Threats -->
+    <div class="hdr-threat">
+      <div class="threat-icon">💉</div>
+      <div class="threat-name"><span class="lz">Prompt 注入</span><span class="le">Prompt Injection</span></div>
+      <div class="threat-name-en">Prompt Injection</div>
+    </div>
+    <div class="hdr-threat">
+      <div class="threat-icon">📁</div>
+      <div class="threat-name"><span class="lz">文件越权</span><span class="le">File Breach</span></div>
+      <div class="threat-name-en">File Breach</div>
+    </div>
+    <div class="hdr-threat">
+      <div class="threat-icon">💻</div>
+      <div class="threat-name"><span class="lz">命令逃逸</span><span class="le">Command Escape</span></div>
+      <div class="threat-name-en">Command Escape</div>
+    </div>
+
+    <!-- Row 1: 权限系统 -->
+    <div class="layer-hdr">
+      <div class="layer-badge">🛡️</div>
+      <div>
+        <div class="layer-num">Layer 1</div>
+        <div class="layer-label"><span class="lz">权限系统</span><span class="le">Permission</span></div>
+        <div class="layer-label-en">Permission System</div>
+      </div>
+    </div>
+    <div class="cell">
+      <div class="cell-hdr">
+        <div>
+          <div class="cell-title"><span class="lz">CLAUDE.md 审查</span><span class="le">CLAUDE.md Scan</span></div>
+          <div class="cell-title-en">CLAUDE.md scanning</div>
+        </div>
+        <div class="strength strong"><div class="strength-dot"></div><span class="lz">强</span><span class="le">Strong</span></div>
+      </div>
+      <div class="cell-desc">
+        <span class="lz">加载 CLAUDE.md 前进行内容安全扫描，检测潜在恶意指令。工具调用前实施权限门控，阻断未授权操作。</span>
+        <span class="le">Security scan before loading CLAUDE.md to detect malicious instructions. Permission gating before tool calls blocks unauthorized operations.</span>
+      </div>
+      <div class="source-ref">tools/BashTool/bashPermissions.ts · permissions/</div>
+    </div>
+    <div class="cell">
+      <div class="cell-hdr">
+        <div>
+          <div class="cell-title"><span class="lz">路径白名单</span><span class="le">Path Allowlist</span></div>
+          <div class="cell-title-en">Path allowlist control</div>
+        </div>
+        <div class="strength strong"><div class="strength-dot"></div><span class="lz">强</span><span class="le">Strong</span></div>
+      </div>
+      <div class="cell-desc">
+        <span class="lz">只读/读写工具分离设计。敏感文件（.env, credentials）默认拒绝访问，通过白名单机制控制可访问路径。</span>
+        <span class="le">Separate read-only and read-write tools. Sensitive files (.env, credentials) blocked by default; path allowlist controls access scope.</span>
+      </div>
+      <div class="source-ref">utils/permissions/ · 24 files / 9,409 lines</div>
+    </div>
+    <div class="cell">
+      <div class="cell-hdr">
+        <div>
+          <div class="cell-title"><span class="lz">命令预检</span><span class="le">Command Pre-check</span></div>
+          <div class="cell-title-en">Dangerous command blocklist</div>
+        </div>
+        <div class="strength medium"><div class="strength-dot"></div><span class="lz">中</span><span class="le">Medium</span></div>
+      </div>
+      <div class="cell-desc">
+        <span class="lz">Bash 命令执行前进行危险命令黑名单检查。rm -rf、dd 等高危操作需用户显式确认。</span>
+        <span class="le">Dangerous command blocklist checked before Bash execution. High-risk ops (rm -rf, dd) require explicit user confirmation.</span>
+      </div>
+      <div class="source-ref">tools/BashTool/bashSecurity.ts · 2,592 lines</div>
+    </div>
+
+    <!-- Row 2: 沙箱隔离 -->
+    <div class="layer-hdr">
+      <div class="layer-badge">🔒</div>
+      <div>
+        <div class="layer-num">Layer 2</div>
+        <div class="layer-label"><span class="lz">沙箱隔离</span><span class="le">Sandbox</span></div>
+        <div class="layer-label-en">Sandbox Isolation</div>
+      </div>
+    </div>
+    <div class="cell">
+      <div class="cell-hdr">
+        <div>
+          <div class="cell-title"><span class="lz">执行范围限制</span><span class="le">Exec Scope Limit</span></div>
+          <div class="cell-title-en">Sandbox execution scope</div>
+        </div>
+        <div class="strength medium"><div class="strength-dot"></div><span class="lz">中</span><span class="le">Medium</span></div>
+      </div>
+      <div class="cell-desc">
+        <span class="lz">沙箱内执行限制注入影响范围。即使恶意 Prompt 突破外层防御，其影响被限制在隔离环境中。</span>
+        <span class="le">Sandbox execution contains injection impact. Even if malicious prompt bypasses outer defenses, damage is confined to the isolated environment.</span>
+      </div>
+      <div class="source-ref">L8: Security Layer · macOS Seatbelt</div>
+    </div>
+    <div class="cell">
+      <div class="cell-hdr">
+        <div>
+          <div class="cell-title"><span class="lz">文件系统隔离</span><span class="le">FS Isolation</span></div>
+          <div class="cell-title-en">macOS / Linux sandbox</div>
+        </div>
+        <div class="strength strong"><div class="strength-dot"></div><span class="lz">强</span><span class="le">Strong</span></div>
+      </div>
+      <div class="cell-desc">
+        <span class="lz">macOS Seatbelt（sandbox-exec）、Linux 命名空间隔离。工作目录只读挂载，禁止写入系统路径。</span>
+        <span class="le">macOS Seatbelt (sandbox-exec) + Linux namespace isolation. Work dir mounted read-only; writes to system paths forbidden.</span>
+      </div>
+      <div class="source-ref">L8: Seatbelt + Namespace · Tech Stack Layer 8</div>
+    </div>
+    <div class="cell">
+      <div class="cell-hdr">
+        <div>
+          <div class="cell-title"><span class="lz">能力限制</span><span class="le">Capability Drop</span></div>
+          <div class="cell-title-en">Linux capabilities control</div>
+        </div>
+        <div class="strength strong"><div class="strength-dot"></div><span class="lz">强</span><span class="le">Strong</span></div>
+      </div>
+      <div class="cell-desc">
+        <span class="lz">Linux capabilities 精细控制，禁用 CAP_SYS_ADMIN 等特权。网络访问受限，防止横向移动。</span>
+        <span class="le">Fine-grained Linux capabilities: CAP_SYS_ADMIN and similar privileges dropped. Network access restricted to prevent lateral movement.</span>
+      </div>
+      <div class="source-ref">L8: Namespace isolation · Linux kernel</div>
+    </div>
+
+    <!-- Row 3: 输入校验 -->
+    <div class="layer-hdr">
+      <div class="layer-badge">✓</div>
+      <div>
+        <div class="layer-num">Layer 3</div>
+        <div class="layer-label"><span class="lz">输入校验</span><span class="le">Validation</span></div>
+        <div class="layer-label-en">Input Validation</div>
+      </div>
+    </div>
+    <div class="cell">
+      <div class="cell-hdr">
+        <div>
+          <div class="cell-title"><span class="lz">Schema 验证</span><span class="le">Schema Validation</span></div>
+          <div class="cell-title-en">Zod schema checking</div>
+        </div>
+        <div class="strength strong"><div class="strength-dot"></div><span class="lz">强</span><span class="le">Strong</span></div>
+      </div>
+      <div class="cell-desc">
+        <span class="lz">Zod Schema 严格验证所有工具参数类型和结构，拒绝不符合预期的输入，阻断注入攻击载体。</span>
+        <span class="le">Zod schema strictly validates all tool parameter types and structure; unexpected inputs rejected, blocking injection attack vectors.</span>
+      </div>
+      <div class="source-ref">L4: Zod v3.22+ · Tech Stack Layer 4</div>
+    </div>
+    <div class="cell">
+      <div class="cell-hdr">
+        <div>
+          <div class="cell-title"><span class="lz">路径遍历检测</span><span class="le">Path Traversal</span></div>
+          <div class="cell-title-en">../  symlink detection</div>
+        </div>
+        <div class="strength strong"><div class="strength-dot"></div><span class="lz">强</span><span class="le">Strong</span></div>
+      </div>
+      <div class="cell-desc">
+        <span class="lz">检测并阻断 ../ 和符号链接攻击。路径规范化处理，解析真实绝对路径后再进行权限校验。</span>
+        <span class="le">Detects and blocks ../ and symlink attacks. Path normalization resolves to real absolute path before permission check.</span>
+      </div>
+      <div class="source-ref">utils/permissions/ · path validation logic</div>
+    </div>
+    <div class="cell">
+      <div class="cell-hdr">
+        <div>
+          <div class="cell-title"><span class="lz">命令注入过滤</span><span class="le">Injection Filter</span></div>
+          <div class="cell-title-en">Shell metachar filtering</div>
+        </div>
+        <div class="strength strong"><div class="strength-dot"></div><span class="lz">强</span><span class="le">Strong</span></div>
+      </div>
+      <div class="cell-desc">
+        <span class="lz">参数化命令执行，禁止 shell 元字符。输入长度限制，正则过滤危险模式（; | &amp; $ ` 等）。</span>
+        <span class="le">Parameterized command execution; shell metacharacters forbidden. Input length limits + regex filters for dangerous patterns (; | &amp; $ ` etc.).</span>
+      </div>
+      <div class="source-ref">tools/BashTool/bashSecurity.ts · 2,592 lines</div>
+    </div>
+
+    <!-- Row 4: 审计日志 -->
+    <div class="layer-hdr" style="border-bottom:none;">
+      <div class="layer-badge">📊</div>
+      <div>
+        <div class="layer-num">Layer 4</div>
+        <div class="layer-label"><span class="lz">审计日志</span><span class="le">Audit Log</span></div>
+        <div class="layer-label-en">Audit &amp; Monitoring</div>
+      </div>
+    </div>
+    <div class="cell" style="border-bottom:none;">
+      <div class="cell-hdr">
+        <div>
+          <div class="cell-title"><span class="lz">行为追踪</span><span class="le">Behavior Trace</span></div>
+          <div class="cell-title-en">Tool call sequence audit</div>
+        </div>
+        <div class="strength medium"><div class="strength-dot"></div><span class="lz">中</span><span class="le">Medium</span></div>
+      </div>
+      <div class="cell-desc">
+        <span class="lz">完整记录 CLAUDE.md 加载和工具调用序列。异常行为模式检测，识别潜在的 Prompt 注入迹象。</span>
+        <span class="le">Full audit of CLAUDE.md loading and tool call sequences. Anomalous pattern detection flags potential prompt injection traces.</span>
+      </div>
+      <div class="source-ref">utils/sessionStorage.ts · 5,105 lines</div>
+    </div>
+    <div class="cell" style="border-bottom:none;">
+      <div class="cell-hdr">
+        <div>
+          <div class="cell-title"><span class="lz">访问审计</span><span class="le">Access Audit</span></div>
+          <div class="cell-title-en">File access logging</div>
+        </div>
+        <div class="strength medium"><div class="strength-dot"></div><span class="lz">中</span><span class="le">Medium</span></div>
+      </div>
+      <div class="cell-desc">
+        <span class="lz">所有文件访问操作记录时间戳、路径、结果。敏感文件访问标记，支持事后追溯分析。</span>
+        <span class="le">All file access ops logged with timestamp, path, result. Sensitive file access flagged; supports post-incident forensics.</span>
+      </div>
+      <div class="source-ref">utils/sessionStorage.ts · audit trail</div>
+    </div>
+    <div class="cell" style="border-bottom:none;">
+      <div class="cell-hdr">
+        <div>
+          <div class="cell-title"><span class="lz">执行监控</span><span class="le">Exec Monitor</span></div>
+          <div class="cell-title-en">Process tree monitoring</div>
+        </div>
+        <div class="strength strong"><div class="strength-dot"></div><span class="lz">强</span><span class="le">Strong</span></div>
+      </div>
+      <div class="cell-desc">
+        <span class="lz">命令执行实时监控，进程树追踪。异常退出码、超时、资源超限告警，支持强制终止。</span>
+        <span class="le">Real-time command execution monitoring with process tree tracking. Alerts on abnormal exit codes, timeouts, resource overruns; supports force-kill.</span>
+      </div>
+      <div class="source-ref">tools/BashTool/ · L8 security layer</div>
+    </div>
+
+  </div><!-- /matrix -->
+</div><!-- /matrix-wrap -->
+
+<!-- Bottom Row: Legend + Note -->
+<div class="bottom-row">
+  <div class="legend">
+    <div class="legend-title"><span class="lz">防御强度图例</span><span class="le">Defense Strength Legend</span></div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:var(--c-strong)"></div>
+      <strong style="color:var(--c-strong)"><span class="lz">强</span><span class="le">Strong</span></strong>
+      <span>— <span class="lz">主动拦截，无需用户介入，全自动防御</span><span class="le">Active blocking, no user intervention, fully automated</span></span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:var(--c-medium)"></div>
+      <strong style="color:var(--c-medium)"><span class="lz">中</span><span class="le">Medium</span></strong>
+      <span>— <span class="lz">部分需用户确认，或检测覆盖范围有限</span><span class="le">Partial user confirmation needed, or limited detection coverage</span></span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:var(--c-weak)"></div>
+      <strong style="color:var(--c-weak)"><span class="lz">弱</span><span class="le">Weak</span></strong>
+      <span>— <span class="lz">依赖用户配置，默认不启用或覆盖不完整</span><span class="le">Depends on user config, not enabled by default or incomplete coverage</span></span>
+    </div>
+  </div>
+  <div class="note-box">
+    <strong>
+      <span class="lz">纵深防御原则</span>
+      <span class="le">Defense in Depth Principle</span>
+    </strong><br>
+    <span class="lz">Claude Code 采用"无空白单元"策略：4 层防御中每个威胁向量至少有一个 <span style="color:var(--c-strong)">强</span> 防御。单层失效不会导致系统完全沦陷，攻击者必须同时突破多层才能造成实质危害。安全相关代码占总代码库的 32.7%（621/1,902 文件），权限关键词出现 5,160 次。</span>
+    <span class="le">Claude Code uses a "no empty cells" strategy: each threat vector has at least one <span style="color:var(--c-strong)">Strong</span> defense across 4 layers. Single layer failure does not cause system compromise; attackers must breach multiple layers simultaneously. Security-related code covers 32.7% of the codebase (621/1,902 files); permission keywords appear 5,160 times.</span>
+  </div>
+</div>
+
+<!-- Footer -->
+<div class="footer">
+  <span>
+    <span class="lz">数据来源：cc-source-stats-report.md + 源码分析 · 2026-04-05</span>
+    <span class="le">Source: cc-source-stats-report.md + code analysis · 2026-04-05</span>
+  </span>
+  <span>VIS-0-006 · Claude Code Whitepaper v4</span>
+</div>
+
+<script>
+(function(){
+  function setTheme(t){try{localStorage.setItem('vtheme',t);}catch(e){}
+    document.documentElement.setAttribute('data-theme',t);
+    ['dark','warm','light'].forEach(n=>{
+      document.getElementById('btn-'+n).classList.toggle('active',n===t);
+    });
+  }
+  function toggleLang(){
+    const isZh = document.documentElement.lang==='zh';
+    document.documentElement.lang = isZh ? 'en' : 'zh';
+    document.getElementById('btn-lang').textContent = isZh ? 'EN·中' : '中·EN';
+  }
+  // cc-restore-on-load
+  try{
+    var _t=localStorage.getItem('vtheme');
+    if(_t==='dark'||_t==='warm'||_t==='light')setTheme(_t);
+    var _l=localStorage.getItem('vlang');
+    if(_l==='en'&&document.documentElement.lang!=='en')toggleLang();
+  }catch(e){}
+  window.setTheme = setTheme;
+  window.toggleLang = toggleLang;
+})();
+</script>
+<script>
+/* v4-embed-sync */
+/* Embed-mode sync v4: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '.ctrl,',
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v4-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

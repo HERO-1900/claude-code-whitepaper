@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <title>VIS-2A-025 Prompt Cache 命中区域图 · v6</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    :root{
+      --bg:#020617;--panel:#0f172a;--card:#0f172a;--border:#1e293b;
+      --text:#e2e8f0;--muted:#94a3b8;--subtle:#334155;--slate:#cbd5e1;
+      --emerald:#34d399;--cyan:#22d3ee;--violet:#a78bfa;--rose:#fb7185;--amber:#fbbf24;
+      --bar-track:rgba(255,255,255,0.04);--bar-track-border:rgba(255,255,255,0.08);
+      --divider:rgba(2,6,23,0.55);--text-on-color:#0b1020;
+    }
+    [data-theme="warm"]{
+      --bg:#f7f3ec;--panel:#ffffff;--card:#fffaf2;--border:#e6d9c4;
+      --text:#1c1917;--muted:#6b5f50;--subtle:#d6ccc2;--slate:#4a3f33;
+      --emerald:#047857;--cyan:#0e7490;--violet:#6d28d9;--rose:#be123c;--amber:#b45309;
+      --bar-track:rgba(0,0,0,0.03);--bar-track-border:rgba(0,0,0,0.08);
+      --divider:rgba(255,255,255,0.65);--text-on-color:#fbfbfb;
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--panel:#f8fafc;--card:#f8fafc;--border:#dbe2ea;
+      --text:#0f172a;--muted:#475569;--subtle:#cbd5e1;--slate:#334155;
+      --emerald:#059669;--cyan:#0891b2;--violet:#7c3aed;--rose:#dc2626;--amber:#b45309;
+      --bar-track:rgba(15,23,42,0.03);--bar-track-border:rgba(15,23,42,0.08);
+      --divider:rgba(255,255,255,0.7);--text-on-color:#fbfbfb;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;padding:24px 28px 36px;font-size:14px}
+    .svg-bg{fill:var(--bg)}
+    .grid-line{stroke:var(--border)}
+    .row-label-main{fill:var(--text);font-weight:700}
+    .row-label-sub{fill:var(--muted)}
+    .bar-track{fill:var(--bar-track);stroke:var(--bar-track-border);stroke-width:1}
+    .seg-divider{stroke:var(--divider);stroke-width:1.5}
+    .seg-title{fill:var(--text-on-color);font-weight:700}
+    .seg-tokens{fill:var(--text-on-color);opacity:0.85}
+    .token-label-below{fill:var(--muted)}
+    .bracket-label{fill:var(--emerald);font-weight:700}
+    .note-text{fill:var(--slate)}
+    .note-sub{fill:var(--muted)}
+    .legend-text{fill:var(--slate)}
+
+    .vis-header{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+    .vis-dot{width:11px;height:11px;border-radius:50%;background:var(--emerald);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+    .vis-title{font-size:19px;font-weight:700;color:var(--text)}
+    .vis-sub{font-size:13px;color:var(--muted)}
+    .svg-wrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;margin-bottom:20px;overflow-x:auto}
+    .cards{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px}
+    .card-hd{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .card-dot{width:10px;height:10px;border-radius:50%}
+    .card-hd h3{font-size:14px;font-weight:600;color:var(--text)}
+    .card-val{font-size:30px;font-weight:700;margin:6px 0 8px}
+    .card ul{list-style:none;font-size:12px;color:var(--muted);line-height:1.8}
+    .vis-footer{font-size:12px;color:var(--muted);text-align:center;border-top:1px solid var(--border);padding-top:12px}
+    .ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:999}
+    .ctrl button{background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;padding:6px 12px;border-radius:6px;cursor:pointer}
+    .ctrl button:hover{border-color:var(--emerald)}
+    @media (max-width:900px){.cards{grid-template-columns:repeat(2,1fr)}}
+    @media (max-width:520px){.cards{grid-template-columns:1fr}}
+    #stripe-cache line{stroke:rgba(255,255,255,0.10)}
+    [data-theme="warm"] #stripe-cache line,[data-theme="light"] #stripe-cache line{stroke:rgba(255,255,255,0.28)}
+  </style>
+</head>
+<body>
+<div class="ctrl">
+  <button onclick="window.cycleTheme()">Theme</button>
+  <button onclick="window.toggleLang()">EN/中</button>
+</div>
+
+<div class="vis-header">
+  <div class="vis-dot"></div>
+  <span class="vis-title">
+    <span class="lz">Prompt Cache 命中区域图</span>
+    <span class="le">Prompt Cache Hit Zone Diagram</span>
+  </span>
+  <span class="vis-sub">
+    <span class="lz">VIS-2A-025 · 连续请求缓存结构分析</span>
+    <span class="le">VIS-2A-025 · Consecutive Request Cache Structure</span>
+  </span>
+</div>
+
+<div class="svg-wrap">
+  <svg viewBox="0 0 1020 580" width="100%" xmlns="http://www.w3.org/2000/svg" style="display:block;min-width:780px">
+    <defs>
+      <linearGradient id="grad-emerald" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#6ee7b7"/><stop offset="100%" stop-color="#059669"/>
+      </linearGradient>
+      <linearGradient id="grad-cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#67e8f9"/><stop offset="100%" stop-color="#0891b2"/>
+      </linearGradient>
+      <linearGradient id="grad-violet" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#c4b5fd"/><stop offset="100%" stop-color="#7c3aed"/>
+      </linearGradient>
+      <linearGradient id="grad-rose" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#fda4af"/><stop offset="100%" stop-color="#e11d48"/>
+      </linearGradient>
+
+      <pattern id="stripe-cache" width="10" height="10" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+        <rect width="10" height="10" fill="transparent"/>
+        <line x1="0" y1="0" x2="0" y2="10" stroke-width="4"/>
+      </pattern>
+
+      <filter id="glow-emerald" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="2.2" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="glow-amber" x="-20%" y="-20%" width="140%" height="140%">
+        <feGaussianBlur stdDeviation="1.6" result="b"/>
+        <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+
+      <marker id="arr-emerald" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#34d399"/>
+      </marker>
+      <marker id="arr-rose" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto">
+        <path d="M 0 0 L 10 5 L 0 10 z" fill="#fb7185"/>
+      </marker>
+    </defs>
+
+    <rect class="svg-bg" x="0" y="0" width="1020" height="580"/>
+
+    <!-- ===== TOP BRACKET: CACHE HIT ZONE ===== -->
+    <line x1="100" y1="72" x2="760" y2="72" stroke="#34d399" stroke-width="2.5" filter="url(#glow-emerald)" opacity="0.95"/>
+    <line x1="100" y1="72" x2="100" y2="84" stroke="#34d399" stroke-width="2.5" opacity="0.95"/>
+    <line x1="760" y1="72" x2="760" y2="84" stroke="#34d399" stroke-width="2.5" opacity="0.95"/>
+    <text x="430" y="60" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="14" class="bracket-label">
+      <tspan class="lz">相同前缀 · 缓存命中 · 0.1× 价格</tspan><tspan class="le">Same prefix · Cache hit · 0.1× price</tspan>
+    </text>
+
+    <!-- ===== VERTICAL BREAKPOINT LINES ===== -->
+    <!-- BP1 at x=350 -->
+    <line x1="350" y1="84" x2="350" y2="330" stroke="#fbbf24" stroke-width="1.8" stroke-dasharray="6,5" filter="url(#glow-amber)" opacity="0.9"/>
+    <circle cx="350" cy="78" r="11" fill="var(--panel)" stroke="#fbbf24" stroke-width="1.8"/>
+    <text x="350" y="82" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" fill="#fbbf24" font-weight="700">1</text>
+
+    <!-- BP2 at x=480 -->
+    <line x1="480" y1="84" x2="480" y2="330" stroke="#fbbf24" stroke-width="1.8" stroke-dasharray="6,5" filter="url(#glow-amber)" opacity="0.9"/>
+    <circle cx="480" cy="78" r="11" fill="var(--panel)" stroke="#fbbf24" stroke-width="1.8"/>
+    <text x="480" y="82" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" fill="#fbbf24" font-weight="700">2</text>
+
+    <!-- BP3 at x=760 -->
+    <line x1="760" y1="84" x2="760" y2="330" stroke="#fbbf24" stroke-width="1.8" stroke-dasharray="6,5" filter="url(#glow-amber)" opacity="0.9"/>
+    <circle cx="760" cy="78" r="11" fill="var(--panel)" stroke="#fbbf24" stroke-width="1.8"/>
+    <text x="760" y="82" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" fill="#fbbf24" font-weight="700">3</text>
+
+    <!-- ===== REQUEST N-1 BAR (y=100, h=70) ===== -->
+    <text x="92" y="132" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="13" class="row-label-main">
+      <tspan class="lz">请求 N-1</tspan><tspan class="le">Req N-1</tspan>
+    </text>
+    <text x="92" y="150" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="11" class="row-label-sub">
+      <tspan class="lz">(上一次)</tspan><tspan class="le">(previous)</tspan>
+    </text>
+
+    <rect class="bar-track" x="100" y="100" width="860" height="70" rx="6"/>
+
+    <!-- Seg 1: System Prompt x=100 w=250 -->
+    <rect x="100" y="100" width="250" height="70" rx="6" fill="url(#grad-emerald)"/>
+    <rect x="100" y="100" width="250" height="70" rx="6" fill="url(#stripe-cache)"/>
+    <text x="225" y="135" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="15" class="seg-title">
+      <tspan class="lz">系统提示词</tspan><tspan class="le">System Prompt</tspan>
+    </text>
+    <text x="225" y="155" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" class="seg-tokens">~20K tokens</text>
+
+    <!-- Seg 2: Tool Schema x=350 w=130 -->
+    <rect x="350" y="100" width="130" height="70" fill="url(#grad-cyan)"/>
+    <rect x="350" y="100" width="130" height="70" fill="url(#stripe-cache)"/>
+    <text x="415" y="135" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="13" class="seg-title">
+      <tspan class="lz">工具 Schema</tspan><tspan class="le">Tool Schema</tspan>
+    </text>
+    <text x="415" y="155" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" class="seg-tokens">~8K</text>
+
+    <!-- Seg 3: History x=480 w=280 -->
+    <rect x="480" y="100" width="280" height="70" fill="url(#grad-violet)"/>
+    <rect x="480" y="100" width="280" height="70" fill="url(#stripe-cache)"/>
+    <text x="620" y="135" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="15" class="seg-title">
+      <tspan class="lz">历史消息</tspan><tspan class="le">History</tspan>
+    </text>
+    <text x="620" y="155" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" class="seg-tokens">~24K tokens</text>
+
+    <!-- Seg 4: New Message x=760 w=200 -->
+    <rect x="760" y="100" width="200" height="70" rx="6" fill="url(#grad-rose)"/>
+    <text x="860" y="135" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="15" class="seg-title">
+      <tspan class="lz">新消息</tspan><tspan class="le">New Message</tspan>
+    </text>
+    <text x="860" y="155" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" class="seg-tokens">~6K tokens</text>
+
+    <!-- dividers -->
+    <line x1="350" y1="100" x2="350" y2="170" class="seg-divider"/>
+    <line x1="480" y1="100" x2="480" y2="170" class="seg-divider"/>
+    <line x1="760" y1="100" x2="760" y2="170" class="seg-divider"/>
+
+    <!-- ===== PRICE TAGS (y=188, h=30) ===== -->
+    <rect x="380" y="188" width="200" height="30" rx="15" fill="rgba(52,211,153,0.14)" stroke="#34d399" stroke-width="1.3"/>
+    <text x="480" y="208" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="14" fill="#34d399" font-weight="700">
+      <tspan class="lz">0.1× 缓存价</tspan><tspan class="le">0.1× cache price</tspan>
+    </text>
+
+    <rect x="770" y="188" width="180" height="30" rx="15" fill="rgba(251,113,133,0.14)" stroke="#fb7185" stroke-width="1.3"/>
+    <text x="860" y="208" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="14" fill="#fb7185" font-weight="700">
+      <tspan class="lz">1× 全价</tspan><tspan class="le">1× full price</tspan>
+    </text>
+
+    <!-- Arrows down to Bar N -->
+    <line x1="480" y1="220" x2="480" y2="238" stroke="#34d399" stroke-width="2" stroke-dasharray="4,3" opacity="0.85" marker-end="url(#arr-emerald)"/>
+    <line x1="860" y1="220" x2="860" y2="238" stroke="#fb7185" stroke-width="2" stroke-dasharray="4,3" opacity="0.85" marker-end="url(#arr-rose)"/>
+
+    <!-- ===== REQUEST N BAR (y=244, h=80) ===== -->
+    <text x="92" y="278" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="13" fill="#34d399" font-weight="700">
+      <tspan class="lz">请求 N</tspan><tspan class="le">Req N</tspan>
+    </text>
+    <text x="92" y="296" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="11" class="row-label-sub">
+      <tspan class="lz">(当前)</tspan><tspan class="le">(current)</tspan>
+    </text>
+
+    <rect class="bar-track" x="100" y="244" width="860" height="80" rx="6"/>
+
+    <!-- Seg 1: System Prompt (cached) -->
+    <rect x="100" y="244" width="250" height="80" rx="6" fill="url(#grad-emerald)" opacity="0.75"/>
+    <rect x="100" y="244" width="250" height="80" rx="6" fill="url(#stripe-cache)"/>
+    <!-- HIT badge at top-left -->
+    <rect x="112" y="252" width="60" height="22" rx="11" fill="#022c22" stroke="#34d399" stroke-width="1.5"/>
+    <path d="M 120 263 L 124 267 L 131 259" stroke="#34d399" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="153" y="267" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" fill="#34d399" font-weight="700" letter-spacing="0.5">HIT</text>
+    <!-- Title below HIT badge -->
+    <text x="225" y="296" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="15" class="seg-title">
+      <tspan class="lz">系统提示词</tspan><tspan class="le">System Prompt</tspan>
+    </text>
+    <text x="225" y="314" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" class="seg-tokens">~20K tokens</text>
+
+    <!-- Seg 2: Tool Schema (cached) -->
+    <rect x="350" y="244" width="130" height="80" fill="url(#grad-cyan)" opacity="0.75"/>
+    <rect x="350" y="244" width="130" height="80" fill="url(#stripe-cache)"/>
+    <rect x="362" y="252" width="60" height="22" rx="11" fill="#022c2e" stroke="#22d3ee" stroke-width="1.5"/>
+    <path d="M 370 263 L 374 267 L 381 259" stroke="#22d3ee" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="403" y="267" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" fill="#22d3ee" font-weight="700" letter-spacing="0.5">HIT</text>
+    <text x="415" y="296" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="13" class="seg-title">
+      <tspan class="lz">工具 Schema</tspan><tspan class="le">Tool Schema</tspan>
+    </text>
+    <text x="415" y="314" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" class="seg-tokens">~8K</text>
+
+    <!-- Seg 3: History (cached) -->
+    <rect x="480" y="244" width="280" height="80" fill="url(#grad-violet)" opacity="0.75"/>
+    <rect x="480" y="244" width="280" height="80" fill="url(#stripe-cache)"/>
+    <rect x="492" y="252" width="60" height="22" rx="11" fill="#1e1b3a" stroke="#a78bfa" stroke-width="1.5"/>
+    <path d="M 500 263 L 504 267 L 511 259" stroke="#a78bfa" stroke-width="2.2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+    <text x="533" y="267" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" fill="#a78bfa" font-weight="700" letter-spacing="0.5">HIT</text>
+    <text x="620" y="296" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="15" class="seg-title">
+      <tspan class="lz">历史消息</tspan><tspan class="le">History</tspan>
+    </text>
+    <text x="620" y="314" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" class="seg-tokens">~24K tokens</text>
+
+    <!-- Seg 4: New Message (MISS) -->
+    <rect x="760" y="244" width="200" height="80" rx="6" fill="url(#grad-rose)"/>
+    <rect x="772" y="252" width="68" height="22" rx="11" fill="#450a0a" stroke="#fb7185" stroke-width="1.5"/>
+    <text x="806" y="267" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" fill="#fb7185" font-weight="700" letter-spacing="0.5">MISS</text>
+    <text x="860" y="296" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="15" class="seg-title">
+      <tspan class="lz">新消息</tspan><tspan class="le">New Message</tspan>
+    </text>
+    <text x="860" y="314" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" class="seg-tokens">~8K tokens</text>
+
+    <!-- dividers Bar N -->
+    <line x1="350" y1="244" x2="350" y2="324" class="seg-divider"/>
+    <line x1="480" y1="244" x2="480" y2="324" class="seg-divider"/>
+    <line x1="760" y1="244" x2="760" y2="324" class="seg-divider"/>
+
+    <!-- Token labels below second bar (y=346) -->
+    <text x="225" y="346" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" class="token-label-below">~20K</text>
+    <text x="415" y="346" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" class="token-label-below">~8K</text>
+    <text x="620" y="346" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" class="token-label-below">~24K</text>
+    <text x="860" y="346" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" class="token-label-below">~6–8K</text>
+
+    <!-- ===== CACHESAFEPARAMS NOTE BOX (y=368, h=78) ===== -->
+    <rect x="100" y="368" width="860" height="78" rx="8" fill="rgba(52,211,153,0.05)" stroke="#34d399" stroke-width="1.2" stroke-dasharray="5,4" opacity="0.9"/>
+
+    <rect x="116" y="380" width="158" height="22" rx="4" fill="rgba(52,211,153,0.18)"/>
+    <text x="195" y="395" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" fill="#34d399" font-weight="700">CacheSafeParams</text>
+
+    <text x="286" y="395" font-family="'JetBrains Mono',monospace" font-size="13" class="note-text">
+      <tspan class="lz">forkedAgent · /btw 命令 · 投机执行 → 共享缓存前缀</tspan>
+      <tspan class="le">forkedAgent · /btw · speculative execution → share cache prefix</tspan>
+    </text>
+    <text x="116" y="426" font-family="'JetBrains Mono',monospace" font-size="12" class="note-sub">
+      <tspan class="lz">保证上述操作不会破坏已缓存的前缀 · 单次请求节省 $0.3–0.6</tspan>
+      <tspan class="le">Guarantees these operations do not break the cached prefix · saves $0.3–0.6 / request</tspan>
+    </text>
+
+    <!-- ===== LEGEND (y=478) ===== -->
+    <rect x="100" y="474" width="18" height="18" rx="4" fill="url(#grad-emerald)"/>
+    <rect x="100" y="474" width="18" height="18" rx="4" fill="url(#stripe-cache)"/>
+    <text x="126" y="488" font-family="'JetBrains Mono',monospace" font-size="13" class="legend-text">
+      <tspan class="lz">缓存命中（不变内容）</tspan><tspan class="le">Cache Hit (unchanged)</tspan>
+    </text>
+
+    <rect x="360" y="474" width="18" height="18" rx="4" fill="url(#grad-rose)"/>
+    <text x="386" y="488" font-family="'JetBrains Mono',monospace" font-size="13" class="legend-text">
+      <tspan class="lz">缓存未命中（新内容）</tspan><tspan class="le">Cache Miss (new content)</tspan>
+    </text>
+
+    <line x1="620" y1="483" x2="654" y2="483" stroke="#fbbf24" stroke-width="1.8" stroke-dasharray="6,5"/>
+    <circle cx="666" cy="483" r="9" fill="var(--panel)" stroke="#fbbf24" stroke-width="1.5"/>
+    <text x="666" y="487" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" fill="#fbbf24" font-weight="700">BP</text>
+    <text x="684" y="488" font-family="'JetBrains Mono',monospace" font-size="13" class="legend-text">
+      <tspan class="lz">cache_control 断点</tspan><tspan class="le">cache_control breakpoint</tspan>
+    </text>
+
+    <rect x="800" y="474" width="18" height="18" rx="4" fill="url(#grad-violet)" opacity="0.75"/>
+    <rect x="800" y="474" width="18" height="18" rx="4" fill="url(#stripe-cache)"/>
+    <text x="826" y="488" font-family="'JetBrains Mono',monospace" font-size="13" class="legend-text">
+      <tspan class="lz">HIT 纹理标记</tspan><tspan class="le">HIT texture</tspan>
+    </text>
+
+    <!-- ===== BOTTOM AXIS HINT (y=530) ===== -->
+    <line x1="100" y1="524" x2="960" y2="524" stroke="var(--border)" stroke-width="1" opacity="0.6"/>
+    <text x="100" y="546" font-family="'JetBrains Mono',monospace" font-size="11" class="row-label-sub">
+      <tspan class="lz">◀ 稳定前缀（可缓存）</tspan><tspan class="le">◀ Stable prefix (cacheable)</tspan>
+    </text>
+    <text x="960" y="546" text-anchor="end" font-family="'JetBrains Mono',monospace" font-size="11" class="row-label-sub">
+      <tspan class="lz">末端变化（新内容）▶</tspan><tspan class="le">Tail mutation (new) ▶</tspan>
+    </text>
+
+  </svg>
+</div>
+
+<!-- ===== SUMMARY CARDS ===== -->
+<div class="cards">
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-dot" style="background:#34d399"></div>
+      <h3><span class="lz">缓存命中价格</span><span class="le">Cache Hit Price</span></h3>
+    </div>
+    <div class="card-val" style="color:#34d399">0.1×</div>
+    <ul>
+      <li><span class="lz">相同前缀 Token 折扣</span><span class="le">Same-prefix token discount</span></li>
+      <li><span class="lz">节省 90% 输入成本</span><span class="le">90% input cost savings</span></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-dot" style="background:#fb7185"></div>
+      <h3><span class="lz">全价付费</span><span class="le">Full Price</span></h3>
+    </div>
+    <div class="card-val" style="color:#fb7185">1×</div>
+    <ul>
+      <li><span class="lz">新内容按标准价计费</span><span class="le">New content standard rate</span></li>
+      <li><span class="lz">仅限缓存边界后部分</span><span class="le">Only content after breakpoint</span></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-dot" style="background:#22d3ee"></div>
+      <h3><span class="lz">典型缓存 Token 数</span><span class="le">Typical Cached Tokens</span></h3>
+    </div>
+    <div class="card-val" style="color:#22d3ee">50K+</div>
+    <ul>
+      <li><span class="lz">系统提示 ~20K</span><span class="le">System prompt ~20K</span></li>
+      <li><span class="lz">工具 Schema ~8K + 历史 ~24K</span><span class="le">Tool schema ~8K + History ~24K</span></li>
+    </ul>
+  </div>
+
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-dot" style="background:#fbbf24"></div>
+      <h3><span class="lz">单次请求节省</span><span class="le">Savings per Request</span></h3>
+    </div>
+    <div class="card-val" style="color:#fbbf24">$0.3–0.6</div>
+    <ul>
+      <li><span class="lz">CacheSafeParams 保障前缀稳定</span><span class="le">CacheSafeParams keeps prefix stable</span></li>
+      <li><span class="lz">forkedAgent · /btw · 投机执行</span><span class="le">forkedAgent · /btw · speculative exec</span></li>
+    </ul>
+  </div>
+</div>
+
+<div class="vis-footer">
+  VIS-2A-025 · Claude Code Prompt Cache 命中区域图 · CC Research 2026-04-23 ·
+  <span class="lz">数据来源: Claude Code 源码 CacheSafeParams 实现</span>
+  <span class="le">Source: Claude Code CacheSafeParams implementation</span>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';document.documentElement.setAttribute('data-theme',t);
+  window.cycleTheme=function(){var themes=['dark','warm','light'];var i=(themes.indexOf(document.documentElement.getAttribute('data-theme'))+1)%3;t=themes[i];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){var cur=document.documentElement.getAttribute('data-lang')||'zh';var next=cur==='en'?'zh':'en';document.documentElement.setAttribute('data-lang',next);localStorage.setItem('vlang',next);};
+  var _sl=localStorage.getItem('vlang');if(_sl){document.documentElement.setAttribute('data-lang',_sl);}
+})();
+</script>
+<script>
+/* v2-embed-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.ctrl,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

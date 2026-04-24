@@ -1,0 +1,195 @@
+/* ============================================================
+   tokens-migration-helper.css — Design Token 迁移示范段落
+   ------------------------------------------------------------
+
+   作用：
+   本文件是"阶段 2 批量迁移"的示范和参考手册。
+   列出 style.css 中出现频率最高的 10 个硬编码颜色，
+   展示如何用 var(--cc-*) 形式替换，并保留回退值（fallback）。
+
+   **重要：本文件目前不生效（未被 index.html 引用）。**
+   它是给开发者看的迁移路径示范，阶段 2 执行时参考这里改 style.css。
+
+   迁移原则：
+   1. 新写法优先用语义变量（--cc-accent-primary 而不是 --cc-color-cyan）
+   2. var() 第二参数保留原始硬编码值作为 fallback，防止老浏览器崩溃
+   3. 迁移顺序：先改最高频（节省最多"散弹"颜色），再改低频
+
+   统计来源（2026-04-06 扫描 css/style.css 3158 行）：
+   - 硬编码 hex 颜色：88 处（45 个不重复值）
+   - rgba() 颜色：88 处（30 个不重复值）
+   - 总计：约 176 处需要迁移
+
+   最高频 10 个颜色及对应的 --cc-* 映射：
+   ┌─────────────────────────────────────────────────────────────────┐
+   │ 原始值                │ 出现次数 │ 对应 token                   │
+   ├─────────────────────────────────────────────────────────────────┤
+   │ rgba(0,212,255,...)   │  ~40 处  │ --cc-accent-primary + 透明度  │
+   │ #48bb78               │   8 处   │ --cc-color-green              │
+   │ rgba(72,187,120,...)  │   8 处   │ --cc-color-green + 透明度     │
+   │ #fff                  │   5 处   │ #fff（纯白，亮色主题保留）     │
+   │ #ff6b6b               │   5 处   │ --cc-color-red                │
+   │ #333 / #1a1a1a        │   5 处各 │ --cc-text-primary（备注1）    │
+   │ #0a0a0a / #000        │   5 处各 │ --cc-bg-primary（备注2）      │
+   │ #ffd93d               │   4 处   │ --cc-color-gold               │
+   │ rgba(255,107,107,...) │   3 处   │ --cc-color-red + 透明度       │
+   │ rgba(72,187,120,.15)  │   3 处   │ --cc-color-green + 透明度     │
+   └─────────────────────────────────────────────────────────────────┘
+   备注1：#333/#1a1a1a 出现在 scrollbar、media print 等场景，
+          亮色主题下应映射到 --cc-text-primary，但原暗色下不对，
+          需要确认这些选择器的主题归属后再迁（已列入未决问题）。
+   备注2：#0a0a0a/#000 出现在遮罩/overlay 场景，非背景层级用途，
+          应保持不变或用 rgba(0,0,0,x) 形式，不映射到 --cc-bg-primary。
+   ============================================================ */
+
+/* ──────────────────────────────────────────────────────────────
+   示范一：.term-green / .c-green（绿色文字，8 次高频）
+   原始 style.css 第 1137 行、1155 行：
+     .term-green { color: #48bb78; }
+     .c-green { color: #48bb78; }
+   迁移后：
+   ────────────────────────────────────────────────────────────── */
+.term-green {
+  /* 示范：用语义 token 替代硬编码绿色 */
+  color: var(--cc-color-green, #48bb78);
+  font-weight: 600;
+}
+
+.c-green {
+  color: var(--cc-color-green, #48bb78);
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   示范二：.df-tag（数据流标签配色，含背景+前景）
+   原始 style.css 第 1508~1511 行：
+     .df-tag.green { background: rgba(72,187,120,0.15); color: #48bb78; }
+     .df-tag.gold  { background: rgba(255,217,61,0.15);  color: #ffd93d; }
+     .df-tag.cyan  { background: rgba(0,212,255,0.15);   color: #00d4ff; }
+     .df-tag.red   { background: rgba(255,107,107,0.15); color: #ff6b6b; }
+   迁移后：
+   ────────────────────────────────────────────────────────────── */
+.df-tag.green {
+  /* 背景用 color 变量 + 固定透明度（token 系统暂不提供 alpha 变体）*/
+  background: rgba(var(--cc-color-green-raw, 72, 187, 120), 0.15);
+  /* 降级方案：直接用语义变量但 alpha 在 token 外处理 */
+  background: color-mix(in srgb, var(--cc-color-green, #48bb78) 15%, transparent);
+  color: var(--cc-color-green, #48bb78);
+}
+
+.df-tag.gold {
+  background: color-mix(in srgb, var(--cc-color-gold, #ffd93d) 15%, transparent);
+  color: var(--cc-color-gold, #ffd93d);
+}
+
+.df-tag.cyan {
+  background: var(--cc-accent-bg, rgba(0, 212, 255, 0.08));
+  color: var(--cc-accent-primary, #00d4ff);
+}
+
+.df-tag.red {
+  background: color-mix(in srgb, var(--cc-color-red, #ff6b6b) 15%, transparent);
+  color: var(--cc-color-red, #ff6b6b);
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   示范三：.df-sm-* 状态机标签颜色
+   原始 style.css 第 1550~1552 行：
+     .df-sm-allow .df-sm-label { color: #48bb78; }
+     .df-sm-deny  .df-sm-label { color: #ff6b6b; }
+     .df-sm-ask   .df-sm-label { color: #ffd93d; }
+   迁移后：
+   ────────────────────────────────────────────────────────────── */
+.df-sm-allow .df-sm-label { color: var(--cc-status-success, #48bb78); }
+.df-sm-deny  .df-sm-label { color: var(--cc-status-error,   #ff6b6b); }
+.df-sm-ask   .df-sm-label { color: var(--cc-status-warning, #ffd93d); }
+
+
+/* ──────────────────────────────────────────────────────────────
+   示范四：.hist-role.user（对话历史用户角色背景）
+   原始 style.css 第 1178 行：
+     .hist-role.user { background: rgba(72,187,120,0.15); color: #48bb78; }
+   迁移后：
+   ────────────────────────────────────────────────────────────── */
+.hist-role.user {
+  background: color-mix(in srgb, var(--cc-color-green, #48bb78) 15%, transparent);
+  color: var(--cc-color-green, #48bb78);
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   示范五：.hidden-feature-card::before（装饰色条）
+   原始 style.css 第 1848~1852 行：
+     nth-child(1)::before { background: #ffd93d; }
+     nth-child(3)::before { background: #7b61ff; }
+     nth-child(4)::before { background: #4ecdc4; }
+     nth-child(5)::before { background: #ff6b6b; }
+   迁移后：
+   ────────────────────────────────────────────────────────────── */
+.hidden-feature-card:nth-child(1)::before { background: var(--cc-color-gold,  #ffd93d); }
+.hidden-feature-card:nth-child(3)::before { background: var(--cc-accent-secondary, #7b61ff); }
+.hidden-feature-card:nth-child(4)::before { background: var(--cc-color-teal,  #4ecdc4); }
+.hidden-feature-card:nth-child(5)::before { background: var(--cc-color-red,   #ff6b6b); }
+
+
+/* ──────────────────────────────────────────────────────────────
+   示范六：rgba(0,212,255,...) 系列（最高频，约 40 处）
+   这类颜色直接来自 --accent-cyan，但以硬编码 rgba() 写在各处。
+   理想做法是统一用 --cc-accent-bg / --cc-accent-bg-strong，
+   或者用 color-mix() 动态生成透明度变体。
+
+   示例（style.css 里典型的强调色 glow 效果）：
+     box-shadow: 0 0 20px rgba(0,212,255,0.3);
+   迁移后：
+   ────────────────────────────────────────────────────────────── */
+/* 仅做示范，以 .accent-glow-example 为例（原 style.css 里没有此类名） */
+.accent-glow-example {
+  box-shadow: 0 0 20px color-mix(in srgb, var(--cc-accent-primary, #00d4ff) 30%, transparent);
+}
+
+
+/* ──────────────────────────────────────────────────────────────
+   示范七：背景色（--bg-primary / --bg-card 系列）
+   原始 style.css 第 5~8 行变量定义：
+     --bg-primary: #0a0e17
+     --bg-secondary: #0d1520
+     --bg-card: #111827
+     --bg-hover: #1a2332
+   这些变量已被 style.css 大量引用，阶段 2 的迁移策略：
+   在 style.css 顶部的 :root 里把它们改为指向 --cc-* token。
+   ────────────────────────────────────────────────────────────── */
+/*
+   阶段 2 将在 style.css 第 5~23 行做如下替换（示意）：
+
+   :root {
+     --bg-primary:    var(--cc-bg-primary);
+     --bg-secondary:  var(--cc-bg-secondary);
+     --bg-card:       var(--cc-bg-elevated);
+     --bg-hover:      var(--cc-bg-hover);
+     --accent-cyan:   var(--cc-accent-primary);
+     --accent-purple: var(--cc-accent-secondary);
+     --accent-red:    var(--cc-color-red);
+     --accent-teal:   var(--cc-color-teal);
+     --accent-gold:   var(--cc-color-gold);
+     --accent-green:  var(--cc-color-green);
+     --accent-pink:   var(--cc-color-pink);
+     --accent-blue:   var(--cc-color-blue);
+     --text-primary:  var(--cc-text-primary);
+     --text-secondary:var(--cc-text-secondary);
+     --text-muted:    var(--cc-text-muted);
+     --border:        var(--cc-border-default);
+     ... （字体变量同理）
+   }
+
+   这一步改完后，所有用 var(--bg-primary) 的地方自动跟随主题，
+   无需修改 3000+ 行的具体选择器。这是"最小改动最大效益"的做法。
+*/
+
+
+/* ──────────────────────────────────────────────────────────────
+   color-mix() 兼容性说明：
+   - Chrome 111+、Firefox 113+、Safari 16.2+ 原生支持
+   - 不支持的浏览器会忽略该行，fallback 为上一行（rgba 硬编码）
+   - 如需兼容旧浏览器，保留 rgba() 写法在前，color-mix() 写法在后
+   ────────────────────────────────────────────────────────────── */

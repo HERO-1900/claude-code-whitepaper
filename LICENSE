@@ -1,0 +1,51 @@
+Claude Code 白皮书 · 架构分析 — License
+
+本仓库采用「双许可」：
+
+  1. 所有**内容类材料**（章节正文、图示、可视化、文字说明、插图、设计稿）
+     按 Creative Commons Attribution-NonCommercial-ShareAlike 4.0
+     International (CC BY-NC-SA 4.0) 授权。
+
+     许可摘要：
+       - 允许复制、分发、改编
+       - 必须署名（注明本项目地址与作者 @HERO-1900）
+       - 非商业用途
+       - 衍生作品须以相同许可协议发布
+
+     完整协议文本：https://creativecommons.org/licenses/by-nc-sa/4.0/legalcode
+     中文摘要：   https://creativecommons.org/licenses/by-nc-sa/4.0/deed.zh
+
+  2. 仓库中作为**示例/脚手架/演示用途的代码片段**（一般嵌入在 Markdown
+     代码块中，或位于 js/ css/ 目录下的站点运行时脚本），按 MIT 许可授权：
+
+     MIT License
+
+     Copyright (c) 2026 HERO-1900 and contributors
+
+     Permission is hereby granted, free of charge, to any person obtaining
+     a copy of this software and associated documentation files (the
+     "Software"), to deal in the Software without restriction, including
+     without limitation the rights to use, copy, modify, merge, publish,
+     distribute, sublicense, and/or sell copies of the Software, and to
+     permit persons to whom the Software is furnished to do so, subject to
+     the following conditions:
+
+     The above copyright notice and this permission notice shall be
+     included in all copies or substantial portions of the Software.
+
+     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+     MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+     IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+     CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+     TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+     SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+Notes
+
+  - 若某文件另有独立 license 头部声明，以该文件声明为准。
+  - 第三方代码（如 js/lib/ 下的 highlight.js 等）保留其原始许可。
+  - Claude Code、Claude、Anthropic 名称及商标归 Anthropic 所有，本项目
+    与 Anthropic 无官方关联。
+
+— 2026-04-24

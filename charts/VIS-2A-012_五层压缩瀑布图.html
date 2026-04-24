@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIS-2A-012 五层上下文压缩瀑布图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    :root{--bg:#020617;--panel:#0f172a;--card:#0f172a;--border:#1e293b;--text:#e2e8f0;--muted:#64748b;--subtle:#334155;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#f97316}
+    [data-theme="warm"]{--bg:#f8f6f3;--panel:#ffffff;--card:#faf9f7;--border:#e2d9cc;--text:#1c1917;--muted:#78716c;--subtle:#d6ccc2}
+    [data-theme="light"]{--bg:#ffffff;--panel:#f8fafc;--card:#f8fafc;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--subtle:#cbd5e1}
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;padding:20px 24px 32px}
+    .svg-bg{fill:var(--bg)}
+    .node-bg{fill:var(--panel)}
+    .grid-line{stroke:var(--border)}
+    [data-theme="warm"] .grid-line{stroke:var(--subtle)}
+    .node-title{fill:var(--text)}
+    .node-meta{fill:var(--muted)}
+    .divider-bg{fill:var(--bg);stroke:var(--subtle)}
+    .vis-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
+    .vis-dot{width:10px;height:10px;border-radius:50%;background:var(--emerald);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+    .vis-title{font-size:17px;font-weight:700;color:var(--text);letter-spacing:.02em}
+    .vis-sub{font-size:11px;color:var(--muted);margin-left:4px}
+    .svg-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:16px;overflow-x:auto}
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
+    @media (max-width:600px){.cards{grid-template-columns:1fr}}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px}
+    .card-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+    .card-dot{width:8px;height:8px;border-radius:50%}
+    .card-hd h3{font-size:12px;font-weight:600;color:var(--text)}
+    .card ul{list-style:none;font-size:11px;color:var(--muted);line-height:1.7}
+    .vis-footer{font-size:10px;color:var(--muted);text-align:center;border-top:1px solid var(--border);padding-top:10px}
+    .ctrl{position:fixed;top:16px;right:16px;display:flex;gap:6px;z-index:999}
+    .ctrl button{background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 10px;border-radius:6px;cursor:pointer}
+    .ctrl button:hover{border-color:var(--emerald)}</style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="window.cycleTheme()">Theme</button>
+  <button onclick="window.toggleLang()">EN/中</button>
+</div>
+
+<div class="vis-header">
+  <div class="vis-dot"></div>
+  <div class="vis-title">
+    <span class="lz">五层上下文压缩瀑布图</span>
+    <span class="le">5+1 Context Compression Waterfall</span>
+  </div>
+  <div class="vis-sub">VIS-2A-012 · <span class="lz">压缩触发条件 · 操作策略 · 成本代价</span><span class="le">Trigger Conditions · Operations · Cost Trade-offs</span></div>
+</div>
+
+<div class="svg-wrap">
+<svg viewBox="0 0 960 650" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+<defs>
+  <pattern id="g12" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" class="grid-line" stroke-width="0.5"/>
+  </pattern>
+  <filter id="glow-g">
+    <feGaussianBlur stdDeviation="2.5" result="blur"/>
+    <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+  </filter>
+</defs>
+
+<!-- background -->
+<rect width="960" height="650" class="svg-bg"/>
+<rect width="960" height="650" fill="url(#g12)" opacity="0.4"/>
+
+<!-- title -->
+<text x="480" y="26" class="node-title lz" font-size="13" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Claude Code · 上下文压缩五层架构</text>
+<text x="480" y="26" class="node-title le" font-size="13" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Claude Code · Context Compression Layers</text>
+<text x="480" y="40" class="node-meta lz" font-size="10" text-anchor="middle" font-family="JetBrains Mono">轻量无损 → 有损摘要 → 紧急响应 · 99% 情况在 L3 前化解 · 矩形高度表示影响深度</text>
+<text x="480" y="40" class="node-meta le" font-size="10" text-anchor="middle" font-family="JetBrains Mono">Lightweight → Lossy → Emergency · 99% cases solved by L3 · Height = impact depth</text>
+
+<!-- All rectangles use x=100, width=720. Heights grow with impact. -->
+
+<!-- ══════ LAYER 1: Tool Result Trim (h=40, short) ══════ -->
+<!-- y=54..94 -->
+<rect x="100" y="54" width="720" height="40" rx="6" class="node-bg"/>
+<rect x="100" y="54" width="720" height="40" rx="6" fill="rgba(34,211,238,0.12)" stroke="#22d3ee" stroke-width="1.5"/>
+<!-- badge -->
+<rect x="110" y="62" width="26" height="24" rx="4" fill="rgba(34,211,238,0.2)" stroke="#22d3ee" stroke-width="1"/>
+<text x="123" y="78" fill="#22d3ee" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">L1</text>
+<!-- zh name -->
+<text x="148" y="71" class="lz node-title" font-size="12" font-weight="600" font-family="JetBrains Mono">工具结果截断</text>
+<text x="148" y="71" class="le node-title" font-size="12" font-weight="600" font-family="JetBrains Mono">Tool Result Trim</text>
+<!-- en subtitle -->
+<text x="148" y="84" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="lz">Tool Result Trim · 触发: result.length &gt; maxResultSizeChars</text>
+<text x="148" y="84" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="le">Tool Result Trim · Trigger: result.length &gt; maxResultSizeChars</text>
+<!-- metrics -->
+<text x="808" y="74" fill="#22d3ee" font-size="14" font-weight="700" text-anchor="end" font-family="JetBrains Mono">~10%</text>
+<text x="808" y="86" fill="#64748b" font-size="10" text-anchor="end" font-family="JetBrains Mono" class="lz">压缩率 · 无损</text>
+<text x="808" y="86" fill="#64748b" font-size="10" text-anchor="end" font-family="JetBrains Mono" class="le">reduction · lossless</text>
+
+<!-- connector L1→L2 -->
+<line x1="460" y1="94" x2="460" y2="102" stroke="#334155" stroke-width="1" stroke-dasharray="3,2"/>
+
+<!-- ══════ LAYER 2: History Snip (h=60, medium) ══════ -->
+<!-- y=102..162 -->
+<rect x="100" y="102" width="720" height="60" rx="6" class="node-bg"/>
+<rect x="100" y="102" width="720" height="60" rx="6" fill="rgba(167,139,250,0.12)" stroke="#a78bfa" stroke-width="1.5"/>
+<!-- badge -->
+<rect x="110" y="114" width="30" height="36" rx="4" fill="rgba(167,139,250,0.2)" stroke="#a78bfa" stroke-width="1"/>
+<text x="125" y="136" fill="#a78bfa" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">L2</text>
+<!-- name -->
+<text x="152" y="121" class="lz node-title" font-size="12" font-weight="600" font-family="JetBrains Mono">历史片段删除</text>
+<text x="152" y="121" class="le node-title" font-size="12" font-weight="600" font-family="JetBrains Mono">History Snip</text>
+<text x="152" y="134" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="lz">History Snip</text>
+<text x="152" y="134" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="le">History Snip · layer 2</text>
+<!-- trigger -->
+<text x="152" y="149" fill="#475569" font-size="10" font-family="JetBrains Mono" class="lz">触发: HISTORY_SNIP marker 存在  ·  移除低优先级历史块</text>
+<text x="152" y="149" fill="#475569" font-size="10" font-family="JetBrains Mono" class="le">Trigger: HISTORY_SNIP marker present · remove low-priority history chunks</text>
+<!-- metrics -->
+<text x="808" y="128" fill="#a78bfa" font-size="14" font-weight="700" text-anchor="end" font-family="JetBrains Mono">~28%</text>
+<text x="808" y="142" fill="#64748b" font-size="10" text-anchor="end" font-family="JetBrains Mono" class="lz">压缩率 · 无损</text>
+<text x="808" y="142" fill="#64748b" font-size="10" text-anchor="end" font-family="JetBrains Mono" class="le">reduction · lossless</text>
+
+<!-- connector L2→L3 -->
+<line x1="460" y1="162" x2="460" y2="170" stroke="#334155" stroke-width="1" stroke-dasharray="3,2"/>
+
+<!-- ══════ LAYER 3: Micro-compact (h=60, medium) ══════ -->
+<!-- y=170..230 -->
+<rect x="100" y="170" width="720" height="60" rx="6" class="node-bg"/>
+<rect x="100" y="170" width="720" height="60" rx="6" fill="rgba(251,191,36,0.12)" stroke="#fbbf24" stroke-width="1.5"/>
+<!-- badge -->
+<rect x="110" y="182" width="30" height="36" rx="4" fill="rgba(251,191,36,0.2)" stroke="#fbbf24" stroke-width="1"/>
+<text x="125" y="204" fill="#fbbf24" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">L3</text>
+<!-- name -->
+<text x="152" y="189" class="lz node-title" font-size="12" font-weight="600" font-family="JetBrains Mono">微型压缩</text>
+<text x="152" y="189" class="le node-title" font-size="12" font-weight="600" font-family="JetBrains Mono">Micro-compact</text>
+<text x="152" y="202" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="lz">Micro-compact</text>
+<text x="152" y="202" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="le">Micro-compact · L3</text>
+<!-- trigger -->
+<text x="152" y="217" fill="#475569" font-size="10" font-family="JetBrains Mono" class="lz">触发: 存在冗余 marker / 模板重复  ·  去除模板语言和重复内容</text>
+<text x="152" y="217" fill="#475569" font-size="10" font-family="JetBrains Mono" class="le">Trigger: redundant markers / template repetitions · eliminate boilerplate</text>
+<!-- metrics -->
+<text x="808" y="196" fill="#fbbf24" font-size="14" font-weight="700" text-anchor="end" font-family="JetBrains Mono">~25%</text>
+<text x="808" y="210" fill="#64748b" font-size="10" text-anchor="end" font-family="JetBrains Mono" class="lz">压缩率 · 无损</text>
+<text x="808" y="210" fill="#64748b" font-size="10" text-anchor="end" font-family="JetBrains Mono" class="le">reduction · lossless</text>
+
+<!-- ══════ 99% DIVIDER ══════ -->
+<line x1="460" y1="230" x2="460" y2="238" stroke="#334155" stroke-width="1" stroke-dasharray="3,2"/>
+<!-- divider box -->
+<rect x="310" y="238" width="300" height="22" rx="4" class="divider-bg" stroke-width="1"/>
+<text x="460" y="253" fill="#94a3b8" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono" class="lz">— 99% 情况在此止步，以下为深度压缩 —</text>
+<text x="460" y="253" fill="#94a3b8" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono" class="le">— 99% cases stop here; below = deep compression —</text>
+<!-- downward arrow indicator -->
+<polygon points="460,268 455,262 465,262" fill="#f97316" opacity="0.8"/>
+
+<!-- ══════ LAYER 4: Context Collapse (h=80, larger) ══════ -->
+<!-- y=276..356 -->
+<rect x="100" y="276" width="720" height="80" rx="6" class="node-bg"/>
+<rect x="100" y="276" width="720" height="80" rx="6" fill="rgba(52,211,153,0.12)" stroke="#34d399" stroke-width="1.5"/>
+<!-- badge -->
+<rect x="110" y="292" width="34" height="48" rx="4" fill="rgba(52,211,153,0.25)" stroke="#34d399" stroke-width="1"/>
+<text x="127" y="320" fill="#34d399" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">L4</text>
+<!-- name -->
+<text x="156" y="295" class="lz node-title" font-size="12" font-weight="600" font-family="JetBrains Mono">上下文折叠</text>
+<text x="156" y="295" class="le node-title" font-size="12" font-weight="600" font-family="JetBrains Mono">Context Collapse</text>
+<text x="156" y="308" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="lz">Context Collapse</text>
+<text x="156" y="308" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="le">Context Collapse · L4</text>
+<!-- trigger -->
+<text x="156" y="325" fill="#475569" font-size="10" font-family="JetBrains Mono" class="lz">触发: CONTEXT_COLLAPSE marker</text>
+<text x="156" y="325" fill="#475569" font-size="10" font-family="JetBrains Mono" class="le">Trigger: CONTEXT_COLLAPSE marker</text>
+<text x="156" y="340" fill="#475569" font-size="10" font-family="JetBrains Mono" class="lz">旧对话替换为 AI 生成的摘要（有损） · 保留近期消息完整</text>
+<text x="156" y="340" fill="#475569" font-size="10" font-family="JetBrains Mono" class="le">Old conv replaced by AI summary (lossy) · recent msgs preserved</text>
+<!-- lossy badge -->
+<rect x="744" y="290" width="64" height="20" rx="3" fill="rgba(52,211,153,0.2)" stroke="#34d399" stroke-width="1"/>
+<text x="776" y="304" fill="#34d399" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono" class="lz">有损</text>
+<text x="776" y="304" fill="#34d399" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono" class="le">lossy</text>
+<!-- metrics -->
+<text x="808" y="330" fill="#34d399" font-size="16" font-weight="700" text-anchor="end" font-family="JetBrains Mono">~40%</text>
+<text x="808" y="344" fill="#64748b" font-size="10" text-anchor="end" font-family="JetBrains Mono" class="lz">压缩率</text>
+<text x="808" y="344" fill="#64748b" font-size="10" text-anchor="end" font-family="JetBrains Mono" class="le">reduction</text>
+
+<!-- connector L4→L5 -->
+<line x1="460" y1="356" x2="460" y2="366" stroke="#334155" stroke-width="1" stroke-dasharray="3,2"/>
+
+<!-- ══════ LAYER 5: Auto Full Compress (h=100, tallest in normal section) ══════ -->
+<!-- y=366..466 -->
+<rect x="100" y="366" width="720" height="100" rx="6" class="node-bg"/>
+<rect x="100" y="366" width="720" height="100" rx="6" fill="rgba(251,113,133,0.12)" stroke="#fb7185" stroke-width="1.5"/>
+<!-- badge -->
+<rect x="110" y="386" width="38" height="60" rx="4" fill="rgba(251,113,133,0.25)" stroke="#fb7185" stroke-width="1"/>
+<text x="129" y="420" fill="#fb7185" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">L5</text>
+<!-- name -->
+<text x="162" y="388" class="lz node-title" font-size="13" font-weight="600" font-family="JetBrains Mono">全量自动压缩</text>
+<text x="162" y="388" class="le node-title" font-size="13" font-weight="600" font-family="JetBrains Mono">Auto Full Compress</text>
+<text x="162" y="402" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="lz">Auto Full Compress</text>
+<text x="162" y="402" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="le">Auto Full Compress · L5</text>
+<!-- trigger -->
+<text x="162" y="420" fill="#475569" font-size="10" font-family="JetBrains Mono" class="lz">触发: token 超出阈值  ·  新 AI 实例摘要全对话</text>
+<text x="162" y="420" fill="#475569" font-size="10" font-family="JetBrains Mono" class="le">Trigger: token threshold exceeded · new AI instance summarizes all</text>
+<text x="162" y="435" fill="#475569" font-size="10" font-family="JetBrains Mono" class="lz">代价: prompt cache 全部失效 · 下轮冷启动 · 细节丢失不可逆</text>
+<text x="162" y="435" fill="#475569" font-size="10" font-family="JetBrains Mono" class="le">Cost: entire prompt cache invalidated · cold start · detail loss irreversible</text>
+<text x="162" y="450" fill="#475569" font-size="10" font-family="JetBrains Mono" class="lz">影响范围: 整条对话被替换为摘要</text>
+<text x="162" y="450" fill="#475569" font-size="10" font-family="JetBrains Mono" class="le">Scope: entire conversation replaced by summary</text>
+<!-- lossy badge -->
+<rect x="744" y="384" width="64" height="20" rx="3" fill="rgba(251,113,133,0.3)" stroke="#fb7185" stroke-width="1"/>
+<text x="776" y="398" fill="#fb7185" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono" class="lz">有损</text>
+<text x="776" y="398" fill="#fb7185" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono" class="le">lossy</text>
+<!-- metrics -->
+<text x="808" y="430" fill="#fb7185" font-size="16" font-weight="700" text-anchor="end" font-family="JetBrains Mono">1/3–1/5</text>
+<text x="808" y="444" fill="#64748b" font-size="10" text-anchor="end" font-family="JetBrains Mono" class="lz">剩余比例</text>
+<text x="808" y="444" fill="#64748b" font-size="10" text-anchor="end" font-family="JetBrains Mono" class="le">remaining</text>
+
+<!-- Emergency section header -->
+<text x="460" y="484" fill="#f97316" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono" opacity="0.95" class="lz">⚠  紧急响应层（仅在 API 413 错误时触发，不主动调用）</text>
+<text x="460" y="484" fill="#f97316" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono" opacity="0.95" class="le">⚠  Emergency Layer (fires only on API 413 error, never proactive)</text>
+
+<!-- ══════ LAYER 5+: Reactive Compact (EMERGENCY, h=100, dashed) ══════ -->
+<!-- y=494..594 -->
+<rect x="100" y="494" width="720" height="100" rx="6" class="node-bg"/>
+<rect x="100" y="494" width="720" height="100" rx="6" fill="rgba(249,115,22,0.08)" stroke="#f97316" stroke-width="2" stroke-dasharray="8,4"/>
+<!-- warning icon block -->
+<rect x="110" y="514" width="38" height="60" rx="4" fill="rgba(249,115,22,0.15)" stroke="#f97316" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="129" y="540" fill="#f97316" font-size="14" text-anchor="middle" font-family="JetBrains Mono">⚠</text>
+<text x="129" y="556" fill="#f97316" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">413</text>
+<text x="129" y="568" fill="#f97316" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">L5+</text>
+<!-- name -->
+<text x="162" y="516" class="lz node-title" font-size="13" font-weight="600" font-family="JetBrains Mono">紧急响应压缩</text>
+<text x="162" y="516" class="le node-title" font-size="13" font-weight="600" font-family="JetBrains Mono">Reactive Compact (Emergency)</text>
+<text x="162" y="530" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="lz">Reactive Compact (Emergency)</text>
+<text x="162" y="530" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="le">Reactive Compact · L5+</text>
+<!-- trigger -->
+<text x="162" y="548" fill="#475569" font-size="10" font-family="JetBrains Mono" class="lz">触发: API 413 错误（Payload Too Large）  ·  被动响应，不主动调用</text>
+<text x="162" y="548" fill="#475569" font-size="10" font-family="JetBrains Mono" class="le">Trigger: API 413 error (Payload Too Large) · reactive only, never proactive</text>
+<text x="162" y="563" fill="#475569" font-size="10" font-family="JetBrains Mono" class="lz">操作: 紧急全量摘要 + 仅重试一次  ·  单次调用，不重复</text>
+<text x="162" y="563" fill="#475569" font-size="10" font-family="JetBrains Mono" class="le">Op: full summary + retry exactly once · single shot, no repeat</text>
+<text x="162" y="578" fill="#475569" font-size="10" font-family="JetBrains Mono" class="lz">副作用: prompt cache 全部作废 · 下轮冷启动 · 最后防线</text>
+<text x="162" y="578" fill="#475569" font-size="10" font-family="JetBrains Mono" class="le">Side effect: prompt cache wiped · cold start · last resort</text>
+<!-- emergency badge -->
+<rect x="738" y="512" width="72" height="22" rx="3" fill="rgba(249,115,22,0.22)" stroke="#f97316" stroke-width="1"/>
+<text x="774" y="526" fill="#f97316" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono" class="lz">最高成本</text>
+<text x="774" y="526" fill="#f97316" font-size="10" font-weight="600" text-anchor="middle" font-family="JetBrains Mono" class="le">Max Cost</text>
+<text x="808" y="560" fill="#f97316" font-size="14" font-weight="700" text-anchor="end" font-family="JetBrains Mono">1×</text>
+<text x="808" y="574" fill="#64748b" font-size="10" text-anchor="end" font-family="JetBrains Mono" class="lz">仅触发一次</text>
+<text x="808" y="574" fill="#64748b" font-size="10" text-anchor="end" font-family="JetBrains Mono" class="le">fires once only</text>
+
+<!-- ══════ BOTTOM STATS BAR ══════ -->
+<rect x="30" y="606" width="900" height="30" rx="6" class="node-bg" opacity="0.8"/>
+<rect x="30" y="606" width="900" height="30" rx="6" fill="none" stroke="#1e293b" stroke-width="1"/>
+
+<!-- stat 1 -->
+<text x="112" y="618" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">压缩策略</text>
+<text x="112" y="618" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">Strategies</text>
+<text x="112" y="631" class="node-title" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">5+1</text>
+<line x1="210" y1="610" x2="210" y2="632" stroke="#1e293b" stroke-width="1"/>
+<!-- stat 2 -->
+<text x="310" y="618" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">无损层 (L1–L3)</text>
+<text x="310" y="618" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">Lossless (L1–L3)</text>
+<text x="310" y="631" fill="#22d3ee" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono" class="lz">3 层</text>
+<text x="310" y="631" fill="#22d3ee" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono" class="le">3 layers</text>
+<line x1="410" y1="610" x2="410" y2="632" stroke="#1e293b" stroke-width="1"/>
+<!-- stat 3 -->
+<text x="510" y="618" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">有损层 (L4–L5+)</text>
+<text x="510" y="618" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">Lossy (L4–L5+)</text>
+<text x="510" y="631" fill="#fb7185" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono" class="lz">3 层</text>
+<text x="510" y="631" fill="#fb7185" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono" class="le">3 layers</text>
+<line x1="620" y1="610" x2="620" y2="632" stroke="#1e293b" stroke-width="1"/>
+<!-- stat 4 -->
+<text x="720" y="618" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">最大压缩保留</text>
+<text x="720" y="618" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">Max Compression</text>
+<text x="720" y="631" fill="#f97316" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">20–33%</text>
+<line x1="820" y1="610" x2="820" y2="632" stroke="#1e293b" stroke-width="1"/>
+<!-- stat 5 -->
+<text x="880" y="618" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">常见覆盖率</text>
+<text x="880" y="618" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">Common Cases</text>
+<text x="880" y="631" fill="#34d399" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">99%</text>
+
+</svg>
+</div>
+
+<!-- INFO CARDS -->
+<div class="cards">
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-dot" style="background:#4ade80"></div>
+      <h3><span class="lz">无损层 L1–L3（安全快速）</span><span class="le">Lossless Layers L1–L3</span></h3>
+    </div>
+    <ul>
+      <li>• <span class="lz">L1 截断超长工具结果，不影响对话</span><span class="le">L1 truncates oversized tool results, no conversation impact</span></li>
+      <li>• <span class="lz">L2 删除低优先历史片段 (HISTORY_SNIP)</span><span class="le">L2 removes low-priority history via HISTORY_SNIP marker</span></li>
+      <li>• <span class="lz">L3 消除冗余模板语言和重复 marker</span><span class="le">L3 eliminates redundant templates and repeated markers</span></li>
+      <li>• <span class="lz">三层叠加可压缩约 10–25%，零信息损失</span><span class="le">Combined 10–25% compression with zero information loss</span></li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-dot" style="background:#fb923c"></div>
+      <h3><span class="lz">有损层 L4–L5（深度压缩）</span><span class="le">Lossy Layers L4–L5</span></h3>
+    </div>
+    <ul>
+      <li>• <span class="lz">L4 通过 AI 摘要替换旧对话（细节丢失）</span><span class="le">L4 replaces old conv with AI summary (detail loss)</span></li>
+      <li>• <span class="lz">L5 启动新 AI 实例处理全量压缩</span><span class="le">L5 spawns a new AI instance for full compression</span></li>
+      <li>• <span class="lz">L5 导致 prompt cache 全部失效（冷启动）</span><span class="le">L5 invalidates all prompt cache (cold start penalty)</span></li>
+      <li>• <span class="lz">仅在 L1–L3 不足以应对时才触发</span><span class="le">Only fires when L1–L3 are insufficient</span></li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-dot" style="background:#ef4444"></div>
+      <h3><span class="lz">紧急层 L5+（最后防线）</span><span class="le">Emergency Layer L5+ (Last Resort)</span></h3>
+    </div>
+    <ul>
+      <li>• <span class="lz">仅 API 返回 413 错误时才触发</span><span class="le">Only fires when API returns HTTP 413</span></li>
+      <li>• <span class="lz">全量摘要压缩后重试，且仅重试一次</span><span class="le">Full summary compression then exactly one retry</span></li>
+      <li>• <span class="lz">prompt cache 全部作废，代价最高</span><span class="le">Entire prompt cache wiped — highest cost</span></li>
+      <li>• <span class="lz">系统最后防线，不主动、不重复调用</span><span class="le">System last resort: never proactive, never repeats</span></li>
+    </ul>
+  </div>
+</div>
+
+<div class="vis-footer">
+  VIS-2A-012 · Claude Code 2.1.88 · <span class="lz">五层上下文压缩架构</span><span class="le">5+1 Context Compression Architecture</span> · CC-Research-byClaude
+</div>
+
+<script>
+(function(){
+  var THEMES=['dark','warm','light'];
+  function applyTheme(t){
+    document.documentElement.setAttribute('data-theme',t);
+    localStorage.setItem('vtheme',t);
+  }
+  function applyLang(l){
+    document.documentElement.setAttribute('data-lang', l);
+    localStorage.setItem('vlang', l);
+  }
+  window.cycleTheme=function(){
+    var cur=document.documentElement.getAttribute('data-theme')||'dark';
+    var next=THEMES[(THEMES.indexOf(cur)+1)%THEMES.length];
+    applyTheme(next);
+  };
+  window.toggleLang=function(){
+    var cur=localStorage.getItem('vlang')||'zh';
+    applyLang(cur==='zh'?'en':'zh');
+  };
+  var savedTheme=localStorage.getItem('vtheme');
+  if(savedTheme) applyTheme(savedTheme);
+  var savedLang=localStorage.getItem('vlang');
+  if(savedLang) applyLang(savedLang);
+})();
+</script>
+
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,106 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
+      .title { fill: #ffffff; font-size: 22px; font-weight: 700; text-anchor: middle; }
+      .subtitle { fill: #888; font-size: 13px; text-anchor: middle; }
+      .layer-name { fill: #ffffff; font-size: 15px; font-weight: 700; }
+      .layer-detail { fill: rgba(255,255,255,0.75); font-size: 12px; }
+      .layer-tokens { fill: rgba(255,255,255,0.9); font-size: 13px; font-weight: 600; text-anchor: end; }
+      .bracket { fill: none; stroke-width: 1.5; }
+    </style>
+    <filter id="layerShadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <rect width="800" height="600" fill="#12121a"/>
+
+  <text x="400" y="38" class="title">System Prompt Sandwich</text>
+  <text x="400" y="56" class="subtitle">6-layer system prompt structure with cache boundary</text>
+
+  <!-- Layer dimensions: each layer is a horizontal bar -->
+  <!-- x=100, width=560, variable heights to show relative token sizes -->
+  <!-- Layer 1: Core Identity (largest) ~4K tokens -->
+  <!-- Layer 2: Tool Definitions ~3K tokens -->
+  <!-- Layer 3: Environment Info ~500 tokens -->
+  <!-- Layer 4: CLAUDE.md ~variable -->
+  <!-- Layer 5: Context Reminders ~variable -->
+  <!-- Layer 6: Conversation History (largest visual) -->
+
+  <!-- Layer 1: Core Identity — #ff6b6b -->
+  <rect x="100" y="85" width="560" height="70" rx="6" fill="#ff6b6b" opacity="0.9" filter="url(#layerShadow)"/>
+  <rect x="100" y="85" width="560" height="70" rx="6" fill="none" stroke="#ff8a8a" stroke-width="1"/>
+  <text x="120" y="112" class="layer-name">1. Core Identity</text>
+  <text x="120" y="128" class="layer-detail">Role definition, capabilities, safety rules, behavioral guidelines</text>
+  <text x="640" y="120" class="layer-tokens">~4,200 tokens</text>
+  <!-- Number badge -->
+  <circle cx="82" cy="120" r="14" fill="#ff6b6b" stroke="#ff8a8a" stroke-width="1.5"/>
+  <text x="82" y="125" fill="#fff" font-size="12" font-weight="700" text-anchor="middle" style="font-family:sans-serif">1</text>
+
+  <!-- Layer 2: Tool Definitions — #ffd93d -->
+  <rect x="100" y="163" width="560" height="62" rx="6" fill="#ffd93d" opacity="0.85" filter="url(#layerShadow)"/>
+  <rect x="100" y="163" width="560" height="62" rx="6" fill="none" stroke="#ffe066" stroke-width="1"/>
+  <text x="120" y="188" class="layer-name" style="fill:#1a1a2e">2. Tool Definitions</text>
+  <text x="120" y="204" class="layer-detail" style="fill:rgba(0,0,0,0.6)">JSON schemas for all available tools (Read, Write, Bash, Grep, ...)</text>
+  <text x="640" y="198" class="layer-tokens" style="fill:#1a1a2e">~3,100 tokens</text>
+  <circle cx="82" cy="194" r="14" fill="#ffd93d" stroke="#ffe066" stroke-width="1.5"/>
+  <text x="82" y="199" fill="#1a1a2e" font-size="12" font-weight="700" text-anchor="middle" style="font-family:sans-serif">2</text>
+
+  <!-- Layer 3: Environment Info — #48bb78 -->
+  <rect x="100" y="233" width="560" height="50" rx="6" fill="#48bb78" opacity="0.85" filter="url(#layerShadow)"/>
+  <rect x="100" y="233" width="560" height="50" rx="6" fill="none" stroke="#68d98e" stroke-width="1"/>
+  <text x="120" y="255" class="layer-name" style="fill:#1a1a2e">3. Environment Info</text>
+  <text x="120" y="270" class="layer-detail" style="fill:rgba(0,0,0,0.6)">CWD, OS, shell, git status, project type</text>
+  <text x="640" y="262" class="layer-tokens" style="fill:#1a1a2e">~500 tokens</text>
+  <circle cx="82" cy="258" r="14" fill="#48bb78" stroke="#68d98e" stroke-width="1.5"/>
+  <text x="82" y="263" fill="#1a1a2e" font-size="12" font-weight="700" text-anchor="middle" style="font-family:sans-serif">3</text>
+
+  <!-- === DYNAMIC BOUNDARY === -->
+  <line x1="70" y1="299" x2="730" y2="299" stroke="#ff6b6b" stroke-width="2" stroke-dasharray="8,4"/>
+  <rect x="290" y="289" width="220" height="20" rx="4" fill="#12121a" stroke="#ff6b6b" stroke-width="1"/>
+  <text x="400" y="303" fill="#ff6b6b" font-size="12" font-weight="700" text-anchor="middle" style="font-family:sans-serif; letter-spacing:1.5px">DYNAMIC_BOUNDARY</text>
+  <!-- Labels -->
+  <text x="730" y="280" fill="#48bb78" font-size="12" text-anchor="end" style="font-family:sans-serif">CACHED (above)</text>
+  <text x="730" y="318" fill="#ff9f43" font-size="12" text-anchor="end" style="font-family:sans-serif">UNCACHED (below)</text>
+
+  <!-- Layer 4: CLAUDE.md — #7b61ff -->
+  <rect x="100" y="320" width="560" height="62" rx="6" fill="#7b61ff" opacity="0.85" filter="url(#layerShadow)"/>
+  <rect x="100" y="320" width="560" height="62" rx="6" fill="none" stroke="#9580ff" stroke-width="1"/>
+  <text x="120" y="345" class="layer-name">4. CLAUDE.md Instructions</text>
+  <text x="120" y="361" class="layer-detail">Project-specific rules, 3-tier hierarchy (~/.claude, project, cwd)</text>
+  <text x="640" y="355" class="layer-tokens">~variable</text>
+  <circle cx="82" cy="351" r="14" fill="#7b61ff" stroke="#9580ff" stroke-width="1.5"/>
+  <text x="82" y="356" fill="#fff" font-size="12" font-weight="700" text-anchor="middle" style="font-family:sans-serif">4</text>
+
+  <!-- Layer 5: Context/Reminders — #e88dff -->
+  <rect x="100" y="390" width="560" height="55" rx="6" fill="#e88dff" opacity="0.85" filter="url(#layerShadow)"/>
+  <rect x="100" y="390" width="560" height="55" rx="6" fill="none" stroke="#f0aaff" stroke-width="1"/>
+  <text x="120" y="414" class="layer-name" style="fill:#1a1a2e">5. Context Reminders</text>
+  <text x="120" y="430" class="layer-detail" style="fill:rgba(0,0,0,0.6)">system-reminder injections, MCP servers, active tools, memories</text>
+  <text x="640" y="422" class="layer-tokens" style="fill:#1a1a2e">~variable</text>
+  <circle cx="82" cy="417" r="14" fill="#e88dff" stroke="#f0aaff" stroke-width="1.5"/>
+  <text x="82" y="422" fill="#1a1a2e" font-size="12" font-weight="700" text-anchor="middle" style="font-family:sans-serif">5</text>
+
+  <!-- Layer 6: Conversation History — #00d4ff -->
+  <rect x="100" y="453" width="560" height="80" rx="6" fill="#00d4ff" opacity="0.85" filter="url(#layerShadow)"/>
+  <rect x="100" y="453" width="560" height="80" rx="6" fill="none" stroke="#33ddff" stroke-width="1"/>
+  <text x="120" y="482" class="layer-name" style="fill:#1a1a2e">6. Conversation History</text>
+  <text x="120" y="498" class="layer-detail" style="fill:rgba(0,0,0,0.6)">All prior messages, tool calls, tool results — grows with each turn</text>
+  <text x="120" y="514" class="layer-detail" style="fill:rgba(0,0,0,0.5)">Subject to compression when approaching context window limit</text>
+  <text x="640" y="495" class="layer-tokens" style="fill:#1a1a2e">~growing</text>
+  <circle cx="82" cy="493" r="14" fill="#00d4ff" stroke="#33ddff" stroke-width="1.5"/>
+  <text x="82" y="498" fill="#1a1a2e" font-size="12" font-weight="700" text-anchor="middle" style="font-family:sans-serif">6</text>
+
+  <!-- Right-side bracket showing "API messages array" -->
+  <path d="M675,90 Q695,90 695,300 Q695,530 675,530" class="bracket" stroke="#555"/>
+  <text x="710" y="300" fill="#666" font-size="12" text-anchor="middle" transform="rotate(90,710,300)" style="font-family:sans-serif; letter-spacing:1px">messages[ ] + system</text>
+
+  <!-- Bottom note -->
+  <text x="400" y="565" fill="#666" font-size="12" text-anchor="middle" style="font-family:sans-serif">
+    Layers 1-3 are cached across turns (cache_read pricing). Layers 4-6 are rebuilt each turn (cache_write pricing).
+  </text>
+  <text x="400" y="582" fill="#555" font-size="12" text-anchor="middle" style="font-family:sans-serif">
+    Total context window: 200K tokens (Claude Sonnet 4) | Compression triggers at ~80% utilization
+  </text>
+</svg>

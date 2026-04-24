@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>完整系统调用栈图 — Claude Code v4</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+/* ===== 三主题语义 token ===== */
+:root,[data-theme="dark"] {
+  --bg: #020617; --bg-card: #0f172a; --bg-card2: #1e293b;
+  --txt: #f1f5f9; --txt2: #cbd5e1; --txt3: #94a3b8; --border: #1e293b;
+  --rose-s: #fb7185; --cyan-s: #22d3ee; --amber-s: #fbbf24;
+  --emerald-s: #34d399; --violet-s: #a78bfa;
+  --rose-f:   rgba(136,19,55,0.38);
+  --rose-f2:  rgba(136,19,55,0.26);
+  --cyan-f:   rgba(8,51,68,0.42);
+  --cyan-f2:  rgba(8,51,68,0.28);
+  --amber-f:  rgba(120,53,15,0.33);
+  --amber-f2: rgba(120,53,15,0.20);
+  --amber-f3: rgba(120,53,15,0.28);
+  --emerald-f:rgba(6,78,59,0.40);
+  --violet-f: rgba(76,29,149,0.40);
+}
+[data-theme="warm"] {
+  --bg: #f8f6f3; --bg-card: #ffffff; --bg-card2: #f1f5f9;
+  --txt: #1e293b; --txt2: #334155; --txt3: #64748b; --border: #e2e8f0;
+  --rose-s: #be123c; --cyan-s: #0e7490; --amber-s: #b45309;
+  --emerald-s: #047857; --violet-s: #6d28d9;
+  --rose-f:   rgba(190,18,60,0.10);
+  --rose-f2:  rgba(190,18,60,0.06);
+  --cyan-f:   rgba(14,116,144,0.10);
+  --cyan-f2:  rgba(14,116,144,0.06);
+  --amber-f:  rgba(180,83,9,0.10);
+  --amber-f2: rgba(180,83,9,0.06);
+  --amber-f3: rgba(180,83,9,0.12);
+  --emerald-f:rgba(4,120,87,0.10);
+  --violet-f: rgba(109,40,217,0.10);
+}
+[data-theme="light"] {
+  --bg: #ffffff; --bg-card: #f8fafc; --bg-card2: #f1f5f9;
+  --txt: #0f172a; --txt2: #334155; --txt3: #64748b; --border: #e2e8f0;
+  --rose-s: #e11d48; --cyan-s: #0891b2; --amber-s: #d97706;
+  --emerald-s: #059669; --violet-s: #7c3aed;
+  --rose-f:   rgba(225,29,72,0.10);
+  --rose-f2:  rgba(225,29,72,0.06);
+  --cyan-f:   rgba(8,145,178,0.10);
+  --cyan-f2:  rgba(8,145,178,0.06);
+  --amber-f:  rgba(217,119,6,0.10);
+  --amber-f2: rgba(217,119,6,0.06);
+  --amber-f3: rgba(217,119,6,0.12);
+  --emerald-f:rgba(5,150,105,0.10);
+  --violet-f: rgba(124,58,237,0.10);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg); color: var(--txt);
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; padding: 48px 24px;
+  transition: background 0.3s, color 0.3s;
+}
+.header { text-align: center; margin-bottom: 32px; }
+.vis-id { font-size: 12px; color: var(--txt3); letter-spacing: 2px; margin-bottom: 8px; }
+.title { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 8px; }
+.subtitle { font-size: 13px; color: var(--txt2); }
+.diagram-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 24px;
+  max-width: 980px; width: 100%;
+}
+.diagram-card svg { display: block; width: 100%; height: auto; }
+.cards-grid {
+  display: grid; grid-template-columns: repeat(5, 1fr);
+  gap: 10px; max-width: 980px; width: 100%; margin-top: 14px;
+}
+.card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 12px;
+}
+.card-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 6px; flex-shrink: 0; }
+.card h3 { font-size: 12px; font-weight: 600; color: var(--txt); margin-bottom: 6px; display: flex; align-items: center; }
+.card p { font-size: 11px; color: var(--txt2); line-height: 1.55; }
+.dot-rose    { background: var(--rose-s); }
+.dot-cyan    { background: var(--cyan-s); }
+.dot-amber   { background: var(--amber-s); }
+.dot-emerald { background: var(--emerald-s); }
+.dot-violet  { background: var(--violet-s); }
+.controls {
+  position: fixed; top: 20px; right: 20px;
+  display: flex; gap: 8px; z-index: 100;
+}
+.ctrl-btn {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 6px 12px; font-size: 12px;
+  font-family: inherit; color: var(--txt); cursor: pointer;
+}
+.ctrl-btn:hover { background: var(--bg-card2); }
+[lang="en"] .lz { display: none; }
+[lang="en"] .le { display: inline; }
+</style>
+</head>
+<body>
+<div class="controls">
+  <button class="ctrl-btn" onclick="window.toggleLang()">EN/中</button>
+  <button class="ctrl-btn" onclick="window.setTheme('dark')"><span class="lz">暗</span><span class="le">Dark</span></button>
+  <button class="ctrl-btn" onclick="window.setTheme('warm')"><span class="lz">暖</span><span class="le">Warm</span></button>
+  <button class="ctrl-btn" onclick="window.setTheme('light')"><span class="lz">亮</span><span class="le">Light</span></button>
+</div>
+
+<div class="header">
+  <div class="vis-id">VIS-1-003 · CLAUDE CODE ARCHITECTURE</div>
+  <div class="title">
+    <span class="lz">完整系统调用栈图</span>
+    <span class="le">Complete System Call Stack</span>
+  </div>
+  <div class="subtitle">
+    <span class="lz">从用户输入到工具返回的 8 层执行路径</span>
+    <span class="le">8-Layer Execution Path from User Input to Tool Return</span>
+  </div>
+</div>
+
+<div class="diagram-card">
+<!--
+  v4 修复:
+  1. 移除文件末尾的 tml> 多余文本碎片
+  2. MAX_TURNS 框从右上角 (被 fixed 控件遮挡) 移到底部右侧空白区
+  3. 字号整体上调 (11→12, 14→15) 提升可读性
+  4. 三主题对比度增强 (warm/light 下文字色更深)
+-->
+<svg viewBox="0 0 960 650" xmlns="http://www.w3.org/2000/svg">
+<defs>
+  <pattern id="grid3" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" stroke="var(--border)" stroke-width="0.5"/>
+  </pattern>
+  <marker id="arr3" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+    <polygon points="0 0,8 3,0 6" fill="var(--txt3)"/>
+  </marker>
+  <marker id="arr3v" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+    <polygon points="0 0,8 3,0 6" fill="var(--violet-s)"/>
+  </marker>
+</defs>
+
+<rect width="960" height="650" fill="var(--bg)"/>
+<rect width="960" height="650" fill="url(#grid3)" opacity="0.4"/>
+
+<!-- Return loop (violet dashed, left side): L8 bottom → L5 midpoint -->
+<path d="M 72,530 C 16,530 16,312 65,312"
+      fill="none" stroke="var(--violet-s)" stroke-width="2" stroke-dasharray="5,4"
+      marker-end="url(#arr3v)" opacity="0.85"/>
+<text transform="rotate(-90,14,421)" x="14" y="425"
+      fill="var(--violet-s)" font-size="12" font-family="JetBrains Mono,monospace"
+      text-anchor="middle" opacity="0.85" font-weight="600">tool_result → queryLoop()</text>
+
+<!-- ===== LAYER 1: Terminal UI (rose) ===== -->
+<rect x="72" y="30" width="860" height="52" rx="6" fill="var(--bg-card)"/>
+<rect x="72" y="30" width="860" height="52" rx="6"
+      fill="var(--rose-f)" stroke="var(--rose-s)" stroke-width="1.5"/>
+<circle cx="44" cy="56" r="18" fill="var(--bg-card)" stroke="var(--rose-s)" stroke-width="2"/>
+<text x="44" y="62" text-anchor="middle" fill="var(--rose-s)"
+      font-size="15" font-weight="700" font-family="JetBrains Mono,monospace">1</text>
+<text x="110" y="51" fill="var(--rose-s)" font-size="15" font-weight="600" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">终端 UI 层</tspan><tspan class="le">Terminal UI Layer</tspan>
+</text>
+<text x="110" y="67" fill="var(--txt2)" font-size="12" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">React/Ink 渲染，用户按 Enter 提交消息</tspan>
+  <tspan class="le">React/Ink renderer — user presses Enter to submit</tspan>
+</text>
+<text x="924" y="59" fill="var(--txt3)" font-size="12" text-anchor="end"
+      font-family="JetBrains Mono,monospace">screens/Chat.tsx → onSubmit()</text>
+
+<line x1="480" y1="82" x2="480" y2="94" stroke="var(--txt3)" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+<!-- ===== LAYER 2: Message Processing (rose dashed) ===== -->
+<rect x="72" y="94" width="860" height="52" rx="6" fill="var(--bg-card)"/>
+<rect x="72" y="94" width="860" height="52" rx="6"
+      fill="var(--rose-f2)" stroke="var(--rose-s)" stroke-width="1" stroke-dasharray="6,3"/>
+<circle cx="44" cy="120" r="18" fill="var(--bg-card)" stroke="var(--rose-s)" stroke-width="2"/>
+<text x="44" y="126" text-anchor="middle" fill="var(--rose-s)"
+      font-size="15" font-weight="700" font-family="JetBrains Mono,monospace">2</text>
+<text x="110" y="115" fill="var(--rose-s)" font-size="15" font-weight="600" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">消息处理层</tspan><tspan class="le">Message Processing</tspan>
+</text>
+<text x="110" y="131" fill="var(--txt2)" font-size="12" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">构建 HumanMessage 对象，追加到 messages[] 历史数组</tspan>
+  <tspan class="le">Builds HumanMessage objects, appends to messages[] history</tspan>
+</text>
+<text x="924" y="123" fill="var(--txt3)" font-size="12" text-anchor="end"
+      font-family="JetBrains Mono,monospace">processUserInput() → messages[]</text>
+
+<line x1="480" y1="146" x2="480" y2="158" stroke="var(--txt3)" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+<!-- ===== LAYER 3: QueryEngine (cyan solid) ===== -->
+<rect x="72" y="158" width="860" height="52" rx="6" fill="var(--bg-card)"/>
+<rect x="72" y="158" width="860" height="52" rx="6"
+      fill="var(--cyan-f)" stroke="var(--cyan-s)" stroke-width="1.5"/>
+<circle cx="44" cy="184" r="18" fill="var(--bg-card)" stroke="var(--cyan-s)" stroke-width="2"/>
+<text x="44" y="190" text-anchor="middle" fill="var(--cyan-s)"
+      font-size="15" font-weight="700" font-family="JetBrains Mono,monospace">3</text>
+<text x="110" y="179" fill="var(--cyan-s)" font-size="15" font-weight="600" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">QueryEngine 调度层</tspan><tspan class="le">QueryEngine Dispatch</tspan>
+</text>
+<text x="110" y="195" fill="var(--txt2)" font-size="12" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">启动查询循环 queryLoop()，协调整个请求生命周期</tspan>
+  <tspan class="le">Starts queryLoop(), orchestrates the entire request lifecycle</tspan>
+</text>
+<text x="924" y="187" fill="var(--txt3)" font-size="12" text-anchor="end"
+      font-family="JetBrains Mono,monospace">QueryEngine.ts → queryLoop()</text>
+
+<line x1="480" y1="210" x2="480" y2="222" stroke="var(--txt3)" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+<!-- ===== LAYER 4: System Prompt (cyan dashed) ===== -->
+<rect x="72" y="222" width="860" height="52" rx="6" fill="var(--bg-card)"/>
+<rect x="72" y="222" width="860" height="52" rx="6"
+      fill="var(--cyan-f2)" stroke="var(--cyan-s)" stroke-width="1" stroke-dasharray="6,3"/>
+<circle cx="44" cy="248" r="18" fill="var(--bg-card)" stroke="var(--cyan-s)" stroke-width="2"/>
+<text x="44" y="254" text-anchor="middle" fill="var(--cyan-s)"
+      font-size="15" font-weight="700" font-family="JetBrains Mono,monospace">4</text>
+<text x="110" y="243" fill="var(--cyan-s)" font-size="15" font-weight="600" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">System Prompt 组装层</tspan><tspan class="le">System Prompt Assembly</tspan>
+</text>
+<text x="110" y="259" fill="var(--txt2)" font-size="12" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">动态拼装系统提示词：工具定义 + 项目上下文，15K–34K tokens</tspan>
+  <tspan class="le">Assembles system prompt: tool defs + project context, 15K–34K tokens</tspan>
+</text>
+<text x="924" y="251" fill="var(--txt3)" font-size="12" text-anchor="end"
+      font-family="JetBrains Mono,monospace">getSystemPrompt() → 15K–34K tok</text>
+
+<line x1="480" y1="274" x2="480" y2="286" stroke="var(--txt3)" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+<!-- ===== LAYER 5: API Call (amber solid) ===== -->
+<rect x="72" y="286" width="860" height="52" rx="6" fill="var(--bg-card)"/>
+<rect x="72" y="286" width="860" height="52" rx="6"
+      fill="var(--amber-f)" stroke="var(--amber-s)" stroke-width="1.5"/>
+<circle cx="44" cy="312" r="18" fill="var(--bg-card)" stroke="var(--amber-s)" stroke-width="2"/>
+<text x="44" y="318" text-anchor="middle" fill="var(--amber-s)"
+      font-size="15" font-weight="700" font-family="JetBrains Mono,monospace">5</text>
+<text x="110" y="307" fill="var(--amber-s)" font-size="15" font-weight="600" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">API 调用层</tspan><tspan class="le">API Call Layer</tspan>
+</text>
+<text x="110" y="323" fill="var(--txt2)" font-size="12" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">发送 HTTP 流式请求到 Anthropic API，建立 SSE 长连接</tspan>
+  <tspan class="le">Sends HTTP streaming request to Anthropic API via SSE streaming</tspan>
+</text>
+<text x="924" y="315" fill="var(--txt3)" font-size="12" text-anchor="end"
+      font-family="JetBrains Mono,monospace">query.ts → streaming</text>
+
+<line x1="480" y1="338" x2="480" y2="350" stroke="var(--txt3)" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+<!-- ===== LAYER 6: Stream Parser (amber dashed) ===== -->
+<rect x="72" y="350" width="860" height="52" rx="6" fill="var(--bg-card)"/>
+<rect x="72" y="350" width="860" height="52" rx="6"
+      fill="var(--amber-f2)" stroke="var(--amber-s)" stroke-width="1" stroke-dasharray="6,3"/>
+<circle cx="44" cy="376" r="18" fill="var(--bg-card)" stroke="var(--amber-s)" stroke-width="2"/>
+<text x="44" y="382" text-anchor="middle" fill="var(--amber-s)"
+      font-size="15" font-weight="700" font-family="JetBrains Mono,monospace">6</text>
+<text x="110" y="371" fill="var(--amber-s)" font-size="15" font-weight="600" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">流式响应解析层</tspan><tspan class="le">Stream Parser</tspan>
+</text>
+<text x="110" y="387" fill="var(--txt2)" font-size="12" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">解析 SSE 事件：content_block_start / delta / stop — 识别 tool_use</tspan>
+  <tspan class="le">Parses SSE events: content_block_start / delta / stop — detects tool_use</tspan>
+</text>
+<text x="924" y="379" fill="var(--txt3)" font-size="12" text-anchor="end"
+      font-family="JetBrains Mono,monospace">SSE Parser → content_block_delta</text>
+
+<line x1="480" y1="402" x2="480" y2="414" stroke="var(--txt3)" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+<!-- ===== LAYER 7: Tool Execution (emerald) ===== -->
+<rect x="72" y="414" width="860" height="52" rx="6" fill="var(--bg-card)"/>
+<rect x="72" y="414" width="860" height="52" rx="6"
+      fill="var(--emerald-f)" stroke="var(--emerald-s)" stroke-width="1.5"/>
+<circle cx="44" cy="440" r="18" fill="var(--bg-card)" stroke="var(--emerald-s)" stroke-width="2"/>
+<text x="44" y="446" text-anchor="middle" fill="var(--emerald-s)"
+      font-size="15" font-weight="700" font-family="JetBrains Mono,monospace">7</text>
+<text x="110" y="435" fill="var(--emerald-s)" font-size="15" font-weight="600" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">Tool 执行层</tspan><tspan class="le">Tool Executor</tspan>
+</text>
+<text x="110" y="451" fill="var(--txt2)" font-size="12" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">StreamingToolExecutor：9 步权限检查 → 执行 → 格式化结果</tspan>
+  <tspan class="le">StreamingToolExecutor: 9-step permission → execute → format result</tspan>
+</text>
+<text x="924" y="443" fill="var(--txt3)" font-size="12" text-anchor="end"
+      font-family="JetBrains Mono,monospace">StreamingToolExecutor → PermissionChain</text>
+
+<line x1="480" y1="466" x2="480" y2="478" stroke="var(--txt3)" stroke-width="1.5" marker-end="url(#arr3)"/>
+
+<!-- ===== LAYER 8: Result Return (violet) ===== -->
+<rect x="72" y="478" width="860" height="52" rx="6" fill="var(--bg-card)"/>
+<rect x="72" y="478" width="860" height="52" rx="6"
+      fill="var(--violet-f)" stroke="var(--violet-s)" stroke-width="1.5"/>
+<circle cx="44" cy="504" r="18" fill="var(--bg-card)" stroke="var(--violet-s)" stroke-width="2"/>
+<text x="44" y="510" text-anchor="middle" fill="var(--violet-s)"
+      font-size="15" font-weight="700" font-family="JetBrains Mono,monospace">8</text>
+<text x="110" y="499" fill="var(--violet-s)" font-size="15" font-weight="600" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">结果回传层</tspan><tspan class="le">Result Return</tspan>
+</text>
+<text x="110" y="515" fill="var(--txt2)" font-size="12" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">tool_result 追加到 messages[]，回到第 5 层继续 queryLoop()</tspan>
+  <tspan class="le">Appends tool_result to messages[], loops back to queryLoop() at layer 5</tspan>
+</text>
+<text x="924" y="507" fill="var(--txt3)" font-size="12" text-anchor="end"
+      font-family="JetBrains Mono,monospace">tool_result → messages[] → loop</text>
+
+<!-- Final output box (居中) -->
+<rect x="280" y="547" width="400" height="32" rx="16"
+      fill="var(--txt3)" stroke="var(--txt3)" stroke-width="1" stroke-dasharray="4,3" opacity="0.15"/>
+<text x="480" y="568" text-anchor="middle" fill="var(--txt2)" font-size="12"
+      font-family="JetBrains Mono,monospace" font-weight="600">
+  <tspan class="lz">shouldContinue() = false  →  渲染输出到终端</tspan>
+  <tspan class="le">shouldContinue() = false  →  Render output to terminal</tspan>
+</text>
+
+<!-- ===== MAX_TURNS 提示框：v4 修复 — 从右上角(被 fixed 控件遮挡)移到底部右侧空白区 ===== -->
+<rect x="710" y="544" width="222" height="38" rx="8"
+      fill="var(--amber-f3)" stroke="var(--amber-s)" stroke-width="1.5" stroke-dasharray="3,3"/>
+<text x="821" y="560" fill="var(--amber-s)" font-size="13" text-anchor="middle" font-weight="700"
+      font-family="JetBrains Mono,monospace">⚠ MAX_TURNS</text>
+<text x="821" y="575" fill="var(--txt2)" font-size="11" text-anchor="middle"
+      font-family="JetBrains Mono,monospace">
+  <tspan class="lz">循环上限保护机制</tspan><tspan class="le">Loop limit guard</tspan>
+</text>
+
+<!-- ===== Legend 图例 ===== -->
+<rect x="72" y="600" width="860" height="1" fill="var(--border)"/>
+
+<circle cx="86"  cy="623" r="5" fill="var(--rose-s)"/>
+<text x="96"  y="628" fill="var(--txt2)" font-size="12" font-family="JetBrains Mono,monospace">UI (L1-2)</text>
+
+<circle cx="186" cy="623" r="5" fill="var(--cyan-s)"/>
+<text x="196" y="628" fill="var(--txt2)" font-size="12" font-family="JetBrains Mono,monospace">Engine (L3-4)</text>
+
+<circle cx="316" cy="623" r="5" fill="var(--amber-s)"/>
+<text x="326" y="628" fill="var(--txt2)" font-size="12" font-family="JetBrains Mono,monospace">API (L5-6)</text>
+
+<circle cx="416" cy="623" r="5" fill="var(--emerald-s)"/>
+<text x="426" y="628" fill="var(--txt2)" font-size="12" font-family="JetBrains Mono,monospace">Tool (L7)</text>
+
+<circle cx="506" cy="623" r="5" fill="var(--violet-s)"/>
+<text x="516" y="628" fill="var(--txt2)" font-size="12" font-family="JetBrains Mono,monospace">Return (L8)</text>
+
+<line x1="630" y1="623" x2="660" y2="623" stroke="var(--violet-s)" stroke-width="2" stroke-dasharray="5,3"/>
+<text x="666" y="628" fill="var(--txt2)" font-size="12" font-family="JetBrains Mono,monospace">Tool Loop</text>
+
+<line x1="760" y1="623" x2="788" y2="623" stroke="var(--amber-s)" stroke-width="1" stroke-dasharray="6,3"/>
+<text x="794" y="628" fill="var(--txt2)" font-size="12" font-family="JetBrains Mono,monospace">
+  <tspan class="lz">虚线 = 子层</tspan><tspan class="le">Dashed = sub-layer</tspan>
+</text>
+
+</svg>
+</div>
+
+<div class="cards-grid">
+  <div class="card">
+    <h3><span class="card-dot dot-rose"></span>
+      <span class="lz">UI 层 (L1-2)</span><span class="le">UI (L1-2)</span></h3>
+    <p><span class="lz">React/Ink 渲染 · Chat.tsx · 消息对象构建</span>
+       <span class="le">React/Ink renderer · Chat.tsx · message building</span></p>
+  </div>
+  <div class="card">
+    <h3><span class="card-dot dot-cyan"></span>
+      <span class="lz">Engine 层 (L3-4)</span><span class="le">Engine (L3-4)</span></h3>
+    <p><span class="lz">QueryEngine 调度 · SystemPrompt 组装 15K–34K tok</span>
+       <span class="le">QueryEngine dispatch · SystemPrompt 15K–34K tokens</span></p>
+  </div>
+  <div class="card">
+    <h3><span class="card-dot dot-amber"></span>
+      <span class="lz">API 层 (L5-6)</span><span class="le">API (L5-6)</span></h3>
+    <p><span class="lz">流式 HTTP 请求 · SSE 解析 · tool_use 提取</span>
+       <span class="le">Streaming HTTP · SSE parsing · tool_use detection</span></p>
+  </div>
+  <div class="card">
+    <h3><span class="card-dot dot-emerald"></span>
+      <span class="lz">Tool 层 (L7)</span><span class="le">Tool (L7)</span></h3>
+    <p><span class="lz">StreamingToolExecutor · 9 步权限链 · 并发执行</span>
+       <span class="le">StreamingToolExecutor · 9-step permission chain</span></p>
+  </div>
+  <div class="card">
+    <h3><span class="card-dot dot-violet"></span>
+      <span class="lz">回传层 (L8)</span><span class="le">Return (L8)</span></h3>
+    <p><span class="lz">tool_result 追加 · 回到 queryLoop() · 循环迭代</span>
+       <span class="le">tool_result append · back to queryLoop()</span></p>
+  </div>
+</div>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('vtheme') || 'dark';
+  var lang  = localStorage.getItem('vlang')  || 'zh';
+  document.documentElement.setAttribute('data-theme', theme);
+  document.documentElement.setAttribute('lang', lang === 'en' ? 'en' : 'zh-CN');
+  document.documentElement.setAttribute('data-lang', lang === 'en' ? 'en' : 'zh');
+
+  window.setTheme = function(t) {
+    theme = t;
+    localStorage.setItem('vtheme', t);
+    document.documentElement.setAttribute('data-theme', t);
+  };
+  window.toggleLang = function() {
+    lang = (lang === 'en') ? 'zh' : 'en';
+    localStorage.setItem('vlang', lang);
+    document.documentElement.setAttribute('lang', lang === 'en' ? 'en' : 'zh-CN');
+    document.documentElement.setAttribute('data-lang', lang === 'en' ? 'en' : 'zh');
+  };
+})();
+</script>
+<script>
+/* v2-embed-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

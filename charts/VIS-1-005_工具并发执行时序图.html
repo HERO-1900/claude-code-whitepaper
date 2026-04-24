@@ -1,0 +1,809 @@
+<!DOCTYPE html>
+<!--
+  VIS-1-005 · 工具并发执行时序图 · Tool Concurrent Execution Sequence
+  CC 白皮书 v3 图表体系 · 三主题(dark/warm/light) + 双语(zh/en)
+  ────────────────────────────────────────────────────────────────
+  源码依据:
+    src/services/tools/toolOrchestration.ts  — runTools / partitionToolCalls / runToolsConcurrently / runToolsSerially
+    src/services/tools/StreamingToolExecutor.ts — StreamingToolExecutor 并发槽控制
+    src/Tool.ts L402 isConcurrencySafe / L750 默认 false (fail-closed)
+    src/tools/FileReadTool/FileReadTool.ts L373 isConcurrencySafe → true
+    src/tools/GlobTool/GlobTool.ts L76 isConcurrencySafe → true
+    src/tools/GrepTool/GrepTool.ts isConcurrencySafe → true
+    src/tools/BashTool/BashTool.tsx L434 isConcurrencySafe = isReadOnly
+  ────────────────────────────────────────────────────────────────
+  viewBox: 1280 × 820
+-->
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code · 工具并发执行时序图 · VIS-1-005</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+/* ===== DESIGN TOKENS ===== */
+:root,[data-theme="dark"]{
+  --bg:#020617;
+  --bg-card:rgba(15,23,42,0.6);
+  --bg-card2:#1e293b;
+  --border:#1e293b;
+  --border-hi:#334155;
+  --txt:#f8fafc;
+  --txt2:#cbd5e1;
+  --txt3:#94a3b8;
+  --txt4:#64748b;
+  /* actor colors */
+  --c-coordinator:#22d3ee;
+  --c-coordinator-fill:rgba(8,51,68,0.55);
+  --c-read:#34d399;
+  --c-read-fill:rgba(6,78,59,0.5);
+  --c-write:#fb923c;
+  --c-write-fill:rgba(154,52,18,0.45);
+  /* zone fills */
+  --zone-par-fill:rgba(52,211,153,0.07);
+  --zone-par-stroke:rgba(52,211,153,0.50);
+  --zone-ser-fill:rgba(251,146,60,0.07);
+  --zone-ser-stroke:rgba(251,146,60,0.50);
+  /* lifeline / axis */
+  --lifeline:#334155;
+  --axis:#475569;
+  /* activation bar */
+  --act-coord:rgba(34,211,238,0.22);
+  --act-read:rgba(52,211,153,0.28);
+  --act-write:rgba(251,146,60,0.28);
+  /* label background */
+  --label-bg:#020617;
+  /* bar chart */
+  --bar-par:#34d399;
+  --bar-ser:#fb923c;
+  --bar-bg:rgba(51,65,85,0.35);
+  /* controls */
+  --btn-bg:rgba(15,23,42,0.85);
+  --btn-active:#22d3ee;
+  --btn-hover:#1e293b;
+}
+[data-theme="warm"]{
+  --bg:#f8f6f3;
+  --bg-card:rgba(255,255,255,0.88);
+  --bg-card2:#f1ede5;
+  --border:#e8e0d4;
+  --border-hi:#c9bba7;
+  --txt:#1a1412;
+  --txt2:#3d2f28;
+  --txt3:#6b5a4e;
+  --txt4:#9c8878;
+  --c-coordinator:#0891b2;
+  --c-coordinator-fill:rgba(8,145,178,0.12);
+  --c-read:#059669;
+  --c-read-fill:rgba(5,150,105,0.12);
+  --c-write:#c2410c;
+  --c-write-fill:rgba(194,65,12,0.12);
+  --zone-par-fill:rgba(5,150,105,0.07);
+  --zone-par-stroke:rgba(5,150,105,0.50);
+  --zone-ser-fill:rgba(194,65,12,0.07);
+  --zone-ser-stroke:rgba(194,65,12,0.50);
+  --lifeline:#c9bba7;
+  --axis:#9c8878;
+  --act-coord:rgba(8,145,178,0.35);
+  --act-read:rgba(5,150,105,0.38);
+  --act-write:rgba(194,65,12,0.38);
+  --label-bg:#faf8f4;
+  --bar-par:#059669;
+  --bar-ser:#c2410c;
+  --bar-bg:rgba(180,160,140,0.25);
+  --btn-bg:rgba(255,255,255,0.92);
+  --btn-active:#0891b2;
+  --btn-hover:#f1ede5;
+}
+[data-theme="light"]{
+  --bg:#ffffff;
+  --bg-card:rgba(248,250,252,0.95);
+  --bg-card2:#f1f5f9;
+  --border:#e2e8f0;
+  --border-hi:#cbd5e1;
+  --txt:#0f172a;
+  --txt2:#334155;
+  --txt3:#475569;
+  --txt4:#94a3b8;
+  --c-coordinator:#0284c7;
+  --c-coordinator-fill:rgba(2,132,199,0.10);
+  --c-read:#059669;
+  --c-read-fill:rgba(5,150,105,0.10);
+  --c-write:#ea580c;
+  --c-write-fill:rgba(234,88,12,0.10);
+  --zone-par-fill:rgba(5,150,105,0.06);
+  --zone-par-stroke:rgba(5,150,105,0.48);
+  --zone-ser-fill:rgba(234,88,12,0.06);
+  --zone-ser-stroke:rgba(234,88,12,0.48);
+  --lifeline:#94a3b8;
+  --axis:#64748b;
+  --act-coord:rgba(2,132,199,0.35);
+  --act-read:rgba(5,150,105,0.38);
+  --act-write:rgba(234,88,12,0.38);
+  --label-bg:#ffffff;
+  --bar-par:#059669;
+  --bar-ser:#ea580c;
+  --bar-bg:rgba(148,163,184,0.28);
+  --btn-bg:rgba(248,250,252,0.95);
+  --btn-active:#0284c7;
+  --btn-hover:#f1f5f9;
+}
+
+/* ===== RESET & BASE ===== */
+*{margin:0;padding:0;box-sizing:border-box;}
+body{
+  font-family:'JetBrains Mono',monospace;
+  background:var(--bg);color:var(--txt);
+  min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;padding:52px 24px 60px;
+  transition:background .25s,color .25s;
+}
+
+/* ===== CONTROLS ===== */
+.controls{
+  position:fixed;top:16px;right:16px;display:flex;gap:5px;z-index:100;
+  background:var(--btn-bg);border:1px solid var(--border);border-radius:10px;
+  padding:5px 7px;backdrop-filter:blur(10px);
+}
+.cb{
+  font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;
+  padding:5px 10px;border-radius:6px;border:1px solid transparent;
+  background:transparent;color:var(--txt3);cursor:pointer;transition:all .15s;
+}
+.cb:hover{color:var(--txt);border-color:var(--border-hi);background:var(--btn-hover);}
+.cb.active{border-color:var(--btn-active);color:var(--txt);}
+.cdiv{width:1px;background:var(--border);margin:2px;}
+
+/* ===== HEADER ===== */
+.header{text-align:center;margin-bottom:24px;}
+.vis-id{font-size:11px;color:var(--txt4);letter-spacing:2px;margin-bottom:8px;text-transform:uppercase;}
+.title{font-size:24px;font-weight:700;letter-spacing:-.5px;margin-bottom:8px;color:var(--txt);}
+.subtitle{font-size:12px;color:var(--txt3);line-height:1.6;}
+
+/* ===== DIAGRAM CARD ===== */
+.diagram-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:16px;padding:28px;
+  max-width:1300px;width:100%;
+  transition:background .25s,border-color .25s;
+}
+.diagram-card svg{display:block;width:100%;height:auto;}
+
+/* ===== INFO CARDS ===== */
+.cards-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);
+  gap:12px;max-width:1300px;width:100%;margin-top:14px;
+}
+@media (max-width:960px){
+  .cards-grid{grid-template-columns:1fr;}
+}
+.info-card{
+  background:var(--bg-card);border:1px solid var(--border);
+  border-radius:10px;padding:16px;
+  transition:background .25s,border-color .25s;
+}
+.ic-head{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.ic-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.ic-title{font-size:12px;font-weight:600;color:var(--txt);}
+.ic-body{font-size:11px;color:var(--txt3);line-height:1.7;}
+
+/* ===== i18n ===== */
+[lang="en"] .lz{display:none;}
+[lang="zh"] .le{display:none;}
+
+/* ===== SVG CSS tokens (SVG reads CSS vars via presentation attributes where possible) ===== */
+svg .t-primary{fill:var(--txt);}
+svg .t-secondary{fill:var(--txt2);}
+svg .t-muted{fill:var(--txt3);}
+svg .t-dim{fill:var(--txt4);}
+svg .t-coord{fill:var(--c-coordinator);}
+svg .t-read{fill:var(--c-read);}
+svg .t-write{fill:var(--c-write);}
+svg .lifeline{stroke:var(--lifeline);fill:none;}
+svg .axis-line{stroke:var(--axis);fill:none;}
+svg .label-bg{fill:var(--label-bg);}
+svg .actor-bg-coord{fill:var(--c-coordinator-fill);stroke:var(--c-coordinator);}
+svg .actor-bg-read{fill:var(--c-read-fill);stroke:var(--c-read);}
+svg .actor-bg-write{fill:var(--c-write-fill);stroke:var(--c-write);}
+svg .act-bar-coord{fill:var(--act-coord);}
+svg .act-bar-read{fill:var(--act-read);}
+svg .act-bar-write{fill:var(--act-write);}
+svg .zone-par{fill:var(--zone-par-fill);stroke:var(--zone-par-stroke);}
+svg .zone-ser{fill:var(--zone-ser-fill);stroke:var(--zone-ser-stroke);}
+svg .bar-bg{fill:var(--bar-bg);}
+svg .bar-par{fill:var(--bar-par);}
+svg .bar-ser{fill:var(--bar-ser);}
+svg .border-line{stroke:var(--border);}
+</style>
+</head>
+<body>
+
+<!-- ===== CONTROLS ===== -->
+<div class="controls">
+  <button class="cb active" id="btn-dark" onclick="setTheme('dark')"><span class="lz">暗</span><span class="le">Dark</span></button>
+  <button class="cb" id="btn-warm" onclick="setTheme('warm')"><span class="lz">暖</span><span class="le">Warm</span></button>
+  <button class="cb" id="btn-light" onclick="setTheme('light')"><span class="lz">亮</span><span class="le">Light</span></button>
+  <div class="cdiv"></div>
+  <button class="cb" onclick="toggleLang()"><span class="lz">EN</span><span class="le">中</span></button>
+</div>
+
+<!-- ===== HEADER ===== -->
+<div class="header">
+  <div class="vis-id">VIS-1-005 · Claude Code Architecture · Tool Orchestration</div>
+  <div class="title">
+    <span class="lz">工具并发执行时序图</span>
+    <span class="le">Tool Concurrent Execution Sequence</span>
+  </div>
+  <div class="subtitle">
+    <span class="lz">partitionToolCalls() 将工具分批 · isConcurrencySafe=true → 并发 · isConcurrencySafe=false → 串行</span>
+    <span class="le">partitionToolCalls() groups tools · isConcurrencySafe=true → concurrent · false → serial</span>
+  </div>
+</div>
+
+<!-- ===== DIAGRAM ===== -->
+<div class="diagram-card">
+<!--
+  LAYOUT PLAN — viewBox 1280 × 820
+  ─────────────────────────────────────────────────────
+  Lifeline X positions (center / activation bar left / right):
+    Coordinator:  center=160  barLeft=153  barRight=167
+    Read:         center=435  barLeft=428  barRight=442
+    Glob:         center=575  barLeft=568  barRight=582
+    Grep:         center=715  barLeft=708  barRight=722
+    Edit:         center=975  barLeft=968  barRight=982
+    Bash:         center=1115 barLeft=1108 barRight=1122
+
+  Y timeline (top→bottom = time↓):
+    Actor boxes:       y=38…118
+    Lifeline start:    y=118
+    M0 baseline:       y=170  — emit 5 tool_use blocks (self-loop)
+    M1 annotation:     y=214  — partitionToolCalls()
+    Parallel zone:     y=255…490
+      M2a dispatch:    y=310  — Coordinator → Read
+      M2b dispatch:    y=325  — Coordinator → Glob
+      M2c dispatch:    y=340  — Coordinator → Grep
+      M3a return:      y=365  — Read resolves (~350ms)
+      M3b return:      y=420  — Glob resolves (~480ms)
+      M3c return:      y=475  — Grep resolves (~550ms)
+    Transition:        y=497  — Batch 1 done → Batch 2
+    Serial zone:       y=510…725
+      M4 dispatch:     y=565  — Coordinator → Edit (1st serial)
+      M5 return:       y=628  — Edit resolves
+      M6 dispatch:     y=658  — Coordinator → Bash (2nd serial, after Edit)
+      M7 return:       y=718  — Bash resolves
+    Time axis:         y=758
+    Bottom:            y=820
+-->
+<svg viewBox="0 0 1280 820" xmlns="http://www.w3.org/2000/svg"
+     font-family="JetBrains Mono, monospace" role="img"
+     aria-label="Tool concurrent execution sequence diagram">
+<defs>
+  <!-- Arrow markers per color — theme-aware via currentColor is tricky for markers,
+       so we provide explicit-color markers for each actor color, and use CSS-variable
+       text on labels.  Markers are SVG-spec so we keep them hard-per-theme via JS
+       or use a shared neutral color with CSS filter trick. We use separate marker IDs. -->
+
+  <!-- COORDINATOR (cyan) -->
+  <marker id="ah-coord" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth">
+    <polygon points="0 0, 9 3.5, 0 7" class="t-coord" style="fill:var(--c-coordinator)"/>
+  </marker>
+  <!-- READ (green) -->
+  <marker id="ah-read" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth">
+    <polygon points="0 0, 9 3.5, 0 7" style="fill:var(--c-read)"/>
+  </marker>
+  <!-- WRITE (orange) -->
+  <marker id="ah-write" markerWidth="9" markerHeight="7" refX="8" refY="3.5" orient="auto" markerUnits="strokeWidth">
+    <polygon points="0 0, 9 3.5, 0 7" style="fill:var(--c-write)"/>
+  </marker>
+
+  <!-- Dashed return: same colors but smaller -->
+  <marker id="ah-coord-ret" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+    <polygon points="0 0, 8 3, 0 6" style="fill:var(--c-coordinator)"/>
+  </marker>
+  <marker id="ah-read-ret" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+    <polygon points="0 0, 8 3, 0 6" style="fill:var(--c-read)"/>
+  </marker>
+  <marker id="ah-write-ret" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto" markerUnits="strokeWidth">
+    <polygon points="0 0, 8 3, 0 6" style="fill:var(--c-write)"/>
+  </marker>
+</defs>
+
+<!-- ══════════════════════════════════════════════════════════
+     ZONE BACKGROUNDS (drawn first, behind everything)
+     ══════════════════════════════════════════════════════════ -->
+
+<!-- Parallel zone -->
+<rect x="200" y="255" width="700" height="235"
+      rx="10" class="zone-par" stroke-width="1.5" stroke-dasharray="7,4"/>
+
+<!-- Serial zone -->
+<rect x="200" y="510" width="970" height="215"
+      rx="10" class="zone-ser" stroke-width="1.5" stroke-dasharray="7,4"/>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     ACTOR BOXES
+     ══════════════════════════════════════════════════════════ -->
+
+<!-- Coordinator -->
+<rect x="70" y="38" width="180" height="80" rx="10" stroke-width="2" class="actor-bg-coord"/>
+<text x="160" y="66" text-anchor="middle" font-size="13" font-weight="700" class="t-coord">Coordinator</text>
+<text x="160" y="83" text-anchor="middle" font-size="10" class="t-secondary">
+  <tspan class="lz">runTools()</tspan><tspan class="le">runTools()</tspan>
+</text>
+<text x="160" y="98" text-anchor="middle" font-size="10" class="t-muted">
+  <tspan class="lz">toolOrchestration.ts</tspan><tspan class="le">toolOrchestration.ts</tspan>
+</text>
+<text x="160" y="113" text-anchor="middle" font-size="10" class="t-dim">L19–82</text>
+
+<!-- Read Tool -->
+<rect x="375" y="38" width="120" height="80" rx="10" stroke-width="2" class="actor-bg-read"/>
+<text x="435" y="62" text-anchor="middle" font-size="12" font-weight="700" class="t-read">Read</text>
+<text x="435" y="79" text-anchor="middle" font-size="10" class="t-secondary">
+  <tspan class="lz">只读工具</tspan><tspan class="le">read-only</tspan>
+</text>
+<text x="435" y="96" text-anchor="middle" font-size="10" style="fill:var(--c-read);font-weight:600">safe=true</text>
+<text x="435" y="110" text-anchor="middle" font-size="10" class="t-dim">FileReadTool L373</text>
+
+<!-- Glob Tool -->
+<rect x="515" y="38" width="120" height="80" rx="10" stroke-width="2" class="actor-bg-read"/>
+<text x="575" y="62" text-anchor="middle" font-size="12" font-weight="700" class="t-read">Glob</text>
+<text x="575" y="79" text-anchor="middle" font-size="10" class="t-secondary">
+  <tspan class="lz">只读工具</tspan><tspan class="le">read-only</tspan>
+</text>
+<text x="575" y="96" text-anchor="middle" font-size="10" style="fill:var(--c-read);font-weight:600">safe=true</text>
+<text x="575" y="110" text-anchor="middle" font-size="10" class="t-dim">GlobTool L76</text>
+
+<!-- Grep Tool -->
+<rect x="655" y="38" width="120" height="80" rx="10" stroke-width="2" class="actor-bg-read"/>
+<text x="715" y="62" text-anchor="middle" font-size="12" font-weight="700" class="t-read">Grep</text>
+<text x="715" y="79" text-anchor="middle" font-size="10" class="t-secondary">
+  <tspan class="lz">只读工具</tspan><tspan class="le">read-only</tspan>
+</text>
+<text x="715" y="96" text-anchor="middle" font-size="10" style="fill:var(--c-read);font-weight:600">safe=true</text>
+<text x="715" y="110" text-anchor="middle" font-size="10" class="t-dim">GrepTool L76</text>
+
+<!-- Edit Tool -->
+<rect x="915" y="38" width="120" height="80" rx="10" stroke-width="2" class="actor-bg-write"/>
+<text x="975" y="62" text-anchor="middle" font-size="12" font-weight="700" class="t-write">Edit</text>
+<text x="975" y="79" text-anchor="middle" font-size="10" class="t-secondary">
+  <tspan class="lz">写操作工具</tspan><tspan class="le">write tool</tspan>
+</text>
+<text x="975" y="96" text-anchor="middle" font-size="10" style="fill:var(--c-write);font-weight:600">safe=false</text>
+<text x="975" y="110" text-anchor="middle" font-size="10" class="t-dim">Tool.ts L750</text>
+
+<!-- Bash Tool -->
+<rect x="1055" y="38" width="120" height="80" rx="10" stroke-width="2" class="actor-bg-write"/>
+<text x="1115" y="62" text-anchor="middle" font-size="12" font-weight="700" class="t-write">Bash</text>
+<text x="1115" y="79" text-anchor="middle" font-size="10" class="t-secondary">
+  <tspan class="lz">写操作工具</tspan><tspan class="le">write tool</tspan>
+</text>
+<text x="1115" y="96" text-anchor="middle" font-size="10" style="fill:var(--c-write);font-weight:600">safe=false</text>
+<text x="1115" y="110" text-anchor="middle" font-size="10" class="t-dim">BashTool L434</text>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     LIFELINES (vertical dashed lines)
+     ══════════════════════════════════════════════════════════ -->
+<line x1="160" y1="118" x2="160" y2="760" class="lifeline" stroke-width="1.2" stroke-dasharray="5,4"/>
+<line x1="435" y1="118" x2="435" y2="760" class="lifeline" stroke-width="1.2" stroke-dasharray="5,4"/>
+<line x1="575" y1="118" x2="575" y2="760" class="lifeline" stroke-width="1.2" stroke-dasharray="5,4"/>
+<line x1="715" y1="118" x2="715" y2="760" class="lifeline" stroke-width="1.2" stroke-dasharray="5,4"/>
+<line x1="975" y1="118" x2="975" y2="760" class="lifeline" stroke-width="1.2" stroke-dasharray="5,4"/>
+<line x1="1115" y1="118" x2="1115" y2="760" class="lifeline" stroke-width="1.2" stroke-dasharray="5,4"/>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     ACTIVATION BARS
+     ══════════════════════════════════════════════════════════ -->
+<!-- Coordinator active throughout -->
+<rect x="153" y="155" width="14" height="600" rx="2" class="act-bar-coord"/>
+
+<!-- Read active during parallel window (t2→t3a) -->
+<rect x="428" y="275" width="14" height="90" rx="2" class="act-bar-read"/>
+<!-- Glob active during parallel window (t2→t3b) -->
+<rect x="568" y="275" width="14" height="145" rx="2" class="act-bar-read"/>
+<!-- Grep active during parallel window (t2→t3c) -->
+<rect x="708" y="275" width="14" height="200" rx="2" class="act-bar-read"/>
+
+<!-- Edit active (t5→t6) -->
+<rect x="968" y="540" width="14" height="90" rx="2" class="act-bar-write"/>
+<!-- Bash active (t6→t7) only AFTER Edit resolves -->
+<rect x="1108" y="640" width="14" height="80" rx="2" class="act-bar-write"/>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     MESSAGES
+     ══════════════════════════════════════════════════════════
+     Numbering follows chronological time top→bottom.
+     Labels sit ABOVE each arrow line on a rect background.
+     All text ≥ 12px (label annotations ≥ 11px).
+     ══════════════════════════════════════════════════════════ -->
+
+<!-- ── M0: self-note on Coordinator: emit 5 tool_use blocks ── -->
+<!-- Self-loop arc -->
+<path d="M 168 170 Q 235 170 235 185 Q 235 200 168 200"
+      fill="none" stroke-width="1.8"
+      style="stroke:var(--c-coordinator)" marker-end="url(#ah-coord)"/>
+<!-- Label background + text -->
+<rect x="163" y="150" width="200" height="34" rx="4" class="label-bg"
+      style="stroke:var(--c-coordinator);stroke-width:0.8"/>
+<text x="263" y="165" text-anchor="middle" font-size="12" font-weight="600" class="t-coord">
+  <tspan class="lz">① 生成 5 个 tool_use block</tspan><tspan class="le">① emit 5 tool_use blocks</tspan>
+</text>
+<text x="263" y="180" text-anchor="middle" font-size="11" class="t-secondary">
+  <tspan class="lz">3 × Read-class + 2 × Write-class</tspan><tspan class="le">3 × Read-class + 2 × Write-class</tspan>
+</text>
+
+
+<!-- ── M1: partitionToolCalls() annotation ── -->
+<!-- Small annotation box on coordinator lifeline -->
+<rect x="118" y="214" width="84" height="24" rx="4" class="label-bg"
+      style="stroke:var(--c-coordinator);stroke-width:0.8"/>
+<text x="160" y="230" text-anchor="middle" font-size="11" font-weight="600" class="t-coord">
+  <tspan class="lz">② partitionToolCalls()</tspan><tspan class="le">② partitionToolCalls()</tspan>
+</text>
+
+<!-- ── Zone labels ── -->
+<!-- Parallel zone label -->
+<rect x="204" y="258" width="240" height="34" rx="3" style="fill:var(--zone-par-fill)"/>
+<text x="324" y="272" text-anchor="middle" font-size="12" font-weight="700" class="t-read">
+  <tspan class="lz">并发区块 · Batch 1 (isConcurrencySafe=true)</tspan><tspan class="le">Concurrent Batch · isConcurrencySafe=true</tspan>
+</text>
+<text x="324" y="287" text-anchor="middle" font-size="11" class="t-read" opacity="0.8">
+  <tspan class="lz">runToolsConcurrently() — 同微任务启动，互不阻塞</tspan><tspan class="le">runToolsConcurrently() — same microtask, non-blocking</tspan>
+</text>
+
+<!-- Serial zone label -->
+<rect x="204" y="513" width="220" height="34" rx="3" style="fill:var(--zone-ser-fill)"/>
+<text x="314" y="527" text-anchor="middle" font-size="12" font-weight="700" class="t-write">
+  <tspan class="lz">串行区块 · Batch 2 (isConcurrencySafe=false)</tspan><tspan class="le">Serial Batch · isConcurrencySafe=false</tspan>
+</text>
+<text x="314" y="542" text-anchor="middle" font-size="11" class="t-write" opacity="0.8">
+  <tspan class="lz">runToolsSerially() — for await 逐个等待</tspan><tspan class="le">runToolsSerially() — for await, one at a time</tspan>
+</text>
+
+
+<!-- ══════════════ PARALLEL SECTION ══════════════ -->
+
+<!-- M2a: Coordinator → Read (dispatch) at y=310 -->
+<line x1="167" y1="310" x2="427" y2="310" stroke-width="2"
+      style="stroke:var(--c-read)" marker-end="url(#ah-read)"/>
+<rect x="178" y="296" width="142" height="18" rx="3" class="label-bg"
+      style="stroke:var(--c-read);stroke-width:0.7"/>
+<text x="249" y="309" text-anchor="middle" font-size="12" font-weight="600" class="t-read">
+  <tspan class="lz">③a dispatch Read</tspan><tspan class="le">③a dispatch Read</tspan>
+</text>
+
+<!-- M2b: Coordinator → Glob (dispatch) at y=325 -->
+<line x1="167" y1="325" x2="567" y2="325" stroke-width="2"
+      style="stroke:var(--c-read)" marker-end="url(#ah-read)"/>
+<rect x="178" y="311" width="142" height="18" rx="3" class="label-bg"
+      style="stroke:var(--c-read);stroke-width:0.7"/>
+<text x="249" y="324" text-anchor="middle" font-size="12" font-weight="600" class="t-read">
+  <tspan class="lz">③b dispatch Glob</tspan><tspan class="le">③b dispatch Glob</tspan>
+</text>
+
+<!-- M2c: Coordinator → Grep (dispatch) at y=340 -->
+<line x1="167" y1="340" x2="707" y2="340" stroke-width="2"
+      style="stroke:var(--c-read)" marker-end="url(#ah-read)"/>
+<rect x="178" y="326" width="142" height="18" rx="3" class="label-bg"
+      style="stroke:var(--c-read);stroke-width:0.7"/>
+<text x="249" y="339" text-anchor="middle" font-size="12" font-weight="600" class="t-read">
+  <tspan class="lz">③c dispatch Grep</tspan><tspan class="le">③c dispatch Grep</tspan>
+</text>
+
+<!-- "同一微任务内启动" annotation -->
+<text x="418" y="357" text-anchor="middle" font-size="11" class="t-read" font-style="italic">
+  <tspan class="lz">← 同一微任务内同时启动 3 个工具 →</tspan><tspan class="le">← 3 tools launched in same microtask →</tspan>
+</text>
+
+<!-- Execution period markers on each tool (horizontal tick at "running") -->
+<!-- Read is fastest, returns at y=365 -->
+<!-- M3a: Read → Coordinator (return) at y=365 -->
+<line x1="442" y1="365" x2="167" y2="365" stroke-width="1.8" stroke-dasharray="6,3"
+      style="stroke:var(--c-read)" marker-end="url(#ah-read-ret)"/>
+<rect x="208" y="351" width="178" height="18" rx="3" class="label-bg"
+      style="stroke:var(--c-read);stroke-width:0.7"/>
+<text x="297" y="364" text-anchor="middle" font-size="12" font-weight="600" class="t-read">
+  <tspan class="lz">④a Read 完成 (~350ms)</tspan><tspan class="le">④a Read done (~350ms)</tspan>
+</text>
+
+<!-- M3b: Glob → Coordinator (return) at y=420 -->
+<line x1="582" y1="420" x2="167" y2="420" stroke-width="1.8" stroke-dasharray="6,3"
+      style="stroke:var(--c-read)" marker-end="url(#ah-read-ret)"/>
+<rect x="228" y="406" width="198" height="18" rx="3" class="label-bg"
+      style="stroke:var(--c-read);stroke-width:0.7"/>
+<text x="327" y="419" text-anchor="middle" font-size="12" font-weight="600" class="t-read">
+  <tspan class="lz">④b Glob 完成 (~480ms)</tspan><tspan class="le">④b Glob done (~480ms)</tspan>
+</text>
+
+<!-- M3c: Grep → Coordinator (return) at y=475 -->
+<line x1="722" y1="475" x2="167" y2="475" stroke-width="1.8" stroke-dasharray="6,3"
+      style="stroke:var(--c-read)" marker-end="url(#ah-read-ret)"/>
+<rect x="280" y="461" width="198" height="18" rx="3" class="label-bg"
+      style="stroke:var(--c-read);stroke-width:0.7"/>
+<text x="379" y="474" text-anchor="middle" font-size="12" font-weight="600" class="t-read">
+  <tspan class="lz">④c Grep 完成 (~550ms)</tspan><tspan class="le">④c Grep done (~550ms)</tspan>
+</text>
+
+<!-- Time-stagger annotation between returns (show "谁先回谁先拿结果") -->
+<text x="830" y="419" text-anchor="middle" font-size="11" class="t-muted" font-style="italic">
+  <tspan class="lz">先完成先返回</tspan><tspan class="le">first done first returned</tspan>
+</text>
+<text x="830" y="434" text-anchor="middle" font-size="11" class="t-muted" font-style="italic">
+  <tspan class="lz">Coordinator 等最后一个</tspan><tspan class="le">Coordinator waits for the last</tspan>
+</text>
+
+
+<!-- ── Transition between zones ── -->
+<line x1="200" y1="497" x2="1175" y2="497" stroke-width="1" stroke-dasharray="3,3" class="axis-line" opacity="0.4"/>
+<text x="690" y="509" text-anchor="middle" font-size="11" class="t-dim" font-style="italic">
+  <tspan class="lz">— Batch 1 全部 resolve → 切换到串行分支 —</tspan>
+  <tspan class="le">— Batch 1 all resolved → switch to serial branch —</tspan>
+</text>
+
+
+<!-- ══════════════ SERIAL SECTION ══════════════ -->
+
+<!-- M4: Coordinator → Edit (dispatch) at y=565 -->
+<line x1="167" y1="565" x2="967" y2="565" stroke-width="2"
+      style="stroke:var(--c-write)" marker-end="url(#ah-write)"/>
+<rect x="480" y="549" width="272" height="20" rx="3" class="label-bg"
+      style="stroke:var(--c-write);stroke-width:0.7"/>
+<text x="616" y="563" text-anchor="middle" font-size="12" font-weight="600" class="t-write">
+  <tspan class="lz">⑤ for await — invoke Edit (第 1 个)</tspan><tspan class="le">⑤ for await — invoke Edit (1st)</tspan>
+</text>
+
+<!-- M5: Edit → Coordinator (return) at y=628 -->
+<line x1="982" y1="628" x2="167" y2="628" stroke-width="1.8" stroke-dasharray="6,3"
+      style="stroke:var(--c-write)" marker-end="url(#ah-write-ret)"/>
+<rect x="500" y="613" width="230" height="18" rx="3" class="label-bg"
+      style="stroke:var(--c-write);stroke-width:0.7"/>
+<text x="615" y="626" text-anchor="middle" font-size="12" font-weight="600" class="t-write">
+  <tspan class="lz">⑥ Edit 完成 · Promise resolve</tspan><tspan class="le">⑥ Edit done · Promise resolved</tspan>
+</text>
+
+<!-- "只有 Edit resolve 后 Bash 才开始" annotation -->
+<text x="1058" y="644" text-anchor="middle" font-size="11" class="t-muted" font-style="italic">
+  <tspan class="lz">Edit 完成后才能启动</tspan><tspan class="le">only starts after Edit</tspan>
+</text>
+
+<!-- M6: Coordinator → Bash (dispatch) at y=658 — ONLY after Edit resolves -->
+<line x1="167" y1="658" x2="1107" y2="658" stroke-width="2"
+      style="stroke:var(--c-write)" marker-end="url(#ah-write)"/>
+<rect x="540" y="642" width="272" height="20" rx="3" class="label-bg"
+      style="stroke:var(--c-write);stroke-width:0.7"/>
+<text x="676" y="656" text-anchor="middle" font-size="12" font-weight="600" class="t-write">
+  <tspan class="lz">⑦ for await — invoke Bash (第 2 个)</tspan><tspan class="le">⑦ for await — invoke Bash (2nd)</tspan>
+</text>
+
+<!-- M7: Bash → Coordinator (return) at y=718 -->
+<line x1="1122" y1="718" x2="167" y2="718" stroke-width="1.8" stroke-dasharray="6,3"
+      style="stroke:var(--c-write)" marker-end="url(#ah-write-ret)"/>
+<rect x="544" y="703" width="230" height="18" rx="3" class="label-bg"
+      style="stroke:var(--c-write);stroke-width:0.7"/>
+<text x="659" y="716" text-anchor="middle" font-size="12" font-weight="600" class="t-write">
+  <tspan class="lz">⑧ Bash 完成 · 汇总 tool_results</tspan><tspan class="le">⑧ Bash done · aggregate tool_results</tspan>
+</text>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     TIME AXIS
+     ══════════════════════════════════════════════════════════ -->
+<line x1="50" y1="758" x2="1220" y2="758" class="axis-line" stroke-width="1.2"/>
+<!-- Arrow head -->
+<polygon points="1220,754 1232,758 1220,762" style="fill:var(--axis)"/>
+<text x="1245" y="762" font-size="12" class="t-muted">
+  <tspan class="lz">时间 →</tspan><tspan class="le">time →</tspan>
+</text>
+
+<!-- Time tick marks and labels -->
+<line x1="160" y1="754" x2="160" y2="764" class="axis-line" stroke-width="1.2"/>
+<text x="160" y="776" text-anchor="middle" font-size="11" class="t-dim">t0</text>
+<text x="160" y="788" text-anchor="middle" font-size="10" class="t-dim">
+  <tspan class="lz">发出 blocks</tspan><tspan class="le">emit blocks</tspan>
+</text>
+
+<line x1="435" y1="754" x2="435" y2="764" class="axis-line" stroke-width="1.2"/>
+<text x="435" y="776" text-anchor="middle" font-size="11" class="t-dim">t1</text>
+<text x="435" y="788" text-anchor="middle" font-size="10" class="t-dim">
+  <tspan class="lz">并发启动</tspan><tspan class="le">concurrent start</tspan>
+</text>
+
+<line x1="715" y1="754" x2="715" y2="764" class="axis-line" stroke-width="1.2"/>
+<text x="715" y="776" text-anchor="middle" font-size="11" class="t-dim">t2</text>
+<text x="715" y="788" text-anchor="middle" font-size="10" class="t-dim">
+  <tspan class="lz">最慢返回</tspan><tspan class="le">slowest returns</tspan>
+</text>
+
+<line x1="975" y1="754" x2="975" y2="764" class="axis-line" stroke-width="1.2"/>
+<text x="975" y="776" text-anchor="middle" font-size="11" class="t-dim">t3</text>
+<text x="975" y="788" text-anchor="middle" font-size="10" class="t-dim">
+  <tspan class="lz">串行 Edit</tspan><tspan class="le">serial Edit</tspan>
+</text>
+
+<line x1="1115" y1="754" x2="1115" y2="764" class="axis-line" stroke-width="1.2"/>
+<text x="1115" y="776" text-anchor="middle" font-size="11" class="t-dim">t4</text>
+<text x="1115" y="788" text-anchor="middle" font-size="10" class="t-dim">
+  <tspan class="lz">串行 Bash</tspan><tspan class="le">serial Bash</tspan>
+</text>
+
+</svg>
+</div>
+
+
+<!-- ══════════════════════════════════════════════════════════
+     BOTTOM INFO CARDS — 耗时对比 bar chart + explanation
+     ══════════════════════════════════════════════════════════ -->
+
+<!-- Bar chart as HTML for theme-awareness -->
+<div class="cards-grid">
+
+  <!-- Card 1: Parallel vs Serial time bar -->
+  <div class="info-card">
+    <div class="ic-head">
+      <span class="ic-dot" style="background:var(--c-read)"></span>
+      <span class="ic-title">
+        <span class="lz">串行 vs 并行耗时</span><span class="le">Serial vs Parallel Time</span>
+      </span>
+    </div>
+    <!-- Mini bar chart -->
+    <div style="margin-bottom:10px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;">
+        <span style="font-size:11px;color:var(--txt3);width:52px;" class="lz">串行</span>
+        <span style="font-size:11px;color:var(--txt3);width:52px;" class="le">Serial</span>
+        <div style="flex:1;background:var(--bar-bg);border-radius:3px;height:14px;position:relative;">
+          <div style="width:100%;height:14px;background:var(--bar-ser);border-radius:3px;"></div>
+        </div>
+        <span style="font-size:11px;color:var(--c-write);font-weight:600;width:36px;">~1380ms</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:11px;color:var(--txt3);width:52px;" class="lz">并行</span>
+        <span style="font-size:11px;color:var(--txt3);width:52px;" class="le">Parallel</span>
+        <div style="flex:1;background:var(--bar-bg);border-radius:3px;height:14px;position:relative;">
+          <div style="width:40%;height:14px;background:var(--bar-par);border-radius:3px;"></div>
+        </div>
+        <span style="font-size:11px;color:var(--c-read);font-weight:600;width:36px;">~550ms</span>
+      </div>
+    </div>
+    <div class="ic-body">
+      <span class="lz">3 个读工具串行：350+480+550=<strong>1380ms</strong>。并行后取最慢值：<strong>~550ms</strong>，节省 60%。</span>
+      <span class="le">3 read tools serial: 350+480+550=<strong>1380ms</strong>. Parallel: limited by slowest at <strong>~550ms</strong>, saving 60%.</span>
+    </div>
+  </div>
+
+  <!-- Card 2: partitionToolCalls -->
+  <div class="info-card">
+    <div class="ic-head">
+      <span class="ic-dot" style="background:var(--c-coordinator)"></span>
+      <span class="ic-title">
+        <span class="lz">分组算法 · partitionToolCalls()</span>
+        <span class="le">Partitioning · partitionToolCalls()</span>
+      </span>
+    </div>
+    <div class="ic-body">
+      <span class="lz">源码 toolOrchestration.ts L91–116：对 tool_use 数组做 <strong>reduce</strong>，按 <code>isConcurrencySafe()</code> 分批——连续的 safe=true 归一批，遇到 safe=false 就另开一批。结果是有序 Batch 数组，串行执行各批。</span>
+      <span class="le">toolOrchestration.ts L91–116: <strong>reduce</strong> over tool_use array, grouping consecutive <code>isConcurrencySafe()=true</code> into one batch; each <code>false</code> starts a new batch. Result: ordered Batch array, batches run sequentially.</span>
+    </div>
+  </div>
+
+  <!-- Card 3: Safety guarantee -->
+  <div class="info-card">
+    <div class="ic-head">
+      <span class="ic-dot" style="background:var(--c-write)"></span>
+      <span class="ic-title">
+        <span class="lz">安全保证 · 失败闭合默认</span>
+        <span class="le">Safety · Fail-Closed Default</span>
+      </span>
+    </div>
+    <div class="ic-body">
+      <span class="lz">Tool.ts L750：<code>isConcurrencySafe</code> 默认 <strong>false</strong>（fail-closed），任何未显式声明 safe 的工具都走串行。BashTool L434 的 safe 等于 <code>isReadOnly()</code>——只有命令不含 cd / 写操作才并发。防止竞态写入与文件不一致。</span>
+      <span class="le">Tool.ts L750: <code>isConcurrencySafe</code> defaults <strong>false</strong> (fail-closed). Any tool without an explicit override runs serially. BashTool L434 sets safe = <code>isReadOnly()</code> — only concurrency-safe when command has no cd / writes. Prevents race conditions and file inconsistency.</span>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function(){
+  // Restore persisted theme + lang
+  var theme = localStorage.getItem('vtheme') || 'dark';
+  var lang  = localStorage.getItem('vlang')  || 'zh';
+  applyTheme(theme);
+  applyLang(lang);
+
+  function applyTheme(t){
+    document.documentElement.setAttribute('data-theme', t);
+    document.querySelectorAll('[id^="btn-"]').forEach(function(b){
+      b.classList.toggle('active', b.id === 'btn-' + t);
+    });
+    localStorage.setItem('vtheme', t);
+  }
+  function applyLang(l){
+    document.documentElement.setAttribute('lang', l === 'en' ? 'en' : 'zh');
+    localStorage.setItem('vlang', l);
+  }
+
+  window.setTheme = applyTheme;
+  window.toggleLang = function(){
+    var cur = localStorage.getItem('vlang') || 'zh';
+    applyLang(cur === 'en' ? 'zh' : 'en');
+  };
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

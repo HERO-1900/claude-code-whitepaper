@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-3-009 | 沙箱三层架构图</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--panel:#0f172a;--card:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--subtle:#475569;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="warm"]{--bg:#1c1410;--panel:#2a1f16;--card:#3d2d20;--border:#5c4a3a;--text:#f5e6d3;--muted:#c4a882;--subtle:#8b7355;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c}
+[data-theme="light"]{--bg:#f8fafc;--panel:#f1f5f9;--card:#e2e8f0;--border:#cbd5e1;--text:#0f172a;--muted:#475569;--subtle:#94a3b8;--amber:#d97706;--cyan:#0891b2;--violet:#7c3aed;--emerald:#059669;--rose:#e11d48;--slate:#475569;--orange:#ea580c}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:20px 16px 40px}
+.grid-line{stroke:var(--border)}
+.node-bg{fill:var(--panel)}
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:100}
+.ctrl button{font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:background .15s}
+.ctrl button:hover{background:var(--border)}[data-lang="en"] .lz{display:none}
+[data-lang="en"] .le{display:inline}
+header{width:100%;max-width:1040px;margin-bottom:24px;padding-top:8px}
+.header-meta{font-size:11px;color:var(--subtle);letter-spacing:.05em;margin-bottom:6px}
+.header-title{font-size:22px;font-weight:700;color:var(--text);line-height:1.2}
+.header-title .accent-cyan{color:var(--cyan)}
+.header-sub{font-size:13px;color:var(--muted);margin-top:6px}
+.svg-wrapper{width:100%;max-width:1040px;background:var(--panel);border:1px solid var(--border);border-radius:12px;overflow:hidden;padding:8px}
+svg{width:100%;height:auto;display:block}
+.summary-cards{display:flex;gap:16px;width:100%;max-width:1040px;margin-top:20px;flex-wrap:wrap}
+.card{flex:1;min-width:260px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px}
+.card-icon{font-size:20px;margin-bottom:8px}
+.card-title{font-size:13px;font-weight:600;margin-bottom:4px}
+.card-body{font-size:11px;color:var(--muted);line-height:1.6}
+.card-cyan{border-top:3px solid var(--cyan)}
+.card-violet{border-top:3px solid var(--violet)}
+.card-emerald{border-top:3px solid var(--emerald)}
+.card-title-cyan{color:var(--cyan)}
+.card-title-violet{color:var(--violet)}
+.card-title-emerald{color:var(--emerald)}
+footer{margin-top:32px;font-size:10px;color:var(--subtle);letter-spacing:.04em}
+</style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="cycleTheme()">Theme</button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<header>
+  <div class="header-meta">VIS-3-009 &nbsp;·&nbsp; Chapter 3 — Security Model &nbsp;·&nbsp; Architecture Diagram</div>
+  <div class="header-title">
+    <span class="lz">沙箱<span class="accent-cyan">三层架构图</span></span>
+    <span class="le">Sandbox <span class="accent-cyan">3-Layer Architecture</span></span>
+  </div>
+  <div class="header-sub">
+    <span class="lz">Claude Code 工具调用 → 权限适配 → OS 内核执行的完整沙箱链路</span>
+    <span class="le">Claude Code tool call → permission adapting → OS kernel enforcement chain</span>
+  </div>
+</header>
+
+<div class="svg-wrapper">
+<svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Sandbox 3-Layer Architecture">
+  <defs>
+    <!-- Grid pattern -->
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M 40 0 L 0 0 0 40" fill="none" stroke-width="0.5" class="grid-line" opacity="0.4"/>
+    </pattern>
+
+    <!-- Arrow markers -->
+    <marker id="arrow-cyan" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="var(--cyan)"/>
+    </marker>
+    <marker id="arrow-violet" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="var(--violet)"/>
+    </marker>
+    <marker id="arrow-muted" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="var(--muted)"/>
+    </marker>
+    <marker id="arrow-amber" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+      <polygon points="0 0, 8 3, 0 6" fill="var(--amber)"/>
+    </marker>
+
+    <!-- Drop shadow filter -->
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.4"/>
+    </filter>
+  </defs>
+
+  <!-- Background -->
+  <rect width="960" height="560" fill="var(--bg)" opacity="0.7"/>
+  <rect width="960" height="560" fill="url(#grid)"/>
+
+  <!-- ================================================================
+       TITLE AREA
+  ================================================================ -->
+  <text x="28" y="36" font-family="'JetBrains Mono',monospace" font-size="12" fill="var(--subtle)" letter-spacing="1">SANDBOX ARCHITECTURE — CLAUDE CODE</text>
+
+  <!-- ================================================================
+       LAYER 1: TOOL LAYER  (y=60 → y=155)
+  ================================================================ -->
+  <!-- Layer fill -->
+  <rect x="24" y="58" width="700" height="97" rx="10" fill="var(--cyan)" fill-opacity="0.07" stroke="var(--cyan)" stroke-width="1.5"/>
+
+  <!-- Layer label badge -->
+  <rect x="34" y="64" width="150" height="22" rx="5" fill="var(--cyan)" fill-opacity="0.2" stroke="var(--cyan)" stroke-width="1"/>
+  <text x="44" y="79" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" fill="var(--cyan)">
+    <tspan class="lz">工具层</tspan><tspan class="le"> Tool Layer</tspan>
+    <tspan font-size="10" fill="var(--cyan)" opacity="0.7"> Layer 1</tspan>
+  </text>
+
+  <!-- Box 1: Tool Calls -->
+  <rect x="200" y="65" width="146" height="83" rx="8" fill="var(--card)" stroke="var(--cyan)" stroke-width="1" filter="url(#shadow)"/>
+  <rect x="200" y="65" width="146" height="20" rx="8" fill="var(--cyan)" fill-opacity="0.25"/>
+  <rect x="200" y="75" width="146" height="10" rx="0" fill="var(--cyan)" fill-opacity="0.25"/>
+  <text x="273" y="79" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" fill="var(--cyan)">
+    <tspan class="lz">工具调用</tspan><tspan class="le">Tool Calls</tspan>
+  </text>
+  <text x="273" y="97" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">Read / Write</text>
+  <text x="273" y="111" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">Bash / Edit</text>
+  <text x="273" y="125" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">WebFetch / Glob…</text>
+  <text x="273" y="140" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)">43 tools total</text>
+
+  <!-- Box 2: Permission Check -->
+  <rect x="366" y="65" width="150" height="83" rx="8" fill="var(--card)" stroke="var(--cyan)" stroke-width="1" filter="url(#shadow)"/>
+  <rect x="366" y="65" width="150" height="20" rx="8" fill="var(--cyan)" fill-opacity="0.25"/>
+  <rect x="366" y="75" width="150" height="10" rx="0" fill="var(--cyan)" fill-opacity="0.25"/>
+  <text x="441" y="79" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" fill="var(--cyan)">
+    <tspan class="lz">权限检查</tspan><tspan class="le">Permission Check</tspan>
+  </text>
+  <text x="441" y="97" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">
+    <tspan class="lz">用户授权门控</tspan><tspan class="le">User auth gate</tspan>
+  </text>
+  <text x="441" y="111" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">
+    <tspan class="lz">路径白名单</tspan><tspan class="le">Path allowlist</tspan>
+  </text>
+  <text x="441" y="125" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">dangerouslyAllow</text>
+  <text x="441" y="140" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)">9-step validation</text>
+
+  <!-- Box 3: Result Formatter -->
+  <rect x="536" y="65" width="158" height="83" rx="8" fill="var(--card)" stroke="var(--cyan)" stroke-width="1" filter="url(#shadow)"/>
+  <rect x="536" y="65" width="158" height="20" rx="8" fill="var(--cyan)" fill-opacity="0.25"/>
+  <rect x="536" y="75" width="158" height="10" rx="0" fill="var(--cyan)" fill-opacity="0.25"/>
+  <text x="615" y="79" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" fill="var(--cyan)">
+    <tspan class="lz">结果格式化器</tspan><tspan class="le">Result Formatter</tspan>
+  </text>
+  <text x="615" y="97" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">
+    <tspan class="lz">输出截断</tspan><tspan class="le">Output truncation</tspan>
+  </text>
+  <text x="615" y="111" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">
+    <tspan class="lz">错误封装</tspan><tspan class="le">Error wrapping</tspan>
+  </text>
+  <text x="615" y="125" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">
+    <tspan class="lz">结果序列化</tspan><tspan class="le">Result serialization</tspan>
+  </text>
+  <text x="615" y="140" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)">→ LLM context</text>
+
+  <!-- ================================================================
+       ARROW: Layer 1 → Layer 2  (Permission request)
+  ================================================================ -->
+  <line x1="374" y1="157" x2="374" y2="188" stroke="var(--cyan)" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow-cyan)"/>
+  <rect x="285" y="162" width="178" height="18" rx="4" fill="var(--panel)" stroke="var(--border)" stroke-width="1"/>
+  <text x="374" y="174" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--cyan)">
+    <tspan class="lz">↓ 权限请求 (Permission request)</tspan><tspan class="le">↓ Permission request</tspan>
+  </text>
+
+  <!-- ================================================================
+       LAYER 2: ADAPTER LAYER  (y=192 → y=302)
+  ================================================================ -->
+  <rect x="24" y="190" width="700" height="112" rx="10" fill="var(--violet)" fill-opacity="0.07" stroke="var(--violet)" stroke-width="1.5"/>
+
+  <!-- Layer label badge -->
+  <rect x="34" y="196" width="156" height="22" rx="5" fill="var(--violet)" fill-opacity="0.2" stroke="var(--violet)" stroke-width="1"/>
+  <text x="44" y="211" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" fill="var(--violet)">
+    <tspan class="lz">适配层</tspan><tspan class="le"> Adapter Layer</tspan>
+    <tspan font-size="10" fill="var(--violet)" opacity="0.7"> Layer 2</tspan>
+  </text>
+
+  <!-- Adapter sub-box: macOS -->
+  <rect x="200" y="197" width="216" height="97" rx="8" fill="var(--card)" stroke="var(--violet)" stroke-width="1" filter="url(#shadow)"/>
+  <rect x="200" y="197" width="216" height="22" rx="8" fill="var(--violet)" fill-opacity="0.3"/>
+  <rect x="200" y="208" width="216" height="11" rx="0" fill="var(--violet)" fill-opacity="0.3"/>
+  <text x="236" y="212" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="var(--violet)">macOS Adapter</text>
+  <!-- Apple logo approx -->
+  <circle cx="220" cy="208" r="6" fill="none" stroke="var(--violet)" stroke-width="1.2"/>
+  <text x="308" y="232" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">sandbox-exec</text>
+  <text x="308" y="247" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">Seatbelt profiles</text>
+  <text x="308" y="262" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+    <tspan class="lz">动态生成 .sb 规则</tspan><tspan class="le">Dynamic .sb rule gen</tspan>
+  </text>
+  <text x="308" y="279" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)">macOS 12+ (Monterey)</text>
+
+  <!-- Platform detection arrow -->
+  <line x1="416" y1="247" x2="452" y2="247" stroke="var(--subtle)" stroke-width="1.5" stroke-dasharray="4,3" marker-end="url(#arrow-muted)"/>
+  <text x="434" y="241" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)">detect</text>
+
+  <!-- Adapter sub-box: Linux -->
+  <rect x="456" y="197" width="216" height="97" rx="8" fill="var(--card)" stroke="var(--violet)" stroke-width="1" filter="url(#shadow)"/>
+  <rect x="456" y="197" width="216" height="22" rx="8" fill="var(--violet)" fill-opacity="0.3"/>
+  <rect x="456" y="208" width="216" height="11" rx="0" fill="var(--violet)" fill-opacity="0.3"/>
+  <text x="490" y="212" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="var(--violet)">Linux Adapter</text>
+  <text x="564" y="232" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">seccomp-bpf</text>
+  <text x="564" y="247" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">user namespaces</text>
+  <text x="564" y="262" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+    <tspan class="lz">挂载命名空间隔离</tspan><tspan class="le">Mount ns isolation</tspan>
+  </text>
+  <text x="564" y="279" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)">Linux kernel 5.0+</text>
+
+  <!-- ================================================================
+       ARROW: Layer 2 → Layer 3  (OS-specific policy)
+  ================================================================ -->
+  <line x1="374" y1="304" x2="374" y2="334" stroke="var(--violet)" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow-violet)"/>
+  <rect x="265" y="308" width="218" height="18" rx="4" fill="var(--panel)" stroke="var(--border)" stroke-width="1"/>
+  <text x="374" y="320" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--violet)">
+    <tspan class="lz">↓ OS 专属策略 (OS-specific policy)</tspan><tspan class="le">↓ OS-specific policy</tspan>
+  </text>
+
+  <!-- ================================================================
+       LAYER 3: RUNTIME LAYER  (y=336 → y=450)
+  ================================================================ -->
+  <rect x="24" y="334" width="700" height="116" rx="10" fill="var(--emerald)" fill-opacity="0.07" stroke="var(--emerald)" stroke-width="1.5"/>
+
+  <!-- Layer label badge -->
+  <rect x="34" y="340" width="160" height="22" rx="5" fill="var(--emerald)" fill-opacity="0.2" stroke="var(--emerald)" stroke-width="1"/>
+  <text x="44" y="355" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" fill="var(--emerald)">
+    <tspan class="lz">运行时层</tspan><tspan class="le"> Runtime Layer</tspan>
+    <tspan font-size="10" fill="var(--emerald)" opacity="0.7"> Layer 3</tspan>
+  </text>
+
+  <!-- Runtime sub-box: macOS Seatbelt -->
+  <rect x="200" y="341" width="216" height="101" rx="8" fill="var(--card)" stroke="var(--emerald)" stroke-width="1" filter="url(#shadow)"/>
+  <rect x="200" y="341" width="216" height="22" rx="8" fill="var(--emerald)" fill-opacity="0.3"/>
+  <rect x="200" y="352" width="216" height="11" rx="0" fill="var(--emerald)" fill-opacity="0.3"/>
+  <text x="308" y="356" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="var(--emerald)">
+    <tspan class="lz">Seatbelt 策略</tspan><tspan class="le">Seatbelt Profiles</tspan>
+  </text>
+  <text x="308" y="375" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">(deny default)</text>
+  <text x="308" y="390" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">(allow file-read*)</text>
+  <text x="308" y="405" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+    <tspan class="lz">路径级 allow/deny</tspan><tspan class="le">Per-path allow/deny</tspan>
+  </text>
+  <text x="308" y="420" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)">
+    <tspan class="lz">网络 / 进程 / FS 策略</tspan><tspan class="le">net / proc / FS policy</tspan>
+  </text>
+  <text x="308" y="434" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--emerald)">kernel enforced ✓</text>
+
+  <!-- Runtime sub-box: Linux seccomp -->
+  <rect x="456" y="341" width="216" height="101" rx="8" fill="var(--card)" stroke="var(--emerald)" stroke-width="1" filter="url(#shadow)"/>
+  <rect x="456" y="341" width="216" height="22" rx="8" fill="var(--emerald)" fill-opacity="0.3"/>
+  <rect x="456" y="352" width="216" height="11" rx="0" fill="var(--emerald)" fill-opacity="0.3"/>
+  <text x="564" y="356" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="var(--emerald)">
+    <tspan class="lz">seccomp BPF 过滤器</tspan><tspan class="le">seccomp BPF Filter</tspan>
+  </text>
+  <text x="564" y="375" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">syscall allowlist</text>
+  <text x="564" y="390" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">mount namespaces</text>
+  <text x="564" y="405" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+    <tspan class="lz">用户命名空间隔离</tspan><tspan class="le">user ns isolation</tspan>
+  </text>
+  <text x="564" y="420" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)">
+    <tspan class="lz">UID/GID 映射</tspan><tspan class="le">UID/GID remapping</tspan>
+  </text>
+  <text x="564" y="434" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--emerald)">kernel enforced ✓</text>
+
+  <!-- Kernel enforcement badge -->
+  <rect x="250" y="459" width="240" height="22" rx="8" fill="var(--emerald)" fill-opacity="0.15" stroke="var(--emerald)" stroke-width="1"/>
+  <text x="370" y="474" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="var(--emerald)">
+    <tspan class="lz">⚙ 内核强制执行 — 无法绕过</tspan><tspan class="le">⚙ Kernel Enforcement — Cannot Bypass</tspan>
+  </text>
+
+  <!-- ================================================================
+       OS LABELS (amber badges) — bottom left of layers
+  ================================================================ -->
+  <rect x="34" y="388" width="152" height="20" rx="6" fill="var(--amber)" fill-opacity="0.15" stroke="var(--amber)" stroke-width="1"/>
+  <text x="110" y="402" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="var(--amber)">macOS 12+ Seatbelt</text>
+
+  <rect x="30" y="414" width="166" height="20" rx="6" fill="var(--amber)" fill-opacity="0.15" stroke="var(--amber)" stroke-width="1"/>
+  <text x="113" y="428" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="var(--amber)">Linux kernel 5.0+ seccomp</text>
+
+  <!-- ================================================================
+       RIGHT SIDEBAR: Permission matrix  (x=736 → x=932)
+  ================================================================ -->
+  <rect x="738" y="58" width="196" height="392" rx="10" fill="var(--panel)" stroke="var(--border)" stroke-width="1" filter="url(#shadow)"/>
+
+  <!-- Sidebar header -->
+  <rect x="738" y="58" width="196" height="30" rx="10" fill="var(--card)"/>
+  <rect x="738" y="75" width="196" height="13" rx="0" fill="var(--card)"/>
+  <text x="836" y="78" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" fill="var(--text)">
+    <tspan class="lz">权限类型矩阵</tspan><tspan class="le">Permission Matrix</tspan>
+  </text>
+
+  <!-- Column headers -->
+  <text x="800" y="104" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="var(--muted)">macOS</text>
+  <text x="898" y="104" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="var(--muted)">Linux</text>
+
+  <!-- Divider -->
+  <line x1="748" y1="108" x2="924" y2="108" stroke="var(--border)" stroke-width="1"/>
+
+  <!-- Row 1: File Read -->
+  <text x="750" y="128" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">
+    <tspan class="lz">文件读取</tspan><tspan class="le">File Read</tspan>
+  </text>
+  <rect x="780" y="116" width="36" height="18" rx="4" fill="var(--emerald)" fill-opacity="0.2" stroke="var(--emerald)" stroke-width="1"/>
+  <text x="798" y="128" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" fill="var(--emerald)">✓</text>
+  <rect x="878" y="116" width="36" height="18" rx="4" fill="var(--emerald)" fill-opacity="0.2" stroke="var(--emerald)" stroke-width="1"/>
+  <text x="896" y="128" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" fill="var(--emerald)">✓</text>
+
+  <!-- Row 2: File Write -->
+  <text x="750" y="158" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">
+    <tspan class="lz">文件写入</tspan><tspan class="le">File Write</tspan>
+  </text>
+  <rect x="780" y="146" width="36" height="18" rx="4" fill="var(--amber)" fill-opacity="0.15" stroke="var(--amber)" stroke-width="1"/>
+  <text x="798" y="158" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--amber)">
+    <tspan class="lz">限</tspan><tspan class="le">Rstr</tspan>
+  </text>
+  <rect x="878" y="146" width="36" height="18" rx="4" fill="var(--amber)" fill-opacity="0.15" stroke="var(--amber)" stroke-width="1"/>
+  <text x="896" y="158" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--amber)">
+    <tspan class="lz">限</tspan><tspan class="le">Rstr</tspan>
+  </text>
+
+  <!-- Row 3: Network -->
+  <text x="750" y="188" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">
+    <tspan class="lz">网络访问</tspan><tspan class="le">Network</tspan>
+  </text>
+  <rect x="780" y="176" width="36" height="18" rx="4" fill="var(--amber)" fill-opacity="0.15" stroke="var(--amber)" stroke-width="1"/>
+  <text x="798" y="188" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--amber)">
+    <tspan class="lz">可限</tspan><tspan class="le">Opt</tspan>
+  </text>
+  <rect x="878" y="176" width="36" height="18" rx="4" fill="var(--amber)" fill-opacity="0.15" stroke="var(--amber)" stroke-width="1"/>
+  <text x="896" y="188" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--amber)">
+    <tspan class="lz">可限</tspan><tspan class="le">Opt</tspan>
+  </text>
+
+  <!-- Row 4: Subprocess -->
+  <text x="750" y="218" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">
+    <tspan class="lz">子进程</tspan><tspan class="le">Subprocess</tspan>
+  </text>
+  <rect x="780" y="206" width="36" height="18" rx="4" fill="var(--amber)" fill-opacity="0.15" stroke="var(--amber)" stroke-width="1"/>
+  <text x="798" y="218" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--amber)">
+    <tspan class="lz">受控</tspan><tspan class="le">Ctrl</tspan>
+  </text>
+  <rect x="878" y="206" width="36" height="18" rx="4" fill="var(--amber)" fill-opacity="0.15" stroke="var(--amber)" stroke-width="1"/>
+  <text x="896" y="218" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--amber)">
+    <tspan class="lz">受控</tspan><tspan class="le">Ctrl</tspan>
+  </text>
+
+  <!-- Row 5: localhost-only -->
+  <text x="750" y="248" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">
+    <tspan class="lz">仅本机网络</tspan><tspan class="le">Localhost-only</tspan>
+  </text>
+  <rect x="780" y="236" width="36" height="18" rx="4" fill="var(--emerald)" fill-opacity="0.2" stroke="var(--emerald)" stroke-width="1"/>
+  <text x="798" y="248" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" fill="var(--emerald)">✓</text>
+  <rect x="878" y="236" width="36" height="18" rx="4" fill="var(--emerald)" fill-opacity="0.2" stroke="var(--emerald)" stroke-width="1"/>
+  <text x="896" y="248" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" fill="var(--emerald)">✓</text>
+
+  <!-- Row 6: FS Namespace -->
+  <text x="750" y="278" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--text)">
+    <tspan class="lz">FS 命名空间</tspan><tspan class="le">FS Namespace</tspan>
+  </text>
+  <rect x="780" y="266" width="36" height="18" rx="4" fill="var(--amber)" fill-opacity="0.08" stroke="var(--subtle)" stroke-width="1"/>
+  <text x="798" y="278" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" fill="var(--subtle)">—</text>
+  <rect x="878" y="266" width="36" height="18" rx="4" fill="var(--emerald)" fill-opacity="0.2" stroke="var(--emerald)" stroke-width="1"/>
+  <text x="896" y="278" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" fill="var(--emerald)">✓</text>
+
+  <!-- Divider -->
+  <line x1="748" y1="296" x2="924" y2="296" stroke="var(--border)" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- Legend -->
+  <rect x="750" y="304" width="14" height="14" rx="3" fill="var(--emerald)" fill-opacity="0.2" stroke="var(--emerald)" stroke-width="1"/>
+  <text x="769" y="315" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+    <tspan class="lz">允许</tspan><tspan class="le">Allowed</tspan>
+  </text>
+  <rect x="750" y="323" width="14" height="14" rx="3" fill="var(--amber)" fill-opacity="0.15" stroke="var(--amber)" stroke-width="1"/>
+  <text x="769" y="334" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+    <tspan class="lz">受限/可选</tspan><tspan class="le">Restricted/Optional</tspan>
+  </text>
+  <rect x="750" y="342" width="14" height="14" rx="3" fill="var(--amber)" fill-opacity="0.08" stroke="var(--subtle)" stroke-width="1"/>
+  <text x="769" y="353" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--muted)">
+    <tspan class="lz">不支持</tspan><tspan class="le">Not supported</tspan>
+  </text>
+
+  <!-- Divider 2 -->
+  <line x1="748" y1="368" x2="924" y2="368" stroke="var(--border)" stroke-width="1"/>
+
+  <!-- Key behaviors note -->
+  <text x="836" y="386" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" font-weight="600" fill="var(--muted)">
+    <tspan class="lz">关键特性</tspan><tspan class="le">Key Behaviors</tspan>
+  </text>
+  <text x="748" y="402" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)">
+    <tspan class="lz">· 策略动态生成（按配置）</tspan><tspan class="le">· Policy generated dynamically</tspan>
+  </text>
+  <text x="748" y="417" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)">
+    <tspan class="lz">· 路径白名单逐条匹配</tspan><tspan class="le">· Path allowlist per entry</tspan>
+  </text>
+  <text x="748" y="432" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)">
+    <tspan class="lz">· 子进程继承沙箱</tspan><tspan class="le">· Subprocs inherit sandbox</tspan>
+  </text>
+  <text x="748" y="447" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)">
+    <tspan class="lz">· 内核级无法 bypass</tspan><tspan class="le">· Cannot bypass kernel</tspan>
+  </text>
+
+  <!-- ================================================================
+       FLOW label (left gutter)
+  ================================================================ -->
+  <!-- Vertical flow label -->
+  <text transform="translate(20,300) rotate(-90)" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)" letter-spacing="2">
+    <tspan class="lz">FLOW  ↓  执行链路</tspan><tspan class="le">FLOW  ↓  Execution Chain</tspan>
+  </text>
+
+  <!-- ================================================================
+       BOTTOM: Source reference
+  ================================================================ -->
+  <text x="480" y="530" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="10" fill="var(--subtle)">Source: src/tools/bash.ts · sandbox.ts · seatbelt.ts — Claude Code 2.1.88</text>
+</svg>
+</div>
+
+<!-- Summary Cards -->
+<div class="summary-cards">
+  <div class="card card-cyan">
+    <div class="card-icon">⚡</div>
+    <div class="card-title card-title-cyan">
+      <span class="lz">工具调用</span>
+      <span class="le">Tool Invocation</span>
+    </div>
+    <div class="card-body">
+      <span class="lz">工具层屏蔽底层 OS 差异，AI 只看到统一的抽象接口。43 个工具均走同一权限检查通道，9 步验证流程确保每次调用合规。</span>
+      <span class="le">The tool layer abstracts OS differences. All 43 tools go through the same 9-step permission check channel before execution.</span>
+    </div>
+  </div>
+  <div class="card card-violet">
+    <div class="card-icon">🔀</div>
+    <div class="card-title card-title-violet">
+      <span class="lz">动态适配</span>
+      <span class="le">Dynamic Adaptation</span>
+    </div>
+    <div class="card-body">
+      <span class="lz">适配层在运行时检测 OS（macOS / Linux），动态生成对应的沙箱策略。macOS 用 sandbox-exec 生成 .sb profile，Linux 组合 seccomp + namespaces。</span>
+      <span class="le">The adapter layer detects OS at runtime and generates the corresponding sandbox policy: Seatbelt profiles for macOS, seccomp+namespaces for Linux.</span>
+    </div>
+  </div>
+  <div class="card card-emerald">
+    <div class="card-icon">🔒</div>
+    <div class="card-title card-title-emerald">
+      <span class="lz">内核执行</span>
+      <span class="le">Kernel Enforcement</span>
+    </div>
+    <div class="card-body">
+      <span class="lz">运行时层由操作系统内核直接强制执行，在进程内无法绕过。任何违反策略的系统调用直接被内核拒绝，与进程权限无关。</span>
+      <span class="le">Runtime enforcement is done at kernel level — cannot be bypassed from within the process. Violating syscalls are rejected directly by the kernel.</span>
+    </div>
+  </div>
+</div>
+
+<footer>VIS-3-009 · CC Research · Claude Code 2.1.88 Source Study · 2026</footer>
+
+<script>
+(function(){
+  var t = localStorage.getItem('vtheme') || 'dark';
+  var l = localStorage.getItem('vlang') || 'zh';
+  document.documentElement.setAttribute('data-theme', t);
+  document.documentElement.setAttribute('data-lang', l);
+  document.getElementById('langBtn').textContent = l === 'zh' ? 'EN' : '中';
+
+  // Apply initial language visibility for SVG elements
+  function applyLang(lang) {
+    document.querySelectorAll('.le, .lz').forEach(function(e) {
+      var isLe = e.classList.contains('le');
+      var isLz = e.classList.contains('lz');
+      if (lang === 'en') {
+        var show = isLe;
+      } else {
+        var show = isLz;
+      }
+      e.style.display = show ? '' : 'none';
+      e.setAttribute('display', show ? 'inline' : 'none');
+    });
+  }
+
+  // Apply on load
+  applyLang(l);
+
+  window.cycleTheme = function() {
+    var themes = ['dark', 'warm', 'light'];
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = themes[(themes.indexOf(cur) + 1) % themes.length];
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('vtheme', next);
+  };
+
+  window.toggleLang = function() {
+    var cur = document.documentElement.getAttribute('data-lang') || 'zh';
+    var next = cur === 'zh' ? 'en' : 'zh';
+    document.documentElement.setAttribute('data-lang', next);
+    localStorage.setItem('vlang', next);
+    document.getElementById('langBtn').textContent = next === 'zh' ? 'EN' : '中';
+    applyLang(next);
+  };
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

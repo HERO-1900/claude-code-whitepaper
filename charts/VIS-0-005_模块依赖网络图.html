@@ -1,0 +1,1634 @@
+<html lang="zh" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code · 模块依赖网络图</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root, [data-theme="dark"] {
+  --bg-primary: #0d1117;
+  --bg-radial-inner: #1b2028;
+  --bg-radial-mid: #0d1117;
+  --bg-radial-outer: #010409;
+  --panel-bg: rgba(13, 17, 23, 0.86);
+  --panel-border: rgba(48, 54, 61, 0.65);
+  --panel-divider: rgba(48, 54, 61, 0.5);
+  --line-default: #30363d;
+  --line-highlight: #ffffff;
+  --text-primary: #e6edf3;
+  --text-secondary: #a8b3bd;
+  --text-tertiary: #6e7681;
+  --accent-tool: #58a6ff;
+  --accent-cmd: #3fb950;
+  --accent-api: #bc8cff;
+  --accent-mcp: #f0883e;
+  --accent-config: #d29922;
+  --accent-bridge: #2ea5ff;
+  --accent-utils: #8b949e;
+  --accent-perm: #ff7b72;
+  --accent-tele: #a5a5a5;
+  --accent-cycle: #f85149;
+  --cluster-label-color: rgba(255,255,255,0.10);
+  --cluster-sub-color: rgba(255,255,255,0.06);
+  --node-stroke: rgba(255,255,255,0.10);
+  --node-stroke-hover: rgba(255,255,255,0.85);
+  --node-label-shadow: rgba(0,0,0,0.9);
+  --tip-bg: rgba(88,166,255,0.08);
+  --button-bg: rgba(13, 17, 23, 0.72);
+  --button-hover-bg: rgba(48, 54, 61, 0.5);
+  --button-hover-border: rgba(139, 148, 158, 0.5);
+  --active-color: #58a6ff;
+}
+
+[data-theme="warm"] {
+  --bg-primary: #f8f6f3;
+  --bg-radial-inner: #fdfbf7;
+  --bg-radial-mid: #f3ede3;
+  --bg-radial-outer: #e8dfd0;
+  --panel-bg: rgba(255, 253, 250, 0.94);
+  --panel-border: rgba(150, 125, 95, 0.45);
+  --panel-divider: rgba(150, 125, 95, 0.3);
+  --line-default: #b8a48a;
+  --line-highlight: #1a1412;
+  --text-primary: #1a1412;
+  --text-secondary: #4a3d32;
+  --text-tertiary: #8c7a68;
+  --accent-tool: #0e7490;
+  --accent-cmd: #047857;
+  --accent-api: #6d28d9;
+  --accent-mcp: #c2410c;
+  --accent-config: #b45309;
+  --accent-bridge: #0369a1;
+  --accent-utils: #57534e;
+  --accent-perm: #be123c;
+  --accent-tele: #78716c;
+  --accent-cycle: #b91c1c;
+  --cluster-label-color: rgba(26,20,18,0.10);
+  --cluster-sub-color: rgba(26,20,18,0.07);
+  --node-stroke: rgba(26,20,18,0.18);
+  --node-stroke-hover: rgba(26,20,18,0.9);
+  --node-label-shadow: rgba(255,253,250,0.95);
+  --tip-bg: rgba(14,116,144,0.10);
+  --button-bg: rgba(255, 253, 250, 0.95);
+  --button-hover-bg: rgba(232, 224, 212, 0.9);
+  --button-hover-border: rgba(120, 113, 108, 0.5);
+  --active-color: #0e7490;
+}
+
+[data-theme="light"] {
+  --bg-primary: #ffffff;
+  --bg-radial-inner: #f8fafc;
+  --bg-radial-mid: #f1f5f9;
+  --bg-radial-outer: #e2e8f0;
+  --panel-bg: rgba(255, 255, 255, 0.95);
+  --panel-border: rgba(148, 163, 184, 0.55);
+  --panel-divider: rgba(148, 163, 184, 0.35);
+  --line-default: #cbd5e1;
+  --line-highlight: #0f172a;
+  --text-primary: #0f172a;
+  --text-secondary: #334155;
+  --text-tertiary: #64748b;
+  --accent-tool: #0369a1;
+  --accent-cmd: #15803d;
+  --accent-api: #6d28d9;
+  --accent-mcp: #c2410c;
+  --accent-config: #a16207;
+  --accent-bridge: #0369a1;
+  --accent-utils: #64748b;
+  --accent-perm: #be123c;
+  --accent-tele: #475569;
+  --accent-cycle: #b91c1c;
+  --cluster-label-color: rgba(15,23,42,0.10);
+  --cluster-sub-color: rgba(15,23,42,0.06);
+  --node-stroke: rgba(15,23,42,0.18);
+  --node-stroke-hover: rgba(15,23,42,0.9);
+  --node-label-shadow: rgba(255,255,255,0.95);
+  --tip-bg: rgba(3,105,161,0.10);
+  --button-bg: rgba(255, 255, 255, 0.95);
+  --button-hover-bg: rgba(241, 245, 249, 0.95);
+  --button-hover-border: rgba(100, 116, 139, 0.6);
+  --active-color: #0369a1;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: radial-gradient(ellipse at 30% 20%, var(--bg-radial-inner) 0%, var(--bg-radial-mid) 50%, var(--bg-radial-outer) 100%);
+  font-family: 'Inter', -apple-system, "PingFang SC", "Microsoft YaHei", "Noto Sans SC", sans-serif;
+  color: var(--text-primary);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+#container { width: 100vw; height: 100vh; position: relative; }
+
+svg { width: 100%; height: 100%; cursor: grab; }
+svg:active { cursor: grabbing; }
+
+html[data-lang="en"] .lz { display: none !important; }
+html:not([data-lang="en"]) .le { display: none !important; }
+
+#title-card {
+  position: absolute;
+  top: 28px;
+  left: 32px;
+  pointer-events: none;
+  z-index: 10;
+  max-width: 520px;
+}
+
+#title-card h1 {
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text-primary);
+  line-height: 1.2;
+}
+
+#title-card .subtitle {
+  font-size: 13.5px;
+  color: var(--text-secondary);
+  margin-top: 10px;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
+}
+
+/* ========== 图例面板：可折叠 ========== */
+.panel {
+  position: absolute;
+  right: 28px;
+  top: 88px;
+  width: 270px;
+  max-height: calc(100vh - 120px);
+  overflow-y: auto;
+  background: var(--panel-bg);
+  backdrop-filter: blur(14px);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  z-index: 10;
+  transition: background 0.3s ease, border-color 0.3s ease, transform 0.3s ease, opacity 0.3s ease, max-height 0.3s ease;
+}
+
+.panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 18px;
+  cursor: pointer;
+  user-select: none;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.3s ease;
+}
+
+.panel.collapsed .panel-header {
+  border-bottom-color: transparent;
+}
+
+.panel:not(.collapsed) .panel-header {
+  border-bottom-color: var(--panel-divider);
+}
+
+.panel-header-title {
+  font-size: 12px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-primary);
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.panel-header-icon {
+  width: 16px;
+  height: 16px;
+  stroke: var(--text-primary);
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+.panel.collapsed .panel-header-icon {
+  transform: rotate(-90deg);
+}
+
+.panel-body {
+  padding: 16px 20px 18px 20px;
+  max-height: 2000px;
+  overflow: hidden;
+  transition: max-height 0.4s ease, padding 0.3s ease, opacity 0.25s ease;
+}
+
+.panel.collapsed .panel-body {
+  max-height: 0;
+  padding-top: 0;
+  padding-bottom: 0;
+  opacity: 0;
+}
+
+.panel h3 {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  margin-bottom: 12px;
+  font-weight: 600;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 8px;
+  font-size: 12.5px;
+}
+
+.legend-dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.legend-item span.cn {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.legend-item span.en {
+  color: var(--text-secondary);
+  margin-left: auto;
+  font-size: 11.5px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+.hub-info {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--panel-divider);
+}
+
+.hub-info-title {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-secondary);
+  margin-bottom: 10px;
+  font-weight: 600;
+}
+
+.hub-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 12.5px;
+  margin-bottom: 7px;
+  gap: 8px;
+}
+
+.hub-name {
+  color: var(--text-primary);
+  font-weight: 500;
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1;
+}
+
+.hub-val {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+/* ========== 详情面板 ========== */
+#detail-panel {
+  position: absolute;
+  left: 32px;
+  bottom: 32px;
+  width: 340px;
+  background: var(--panel-bg);
+  backdrop-filter: blur(18px);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  padding: 22px 24px;
+  z-index: 10;
+  opacity: 0;
+  transform: translateY(12px);
+  transition: opacity 0.3s ease, transform 0.3s ease, background 0.3s ease, border-color 0.3s ease;
+  pointer-events: none;
+}
+
+#detail-panel.visible {
+  opacity: 1;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+#detail-panel h2 {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 17px;
+  font-weight: 700;
+  margin-bottom: 4px;
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+#detail-panel .meta {
+  font-size: 11.5px;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 14px;
+  font-weight: 600;
+}
+
+#detail-panel .desc {
+  font-size: 13px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 14px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid var(--panel-divider);
+}
+
+#detail-panel .stat-row {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  margin-bottom: 7px;
+}
+
+#detail-panel .stat-row .label {
+  color: var(--text-secondary);
+}
+
+#detail-panel .stat-row .value {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+#detail-panel .stat-tip {
+  font-size: 12px;
+  color: var(--text-secondary);
+  margin-top: 10px;
+  line-height: 1.55;
+  padding: 9px 11px;
+  background: var(--tip-bg);
+  border-left: 2px solid var(--accent-tool);
+  border-radius: 0 6px 6px 0;
+}
+
+/* ========== 阅读指引面板（可折叠） ========== */
+#info-footer {
+  position: absolute;
+  left: 32px;
+  bottom: 32px;
+  width: 340px;
+  background: var(--panel-bg);
+  backdrop-filter: blur(18px);
+  border: 1px solid var(--panel-border);
+  border-radius: 16px;
+  padding: 18px 22px;
+  z-index: 10;
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+#info-footer .guide-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  cursor: pointer;
+  user-select: none;
+  margin-bottom: 10px;
+}
+
+#info-footer.collapsed .guide-toggle {
+  margin-bottom: 0;
+}
+
+#info-footer .guide-toggle h4 {
+  font-size: 13.5px;
+  color: var(--text-primary);
+  font-weight: 600;
+  margin-bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.guide-toggle-icon {
+  width: 16px;
+  height: 16px;
+  stroke: var(--text-primary);
+  transition: transform 0.3s ease;
+  flex-shrink: 0;
+}
+
+#info-footer.collapsed .guide-toggle-icon {
+  transform: rotate(-90deg);
+}
+
+.guide-content {
+  max-height: 300px;
+  overflow: hidden;
+  transition: max-height 0.4s ease, opacity 0.25s ease, padding-top 0.3s ease;
+}
+
+#info-footer.collapsed .guide-content {
+  max-height: 0;
+  opacity: 0;
+  padding-top: 0;
+}
+
+.guide-content p {
+  font-size: 12.5px;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: 6px;
+}
+
+.guide-content .term {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 12px;
+  margin-top: 4px;
+}
+
+.guide-content .term-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--accent-tool);
+}
+
+.guide-content .term-text {
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.cluster-label {
+  font-family: 'Inter', -apple-system, "PingFang SC", sans-serif;
+  font-size: 2.4rem;
+  font-weight: 700;
+  fill: var(--cluster-label-color);
+  pointer-events: none;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  letter-spacing: 0.04em;
+}
+
+.cluster-label-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 1rem;
+  font-weight: 500;
+  fill: var(--cluster-sub-color);
+  pointer-events: none;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  letter-spacing: 0.08em;
+}
+
+.link {
+  stroke: var(--line-default);
+  transition: stroke 0.25s ease, stroke-width 0.25s ease, stroke-opacity 0.25s ease;
+}
+
+.link.highlight {
+  stroke: var(--line-highlight);
+  stroke-opacity: 0.9 !important;
+}
+
+.link.dim { stroke-opacity: 0.04 !important; }
+.link.cycle { stroke: var(--accent-cycle); stroke-dasharray: 5 4; }
+
+.node-circle {
+  stroke: var(--node-stroke);
+  stroke-width: 1px;
+  transition: all 0.25s ease;
+  cursor: pointer;
+}
+
+.node-circle:hover {
+  stroke: var(--node-stroke-hover);
+  stroke-width: 2px;
+}
+
+.node-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  fill: var(--text-primary);
+  pointer-events: none;
+  text-shadow: 0 1px 4px var(--node-label-shadow), 0 0 2px var(--node-label-shadow);
+  dominant-baseline: middle;
+}
+
+.node-label.hub { font-weight: 700; font-size: 13.5px; }
+.node-group.dim { opacity: 0.18; }
+.node-group.highlight { opacity: 1; }
+
+.glow-circle { pointer-events: none; fill: none; stroke-width: 0; }
+
+.warning-icon { pointer-events: none; opacity: 0; transition: opacity 0.25s ease; }
+.warning-icon.visible { opacity: 1; }
+
+/* 顶部控制条 */
+.top-controls {
+  position: absolute;
+  top: 28px;
+  right: 28px;
+  display: flex;
+  gap: 6px;
+  z-index: 20;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  padding: 5px 7px;
+  backdrop-filter: blur(10px);
+  transition: background 0.3s ease, border-color 0.3s ease;
+}
+
+.cb {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 11.5px;
+  font-weight: 500;
+  padding: 5px 10px;
+  border-radius: 6px;
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cb:hover { color: var(--text-primary); border-color: var(--panel-border); }
+.cb.active { border-color: var(--active-color); color: var(--text-primary); }
+.cdiv { width: 1px; background: var(--panel-divider); margin: 2px; }
+
+.zoom-controls {
+  position: absolute;
+  bottom: 28px;
+  right: 28px;
+  display: flex;
+  gap: 10px;
+  z-index: 10;
+}
+
+.zoom-controls button {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  border: 1px solid var(--panel-border);
+  background: var(--button-bg);
+  color: var(--text-primary);
+  font-size: 17px;
+  cursor: pointer;
+  backdrop-filter: blur(10px);
+  transition: all 0.2s ease;
+}
+
+.zoom-controls button:hover {
+  background: var(--button-hover-bg);
+  border-color: var(--button-hover-border);
+}
+
+.hidden { display: none; }
+
+/* ========== 响应式：移动端图例默认折叠、标题和 footer 收缩 ========== */
+@media (max-width: 900px) {
+  #title-card {
+    top: 16px;
+    left: 16px;
+    right: 16px;
+    max-width: calc(100vw - 32px);
+  }
+  #title-card h1 { font-size: 1.4rem; }
+  #title-card .subtitle { font-size: 12px; margin-top: 6px; }
+
+  .top-controls {
+    top: auto;
+    bottom: 16px;
+    right: 16px;
+    left: auto;
+    padding: 4px 5px;
+  }
+  .cb { padding: 5px 8px; font-size: 11px; }
+
+  .panel {
+    width: calc(100vw - 32px);
+    max-width: 320px;
+    right: 16px;
+    top: auto;
+    bottom: 76px;
+    max-height: 60vh;
+  }
+
+  #detail-panel, #info-footer {
+    left: 16px;
+    right: 16px;
+    bottom: 76px;
+    width: calc(100vw - 32px);
+    max-width: 400px;
+    padding: 14px 16px;
+  }
+
+  #info-footer .guide-toggle h4 { font-size: 13px; }
+  .guide-content p { font-size: 12px; }
+
+  .zoom-controls {
+    bottom: 16px;
+    right: 16px;
+  }
+  .zoom-controls button {
+    width: 34px;
+    height: 34px;
+    font-size: 16px;
+  }
+
+  .cluster-label { font-size: 1.6rem; }
+  .cluster-label-sub { font-size: 0.8rem; }
+}
+
+@media (max-width: 560px) {
+  #title-card h1 { font-size: 1.2rem; }
+  #title-card .subtitle { font-size: 11.5px; }
+  .panel { max-height: 50vh; }
+  .legend-item { font-size: 12px; }
+  .legend-item span.en { font-size: 11px; }
+}
+</style>
+</head>
+<body>
+<div id="container">
+  <div class="top-controls">
+    <button class="cb active" data-theme-btn="dark" onclick="setTheme('dark')">Dark</button>
+    <button class="cb" data-theme-btn="warm" onclick="setTheme('warm')">Warm</button>
+    <button class="cb" data-theme-btn="light" onclick="setTheme('light')">Light</button>
+    <div class="cdiv"></div>
+    <button class="cb" id="lang-btn" onclick="toggleLang()"><span class="lz">EN</span><span class="le">中</span></button>
+  </div>
+
+  <div id="title-card">
+    <h1>
+      <span class="lz">模块依赖网络图</span>
+      <span class="le">Module Dependency Network</span>
+    </h1>
+    <div class="subtitle">
+      <span class="lz">
+        每个圆点 = Claude Code 2.1.88 源码里的一个文件。连线 = import（A 用了 B 的功能）。<br>
+        圆越大 = 被越多文件依赖，就是系统的"交通枢纽"。拖拽可移动，悬浮可看详情。
+      </span>
+      <span class="le">
+        Each dot = one source file in Claude Code 2.1.88. Lines = import edges (A uses B).<br>
+        Bigger circle = more dependents (a traffic hub). Drag to move, hover for details.
+      </span>
+    </div>
+  </div>
+
+  <div class="panel" id="legend-panel">
+    <div class="panel-header" id="panel-header" onclick="toggleLegend()">
+      <span class="panel-header-title">
+        <svg class="panel-header-icon" viewBox="0 0 16 16" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="4 6 8 10 12 6"></polyline>
+        </svg>
+        <span class="lz">图例 · 核心枢纽</span>
+        <span class="le">Legend · Hubs</span>
+      </span>
+    </div>
+    <div class="panel-body">
+      <h3><span class="lz">子系统图例</span><span class="le">Legend</span></h3>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent-tool)"></div><span class="cn"><span class="lz">工具层</span><span class="le">Tools</span></span><span class="en"><span class="lz">src/tools/</span><span class="le">src/tools/</span></span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent-api)"></div><span class="cn"><span class="lz">查询核心</span><span class="le">Query Core</span></span><span class="en"><span class="lz">query.ts</span><span class="le">query.ts</span></span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent-cmd)"></div><span class="cn"><span class="lz">命令层</span><span class="le">Commands</span></span><span class="en"><span class="lz">commands/</span><span class="le">commands/</span></span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent-mcp)"></div><span class="cn"><span class="lz">MCP 服务</span><span class="le">MCP</span></span><span class="en"><span class="lz">services/mcp/</span><span class="le">services/mcp/</span></span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent-bridge)"></div><span class="cn"><span class="lz">Bridge 桥</span><span class="le">Bridge</span></span><span class="en"><span class="lz">src/bridge/</span><span class="le">src/bridge/</span></span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent-perm)"></div><span class="cn"><span class="lz">权限</span><span class="le">Permission</span></span><span class="en"><span class="lz">permissions</span><span class="le">permissions</span></span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent-config)"></div><span class="cn"><span class="lz">配置</span><span class="le">Config</span></span><span class="en"><span class="lz">bridgeConfig</span><span class="le">bridgeConfig</span></span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent-utils)"></div><span class="cn"><span class="lz">工具类</span><span class="le">Utils</span></span><span class="en"><span class="lz">src/utils/</span><span class="le">src/utils/</span></span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:var(--accent-tele)"></div><span class="cn"><span class="lz">遥测</span><span class="le">Telemetry</span></span><span class="en"><span class="lz">telemetry</span><span class="le">telemetry</span></span></div>
+      <div class="legend-item"><div class="legend-dot" style="background:transparent;border:1px dashed var(--accent-cycle);"></div><span class="cn"><span class="lz">循环依赖</span><span class="le">Cycle</span></span><span class="en"><span class="lz">warn</span><span class="le">warn</span></span></div>
+
+      <div class="hub-info">
+        <div class="hub-info-title"><span class="lz">核心枢纽 · Top 5</span><span class="le">Top 5 Hubs</span></div>
+        <div class="hub-row"><span class="hub-name">Tool.ts</span><span class="hub-val"><span class="lz">入度 42</span><span class="le">in-deg 42</span></span></div>
+        <div class="hub-row"><span class="hub-name">bridgeConfig</span><span class="hub-val"><span class="lz">入度 22</span><span class="le">in-deg 22</span></span></div>
+        <div class="hub-row"><span class="hub-name">permissions</span><span class="hub-val"><span class="lz">入度 14</span><span class="le">in-deg 14</span></span></div>
+        <div class="hub-row"><span class="hub-name">QueryEngine</span><span class="hub-val"><span class="lz">入度 12</span><span class="le">in-deg 12</span></span></div>
+        <div class="hub-row"><span class="hub-name">api/client</span><span class="hub-val"><span class="lz">入度 11</span><span class="le">in-deg 11</span></span></div>
+      </div>
+    </div>
+  </div>
+
+  <div id="detail-panel" class="hidden">
+    <h2 id="dp-name">Tool.ts</h2>
+    <div class="meta" id="dp-group"></div>
+    <div class="desc" id="dp-desc"></div>
+    <div class="stat-row">
+      <span class="label"><span class="lz">入度（被依赖）</span><span class="le">In-degree (dependents)</span></span>
+      <span class="value" id="dp-in">0</span>
+    </div>
+    <div class="stat-row">
+      <span class="label"><span class="lz">出度（依赖数）</span><span class="le">Out-degree (deps)</span></span>
+      <span class="value" id="dp-out">0</span>
+    </div>
+    <div class="stat-row">
+      <span class="label"><span class="lz">重要性</span><span class="le">Weight</span></span>
+      <span class="value" id="dp-weight">-</span>
+    </div>
+    <div class="stat-tip">
+      <span class="lz"><strong>入度</strong>：有多少文件 import 了它。<strong>出度</strong>：它 import 了多少文件。圆越大 = 入度越高 = 越核心。</span>
+      <span class="le"><strong>In-degree</strong>: how many files import this. <strong>Out-degree</strong>: how many files it imports. Bigger circle = higher in-degree = more critical.</span>
+    </div>
+  </div>
+
+  <div id="info-footer">
+    <div class="guide-toggle" onclick="toggleGuide()">
+      <h4>
+        <span class="lz">如何阅读这张图</span>
+        <span class="le">How to read this chart</span>
+      </h4>
+      <svg class="guide-toggle-icon" viewBox="0 0 16 16" fill="none" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <polyline points="4 6 8 10 12 6"></polyline>
+      </svg>
+    </div>
+    <div class="guide-content">
+      <p>
+        <span class="lz">圆点大小 = 被引用次数（入度），越大越核心。连线 = import 依赖。红色虚线 = 循环依赖。</span>
+        <span class="le">Circle size = in-degree (dependents). Lines = imports. Red dashed = circular deps.</span>
+      </p>
+      <div style="margin-top:6px;">
+        <span class="term"><span class="term-dot" style="background:var(--accent-tool)"></span><span class="term-text"><span class="lz">入度 = 被依赖数</span><span class="le">in-deg = dependents</span></span></span>
+        <span class="term"><span class="term-dot" style="background:var(--accent-cmd)"></span><span class="term-text"><span class="lz">出度 = 依赖数</span><span class="le">out-deg = deps</span></span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="zoom-controls">
+    <button id="zoom-in" title="Zoom In">+</button>
+    <button id="zoom-out" title="Zoom Out">−</button>
+    <button id="reset" title="Reset">⟲</button>
+  </div>
+</div>
+
+<script src="../../../js/lib/d3.v7.min.js"></script>
+<script>
+const width = window.innerWidth;
+const height = window.innerHeight;
+
+function setTheme(t) {
+  try { localStorage.setItem('vtheme', t); } catch(e) {}
+  document.documentElement.setAttribute('data-theme', t);
+  document.querySelectorAll('[data-theme-btn]').forEach(b => {
+    b.classList.toggle('active', b.getAttribute('data-theme-btn') === t);
+  });
+}
+function toggleLang() {
+  const h = document.documentElement;
+  const next = h.getAttribute('data-lang') === 'en' ? 'zh' : 'en';
+  try { localStorage.setItem('vlang', next); } catch(e) {}
+  h.setAttribute('data-lang', next);
+  h.lang = next;
+}
+
+// 图例面板折叠切换
+function toggleLegend() {
+  const panel = document.getElementById('legend-panel');
+  panel.classList.toggle('collapsed');
+  try { localStorage.setItem('vlegend', panel.classList.contains('collapsed') ? 'collapsed' : 'open'); } catch(e) {}
+}
+
+// 阅读指引折叠切换
+function toggleGuide() {
+  const footer = document.getElementById('info-footer');
+  footer.classList.toggle('collapsed');
+  try { localStorage.setItem('vguide', footer.classList.contains('collapsed') ? 'collapsed' : 'open'); } catch(e) {}
+}
+
+try {
+  var _t = localStorage.getItem('vtheme');
+  if (_t === 'dark' || _t === 'warm' || _t === 'light') setTheme(_t);
+  var _l = localStorage.getItem('vlang');
+  if (_l === 'en') { document.documentElement.setAttribute('data-lang', 'en'); document.documentElement.lang = 'en'; }
+} catch(e) {}
+
+// 默认折叠策略：移动端自动折叠，桌面展开；用户偏好优先
+(function initLegendState(){
+  var saved = null;
+  try { saved = localStorage.getItem('vlegend'); } catch(e) {}
+  var panel = document.getElementById('legend-panel');
+  if (saved === 'collapsed') {
+    panel.classList.add('collapsed');
+  } else if (saved === 'open') {
+    panel.classList.remove('collapsed');
+  } else {
+    // 无用户偏好：移动端默认收起
+    if (window.innerWidth <= 900) panel.classList.add('collapsed');
+  }
+})();
+
+// 阅读指引折叠状态恢复
+(function initGuideState(){
+  var saved = null;
+  try { saved = localStorage.getItem('vguide'); } catch(e) {}
+  var footer = document.getElementById('info-footer');
+  if (saved === 'collapsed') {
+    footer.classList.add('collapsed');
+  }
+})();
+
+const colorMap = {
+  tool:   'var(--accent-tool)',
+  core:   'var(--accent-api)',
+  cmd:    'var(--accent-cmd)',
+  mcp:    'var(--accent-mcp)',
+  bridge: 'var(--accent-bridge)',
+  perm:   'var(--accent-perm)',
+  config: 'var(--accent-config)',
+  utils:  'var(--accent-utils)',
+  tele:   'var(--accent-tele)'
+};
+
+const groupNamesZh = {
+  tool:   '工具层 / Tools',
+  core:   '查询核心 / Query Core',
+  cmd:    '命令层 / Commands',
+  mcp:    'MCP 服务 / MCP',
+  bridge: 'Bridge 桥 / Bridge',
+  perm:   '权限系统 / Permission',
+  config: '配置层 / Config',
+  utils:  '工具函数 / Utils',
+  tele:   '遥测 / Telemetry'
+};
+const groupNamesEn = {
+  tool:   'Tools',
+  core:   'Query Core',
+  cmd:    'Commands',
+  mcp:    'MCP Service',
+  bridge: 'Bridge',
+  perm:   'Permission',
+  config: 'Config',
+  utils:  'Utils',
+  tele:   'Telemetry'
+};
+
+const nodeDescZh = {
+  'Tool.ts': '所有工具的基类/接口定义，被 src/tools/ 下 40+ 工具实现，是系统最大枢纽。',
+  'query.ts': '顶层查询函数 query()，是 REPL 发起 turn 的入口。',
+  'QueryEngine.ts': '查询引擎实现，协调 Agent Loop 的一次 turn。',
+  'toolExecutor.ts': '工具执行器，在权限校验后调用具体 tool，处理 UserAbort、超时、并发。',
+  'REPL.tsx': 'REPL 主界面（screens），管理输入输出、历史、键盘绑定。',
+  'commands.ts': '内建 slash 命令注册表（/clear, /compact 等）。',
+  'tools.ts': 'tools 数组聚合入口，导出所有可用工具。',
+  'tools/BashTool': '执行 shell 命令的工具，有持久化 shell 会话。',
+  'tools/FileReadTool': '读文件工具，支持 image/PDF/notebook。',
+  'tools/FileEditTool': 'old_string 精确替换编辑工具。',
+  'tools/FileWriteTool': '整文件覆盖写入工具。',
+  'tools/GrepTool': 'ripgrep 内容搜索。',
+  'tools/GlobTool': '文件名模式匹配。',
+  'tools/AgentTool': '启动子 Agent（Task）委托复杂任务。',
+  'tools/TodoWriteTool': '任务列表管理（Todo）。',
+  'tools/SkillTool': '执行 Skill 的入口。',
+  'tools/MCPTool': '调用外部 MCP 工具的通用包装。',
+  'tools/WebFetchTool': '抓取网页内容。',
+  'tools/WebSearchTool': 'Web 搜索。',
+  'tools/NotebookEditTool': 'Jupyter notebook 单元格编辑。',
+  'tools/REPLTool': '执行 JS/TS REPL 代码。',
+  'tools/LSPTool': 'LSP 语言服务集成。',
+  'tools/ScheduleCronTool': 'Cron 定时任务。',
+  'tools/SleepTool': '延时等待工具。',
+  'tools/PowerShellTool': 'PowerShell 命令执行。',
+  'tools/AskUserQuestionTool': '向用户提问。',
+  'tools/BriefTool': '生成任务 brief。',
+  'tools/ConfigTool': '配置读写工具。',
+  'tools/EnterPlanModeTool': '进入计划模式。',
+  'tools/ExitPlanModeTool': '退出计划模式。',
+  'tools/EnterWorktreeTool': '进入 git worktree。',
+  'tools/ExitWorktreeTool': '退出 git worktree。',
+  'tools/TaskCreateTool': '创建后台任务。',
+  'tools/TaskGetTool': '查看任务。',
+  'tools/TaskListTool': '任务列表。',
+  'tools/TaskOutputTool': '读取任务输出。',
+  'tools/TaskStopTool': '停止任务。',
+  'tools/TaskUpdateTool': '更新任务状态。',
+  'tools/ToolSearchTool': '搜索可用工具。',
+  'tools/SyntheticOutputTool': '合成工具输出，包装非结构化数据为统一格式。',
+  'tools/SendMessageTool': '向外发送消息。',
+  'tools/ListMcpResourcesTool': '列出 MCP 资源。',
+  'tools/ReadMcpResourceTool': '读取 MCP 资源。',
+  'tools/McpAuthTool': 'MCP 鉴权。',
+  'tools/RemoteTriggerTool': '触发远程 Agent。',
+  'tools/TeamCreateTool': '创建团队/组织。',
+  'tools/TeamDeleteTool': '删除团队/组织。',
+  'services/api/client': 'Anthropic API HTTP 客户端主入口。',
+  'services/api/claude': 'claude() 调用包装，流式响应处理。',
+  'services/api/withRetry': '请求重试策略（指数退避）。',
+  'services/api/errors': 'API 错误类型与归一化。',
+  'services/api/usage': 'token 用量统计。',
+  'services/mcp/client': 'MCP 客户端核心实现。',
+  'services/mcp/MCPConnectionManager': 'MCP 连接生命周期管理。',
+  'services/mcp/config': 'MCP server 配置加载。',
+  'services/mcp/auth': 'MCP OAuth/Header 鉴权。',
+  'services/mcp/InProcessTransport': '进程内 MCP 传输。',
+  'services/mcp/SdkControlTransport': 'SDK 控制面传输。',
+  'bridge/bridgeMain': 'Bridge 总装配器，cloud/ide 模式切换。',
+  'bridge/bridgeConfig': 'Bridge 全局配置，被 20+ 模块引用。',
+  'bridge/bridgeApi': 'Bridge API 层。',
+  'bridge/replBridge': 'REPL 跨进程桥接。',
+  'bridge/bridgeMessaging': 'Bridge 消息传递。',
+  'bridge/bridgePermissionCallbacks': '权限回调桥。',
+  'bridge/sessionRunner': '会话运行器。',
+  'bridge/inboundMessages': '入站消息处理。',
+  'utils/permissions': '权限校验核心，toolExecutor 调用前必经。',
+  'hooks/toolPermission': '工具权限 React hook（UI 侧）。',
+  'components/permissions': '权限请求对话框集合（12+ 组件）。',
+  'utils/telemetry': '遥测采集（OTel/Statsig）。',
+  'commands/index': 'slash 命令聚合导出。',
+  'commands/clear': '/clear 命令。',
+  'commands/compact': '/compact 命令。',
+  'commands/config': '/config 命令。',
+  'commands/agents': '/agents 命令。',
+  'commands/commit': '/commit 命令。',
+  'commands/brief': '/brief 命令。',
+  'utils/logger': '统一日志工具。',
+  'utils/fs': '文件系统安全封装。',
+  'utils/path': '路径解析工具。',
+  'utils/errors': '错误基类与工具函数。'
+};
+
+const nodeDescEn = {
+  'Tool.ts': 'Base class / interface for all tools. Implemented by 40+ tools under src/tools/. Biggest hub.',
+  'query.ts': 'Top-level query() entry — REPL calls this to start a turn.',
+  'QueryEngine.ts': 'Query engine impl — orchestrates one turn of the Agent Loop.',
+  'toolExecutor.ts': 'Tool executor — runs a tool after permission check, handles abort / timeout / concurrency.',
+  'REPL.tsx': 'Main REPL UI (screens/) — input, output, history, keybindings.',
+  'commands.ts': 'Built-in slash command registry (/clear, /compact...).',
+  'tools.ts': 'Aggregate tools array — exports every available tool.',
+  'tools/BashTool': 'Shell command tool with a persistent session.',
+  'tools/FileReadTool': 'File read tool (image / PDF / notebook supported).',
+  'tools/FileEditTool': 'Exact-match old_string edit tool.',
+  'tools/FileWriteTool': 'Whole-file overwrite tool.',
+  'tools/GrepTool': 'ripgrep content search.',
+  'tools/GlobTool': 'Filename glob matching.',
+  'tools/AgentTool': 'Spawn a sub-agent (Task) for delegated work.',
+  'tools/TodoWriteTool': 'Todo list manager.',
+  'tools/SkillTool': 'Skill execution entry.',
+  'tools/MCPTool': 'Generic wrapper for external MCP tools.',
+  'tools/WebFetchTool': 'Fetch a web page.',
+  'tools/WebSearchTool': 'Web search.',
+  'tools/NotebookEditTool': 'Jupyter notebook cell edit.',
+  'tools/REPLTool': 'JS/TS REPL code execution.',
+  'tools/LSPTool': 'LSP language service integration.',
+  'tools/ScheduleCronTool': 'Cron-scheduled tasks.',
+  'tools/SleepTool': 'Delay / wait tool.',
+  'tools/PowerShellTool': 'PowerShell command execution.',
+  'tools/AskUserQuestionTool': 'Ask the user a question.',
+  'tools/BriefTool': 'Generate a task brief.',
+  'tools/ConfigTool': 'Config read/write tool.',
+  'tools/EnterPlanModeTool': 'Enter Plan Mode.',
+  'tools/ExitPlanModeTool': 'Exit Plan Mode.',
+  'tools/EnterWorktreeTool': 'Enter a git worktree.',
+  'tools/ExitWorktreeTool': 'Exit a git worktree.',
+  'tools/TaskCreateTool': 'Create a background task.',
+  'tools/TaskGetTool': 'Get a task.',
+  'tools/TaskListTool': 'List tasks.',
+  'tools/TaskOutputTool': 'Read task output.',
+  'tools/TaskStopTool': 'Stop a task.',
+  'tools/TaskUpdateTool': 'Update task status.',
+  'tools/ToolSearchTool': 'Search available tools.',
+  'tools/SyntheticOutputTool': 'Synthesize tool output — wraps unstructured data into a unified format.',
+  'tools/SendMessageTool': 'Send an outbound message.',
+  'tools/ListMcpResourcesTool': 'List MCP resources.',
+  'tools/ReadMcpResourceTool': 'Read an MCP resource.',
+  'tools/McpAuthTool': 'MCP authentication.',
+  'tools/RemoteTriggerTool': 'Trigger a remote Agent.',
+  'tools/TeamCreateTool': 'Create a team / organization.',
+  'tools/TeamDeleteTool': 'Delete a team / organization.',
+  'services/api/client': 'Anthropic API HTTP client main entry.',
+  'services/api/claude': 'claude() call wrapper with streaming.',
+  'services/api/withRetry': 'Retry policy with exponential backoff.',
+  'services/api/errors': 'API error types and normalization.',
+  'services/api/usage': 'Token usage accounting.',
+  'services/mcp/client': 'MCP client core.',
+  'services/mcp/MCPConnectionManager': 'MCP connection lifecycle manager.',
+  'services/mcp/config': 'MCP server config loader.',
+  'services/mcp/auth': 'MCP OAuth / header auth.',
+  'services/mcp/InProcessTransport': 'In-process MCP transport.',
+  'services/mcp/SdkControlTransport': 'SDK control-plane transport.',
+  'bridge/bridgeMain': 'Bridge assembler — cloud / IDE mode switch.',
+  'bridge/bridgeConfig': 'Bridge global config. Referenced by 20+ modules.',
+  'bridge/bridgeApi': 'Bridge API layer.',
+  'bridge/replBridge': 'REPL cross-process bridge.',
+  'bridge/bridgeMessaging': 'Bridge message passing.',
+  'bridge/bridgePermissionCallbacks': 'Permission callback bridge.',
+  'bridge/sessionRunner': 'Session runner.',
+  'bridge/inboundMessages': 'Inbound message handler.',
+  'utils/permissions': 'Permission check core — every tool passes through before exec.',
+  'hooks/toolPermission': 'Tool permission React hook (UI side).',
+  'components/permissions': 'Permission request dialogs (12+ components).',
+  'utils/telemetry': 'Telemetry collector (OTel / Statsig).',
+  'commands/index': 'Slash commands aggregate export.',
+  'commands/clear': '/clear command.',
+  'commands/compact': '/compact command.',
+  'commands/config': '/config command.',
+  'commands/agents': '/agents command.',
+  'commands/commit': '/commit command.',
+  'commands/brief': '/brief command.',
+  'utils/logger': 'Unified logger.',
+  'utils/fs': 'Safe filesystem wrapper.',
+  'utils/path': 'Path resolution utils.',
+  'utils/errors': 'Error base class and utils.'
+};
+
+const clusterCenters = {
+  tool:   { x: width * 0.28, y: height * 0.32 },
+  core:   { x: width * 0.5,  y: height * 0.46 },
+  cmd:    { x: width * 0.78, y: height * 0.28 },
+  mcp:    { x: width * 0.78, y: height * 0.62 },
+  bridge: { x: width * 0.5,  y: height * 0.72 },
+  perm:   { x: width * 0.22, y: height * 0.68 },
+  config: { x: width * 0.12, y: height * 0.5 },
+  utils:  { x: width * 0.5,  y: height * 0.88 },
+  tele:   { x: width * 0.88, y: height * 0.85 }
+};
+
+const clusterLabelsZh = [
+  { text: '工具', sub: 'TOOLS',   key: 'tool' },
+  { text: '核心', sub: 'CORE',    key: 'core' },
+  { text: '命令', sub: 'CMD',     key: 'cmd' },
+  { text: 'MCP',  sub: 'MCP',     key: 'mcp' },
+  { text: '桥',   sub: 'BRIDGE',  key: 'bridge' },
+  { text: '权限', sub: 'PERM',    key: 'perm' },
+  { text: '配置', sub: 'CONFIG',  key: 'config' },
+  { text: '工具类', sub: 'UTILS', key: 'utils' },
+  { text: '遥测', sub: 'TELE',    key: 'tele' }
+];
+const clusterLabelsEn = [
+  { text: 'TOOLS',   sub: 'src/tools/',       key: 'tool' },
+  { text: 'CORE',    sub: 'query',            key: 'core' },
+  { text: 'CMD',     sub: 'src/commands/',    key: 'cmd' },
+  { text: 'MCP',     sub: 'services/mcp/',    key: 'mcp' },
+  { text: 'BRIDGE',  sub: 'src/bridge/',      key: 'bridge' },
+  { text: 'PERM',    sub: 'permissions',      key: 'perm' },
+  { text: 'CONFIG',  sub: 'bridgeConfig',     key: 'config' },
+  { text: 'UTILS',   sub: 'src/utils/',       key: 'utils' },
+  { text: 'TELE',    sub: 'telemetry',        key: 'tele' }
+];
+
+const nodes = [
+  { id: 'Tool.ts',          group: 'tool',   inDegree: 42 },
+  { id: 'query.ts',         group: 'core',   inDegree: 6  },
+  { id: 'QueryEngine.ts',   group: 'core',   inDegree: 12 },
+  { id: 'toolExecutor.ts',  group: 'core',   inDegree: 8  },
+  { id: 'REPL.tsx',         group: 'core',   inDegree: 3  },
+  { id: 'commands.ts',      group: 'cmd',    inDegree: 5  },
+  { id: 'tools.ts',         group: 'tool',   inDegree: 4  },
+
+  { id: 'tools/BashTool',              group: 'tool', inDegree: 2 },
+  { id: 'tools/FileReadTool',          group: 'tool', inDegree: 2 },
+  { id: 'tools/FileEditTool',          group: 'tool', inDegree: 2 },
+  { id: 'tools/FileWriteTool',         group: 'tool', inDegree: 2 },
+  { id: 'tools/GrepTool',              group: 'tool', inDegree: 2 },
+  { id: 'tools/GlobTool',              group: 'tool', inDegree: 2 },
+  { id: 'tools/AgentTool',             group: 'tool', inDegree: 3 },
+  { id: 'tools/TodoWriteTool',         group: 'tool', inDegree: 2 },
+  { id: 'tools/SkillTool',             group: 'tool', inDegree: 2 },
+  { id: 'tools/MCPTool',               group: 'tool', inDegree: 3 },
+  { id: 'tools/WebFetchTool',          group: 'tool', inDegree: 2 },
+  { id: 'tools/WebSearchTool',         group: 'tool', inDegree: 2 },
+  { id: 'tools/NotebookEditTool',      group: 'tool', inDegree: 2 },
+  { id: 'tools/REPLTool',              group: 'tool', inDegree: 2 },
+  { id: 'tools/LSPTool',               group: 'tool', inDegree: 2 },
+  { id: 'tools/ScheduleCronTool',      group: 'tool', inDegree: 2 },
+  { id: 'tools/SleepTool',             group: 'tool', inDegree: 1 },
+  { id: 'tools/PowerShellTool',        group: 'tool', inDegree: 2 },
+  { id: 'tools/AskUserQuestionTool',   group: 'tool', inDegree: 2 },
+  { id: 'tools/BriefTool',             group: 'tool', inDegree: 2 },
+  { id: 'tools/ConfigTool',            group: 'tool', inDegree: 2 },
+  { id: 'tools/EnterPlanModeTool',     group: 'tool', inDegree: 2 },
+  { id: 'tools/ExitPlanModeTool',      group: 'tool', inDegree: 2 },
+  { id: 'tools/EnterWorktreeTool',     group: 'tool', inDegree: 1 },
+  { id: 'tools/ExitWorktreeTool',      group: 'tool', inDegree: 1 },
+  { id: 'tools/TaskCreateTool',        group: 'tool', inDegree: 2 },
+  { id: 'tools/TaskGetTool',           group: 'tool', inDegree: 1 },
+  { id: 'tools/TaskListTool',          group: 'tool', inDegree: 1 },
+  { id: 'tools/TaskOutputTool',        group: 'tool', inDegree: 1 },
+  { id: 'tools/TaskStopTool',          group: 'tool', inDegree: 1 },
+  { id: 'tools/TaskUpdateTool',        group: 'tool', inDegree: 1 },
+  { id: 'tools/ToolSearchTool',        group: 'tool', inDegree: 2 },
+  { id: 'tools/SendMessageTool',       group: 'tool', inDegree: 1 },
+  { id: 'tools/ListMcpResourcesTool',  group: 'tool', inDegree: 1 },
+  { id: 'tools/ReadMcpResourceTool',   group: 'tool', inDegree: 1 },
+  { id: 'tools/McpAuthTool',           group: 'tool', inDegree: 1 },
+  { id: 'tools/RemoteTriggerTool',     group: 'tool', inDegree: 1 },
+  { id: 'tools/SyntheticOutputTool',   group: 'tool', inDegree: 1 },
+  { id: 'tools/TeamCreateTool',        group: 'tool', inDegree: 1 },
+  { id: 'tools/TeamDeleteTool',        group: 'tool', inDegree: 1 },
+
+  { id: 'services/api/client',    group: 'core', inDegree: 11 },
+  { id: 'services/api/claude',    group: 'core', inDegree: 7  },
+  { id: 'services/api/withRetry', group: 'core', inDegree: 6  },
+  { id: 'services/api/errors',    group: 'core', inDegree: 5  },
+  { id: 'services/api/usage',     group: 'core', inDegree: 4  },
+
+  { id: 'services/mcp/client',                group: 'mcp', inDegree: 6 },
+  { id: 'services/mcp/MCPConnectionManager',  group: 'mcp', inDegree: 5 },
+  { id: 'services/mcp/config',                group: 'mcp', inDegree: 4 },
+  { id: 'services/mcp/auth',                  group: 'mcp', inDegree: 3 },
+  { id: 'services/mcp/InProcessTransport',    group: 'mcp', inDegree: 2 },
+  { id: 'services/mcp/SdkControlTransport',   group: 'mcp', inDegree: 2 },
+
+  { id: 'bridge/bridgeMain',                 group: 'bridge', inDegree: 8  },
+  { id: 'bridge/bridgeConfig',               group: 'config', inDegree: 22 },
+  { id: 'bridge/bridgeApi',                  group: 'bridge', inDegree: 6  },
+  { id: 'bridge/replBridge',                 group: 'bridge', inDegree: 4  },
+  { id: 'bridge/bridgeMessaging',            group: 'bridge', inDegree: 5  },
+  { id: 'bridge/bridgePermissionCallbacks',  group: 'bridge', inDegree: 3  },
+  { id: 'bridge/sessionRunner',              group: 'bridge', inDegree: 4  },
+  { id: 'bridge/inboundMessages',            group: 'bridge', inDegree: 3  },
+
+  { id: 'utils/permissions',      group: 'perm', inDegree: 14 },
+  { id: 'hooks/toolPermission',   group: 'perm', inDegree: 6  },
+  { id: 'components/permissions', group: 'perm', inDegree: 4  },
+
+  { id: 'utils/telemetry', group: 'tele', inDegree: 9 },
+
+  { id: 'commands/index',   group: 'cmd', inDegree: 5 },
+  { id: 'commands/clear',   group: 'cmd', inDegree: 1 },
+  { id: 'commands/compact', group: 'cmd', inDegree: 1 },
+  { id: 'commands/config',  group: 'cmd', inDegree: 1 },
+  { id: 'commands/agents',  group: 'cmd', inDegree: 1 },
+  { id: 'commands/commit',  group: 'cmd', inDegree: 1 },
+  { id: 'commands/brief',   group: 'cmd', inDegree: 1 },
+
+  { id: 'utils/logger', group: 'utils', inDegree: 9 },
+  { id: 'utils/fs',     group: 'utils', inDegree: 6 },
+  { id: 'utils/path',   group: 'utils', inDegree: 5 },
+  { id: 'utils/errors', group: 'utils', inDegree: 5 }
+];
+
+const links = [];
+
+nodes.filter(n => n.id.startsWith('tools/')).forEach(n => {
+  links.push({ source: n.id, target: 'Tool.ts', weight: 1 });
+});
+
+nodes.filter(n => n.id.startsWith('tools/')).slice(0, 20).forEach(n => {
+  links.push({ source: 'tools.ts', target: n.id, weight: 1 });
+});
+links.push({ source: 'tools.ts', target: 'Tool.ts', weight: 1 });
+
+links.push({ source: 'REPL.tsx', target: 'query.ts', weight: 3 });
+links.push({ source: 'REPL.tsx', target: 'commands.ts', weight: 2 });
+links.push({ source: 'REPL.tsx', target: 'bridge/replBridge', weight: 2 });
+links.push({ source: 'query.ts', target: 'QueryEngine.ts', weight: 3 });
+links.push({ source: 'QueryEngine.ts', target: 'toolExecutor.ts', weight: 3 });
+links.push({ source: 'QueryEngine.ts', target: 'services/api/client', weight: 2 });
+links.push({ source: 'QueryEngine.ts', target: 'services/api/claude', weight: 2 });
+links.push({ source: 'QueryEngine.ts', target: 'bridge/bridgeMain', weight: 1 });
+links.push({ source: 'QueryEngine.ts', target: 'utils/telemetry', weight: 1 });
+links.push({ source: 'toolExecutor.ts', target: 'Tool.ts', weight: 2 });
+links.push({ source: 'toolExecutor.ts', target: 'tools.ts', weight: 2 });
+links.push({ source: 'toolExecutor.ts', target: 'utils/permissions', weight: 3 });
+links.push({ source: 'toolExecutor.ts', target: 'utils/telemetry', weight: 1 });
+links.push({ source: 'toolExecutor.ts', target: 'utils/errors', weight: 1 });
+
+['tools/BashTool','tools/FileWriteTool','tools/FileEditTool','tools/WebFetchTool','tools/NotebookEditTool','tools/PowerShellTool','tools/SkillTool','tools/AskUserQuestionTool','tools/MCPTool'].forEach(t => {
+  links.push({ source: t, target: 'utils/permissions', weight: 1 });
+});
+links.push({ source: 'hooks/toolPermission', target: 'utils/permissions', weight: 2 });
+links.push({ source: 'components/permissions', target: 'hooks/toolPermission', weight: 2 });
+links.push({ source: 'bridge/bridgePermissionCallbacks', target: 'utils/permissions', weight: 1 });
+links.push({ source: 'REPL.tsx', target: 'hooks/toolPermission', weight: 2 });
+links.push({ source: 'REPL.tsx', target: 'components/permissions', weight: 1 });
+
+links.push({ source: 'services/api/claude', target: 'services/api/client', weight: 2 });
+links.push({ source: 'services/api/client', target: 'services/api/withRetry', weight: 2 });
+links.push({ source: 'services/api/client', target: 'services/api/errors', weight: 1 });
+links.push({ source: 'services/api/client', target: 'services/api/usage', weight: 1 });
+links.push({ source: 'services/api/withRetry', target: 'services/api/errors', weight: 1 });
+links.push({ source: 'services/api/client', target: 'utils/telemetry', weight: 1 });
+
+links.push({ source: 'services/mcp/client', target: 'services/mcp/config', weight: 1 });
+links.push({ source: 'services/mcp/MCPConnectionManager', target: 'services/mcp/client', weight: 2 });
+links.push({ source: 'services/mcp/MCPConnectionManager', target: 'services/mcp/auth', weight: 1 });
+links.push({ source: 'services/mcp/client', target: 'services/mcp/InProcessTransport', weight: 1 });
+links.push({ source: 'services/mcp/client', target: 'services/mcp/SdkControlTransport', weight: 1 });
+links.push({ source: 'tools/MCPTool', target: 'services/mcp/client', weight: 2 });
+links.push({ source: 'tools/ListMcpResourcesTool', target: 'services/mcp/client', weight: 1 });
+links.push({ source: 'tools/ReadMcpResourceTool', target: 'services/mcp/client', weight: 1 });
+links.push({ source: 'tools/McpAuthTool', target: 'services/mcp/auth', weight: 1 });
+
+links.push({ source: 'bridge/bridgeMain', target: 'bridge/bridgeConfig', weight: 2 });
+links.push({ source: 'bridge/bridgeMain', target: 'bridge/bridgeApi', weight: 2 });
+links.push({ source: 'bridge/bridgeApi', target: 'bridge/bridgeConfig', weight: 1 });
+links.push({ source: 'bridge/replBridge', target: 'bridge/bridgeConfig', weight: 1 });
+links.push({ source: 'bridge/replBridge', target: 'bridge/bridgeMessaging', weight: 2 });
+links.push({ source: 'bridge/sessionRunner', target: 'bridge/bridgeConfig', weight: 1 });
+links.push({ source: 'bridge/sessionRunner', target: 'bridge/bridgeMessaging', weight: 1 });
+links.push({ source: 'bridge/inboundMessages', target: 'bridge/bridgeMessaging', weight: 1 });
+links.push({ source: 'bridge/bridgePermissionCallbacks', target: 'bridge/bridgeConfig', weight: 1 });
+
+['services/api/client','services/mcp/client','services/mcp/config','QueryEngine.ts','utils/permissions','utils/telemetry','REPL.tsx','tools/MCPTool','commands.ts','tools/ConfigTool','bridge/inboundMessages','tools/BashTool','tools/ScheduleCronTool','tools/RemoteTriggerTool'].forEach(m => {
+  links.push({ source: m, target: 'bridge/bridgeConfig', weight: 1 });
+});
+
+['commands/clear','commands/compact','commands/config','commands/agents','commands/commit','commands/brief'].forEach(c => {
+  links.push({ source: c, target: 'commands/index', weight: 1 });
+});
+links.push({ source: 'commands.ts', target: 'commands/index', weight: 2 });
+links.push({ source: 'commands/config', target: 'tools/ConfigTool', weight: 1 });
+links.push({ source: 'commands/agents', target: 'tools/AgentTool', weight: 1 });
+links.push({ source: 'commands/brief', target: 'tools/BriefTool', weight: 1 });
+links.push({ source: 'commands/commit', target: 'tools/BashTool', weight: 1 });
+
+links.push({ source: 'tools/BashTool', target: 'utils/fs', weight: 1 });
+links.push({ source: 'tools/FileReadTool', target: 'utils/fs', weight: 1 });
+links.push({ source: 'tools/FileReadTool', target: 'utils/path', weight: 1 });
+links.push({ source: 'tools/FileWriteTool', target: 'utils/fs', weight: 1 });
+links.push({ source: 'tools/FileWriteTool', target: 'utils/path', weight: 1 });
+links.push({ source: 'tools/FileEditTool', target: 'utils/fs', weight: 1 });
+links.push({ source: 'tools/GrepTool', target: 'utils/path', weight: 1 });
+links.push({ source: 'tools/GlobTool', target: 'utils/path', weight: 1 });
+links.push({ source: 'tools/AgentTool', target: 'services/api/claude', weight: 1 });
+links.push({ source: 'tools/AgentTool', target: 'Tool.ts', weight: 1 });
+links.push({ source: 'tools/WebFetchTool', target: 'utils/errors', weight: 1 });
+links.push({ source: 'tools/NotebookEditTool', target: 'utils/fs', weight: 1 });
+links.push({ source: 'tools/ScheduleCronTool', target: 'utils/telemetry', weight: 1 });
+links.push({ source: 'tools/RemoteTriggerTool', target: 'bridge/bridgeApi', weight: 1 });
+links.push({ source: 'tools/SendMessageTool', target: 'bridge/bridgeMessaging', weight: 1 });
+
+links.push({ source: 'utils/fs', target: 'utils/path', weight: 1 });
+links.push({ source: 'utils/errors', target: 'utils/logger', weight: 1 });
+links.push({ source: 'utils/permissions', target: 'utils/logger', weight: 1 });
+links.push({ source: 'utils/permissions', target: 'utils/errors', weight: 1 });
+links.push({ source: 'utils/telemetry', target: 'utils/logger', weight: 1 });
+
+links.push({ source: 'Tool.ts', target: 'utils/errors', weight: 1 });
+links.push({ source: 'Tool.ts', target: 'utils/logger', weight: 1 });
+
+const seen = new Set();
+const dedupedLinks = links.filter(l => {
+  const key = (typeof l.source === 'string' ? l.source : l.source.id) + '→' + (typeof l.target === 'string' ? l.target : l.target.id);
+  if (seen.has(key)) return false;
+  seen.add(key);
+  return true;
+});
+
+const cycles = [
+  { source: 'bridge/bridgeMain', target: 'bridge/bridgeApi' },
+  { source: 'services/api/client', target: 'services/api/errors' },
+  { source: 'utils/fs', target: 'utils/path' }
+];
+
+const cycleLinks = cycles.map(c => {
+  const existing = dedupedLinks.find(l => l.source === c.source && l.target === c.target);
+  if (!existing) dedupedLinks.push({ ...c, weight: 1 });
+  return { source: c.source, target: c.target };
+});
+
+dedupedLinks.push({ source: 'bridge/bridgeApi', target: 'bridge/bridgeMain', weight: 1 });
+dedupedLinks.push({ source: 'services/api/errors', target: 'services/api/client', weight: 1 });
+dedupedLinks.push({ source: 'utils/path', target: 'utils/fs', weight: 1 });
+
+const svg = d3.select("#container").append("svg")
+  .attr("viewBox", [0, 0, width, height]);
+
+const g = svg.append("g");
+
+const zoom = d3.zoom()
+  .scaleExtent([0.3, 4])
+  .on("zoom", (event) => g.attr("transform", event.transform));
+
+svg.call(zoom);
+
+const defs = svg.append("defs");
+const glowDefs = {
+  tool:   { blur: 4 },
+  core:   { blur: 5 },
+  cmd:    { blur: 3 },
+  mcp:    { blur: 3 },
+  bridge: { blur: 3 },
+  perm:   { blur: 3 },
+  config: { blur: 5 },
+  utils:  { blur: 3 },
+  tele:   { blur: 3 }
+};
+Object.entries(glowDefs).forEach(([key, cfg]) => {
+  const filter = defs.append("filter")
+    .attr("id", `glow-${key}`)
+    .attr("x", "-50%").attr("y", "-50%")
+    .attr("width", "200%").attr("height", "200%");
+  filter.append("feGaussianBlur").attr("stdDeviation", cfg.blur).attr("result", "coloredBlur");
+  const merge = filter.append("feMerge");
+  merge.append("feMergeNode").attr("in", "coloredBlur");
+  merge.append("feMergeNode").attr("in", "SourceGraphic");
+});
+
+function radiusFor(d) { return Math.max(5, Math.sqrt(d.inDegree) * 3.8); }
+
+const simulation = d3.forceSimulation(dedupedLinks.length ? nodes : [])
+  .force("link", d3.forceLink(dedupedLinks).id(d => d.id)
+    .distance(d => 80 + (3 - Math.min(d.weight, 3)) * 20))
+  .force("charge", d3.forceManyBody().strength(d => d.inDegree > 15 ? -800 : d.inDegree > 5 ? -400 : -260))
+  .force("center", d3.forceCenter(width / 2, height / 2))
+  .force("collide", d3.forceCollide().radius(d => radiusFor(d) + 8).iterations(2))
+  .force("x", d3.forceX(d => (clusterCenters[d.group] || { x: width/2 }).x).strength(0.07))
+  .force("y", d3.forceY(d => (clusterCenters[d.group] || { y: height/2 }).y).strength(0.07));
+
+function renderClusterLabels() {
+  g.selectAll(".cluster-label, .cluster-label-sub").remove();
+  const lang = document.documentElement.getAttribute('data-lang') === 'en' ? 'en' : 'zh';
+  const labels = lang === 'en' ? clusterLabelsEn : clusterLabelsZh;
+
+  g.selectAll(".cluster-label-sub")
+    .data(labels)
+    .enter()
+    .append("text")
+    .attr("class", "cluster-label-sub")
+    .attr("x", d => clusterCenters[d.key].x)
+    .attr("y", d => clusterCenters[d.key].y + 32)
+    .text(d => d.sub);
+
+  g.selectAll(".cluster-label")
+    .data(labels)
+    .enter()
+    .append("text")
+    .attr("class", "cluster-label")
+    .attr("x", d => clusterCenters[d.key].x)
+    .attr("y", d => clusterCenters[d.key].y)
+    .text(d => d.text);
+}
+renderClusterLabels();
+
+const link = g.append("g")
+  .attr("class", "links")
+  .selectAll("line")
+  .data(dedupedLinks)
+  .enter()
+  .append("line")
+  .attr("class", d => {
+    const s = typeof d.source === 'string' ? d.source : d.source.id;
+    const t = typeof d.target === 'string' ? d.target : d.target.id;
+    const isCycle = cycleLinks.some(c => c.source === s && c.target === t);
+    return `link${isCycle ? ' cycle' : ''}`;
+  })
+  .attr("stroke-width", d => Math.max(1, d.weight * 1.2))
+  .attr("stroke-opacity", d => 0.18 + d.weight * 0.08);
+
+const nodeGroup = g.append("g")
+  .attr("class", "nodes")
+  .selectAll("g")
+  .data(nodes)
+  .enter()
+  .append("g")
+  .attr("class", "node-group");
+
+nodeGroup.filter(d => d.inDegree > 8)
+  .append("circle")
+  .attr("class", "glow-circle")
+  .attr("r", d => radiusFor(d) + 6)
+  .style("fill", d => colorMap[d.group])
+  .style("opacity", 0.45)
+  .style("filter", d => `url(#glow-${d.group})`);
+
+const nodeCircle = nodeGroup.append("circle")
+  .attr("class", "node-circle")
+  .attr("r", d => radiusFor(d))
+  .attr("fill", d => colorMap[d.group]);
+
+const nodeLabel = nodeGroup.append("text")
+  .attr("class", d => `node-label${d.inDegree > 8 ? ' hub' : ''}`)
+  .attr("dx", d => radiusFor(d) + 6)
+  .attr("dy", 1)
+  .style("opacity", d => d.inDegree > 2 ? 1 : 0)
+  .text(d => {
+    const parts = d.id.split('/');
+    return parts[parts.length - 1];
+  });
+
+const warningGroup = g.append("g").attr("class", "warning-icons");
+const warnings = warningGroup.selectAll("g")
+  .data(cycleLinks)
+  .enter()
+  .append("g")
+  .attr("class", "warning-icon");
+
+warnings.append("circle")
+  .attr("r", 8)
+  .attr("fill", "var(--accent-cycle)")
+  .attr("stroke", "var(--bg-primary)")
+  .attr("stroke-width", 2);
+
+warnings.append("text")
+  .attr("text-anchor", "middle")
+  .attr("dominant-baseline", "middle")
+  .attr("fill", "#fff")
+  .attr("font-size", "11px")
+  .attr("font-weight", "700")
+  .text("!");
+
+nodeGroup.call(d3.drag()
+  .on("start", (event, d) => {
+    if (!event.active) simulation.alphaTarget(0.3).restart();
+    d.fx = d.x; d.fy = d.y;
+  })
+  .on("drag", (event, d) => { d.fx = event.x; d.fy = event.y; })
+  .on("end", (event, d) => {
+    if (!event.active) simulation.alphaTarget(0);
+    d.fx = null; d.fy = null;
+  }));
+
+let lockedNode = null;
+let detailTimeout = null;
+const detailPanel = document.getElementById('detail-panel');
+const infoFooter = document.getElementById('info-footer');
+
+function isEn() { return document.documentElement.getAttribute('data-lang') === 'en'; }
+
+function showDetail(d) {
+  if (detailTimeout) { clearTimeout(detailTimeout); detailTimeout = null; }
+  document.getElementById('dp-name').textContent = d.id;
+  document.getElementById('dp-group').textContent = isEn() ? groupNamesEn[d.group] : groupNamesZh[d.group];
+  const descZh = nodeDescZh[d.id] || 'Claude Code 核心模块文件。';
+  const descEn = nodeDescEn[d.id] || 'A core module file in Claude Code.';
+  document.getElementById('dp-desc').textContent = isEn() ? descEn : descZh;
+  document.getElementById('dp-in').textContent = d.inDegree;
+  const outDeg = dedupedLinks.filter(l => (l.source.id || l.source) === d.id).length;
+  document.getElementById('dp-out').textContent = outDeg;
+  let weightText;
+  if (isEn()) {
+    weightText = d.inDegree > 15 ? 'Critical' : d.inDegree > 8 ? 'High' : d.inDegree > 3 ? 'Medium' : 'Low';
+  } else {
+    weightText = d.inDegree > 15 ? '极高' : d.inDegree > 8 ? '高' : d.inDegree > 3 ? '中' : '低';
+  }
+  document.getElementById('dp-weight').textContent = weightText;
+  detailPanel.classList.remove('hidden');
+  detailPanel.classList.add('visible');
+  infoFooter.classList.add('hidden');
+}
+
+function hideDetail() {
+  if (!lockedNode) {
+    detailPanel.classList.remove('visible');
+    detailTimeout = setTimeout(() => {
+      if (!lockedNode) detailPanel.classList.add('hidden');
+    }, 300);
+    infoFooter.classList.remove('hidden');
+  }
+}
+
+function setHighlight(d) {
+  const connected = new Set();
+  connected.add(d.id);
+  dedupedLinks.forEach(l => {
+    const s = l.source.id || l.source;
+    const t = l.target.id || l.target;
+    if (s === d.id) connected.add(t);
+    if (t === d.id) connected.add(s);
+  });
+  nodeGroup.classed("dim", n => !connected.has(n.id));
+  nodeGroup.classed("highlight", n => connected.has(n.id));
+  link.classed("dim", l => (l.source.id || l.source) !== d.id && (l.target.id || l.target) !== d.id);
+  link.classed("highlight", l => (l.source.id || l.source) === d.id || (l.target.id || l.target) === d.id);
+}
+
+function clearHighlight() {
+  if (lockedNode) return;
+  nodeGroup.classed("dim", false).classed("highlight", false);
+  link.classed("dim", false).classed("highlight", false);
+}
+
+nodeGroup
+  .on("mouseenter", (event, d) => { showDetail(d); setHighlight(d); })
+  .on("mouseleave", () => { hideDetail(); clearHighlight(); })
+  .on("click", (event, d) => {
+    event.stopPropagation();
+    lockedNode = lockedNode === d ? null : d;
+    if (lockedNode) { showDetail(d); setHighlight(d); }
+    else { hideDetail(); clearHighlight(); }
+  });
+
+svg.on("click", () => {
+  lockedNode = null;
+  hideDetail();
+  clearHighlight();
+});
+
+simulation.on("tick", () => {
+  link
+    .attr("x1", d => d.source.x)
+    .attr("y1", d => d.source.y)
+    .attr("x2", d => d.target.x)
+    .attr("y2", d => d.target.y);
+
+  nodeGroup.attr("transform", d => `translate(${d.x},${d.y})`);
+
+  warnings.attr("transform", d => {
+    const s = nodes.find(n => n.id === (d.source.id || d.source));
+    const t = nodes.find(n => n.id === (d.target.id || d.target));
+    if (!s || !t || !s.x || !t.x) return "translate(-1000,-1000)";
+    const mx = (s.x + t.x) / 2;
+    const my = (s.y + t.y) / 2;
+    return `translate(${mx},${my})`;
+  });
+  warnings.classed("visible", d => {
+    const s = nodes.find(n => n.id === (d.source.id || d.source));
+    const t = nodes.find(n => n.id === (d.target.id || d.target));
+    if (!s || !t || !s.x || !t.x) return false;
+    const dx = s.x - t.x, dy = s.y - t.y;
+    return Math.sqrt(dx*dx + dy*dy) > 30;
+  });
+});
+
+document.getElementById('zoom-in').addEventListener('click', () => {
+  svg.transition().call(zoom.scaleBy, 1.3);
+});
+document.getElementById('zoom-out').addEventListener('click', () => {
+  svg.transition().call(zoom.scaleBy, 1 / 1.3);
+});
+document.getElementById('reset').addEventListener('click', () => {
+  svg.transition().call(zoom.transform, d3.zoomIdentity);
+});
+
+const langObserver = new MutationObserver(() => renderClusterLabels());
+langObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['data-lang'] });
+
+window.setTheme = setTheme;
+window.toggleLang = toggleLang;
+window.toggleLegend = toggleLegend;
+window.toggleGuide = toggleGuide;
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

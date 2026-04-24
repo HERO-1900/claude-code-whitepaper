@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>三条导出路径并行架构图 — VIS-3-011</title>
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<style>
+  :root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#0f172a;--border:rgba(255,255,255,.10);--text:#f1f5f9;--muted:#cbd5e1;--subtle:#334155;--divider:rgba(255,255,255,.08);--grid:rgba(255,255,255,.05);}
+  :root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#1c1917;--border:rgba(255,255,255,.10);--text:#f5f0eb;--muted:#d6d3d1;--subtle:#3c3835;--divider:rgba(255,255,255,.08);--grid:rgba(255,255,255,.05);}
+  :root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f8fafc;--border:rgba(0,0,0,.10);--text:#0f172a;--muted:#334155;--subtle:#e2e8f0;--divider:rgba(15,23,42,.10);--grid:rgba(15,23,42,.08);}
+  :root{--amber:#f59e0b;--cyan:#0891b2;--violet:#7c3aed;--emerald:#059669;--rose:#e11d48;--slate:#64748b;--orange:#f97316;}
+  :root[data-theme="dark"]  {--cyan:#22d3ee;--violet:#a78bfa;--emerald:#10b981;--rose:#fb7185;--amber:#fbbf24;}
+  :root[data-theme="warm"]  {--cyan:#22d3ee;--violet:#a78bfa;--emerald:#10b981;--rose:#fb7185;--amber:#fbbf24;}
+  :root[data-theme="light"] {--cyan:#0e7490;--violet:#6d28d9;--emerald:#047857;--rose:#be123c;--amber:#b45309;}
+
+  *{box-sizing:border-box;margin:0;padding:0;}
+  body{background:var(--bg);color:var(--text);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px;}
+
+  .topbar{width:100%;max-width:980px;display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;gap:12px;}
+  .topbar-left{display:flex;flex-direction:column;gap:4px;}
+  .vis-id{font-size:12px;font-family:'JetBrains Mono',monospace;color:var(--muted);letter-spacing:.06em;}
+  .vis-title{font-size:19px;font-weight:700;color:var(--text);}
+  .vis-sub{font-size:13px;color:var(--muted);}
+  .topbar-right{display:flex;gap:8px;flex-shrink:0;}
+  .btn{cursor:pointer;padding:8px 16px;border-radius:6px;border:1px solid var(--border);background:var(--panel);color:var(--text);font-size:13px;font-weight:500;transition:all .18s;}
+  .btn:hover{background:var(--subtle);}
+
+  .chart-panel{width:100%;max-width:980px;background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:24px;overflow:hidden;}
+
+  .svg-wrap{width:100%;overflow:hidden;}
+  svg{display:block;width:100%;height:auto;}
+
+  .section-label{fill:var(--muted);opacity:.75;}
+  .endpoint-sub{fill:var(--muted);}
+  .source-badge-bg{fill:var(--card);stroke:var(--border);stroke-width:1;}
+  .source-badge-text{fill:var(--text);}
+  .grid-dot{fill:var(--grid);}
+  .divider-line{stroke:var(--divider);}
+
+  .stats-row{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;}
+  .stat-card{flex:1;min-width:140px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 18px;text-align:center;}
+  .stat-number{font-size:30px;font-weight:800;line-height:1;}
+  .stat-label{font-size:13px;color:var(--muted);margin-top:6px;letter-spacing:.02em;font-weight:500;}
+  .stat-card:nth-child(1) .stat-number{color:var(--cyan);}
+  .stat-card:nth-child(2) .stat-number{color:var(--emerald);}
+  .stat-card:nth-child(3) .stat-number{color:var(--amber);}
+
+  .legend{display:flex;gap:18px 24px;flex-wrap:wrap;margin-top:16px;padding-top:16px;border-top:1px solid var(--border);}
+  .legend-item{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--text);font-weight:500;}
+  .legend-dot{width:12px;height:12px;border-radius:50%;flex-shrink:0;}
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="topbar-left">
+    <span class="vis-id">VIS-3-011</span>
+    <span class="vis-title">
+      <span class="lz">三条导出路径并行架构图</span>
+      <span class="le" style="display:none">Parallel Export Path Architecture</span>
+    </span>
+    <span class="vis-sub">
+      <span class="lz">instrumentation.ts · 421–701 行 · initializeTelemetry()</span>
+      <span class="le" style="display:none">instrumentation.ts · lines 421–701 · initializeTelemetry()</span>
+    </span>
+  </div>
+  <div class="topbar-right">
+    <button class="btn" onclick="cycleTheme()">
+      <span class="lz">切换主题</span><span class="le" style="display:none">Theme</span>
+    </button>
+    <button class="btn" onclick="toggleLang()">
+      <span class="lz">EN</span><span class="le" style="display:none">中文</span>
+    </button>
+  </div>
+</div>
+
+<div class="chart-panel">
+  <div class="svg-wrap">
+    <svg viewBox="0 0 960 560" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="三条导出路径并行架构图">
+      <defs>
+        <filter id="glow-amber" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow-cyan" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="3.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow-emerald" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="3.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow-violet" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="3.5" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+        <filter id="glow-rose" x="-60%" y="-60%" width="220%" height="220%">
+          <feGaussianBlur stdDeviation="3" result="blur"/>
+          <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+        </filter>
+
+        <!-- Motion paths -->
+        <path id="motionP1" d="M 120,260 C 300,260 400,110 540,110 C 640,110 720,110 780,110" fill="none"/>
+        <path id="motionP2" d="M 120,260 C 300,260 460,270 580,270 C 680,270 740,270 780,270" fill="none"/>
+        <path id="motionP3" d="M 120,260 C 300,260 400,430 540,430 C 640,430 720,430 780,430" fill="none"/>
+        <!-- Perfetto branch: cleaner right-angle style from the split node -->
+        <path id="motionP4" d="M 580,270 C 610,270 620,310 620,360 C 620,440 660,490 700,490 C 740,490 770,490 800,490" fill="none"/>
+
+        <linearGradient id="grad-cyan" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#22d3ee;stop-opacity:.22"/>
+          <stop offset="100%" style="stop-color:#22d3ee;stop-opacity:.06"/>
+        </linearGradient>
+        <linearGradient id="grad-emerald" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#10b981;stop-opacity:.22"/>
+          <stop offset="100%" style="stop-color:#10b981;stop-opacity:.06"/>
+        </linearGradient>
+        <linearGradient id="grad-violet" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#8b5cf6;stop-opacity:.22"/>
+          <stop offset="100%" style="stop-color:#8b5cf6;stop-opacity:.06"/>
+        </linearGradient>
+        <linearGradient id="grad-rose" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#f43f5e;stop-opacity:.22"/>
+          <stop offset="100%" style="stop-color:#f43f5e;stop-opacity:.06"/>
+        </linearGradient>
+        <linearGradient id="grad-amber" x1="0%" y1="0%" x2="100%" y2="100%">
+          <stop offset="0%" style="stop-color:#f59e0b;stop-opacity:.30"/>
+          <stop offset="100%" style="stop-color:#f59e0b;stop-opacity:.08"/>
+        </linearGradient>
+
+        <pattern id="dots" x="0" y="0" width="32" height="32" patternUnits="userSpaceOnUse">
+          <circle class="grid-dot" cx="1" cy="1" r="1"/>
+        </pattern>
+      </defs>
+
+      <rect width="960" height="560" fill="url(#dots)"/>
+
+      <!-- Section labels -->
+      <text class="section-label" x="80" y="36" text-anchor="middle" font-size="12" font-family="monospace" letter-spacing="1.5" font-weight="700">ENTRY</text>
+      <text class="section-label" x="830" y="36" text-anchor="middle" font-size="12" font-family="monospace" letter-spacing="1.5" font-weight="700">BACKENDS</text>
+
+      <line class="divider-line" x1="220" y1="20" x2="220" y2="540" stroke-width="1" stroke-dasharray="4,8"/>
+      <line class="divider-line" x1="750" y1="20" x2="750" y2="540" stroke-width="1" stroke-dasharray="4,8"/>
+
+      <!-- Halo glow layers -->
+      <path d="M 120,260 C 300,260 400,110 540,110 C 640,110 720,110 780,110"
+            fill="none" stroke="#22d3ee" stroke-width="12" stroke-opacity=".12" stroke-linecap="round"/>
+      <path d="M 120,260 C 300,260 460,270 580,270 C 680,270 740,270 780,270"
+            fill="none" stroke="#10b981" stroke-width="12" stroke-opacity=".12" stroke-linecap="round"/>
+      <path d="M 120,260 C 300,260 400,430 540,430 C 640,430 720,430 780,430"
+            fill="none" stroke="#8b5cf6" stroke-width="12" stroke-opacity=".12" stroke-linecap="round"/>
+
+      <!-- Main strokes -->
+      <path d="M 120,260 C 300,260 400,110 540,110 C 640,110 720,110 780,110"
+            fill="none" stroke="#22d3ee" stroke-width="3.5" stroke-linecap="round" filter="url(#glow-cyan)"/>
+      <path d="M 120,260 C 300,260 460,270 580,270 C 680,270 740,270 780,270"
+            fill="none" stroke="#10b981" stroke-width="3.5" stroke-linecap="round" filter="url(#glow-emerald)"/>
+      <path d="M 120,260 C 300,260 400,430 540,430 C 640,430 720,430 780,430"
+            fill="none" stroke="#8b5cf6" stroke-width="3.5" stroke-linecap="round" filter="url(#glow-violet)"/>
+
+      <!-- Perfetto branch (redesigned, cleaner) -->
+      <path d="M 580,270 C 610,270 620,310 620,360 C 620,440 660,490 700,490 C 740,490 770,490 800,490"
+            fill="none" stroke="#f43f5e" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="7,4"
+            stroke-opacity=".85" filter="url(#glow-rose)"/>
+
+      <!-- Path labels — bigger, higher contrast -->
+      <g>
+        <rect x="300" y="148" width="150" height="32" rx="6" fill="rgba(34,211,238,.28)" stroke="#22d3ee" stroke-width="1.5" stroke-opacity=".6"/>
+        <text x="375" y="169" text-anchor="middle" font-size="13" fill="#22d3ee" font-weight="700" class="lz">OTLP 导出路径</text>
+        <text x="375" y="169" text-anchor="middle" font-size="13" fill="#22d3ee" font-weight="700" class="le" display="none">OTLP Export Path</text>
+      </g>
+
+      <g>
+        <rect x="330" y="282" width="140" height="32" rx="6" fill="rgba(16,185,129,.28)" stroke="#10b981" stroke-width="1.5" stroke-opacity=".6"/>
+        <text x="400" y="303" text-anchor="middle" font-size="13" fill="#10b981" font-weight="700" class="lz">BigQuery 路径</text>
+        <text x="400" y="303" text-anchor="middle" font-size="13" fill="#10b981" font-weight="700" class="le" display="none">BigQuery Path</text>
+      </g>
+
+      <g>
+        <rect x="300" y="388" width="150" height="32" rx="6" fill="rgba(139,92,246,.28)" stroke="#8b5cf6" stroke-width="1.5" stroke-opacity=".6"/>
+        <text x="375" y="409" text-anchor="middle" font-size="13" fill="#a78bfa" font-weight="700" class="lz">Beta 追踪路径</text>
+        <text x="375" y="409" text-anchor="middle" font-size="13" fill="#a78bfa" font-weight="700" class="le" display="none">Beta Tracing Path</text>
+      </g>
+
+      <g>
+        <rect x="640" y="398" width="120" height="28" rx="6" fill="rgba(244,63,94,.28)" stroke="#f43f5e" stroke-width="1.5" stroke-opacity=".6"/>
+        <text x="700" y="417" text-anchor="middle" font-size="12" fill="#fb7185" font-weight="700" class="lz">Perfetto 分支</text>
+        <text x="700" y="417" text-anchor="middle" font-size="12" fill="#fb7185" font-weight="700" class="le" display="none">Perfetto Branch</text>
+      </g>
+
+      <!-- Animated particles -->
+      <circle r="6" fill="#22d3ee" filter="url(#glow-cyan)">
+        <animateMotion dur="2.8s" repeatCount="indefinite" begin="0s"><mpath href="#motionP1"/></animateMotion>
+      </circle>
+      <circle r="4.5" fill="#22d3ee" opacity=".7">
+        <animateMotion dur="2.8s" repeatCount="indefinite" begin="1.4s"><mpath href="#motionP1"/></animateMotion>
+      </circle>
+
+      <circle r="6" fill="#10b981" filter="url(#glow-emerald)">
+        <animateMotion dur="2.4s" repeatCount="indefinite" begin="0.5s"><mpath href="#motionP2"/></animateMotion>
+      </circle>
+      <circle r="4.5" fill="#10b981" opacity=".7">
+        <animateMotion dur="2.4s" repeatCount="indefinite" begin="1.7s"><mpath href="#motionP2"/></animateMotion>
+      </circle>
+
+      <circle r="6" fill="#8b5cf6" filter="url(#glow-violet)">
+        <animateMotion dur="3.2s" repeatCount="indefinite" begin="0.9s"><mpath href="#motionP3"/></animateMotion>
+      </circle>
+      <circle r="4.5" fill="#8b5cf6" opacity=".7">
+        <animateMotion dur="3.2s" repeatCount="indefinite" begin="2.1s"><mpath href="#motionP3"/></animateMotion>
+      </circle>
+
+      <circle r="4.5" fill="#f43f5e" filter="url(#glow-rose)">
+        <animateMotion dur="2.6s" repeatCount="indefinite" begin="1.1s"><mpath href="#motionP4"/></animateMotion>
+      </circle>
+      <circle r="3.5" fill="#f43f5e" opacity=".7">
+        <animateMotion dur="2.6s" repeatCount="indefinite" begin="2.3s"><mpath href="#motionP4"/></animateMotion>
+      </circle>
+
+      <!-- Entry node -->
+      <circle cx="80" cy="260" r="40" fill="none" stroke="#f59e0b" stroke-width="1.5" stroke-opacity=".35">
+        <animate attributeName="r" values="36;46;36" dur="2.4s" repeatCount="indefinite"/>
+        <animate attributeName="stroke-opacity" values=".45;.1;.45" dur="2.4s" repeatCount="indefinite"/>
+      </circle>
+      <circle cx="80" cy="260" r="34" fill="url(#grad-amber)" stroke="#f59e0b" stroke-width="2.5" filter="url(#glow-amber)"/>
+      <circle cx="80" cy="260" r="26" fill="rgba(245,158,11,.18)" stroke="#f59e0b" stroke-width="1" stroke-opacity=".7"/>
+      <text x="80" y="268" text-anchor="middle" font-size="22" fill="#f59e0b" font-weight="800">⚡</text>
+
+      <text x="80" y="322" text-anchor="middle" font-size="13" fill="#f59e0b" font-weight="700" font-family="monospace">initializeTelemetry()</text>
+      <text x="80" y="340" text-anchor="middle" font-size="12" fill="#f59e0b" fill-opacity=".75" font-family="monospace">:421–701</text>
+
+      <!-- Split / branch node on BigQuery path (redesigned) -->
+      <!-- Outer glow -->
+      <circle cx="580" cy="270" r="11" fill="none" stroke="#10b981" stroke-width="1.5" stroke-opacity=".4">
+        <animate attributeName="r" values="9;14;9" dur="2s" repeatCount="indefinite"/>
+        <animate attributeName="stroke-opacity" values=".5;.1;.5" dur="2s" repeatCount="indefinite"/>
+      </circle>
+      <!-- Half-half split node: emerald on top, rose on bottom -->
+      <circle cx="580" cy="270" r="8" fill="#10b981" stroke="var(--panel)" stroke-width="2"/>
+      <path d="M 572,270 A 8,8 0 0 0 588,270 Z" fill="#f43f5e"/>
+      <circle cx="580" cy="270" r="8" fill="none" stroke="var(--panel)" stroke-width="2"/>
+
+      <!-- Small label above split node -->
+      <g>
+        <rect x="538" y="230" width="84" height="22" rx="5" fill="var(--card)" stroke="var(--border)" stroke-width="1"/>
+        <text x="580" y="245" text-anchor="middle" font-size="11" fill="var(--text)" font-weight="600" class="lz">分支点 SPLIT</text>
+        <text x="580" y="245" text-anchor="middle" font-size="11" fill="var(--text)" font-weight="600" class="le" display="none">SPLIT NODE</text>
+      </g>
+
+      <!-- Endpoint nodes (larger, clearer) -->
+      <!-- P1 OTLP -->
+      <rect x="782" y="70" width="160" height="80" rx="10" fill="url(#grad-cyan)" stroke="#22d3ee" stroke-width="1.8"/>
+      <rect x="782" y="70" width="6" height="80" rx="3" fill="#22d3ee"/>
+      <text x="802" y="94" font-size="14" fill="#22d3ee" font-weight="700" class="lz">OTLP Exporters</text>
+      <text x="802" y="94" font-size="14" fill="#22d3ee" font-weight="700" class="le" display="none">OTLP Exporters</text>
+      <text class="endpoint-sub lz" x="802" y="114" font-size="12">企业 OTLP 端点</text>
+      <text class="endpoint-sub le" x="802" y="114" font-size="12" display="none">Enterprise Endpoint</text>
+      <text x="802" y="134" font-size="11" fill="#22d3ee" fill-opacity=".75" font-family="monospace">otlp://*</text>
+      <circle cx="926" cy="110" r="5" fill="#22d3ee">
+        <animate attributeName="opacity" values="1;.3;1" dur="1.8s" repeatCount="indefinite"/>
+      </circle>
+
+      <!-- P2 BigQuery -->
+      <rect x="782" y="230" width="160" height="80" rx="10" fill="url(#grad-emerald)" stroke="#10b981" stroke-width="1.8"/>
+      <rect x="782" y="230" width="6" height="80" rx="3" fill="#10b981"/>
+      <text x="802" y="254" font-size="14" fill="#10b981" font-weight="700" class="lz">BigQuery Metrics</text>
+      <text x="802" y="254" font-size="14" fill="#10b981" font-weight="700" class="le" display="none">BigQuery Metrics</text>
+      <text class="endpoint-sub lz" x="802" y="274" font-size="12">Anthropic BigQuery</text>
+      <text class="endpoint-sub le" x="802" y="274" font-size="12" display="none">Anthropic BigQuery</text>
+      <text x="802" y="294" font-size="11" fill="#10b981" fill-opacity=".75" font-family="monospace">GCP bq://*</text>
+      <circle cx="926" cy="270" r="5" fill="#10b981">
+        <animate attributeName="opacity" values="1;.3;1" dur="2.1s" repeatCount="indefinite" begin=".4s"/>
+      </circle>
+
+      <!-- P3 Beta -->
+      <rect x="782" y="390" width="160" height="80" rx="10" fill="url(#grad-violet)" stroke="#8b5cf6" stroke-width="1.8"/>
+      <rect x="782" y="390" width="6" height="80" rx="3" fill="#8b5cf6"/>
+      <text x="802" y="414" font-size="14" fill="#a78bfa" font-weight="700" class="lz">Beta Tracing</text>
+      <text x="802" y="414" font-size="14" fill="#a78bfa" font-weight="700" class="le" display="none">Beta Tracing</text>
+      <text class="endpoint-sub lz" x="802" y="434" font-size="12">Honeycomb</text>
+      <text class="endpoint-sub le" x="802" y="434" font-size="12" display="none">Honeycomb</text>
+      <text x="802" y="454" font-size="11" fill="#a78bfa" fill-opacity=".75" font-family="monospace">otlp://hny*</text>
+      <circle cx="926" cy="430" r="5" fill="#8b5cf6">
+        <animate attributeName="opacity" values="1;.3;1" dur="2.5s" repeatCount="indefinite" begin=".9s"/>
+      </circle>
+
+      <!-- P4 Perfetto (branch endpoint) -->
+      <rect x="802" y="464" width="150" height="56" rx="10" fill="url(#grad-rose)" stroke="#f43f5e" stroke-width="1.8" stroke-dasharray="6,3"/>
+      <rect x="802" y="464" width="6" height="56" rx="3" fill="#f43f5e"/>
+      <text x="822" y="486" font-size="13" fill="#fb7185" font-weight="700">Perfetto</text>
+      <text class="endpoint-sub lz" x="822" y="506" font-size="11">Chrome Trace 格式</text>
+      <text class="endpoint-sub le" x="822" y="506" font-size="11" display="none">Chrome Trace format</text>
+      <circle cx="938" cy="492" r="4" fill="#f43f5e">
+        <animate attributeName="opacity" values="1;.3;1" dur="1.6s" repeatCount="indefinite" begin="1.1s"/>
+      </circle>
+
+      <!-- Source file badge -->
+      <rect class="source-badge-bg" x="20" y="18" width="188" height="26" rx="6"/>
+      <text class="source-badge-text" x="34" y="35" font-size="12" font-family="monospace" font-weight="600">instrumentation.ts</text>
+      <rect x="158" y="23" width="42" height="16" rx="3" fill="rgba(245,158,11,.25)" stroke="#f59e0b" stroke-width="1" stroke-opacity=".6"/>
+      <text x="179" y="35" text-anchor="middle" font-size="11" fill="#f59e0b" font-weight="700">:421</text>
+    </svg>
+  </div>
+
+  <div class="stats-row">
+    <div class="stat-card">
+      <div class="stat-number">3</div>
+      <div class="stat-label">
+        <span class="lz">导出路径</span>
+        <span class="le" style="display:none">Export Paths</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number">4</div>
+      <div class="stat-label">
+        <span class="lz">后端目标</span>
+        <span class="le" style="display:none">Backend Targets</span>
+      </div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-number" style="color:var(--amber)">∥</div>
+      <div class="stat-label">
+        <span class="lz">实时并行</span>
+        <span class="le" style="display:none">Real-time Parallel</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="legend">
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#f59e0b;box-shadow:0 0 8px #f59e0b99;"></div>
+      <span class="lz">入口节点 initializeTelemetry()</span>
+      <span class="le" style="display:none">Entry: initializeTelemetry()</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#22d3ee;box-shadow:0 0 8px #22d3ee99;"></div>
+      <span class="lz">OTLP 企业端点</span>
+      <span class="le" style="display:none">OTLP Enterprise Endpoint</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#10b981;box-shadow:0 0 8px #10b98199;"></div>
+      <span class="lz">Anthropic BigQuery</span>
+      <span class="le" style="display:none">Anthropic BigQuery</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#8b5cf6;box-shadow:0 0 8px #8b5cf699;"></div>
+      <span class="lz">Beta 精细追踪 (Honeycomb)</span>
+      <span class="le" style="display:none">Beta Detailed Tracing (Honeycomb)</span>
+    </div>
+    <div class="legend-item">
+      <div class="legend-dot" style="background:#f43f5e;box-shadow:0 0 8px #f43f5e99;"></div>
+      <span class="lz">Perfetto Chrome Trace 分支</span>
+      <span class="le" style="display:none">Perfetto Chrome Trace Branch</span>
+    </div>
+  </div>
+</div>
+<script>
+/* v2-embed-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

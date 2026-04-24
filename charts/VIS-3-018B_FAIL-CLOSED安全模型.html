@@ -1,0 +1,1103 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FAIL-CLOSED 安全模型 — VIS-3-018B</title>
+<style>
+/* ═══════════════════════════════════════════════
+   V2 CSS TOKENS
+═══════════════════════════════════════════════ */
+:root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;--svg-text:#f1f5f9;--svg-text-muted:#cbd5e1;}
+:root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;--svg-text:#f5f0eb;--svg-text-muted:#d6cfc7;}
+:root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#475569;--subtle:#e2e8f0;--svg-text:#0f172a;--svg-text-muted:#334155;}
+:root{--amber:#f59e0b;--amber-strong:#d97706;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--emerald-strong:#059669;--rose:#f43f5e;--rose-strong:#e11d48;--slate:#64748b;--orange:#f97316;}
+:root[data-theme="light"]{--amber:#b45309;--emerald:#047857;--rose:#be123c;}
+
+/* ═══════════════════════════════════════════════
+   RESET & BASE
+═══════════════════════════════════════════════ */
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;}
+body{
+  font-family:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  font-size:15px;
+  line-height:1.55;
+  min-height:100vh;
+}
+
+/* ═══════════════════════════════════════════════
+   LAYOUT SHELL
+═══════════════════════════════════════════════ */
+.page{
+  max-width:1040px;
+  margin:0 auto;
+  padding:30px 26px 44px;
+  display:flex;
+  flex-direction:column;
+  gap:22px;
+}
+
+/* ═══════════════════════════════════════════════
+   TOOLBAR
+═══════════════════════════════════════════════ */
+.toolbar{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  font-size:12px;
+  color:var(--muted);
+}
+.toolbar-left{display:flex;align-items:center;gap:10px;}
+.badge-id{
+  font-family:'JetBrains Mono','Fira Code',monospace;
+  font-size:11px;
+  background:var(--subtle);
+  border:1px solid var(--border);
+  border-radius:5px;
+  padding:3px 8px;
+  color:var(--muted);
+  letter-spacing:.5px;
+}
+.toolbar-right{display:flex;gap:8px;}
+.btn{
+  cursor:pointer;
+  border:1px solid var(--border);
+  background:var(--subtle);
+  color:var(--text);
+  border-radius:6px;
+  padding:5px 14px;
+  font-size:12px;
+  transition:all .18s ease;
+  user-select:none;
+}
+.btn:hover{background:var(--muted);color:var(--bg);}
+
+/* ═══════════════════════════════════════════════
+   PAGE HEADER
+═══════════════════════════════════════════════ */
+.page-header{
+  text-align:center;
+  padding:4px 0 2px;
+}
+.page-title{
+  font-size:26px;
+  font-weight:700;
+  letter-spacing:-.3px;
+  color:var(--text);
+  line-height:1.3;
+}
+.page-subtitle{
+  font-size:15px;
+  color:var(--muted);
+  margin-top:7px;
+}
+
+/* ═══════════════════════════════════════════════
+   COMPARISON GRID
+═══════════════════════════════════════════════ */
+.comparison-grid{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  gap:0;
+  align-items:stretch;
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid var(--border);
+}
+
+/* LEFT PANEL — FAIL-OPEN */
+.panel-left{
+  background:linear-gradient(135deg, rgba(244,63,94,.10) 0%, rgba(244,63,94,.04) 100%);
+  border-right:1px solid var(--border);
+  padding:26px 24px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+/* RIGHT PANEL — FAIL-CLOSED */
+.panel-right{
+  background:linear-gradient(135deg, rgba(16,185,129,.10) 0%, rgba(16,185,129,.04) 100%);
+  border-left:1px solid var(--border);
+  padding:26px 24px;
+  display:flex;
+  flex-direction:column;
+  gap:18px;
+}
+
+/* CENTER DIVIDER */
+.panel-center{
+  width:84px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  background:var(--panel);
+  padding:18px 0;
+  gap:12px;
+  position:relative;
+}
+
+/* Panel headers */
+.panel-title{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.panel-icon{
+  width:36px;
+  height:36px;
+  border-radius:9px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-size:18px;
+  flex-shrink:0;
+  font-weight:800;
+}
+.panel-icon.danger{background:rgba(244,63,94,.20);color:var(--rose);}
+.panel-icon.safe{background:rgba(16,185,129,.20);color:var(--emerald);}
+
+.panel-name{
+  font-size:18px;
+  font-weight:800;
+  line-height:1.2;
+  letter-spacing:.3px;
+}
+.panel-name.danger{color:var(--rose);}
+.panel-name.safe{color:var(--emerald);}
+.panel-sub{font-size:12.5px;color:var(--muted);margin-top:2px;}
+
+/* Decision box */
+.decision-box{
+  border-radius:10px;
+  padding:16px 18px;
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+}
+.decision-box.danger{
+  background:rgba(244,63,94,.12);
+  border:1.5px solid rgba(244,63,94,.38);
+}
+.decision-box.safe{
+  background:rgba(16,185,129,.12);
+  border:1.5px solid rgba(16,185,129,.38);
+}
+.decision-trigger{
+  font-size:12px;
+  color:var(--muted);
+  text-transform:uppercase;
+  letter-spacing:.7px;
+  font-weight:700;
+}
+.decision-arrow{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  font-size:14px;
+  font-weight:600;
+  flex-wrap:wrap;
+}
+.decision-arrow .err-token{
+  font-family:'JetBrains Mono','Fira Code',monospace;
+  font-size:12px;
+  background:var(--subtle);
+  border:1px solid var(--border);
+  border-radius:5px;
+  padding:3px 8px;
+  color:var(--text);
+  font-weight:700;
+}
+.decision-arrow .arrow-sym{font-size:18px;color:var(--muted);}
+.decision-arrow .result-danger{
+  font-size:15px;
+  font-weight:800;
+  color:var(--rose);
+  background:rgba(244,63,94,.18);
+  border-radius:6px;
+  padding:4px 12px;
+}
+.decision-arrow .result-safe{
+  font-size:15px;
+  font-weight:800;
+  color:var(--emerald);
+  background:rgba(16,185,129,.18);
+  border-radius:6px;
+  padding:4px 12px;
+}
+
+.example-row{
+  font-size:13px;
+  color:var(--muted);
+  line-height:1.6;
+}
+.example-row strong{color:var(--text);}
+
+/* Risk/Benefit label */
+.risk-label{
+  font-size:12px;
+  font-weight:700;
+  text-transform:uppercase;
+  letter-spacing:.6px;
+  margin-bottom:6px;
+}
+.risk-label.danger{color:var(--rose);}
+.risk-label.safe{color:var(--emerald);}
+.risk-text{font-size:13px;color:var(--muted);line-height:1.6;}
+:root[data-theme="light"] .risk-text{color:#334155;}
+
+/* Real-world examples list */
+.examples-section{margin-top:4px;}
+.examples-title{
+  font-size:11px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.9px;
+  color:var(--muted);
+  margin-bottom:10px;
+  display:flex;
+  align-items:center;
+  gap:6px;
+}
+.example-item{
+  display:flex;
+  align-items:flex-start;
+  gap:10px;
+  margin-bottom:9px;
+  padding:10px 12px;
+  border-radius:8px;
+  font-size:13px;
+  line-height:1.55;
+}
+.example-item.danger{background:rgba(244,63,94,.08);border:1px solid rgba(244,63,94,.20);}
+.example-item.safe{background:rgba(16,185,129,.08);border:1px solid rgba(16,185,129,.20);}
+.example-icon{font-size:16px;flex-shrink:0;margin-top:1px;line-height:1;}
+.example-content{flex:1;min-width:0;}
+.example-name{font-weight:700;color:var(--text);margin-bottom:3px;font-size:13px;}
+.example-desc{color:var(--muted);font-size:12.5px;line-height:1.6;}
+:root[data-theme="light"] .example-desc{color:#475569;}
+
+/* Claude Code badge */
+.cc-badge{
+  display:inline-flex;
+  align-items:center;
+  gap:6px;
+  background:rgba(245,158,11,.15);
+  border:1.5px solid rgba(245,158,11,.45);
+  border-radius:20px;
+  padding:5px 14px;
+  font-size:12px;
+  font-weight:700;
+  color:var(--amber);
+  margin-top:4px;
+  align-self:flex-start;
+}
+:root[data-theme="light"] .cc-badge{background:rgba(245,158,11,.18);border-color:rgba(180,83,9,.5);}
+
+/* ═══════════════════════════════════════════════
+   CENTER DIVIDER CONTENT
+═══════════════════════════════════════════════ */
+.vs-animation{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+}
+
+/* ERROR token animation */
+.err-bubble{
+  font-family:'JetBrains Mono','Fira Code',monospace;
+  font-size:11px;
+  font-weight:800;
+  background:rgba(245,158,11,.20);
+  border:1.5px solid rgba(245,158,11,.55);
+  border-radius:6px;
+  padding:4px 9px;
+  color:var(--amber);
+  letter-spacing:.5px;
+  animation:errPulse 2.5s ease-in-out infinite;
+}
+@keyframes errPulse{
+  0%,100%{opacity:.65;transform:scale(1);}
+  50%{opacity:1;transform:scale(1.06);}
+}
+
+/* VS label */
+.vs-label{
+  font-size:22px;
+  font-weight:900;
+  background:linear-gradient(135deg,var(--rose),var(--emerald));
+  -webkit-background-clip:text;
+  -webkit-text-fill-color:transparent;
+  background-clip:text;
+  letter-spacing:-.5px;
+  line-height:1;
+}
+
+/* Animated fork arrows */
+.fork-container{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:5px;
+  width:100%;
+}
+.fork-label{
+  font-size:10.5px;
+  font-weight:800;
+  letter-spacing:.4px;
+  text-transform:uppercase;
+}
+.fork-left-label{color:var(--rose);}
+.fork-right-label{color:var(--emerald);}
+
+.fork-arrows{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:2px;
+}
+.arrow-up{
+  font-size:18px;
+  color:var(--rose);
+  animation:arrowBlink 2.5s ease-in-out infinite;
+  animation-delay:.3s;
+}
+.arrow-down{
+  font-size:18px;
+  color:var(--emerald);
+  animation:arrowBlink 2.5s ease-in-out infinite;
+  animation-delay:.9s;
+}
+@keyframes arrowBlink{
+  0%,100%{opacity:.4;}
+  50%{opacity:1;}
+}
+
+/* Lightning bolt */
+.lightning{
+  font-size:24px;
+  color:var(--amber);
+  animation:lightningFlash 2s ease-in-out infinite;
+}
+@keyframes lightningFlash{
+  0%,90%,100%{opacity:.55;transform:scale(1);}
+  92%,96%{opacity:1;transform:scale(1.15);}
+  94%,98%{opacity:.75;transform:scale(.95);}
+}
+
+/* Vertical dashed line */
+.v-line{
+  flex:1;
+  width:1px;
+  background:repeating-linear-gradient(to bottom, var(--border) 0px, var(--border) 4px, transparent 4px, transparent 8px);
+  min-height:22px;
+}
+
+/* ═══════════════════════════════════════════════
+   ANIMATION FLOW DIAGRAM (SVG)
+═══════════════════════════════════════════════ */
+.flow-section{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:22px 26px;
+}
+.section-label{
+  font-size:13px;
+  font-weight:800;
+  text-transform:uppercase;
+  letter-spacing:.9px;
+  color:var(--text);
+  margin-bottom:16px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+.section-label::before{
+  content:'';
+  display:inline-block;
+  width:4px;
+  height:16px;
+  border-radius:2px;
+  background:var(--amber);
+}
+
+.flow-svg-wrap{
+  width:100%;
+  overflow:visible;
+}
+
+/* ═══════════════════════════════════════════════
+   BOTTOM PANEL — CLAUDE CODE IMPLEMENTATION
+═══════════════════════════════════════════════ */
+.impl-section{
+  background:var(--panel);
+  border:1px solid var(--border);
+  border-radius:14px;
+  padding:22px 26px;
+}
+.impl-grid{
+  display:grid;
+  grid-template-columns:repeat(2,1fr);
+  gap:12px;
+  margin-top:16px;
+}
+.impl-item{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-left:3px solid var(--emerald);
+  border-radius:8px;
+  padding:14px 16px;
+  display:flex;
+  align-items:flex-start;
+  gap:12px;
+}
+.impl-icon{
+  font-size:18px;
+  flex-shrink:0;
+  margin-top:1px;
+  line-height:1;
+}
+.impl-content{flex:1;min-width:0;}
+.impl-trigger{
+  font-size:13px;
+  font-weight:700;
+  color:var(--text);
+  margin-bottom:4px;
+}
+.impl-action{
+  font-size:12px;
+  color:var(--emerald);
+  font-weight:700;
+  font-family:'JetBrains Mono','Fira Code',monospace;
+  word-break:break-word;
+}
+
+/* ═══════════════════════════════════════════════
+   KEY CALLOUT BOX
+═══════════════════════════════════════════════ */
+.callout-box{
+  background:linear-gradient(135deg,rgba(245,158,11,.13),rgba(245,158,11,.06));
+  border:2px solid rgba(245,158,11,.45);
+  border-radius:12px;
+  padding:20px 24px;
+  text-align:center;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+}
+.callout-icon{font-size:28px;line-height:1;}
+.callout-zh{
+  font-size:17px;
+  font-weight:800;
+  color:var(--amber);
+  letter-spacing:.3px;
+}
+.callout-en{
+  font-size:13px;
+  color:var(--muted);
+  font-style:italic;
+}
+.callout-line{
+  width:44px;
+  height:2px;
+  background:rgba(245,158,11,.5);
+  border-radius:1px;
+  margin:3px 0;
+}
+.callout-detail{
+  font-size:13px;
+  color:var(--muted);
+  margin-top:5px;
+  max-width:620px;
+  text-align:center;
+  line-height:1.65;
+}
+:root[data-theme="light"] .callout-detail{color:#334155;}
+
+/* ═══════════════════════════════════════════════
+   SVG INLINE ANIMATIONS
+═══════════════════════════════════════════════ */
+.token-particle{
+  animation:tokenTravel 3s ease-in-out infinite;
+}
+
+@keyframes tokenTravel{
+  0%{opacity:0;transform:translateY(-12px);}
+  15%{opacity:1;transform:translateY(0);}
+  80%{opacity:1;transform:translateY(0);}
+  100%{opacity:0;transform:translateY(0);}
+}
+
+/* ═══════════════════════════════════════════════
+   SVG THEME ADAPTATION
+═══════════════════════════════════════════════ */
+.svg-label{fill:var(--svg-text);}
+.svg-label-muted{fill:var(--svg-text-muted);}
+
+/* ═══════════════════════════════════════════════
+   RESPONSIVE
+═══════════════════════════════════════════════ */
+@media(max-width:720px){
+  .comparison-grid{grid-template-columns:1fr;grid-template-rows:auto auto auto;}
+  .panel-center{width:100%;flex-direction:row;justify-content:center;padding:12px 16px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);}
+  .panel-left{border-right:none;border-bottom:1px solid var(--border);}
+  .panel-right{border-left:none;border-top:1px solid var(--border);}
+  .v-line{width:20px;height:1px;flex:0;}
+  .vs-animation{flex-direction:row;}
+  .fork-container{flex-direction:row;}
+  .impl-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.tagName==='tspan'||e.closest('svg'))e.setAttribute('display',hide?'none':'inline');});
+    document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.tagName==='tspan'||e.closest('svg'))e.setAttribute('display',show?'inline':'none');});
+  }
+  applyLang();
+  window.cycleTheme=function(){var ts=['dark','warm','light'];var i=ts.indexOf(document.documentElement.getAttribute('data-theme'));t=ts[(i+1)%3];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+
+<div class="page">
+
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <span class="badge-id">VIS-3-018B</span>
+      <span class="lz">安全模型 · FAIL-CLOSED 原则</span>
+      <span class="le" style="display:none">Security Model · FAIL-CLOSED Principle</span>
+    </div>
+    <div class="toolbar-right">
+      <button class="btn" onclick="cycleTheme()">
+        <span class="lz">主题</span><span class="le" style="display:none">Theme</span>
+      </button>
+      <button class="btn" onclick="toggleLang()">
+        <span class="lz">EN</span><span class="le" style="display:none">中</span>
+      </button>
+    </div>
+  </div>
+
+  <div class="page-header">
+    <div class="page-title">
+      <span class="lz">FAIL-CLOSED 安全模型</span>
+      <span class="le" style="display:none">FAIL-CLOSED Security Model</span>
+    </div>
+    <div class="page-subtitle">
+      <span class="lz">出错时应该拒绝还是放行？这是安全系统的核心分歧</span>
+      <span class="le" style="display:none">Should errors grant or deny access? This is the core security divide.</span>
+    </div>
+  </div>
+
+  <div class="comparison-grid">
+
+    <div class="panel-left">
+      <div class="panel-title">
+        <div class="panel-icon danger">✗</div>
+        <div>
+          <div class="panel-name danger">FAIL-OPEN</div>
+          <div class="panel-sub">
+            <span class="lz">出错→放行（危险模式）</span>
+            <span class="le" style="display:none">On Error → ALLOW (Dangerous)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="decision-box danger">
+        <div class="decision-trigger">
+          <span class="lz">发生错误时</span>
+          <span class="le" style="display:none">ON ERROR</span>
+        </div>
+        <div class="decision-arrow">
+          <span class="err-token">ERROR</span>
+          <span class="arrow-sym">→</span>
+          <span class="result-danger">
+            <span class="lz">✗ ALLOW</span>
+            <span class="le" style="display:none">✗ ALLOW</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="example-row">
+        <strong>
+          <span class="lz">示例：</span>
+          <span class="le" style="display:none">Example:</span>
+        </strong>
+        <span class="lz">权限检查失败 → 默认"允许所有"</span>
+        <span class="le" style="display:none">Permission check fails → defaults to "allow all"</span>
+      </div>
+
+      <div>
+        <div class="risk-label danger">
+          <span class="lz">⚠ 风险</span>
+          <span class="le" style="display:none">⚠ RISK</span>
+        </div>
+        <div class="risk-text">
+          <span class="lz">攻击者可以<strong style="color:var(--rose)">主动触发错误</strong>来绕过安全检查，将系统漏洞转化为访问权限</span>
+          <span class="le" style="display:none">Attackers can <strong style="color:var(--rose)">deliberately trigger errors</strong> to bypass security checks, turning system failures into access grants</span>
+        </div>
+      </div>
+
+      <div class="examples-section">
+        <div class="examples-title">
+          <span class="lz">真实失败案例</span>
+          <span class="le" style="display:none">Real-World FAIL-OPEN Failures</span>
+        </div>
+
+        <div class="example-item danger">
+          <span class="example-icon">🔓</span>
+          <div class="example-content">
+            <div class="example-name">
+              <span class="lz">OAuth 超时绕过</span>
+              <span class="le" style="display:none">OAuth Timeout Bypass</span>
+            </div>
+            <div class="example-desc">
+              <span class="lz">令牌验证服务超时 → 系统默认放行 → 攻击者伪造超时触发未授权登录</span>
+              <span class="le" style="display:none">Token validation timeout → system defaults to pass → attacker fakes timeout to gain unauthorized login</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="example-item danger">
+          <span class="example-icon">🗄️</span>
+          <div class="example-content">
+            <div class="example-name">
+              <span class="lz">数据库连接失败 → 超级权限</span>
+              <span class="le" style="display:none">DB Connection Failure → Full Access</span>
+            </div>
+            <div class="example-desc">
+              <span class="lz">角色查询失败 → 默认管理员权限 → 可读取任意用户数据</span>
+              <span class="le" style="display:none">Role lookup fails → defaults to admin → all user data exposed</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="example-item danger">
+          <span class="example-icon">🛂</span>
+          <div class="example-content">
+            <div class="example-name">
+              <span class="lz">防火墙规则解析错误</span>
+              <span class="le" style="display:none">Firewall Rule Parse Error</span>
+            </div>
+            <div class="example-desc">
+              <span class="lz">ACL 规则语法错误 → 防火墙重启时默认"允许所有流量"</span>
+              <span class="le" style="display:none">ACL syntax error → firewall restart defaults to "allow all traffic"</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="panel-center">
+      <div class="v-line"></div>
+      <div class="vs-animation">
+        <div class="err-bubble">ERROR</div>
+
+        <div class="fork-container">
+          <div class="fork-label fork-left-label">
+            <span class="lz">← 危险</span>
+            <span class="le" style="display:none">← Danger</span>
+          </div>
+          <div class="fork-arrows">
+            <div class="arrow-up">↖</div>
+            <div class="lightning">⚡</div>
+            <div class="arrow-down">↗</div>
+          </div>
+          <div class="fork-label fork-right-label">
+            <span class="lz">安全 →</span>
+            <span class="le" style="display:none">Safe →</span>
+          </div>
+        </div>
+
+        <div class="vs-label">VS</div>
+      </div>
+      <div class="v-line"></div>
+    </div>
+
+    <div class="panel-right">
+      <div class="panel-title">
+        <div class="panel-icon safe">✓</div>
+        <div>
+          <div class="panel-name safe">FAIL-CLOSED</div>
+          <div class="panel-sub">
+            <span class="lz">出错→拒绝（安全模式）</span>
+            <span class="le" style="display:none">On Error → DENY (Safe Mode)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="decision-box safe">
+        <div class="decision-trigger">
+          <span class="lz">发生错误时</span>
+          <span class="le" style="display:none">ON ERROR</span>
+        </div>
+        <div class="decision-arrow">
+          <span class="err-token">ERROR</span>
+          <span class="arrow-sym">→</span>
+          <span class="result-safe">
+            <span class="lz">✓ DENY</span>
+            <span class="le" style="display:none">✓ DENY</span>
+          </span>
+        </div>
+      </div>
+
+      <div class="example-row">
+        <strong>
+          <span class="lz">示例：</span>
+          <span class="le" style="display:none">Example:</span>
+        </strong>
+        <span class="lz">权限检查失败 → 默认"拒绝所有"</span>
+        <span class="le" style="display:none">Permission check fails → defaults to "deny all"</span>
+      </div>
+
+      <div>
+        <div class="risk-label safe">
+          <span class="lz">✓ 优势</span>
+          <span class="le" style="display:none">✓ BENEFIT</span>
+        </div>
+        <div class="risk-text">
+          <span class="lz">错误<strong style="color:var(--emerald)">永远不会授予权限</strong>。触发错误只会导致拒绝，攻击者无法将系统故障转化为安全漏洞</span>
+          <span class="le" style="display:none">Errors <strong style="color:var(--emerald)">can never grant access</strong>. Triggering errors only causes denial — attackers cannot exploit failures into permissions</span>
+        </div>
+      </div>
+
+      <div class="cc-badge">
+        ✦
+        <span class="lz">Claude Code 始终使用此模式</span>
+        <span class="le" style="display:none">Claude Code Always Uses This</span>
+      </div>
+
+      <div class="examples-section">
+        <div class="examples-title">
+          <span class="lz">正确实现示例</span>
+          <span class="le" style="display:none">Correct FAIL-CLOSED Implementations</span>
+        </div>
+
+        <div class="example-item safe">
+          <span class="example-icon">🛡️</span>
+          <div class="example-content">
+            <div class="example-name">
+              <span class="lz">TLS 证书验证</span>
+              <span class="le" style="display:none">TLS Certificate Validation</span>
+            </div>
+            <div class="example-desc">
+              <span class="lz">证书无法验证 → 拒绝连接，不降级为明文</span>
+              <span class="le" style="display:none">Certificate unverifiable → reject connection, never fallback to plaintext</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="example-item safe">
+          <span class="example-icon">🔑</span>
+          <div class="example-content">
+            <div class="example-name">
+              <span class="lz">密钥管理服务不可达</span>
+              <span class="le" style="display:none">Key Management Service Unreachable</span>
+            </div>
+            <div class="example-desc">
+              <span class="lz">KMS 超时 → 拒绝解密，不使用本地明文回退</span>
+              <span class="le" style="display:none">KMS timeout → deny decryption, no local plaintext fallback</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="example-item safe">
+          <span class="example-icon">📋</span>
+          <div class="example-content">
+            <div class="example-name">
+              <span class="lz">策略引擎崩溃</span>
+              <span class="le" style="display:none">Policy Engine Crash</span>
+            </div>
+            <div class="example-desc">
+              <span class="lz">OPA/Rego 评估异常 → 阻断请求，不默认放行</span>
+              <span class="le" style="display:none">OPA/Rego evaluation exception → block request, never default permit</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ═══════════════════════════════════════
+       ANIMATED FLOW DIAGRAM — REDRAWN
+       Coordinates recalculated for non-overlapping boxes
+  ════════════════════════════════════════ -->
+  <div class="flow-section">
+    <div class="section-label">
+      <span class="lz">错误传播路径 — 动态对比</span>
+      <span class="le" style="display:none">Error Propagation Path — Animated Contrast</span>
+    </div>
+
+    <div class="flow-svg-wrap">
+      <svg viewBox="0 0 980 240" width="100%" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Error flow animation">
+        <defs>
+          <marker id="arrowRed" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+            <polygon points="0 0, 8 4, 0 8" fill="#f43f5e"/>
+          </marker>
+          <marker id="arrowGreen" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+            <polygon points="0 0, 8 4, 0 8" fill="#10b981"/>
+          </marker>
+          <marker id="arrowAmber" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto">
+            <polygon points="0 0, 8 4, 0 8" fill="#f59e0b"/>
+          </marker>
+        </defs>
+
+        <!-- Background tracks -->
+        <!-- Top row: FAIL-OPEN  (y: 10-110, height 100) -->
+        <rect x="10" y="10" width="960" height="100" rx="12" fill="rgba(244,63,94,0.07)" stroke="rgba(244,63,94,0.28)" stroke-width="1.2"/>
+        <!-- Bottom row: FAIL-CLOSED (y: 130-230) -->
+        <rect x="10" y="130" width="960" height="100" rx="12" fill="rgba(16,185,129,0.07)" stroke="rgba(16,185,129,0.28)" stroke-width="1.2"/>
+
+        <!-- ROW LABELS (top-left of each track, ample padding) -->
+        <text x="24" y="32" fill="#f43f5e" font-size="13" font-weight="800" font-family="system-ui,sans-serif" letter-spacing=".5">FAIL-OPEN</text>
+        <text x="24" y="152" fill="#10b981" font-size="13" font-weight="800" font-family="system-ui,sans-serif" letter-spacing=".5">FAIL-CLOSED</text>
+
+        <!-- ═══ FAIL-OPEN ROW — 4 steps, y center = 78 ═══ -->
+        <!-- Step 1: Request (x:130, w:100) -->
+        <rect x="130" y="58" width="100" height="40" rx="8" fill="rgba(244,63,94,0.16)" stroke="rgba(244,63,94,0.5)" stroke-width="1.3"/>
+        <text x="180" y="83" text-anchor="middle" class="svg-label lz" font-size="13" font-weight="600" font-family="system-ui,sans-serif">请求</text>
+        <text x="180" y="83" text-anchor="middle" class="svg-label le" font-size="13" font-weight="600" font-family="system-ui,sans-serif" display="none">Request</text>
+
+        <!-- Arrow 1→2 (x: 232 → 278) -->
+        <line x1="232" y1="78" x2="278" y2="78" stroke="#f43f5e" stroke-width="1.6" marker-end="url(#arrowRed)" opacity=".7"/>
+
+        <!-- Step 2: Permission Check (x:280, w:130) -->
+        <rect x="280" y="58" width="130" height="40" rx="8" fill="rgba(244,63,94,0.16)" stroke="rgba(244,63,94,0.5)" stroke-width="1.3"/>
+        <text x="345" y="83" text-anchor="middle" class="svg-label lz" font-size="13" font-weight="600" font-family="system-ui,sans-serif">权限检查</text>
+        <text x="345" y="83" text-anchor="middle" class="svg-label le" font-size="13" font-weight="600" font-family="system-ui,sans-serif" display="none">Auth Check</text>
+
+        <!-- Arrow 2→3 (error) - label ABOVE the line, not inside any box -->
+        <text x="448" y="50" text-anchor="middle" fill="#f59e0b" font-size="11" font-family="'JetBrains Mono',monospace" font-weight="800" letter-spacing=".5">ERROR</text>
+        <line x1="412" y1="78" x2="484" y2="78" stroke="#f59e0b" stroke-width="1.8" marker-end="url(#arrowAmber)" stroke-dasharray="4 3"/>
+
+        <!-- Step 3: Decision (x:486, w:110) -->
+        <rect x="486" y="58" width="110" height="40" rx="8" fill="rgba(244,63,94,0.26)" stroke="#f43f5e" stroke-width="2"/>
+        <text x="541" y="83" text-anchor="middle" fill="#f43f5e" font-size="14" font-weight="800" font-family="system-ui,sans-serif">→ ALLOW</text>
+
+        <!-- Arrow 3→4 -->
+        <line x1="598" y1="78" x2="644" y2="78" stroke="#f43f5e" stroke-width="1.6" marker-end="url(#arrowRed)" opacity=".7"/>
+
+        <!-- Step 4: Access Granted (x:646, w:150) -->
+        <rect x="646" y="52" width="150" height="52" rx="10" fill="rgba(244,63,94,0.22)" stroke="#f43f5e" stroke-width="2"/>
+        <text x="721" y="75" text-anchor="middle" fill="#f43f5e" font-size="13" font-weight="800" font-family="system-ui,sans-serif" class="lz">⚠ 访问授予</text>
+        <text x="721" y="75" text-anchor="middle" fill="#f43f5e" font-size="13" font-weight="800" font-family="system-ui,sans-serif" class="le" display="none">⚠ ACCESS GRANTED</text>
+        <text x="721" y="93" text-anchor="middle" fill="#f43f5e" font-size="11" font-family="system-ui,sans-serif" class="lz">攻击者得逞</text>
+        <text x="721" y="93" text-anchor="middle" fill="#f43f5e" font-size="11" font-family="system-ui,sans-serif" class="le" display="none">Attacker wins</text>
+
+        <!-- ═══ FAIL-CLOSED ROW — 4 steps + CC badge, y center = 198 ═══ -->
+        <!-- Step 1: Request -->
+        <rect x="130" y="178" width="100" height="40" rx="8" fill="rgba(16,185,129,0.16)" stroke="rgba(16,185,129,0.5)" stroke-width="1.3"/>
+        <text x="180" y="203" text-anchor="middle" class="svg-label lz" font-size="13" font-weight="600" font-family="system-ui,sans-serif">请求</text>
+        <text x="180" y="203" text-anchor="middle" class="svg-label le" font-size="13" font-weight="600" font-family="system-ui,sans-serif" display="none">Request</text>
+
+        <!-- Arrow 1→2 -->
+        <line x1="232" y1="198" x2="278" y2="198" stroke="#10b981" stroke-width="1.6" marker-end="url(#arrowGreen)" opacity=".7"/>
+
+        <!-- Step 2: Permission Check -->
+        <rect x="280" y="178" width="130" height="40" rx="8" fill="rgba(16,185,129,0.16)" stroke="rgba(16,185,129,0.5)" stroke-width="1.3"/>
+        <text x="345" y="203" text-anchor="middle" class="svg-label lz" font-size="13" font-weight="600" font-family="system-ui,sans-serif">权限检查</text>
+        <text x="345" y="203" text-anchor="middle" class="svg-label le" font-size="13" font-weight="600" font-family="system-ui,sans-serif" display="none">Auth Check</text>
+
+        <!-- Arrow 2→3 (error) - label ABOVE -->
+        <text x="448" y="170" text-anchor="middle" fill="#f59e0b" font-size="11" font-family="'JetBrains Mono',monospace" font-weight="800" letter-spacing=".5">ERROR</text>
+        <line x1="412" y1="198" x2="484" y2="198" stroke="#f59e0b" stroke-width="1.8" marker-end="url(#arrowAmber)" stroke-dasharray="4 3"/>
+
+        <!-- Step 3: Decision -->
+        <rect x="486" y="178" width="110" height="40" rx="8" fill="rgba(16,185,129,0.22)" stroke="#10b981" stroke-width="2"/>
+        <text x="541" y="203" text-anchor="middle" fill="#10b981" font-size="14" font-weight="800" font-family="system-ui,sans-serif">→ DENY</text>
+
+        <!-- Arrow 3→4 -->
+        <line x1="598" y1="198" x2="644" y2="198" stroke="#10b981" stroke-width="1.6" marker-end="url(#arrowGreen)" opacity=".7"/>
+
+        <!-- Step 4: Access Denied -->
+        <rect x="646" y="172" width="150" height="52" rx="10" fill="rgba(16,185,129,0.18)" stroke="#10b981" stroke-width="2"/>
+        <text x="721" y="195" text-anchor="middle" fill="#10b981" font-size="13" font-weight="800" font-family="system-ui,sans-serif" class="lz">✓ 访问拒绝</text>
+        <text x="721" y="195" text-anchor="middle" fill="#10b981" font-size="13" font-weight="800" font-family="system-ui,sans-serif" class="le" display="none">✓ ACCESS DENIED</text>
+        <text x="721" y="213" text-anchor="middle" fill="#10b981" font-size="11" font-family="system-ui,sans-serif" class="lz">系统安全</text>
+        <text x="721" y="213" text-anchor="middle" fill="#10b981" font-size="11" font-family="system-ui,sans-serif" class="le" display="none">System secure</text>
+
+        <!-- Connector from step4 to CC badge -->
+        <line x1="798" y1="198" x2="824" y2="198" stroke="#f59e0b" stroke-width="1.4" marker-end="url(#arrowAmber)" opacity=".7"/>
+
+        <!-- Claude Code badge — enlarged and repositioned -->
+        <rect x="826" y="172" width="140" height="52" rx="10" fill="rgba(245,158,11,0.18)" stroke="rgba(245,158,11,0.6)" stroke-width="1.8"/>
+        <text x="896" y="192" text-anchor="middle" fill="#f59e0b" font-size="12" font-weight="800" font-family="system-ui,sans-serif" letter-spacing=".5">✦ CLAUDE CODE</text>
+        <text x="896" y="211" text-anchor="middle" fill="#f59e0b" font-size="11" font-family="system-ui,sans-serif" class="lz">使用此策略</text>
+        <text x="896" y="211" text-anchor="middle" fill="#f59e0b" font-size="11" font-family="system-ui,sans-serif" class="le" display="none">Uses this policy</text>
+
+        <!-- Animated error tokens positioned ALONG the arrow, not overlapping boxes -->
+        <g class="token-particle">
+          <rect x="430" y="66" width="40" height="20" rx="5" fill="rgba(245,158,11,0.35)" stroke="#f59e0b" stroke-width="1.3"/>
+          <text x="450" y="81" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="800" font-family="'JetBrains Mono',monospace">ERR</text>
+        </g>
+
+        <g class="token-particle" style="animation-delay:.8s">
+          <rect x="430" y="186" width="40" height="20" rx="5" fill="rgba(245,158,11,0.35)" stroke="#f59e0b" stroke-width="1.3"/>
+          <text x="450" y="201" text-anchor="middle" fill="#f59e0b" font-size="11" font-weight="800" font-family="'JetBrains Mono',monospace">ERR</text>
+        </g>
+
+      </svg>
+    </div>
+  </div>
+
+  <div class="impl-section">
+    <div class="section-label">
+      <span class="lz">Claude Code 的 FAIL-CLOSED 实现细节</span>
+      <span class="le" style="display:none">Claude Code FAIL-CLOSED Implementation Details</span>
+    </div>
+
+    <div class="impl-grid">
+
+      <div class="impl-item">
+        <span class="impl-icon">🔧</span>
+        <div class="impl-content">
+          <div class="impl-trigger">
+            <span class="lz">Sandbox 沙箱错误</span>
+            <span class="le" style="display:none">Sandbox Error</span>
+          </div>
+          <div class="impl-action">→ Block tool execution</div>
+        </div>
+      </div>
+
+      <div class="impl-item">
+        <span class="impl-icon">⏱️</span>
+        <div class="impl-content">
+          <div class="impl-trigger">
+            <span class="lz">权限检查超时</span>
+            <span class="le" style="display:none">Permission Timeout</span>
+          </div>
+          <div class="impl-action">→ Deny</div>
+        </div>
+      </div>
+
+      <div class="impl-item">
+        <span class="impl-icon">❓</span>
+        <div class="impl-content">
+          <div class="impl-trigger">
+            <span class="lz">未知工具调用</span>
+            <span class="le" style="display:none">Unknown Tool</span>
+          </div>
+          <div class="impl-action">→ Deny</div>
+        </div>
+      </div>
+
+      <div class="impl-item">
+        <span class="impl-icon">📄</span>
+        <div class="impl-content">
+          <div class="impl-trigger">
+            <span class="lz">配置文件解析错误</span>
+            <span class="le" style="display:none">Config Parse Error</span>
+          </div>
+          <div class="impl-action">→ Use most restrictive defaults</div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <div class="callout-box">
+    <div class="callout-icon">🔐</div>
+    <div class="callout-zh">
+      <span class="lz">安全原则：失败比危险更好</span>
+      <span class="le" style="display:none">Security Principle: Safe Failure Beats Dangerous Success</span>
+    </div>
+    <div class="callout-line"></div>
+    <div class="callout-en">
+      <span class="lz">Security Principle: Safe failure beats dangerous success</span>
+      <span class="le" style="display:none">Safe failure beats dangerous success</span>
+    </div>
+    <div class="callout-detail">
+      <span class="lz">系统宁可无法完成任务，也不能在不确定的情况下授予权限。不确定 = 拒绝。</span>
+      <span class="le" style="display:none">The system should rather fail to complete a task than grant access under uncertainty. Uncertain = Deny.</span>
+    </div>
+  </div>
+
+</div>
+<script>
+/* v2-embed-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName.toLowerCase() === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.setAttribute('display', 'inline');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName.toLowerCase() === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'inline'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,209 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 820" width="800" height="820">
+  <defs>
+    <style>
+      text { font-family: system-ui, -apple-system, sans-serif; }
+    </style>
+    <filter id="shadow">
+      <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#000" flood-opacity="0.35"/>
+    </filter>
+    <linearGradient id="headerGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#58a6ff" stop-opacity="0.12"/>
+      <stop offset="100%" stop-color="#3fb950" stop-opacity="0.12"/>
+    </linearGradient>
+    <!-- Layer background gradients -->
+    <linearGradient id="layer1Bg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#58a6ff" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#388bfd" stop-opacity="0.04"/>
+    </linearGradient>
+    <linearGradient id="layer2Bg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#bc8cff" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#d2a8ff" stop-opacity="0.04"/>
+    </linearGradient>
+    <linearGradient id="layer3Bg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#3fb950" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#56d364" stop-opacity="0.04"/>
+    </linearGradient>
+    <linearGradient id="layer4Bg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#d29922" stop-opacity="0.08"/>
+      <stop offset="100%" stop-color="#d29922" stop-opacity="0.04"/>
+    </linearGradient>
+    <linearGradient id="layer5Bg" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#f85149" stop-opacity="0.06"/>
+      <stop offset="100%" stop-color="#f85149" stop-opacity="0.03"/>
+    </linearGradient>
+  </defs>
+
+  <!-- Background -->
+  <rect width="800" height="820" fill="#0d1117" rx="12"/>
+
+  <!-- Header -->
+  <rect x="0" y="0" width="800" height="80" fill="url(#headerGrad)" rx="12"/>
+  <rect x="0" y="40" width="800" height="40" fill="url(#headerGrad)"/>
+  <text x="400" y="38" fill="#ffffff" font-size="22" font-weight="700" text-anchor="middle">Claude Code Architecture</text>
+  <text x="400" y="62" fill="#8b949e" font-size="13" text-anchor="middle">Layered Module Map</text>
+
+  <!-- ==================== LAYER 1: CLI Entry Points ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="100" width="720" height="120" rx="10" fill="url(#layer1Bg)" stroke="#58a6ff" stroke-width="1" stroke-opacity="0.4"/>
+  </g>
+  <!-- Layer label -->
+  <rect x="40" y="100" width="6" height="120" rx="3" fill="#58a6ff"/>
+  <text x="68" y="123" fill="#58a6ff" font-size="13" font-weight="700">CLI ENTRY POINTS</text>
+  <text x="68" y="140" fill="#8b949e" font-size="11">commands/ , cli/</text>
+
+  <!-- Module boxes inside -->
+  <rect x="68" y="155" width="90" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="113" y="176" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">main.ts</text>
+
+  <rect x="170" y="155" width="110" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="225" y="176" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">cli/index.ts</text>
+
+  <rect x="292" y="155" width="100" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="342" y="176" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">/doctor</text>
+
+  <rect x="404" y="155" width="100" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="454" y="176" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">/config</text>
+
+  <rect x="516" y="155" width="100" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="566" y="176" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">/review</text>
+
+  <rect x="628" y="155" width="110" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="683" y="176" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">/init  /login</text>
+
+  <!-- Downward connector -->
+  <line x1="400" y1="220" x2="400" y2="240" stroke="#30363d" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- ==================== LAYER 2: Core Engine ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="240" width="720" height="120" rx="10" fill="url(#layer2Bg)" stroke="#bc8cff" stroke-width="1" stroke-opacity="0.4"/>
+  </g>
+  <rect x="40" y="240" width="6" height="120" rx="3" fill="#bc8cff"/>
+  <text x="68" y="263" fill="#bc8cff" font-size="13" font-weight="700">CORE ENGINE</text>
+  <text x="68" y="280" fill="#8b949e" font-size="11">Agent orchestration, query cycle, prompt assembly</text>
+
+  <rect x="68" y="295" width="130" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="133" y="316" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">queryLoop.ts</text>
+
+  <rect x="210" y="295" width="130" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="275" y="316" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">Agent Class</text>
+
+  <rect x="352" y="295" width="140" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="422" y="316" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">System Prompt</text>
+
+  <rect x="504" y="295" width="120" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="564" y="316" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">API Client</text>
+
+  <rect x="636" y="295" width="106" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="689" y="316" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">Messages</text>
+
+  <!-- Downward connector -->
+  <line x1="400" y1="360" x2="400" y2="380" stroke="#30363d" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- ==================== LAYER 3: Tool Runtime ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="380" width="720" height="140" rx="10" fill="url(#layer3Bg)" stroke="#3fb950" stroke-width="1" stroke-opacity="0.4"/>
+  </g>
+  <rect x="40" y="380" width="6" height="140" rx="3" fill="#3fb950"/>
+  <text x="68" y="403" fill="#3fb950" font-size="13" font-weight="700">TOOL RUNTIME</text>
+  <text x="220" y="403" fill="#8b949e" font-size="11">43 built-in tools</text>
+
+  <!-- Tool boxes - Row 1 -->
+  <rect x="68" y="415" width="82" height="32" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="1" stroke-opacity="0.4"/>
+  <text x="109" y="435" fill="#56d364" font-size="11" font-weight="600" text-anchor="middle">Bash</text>
+
+  <rect x="160" y="415" width="82" height="32" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="1" stroke-opacity="0.4"/>
+  <text x="201" y="435" fill="#56d364" font-size="11" font-weight="600" text-anchor="middle">Read</text>
+
+  <rect x="252" y="415" width="82" height="32" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="1" stroke-opacity="0.4"/>
+  <text x="293" y="435" fill="#56d364" font-size="11" font-weight="600" text-anchor="middle">Write</text>
+
+  <rect x="344" y="415" width="82" height="32" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="1" stroke-opacity="0.4"/>
+  <text x="385" y="435" fill="#56d364" font-size="11" font-weight="600" text-anchor="middle">Edit</text>
+
+  <rect x="436" y="415" width="82" height="32" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="1" stroke-opacity="0.4"/>
+  <text x="477" y="435" fill="#56d364" font-size="11" font-weight="600" text-anchor="middle">Grep</text>
+
+  <rect x="528" y="415" width="82" height="32" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="1" stroke-opacity="0.4"/>
+  <text x="569" y="435" fill="#56d364" font-size="11" font-weight="600" text-anchor="middle">Glob</text>
+
+  <rect x="620" y="415" width="120" height="32" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="1" stroke-opacity="0.4"/>
+  <text x="680" y="435" fill="#56d364" font-size="11" font-weight="600" text-anchor="middle">Agent (sub)</text>
+
+  <!-- Tool boxes - Row 2 -->
+  <rect x="68" y="457" width="100" height="32" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="1" stroke-opacity="0.3"/>
+  <text x="118" y="477" fill="#8b949e" font-size="11" font-weight="500" text-anchor="middle">WebSearch</text>
+
+  <rect x="178" y="457" width="100" height="32" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="1" stroke-opacity="0.3"/>
+  <text x="228" y="477" fill="#8b949e" font-size="11" font-weight="500" text-anchor="middle">WebFetch</text>
+
+  <rect x="288" y="457" width="110" height="32" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="1" stroke-opacity="0.3"/>
+  <text x="343" y="477" fill="#8b949e" font-size="11" font-weight="500" text-anchor="middle">NotebookEdit</text>
+
+  <rect x="408" y="457" width="100" height="32" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="1" stroke-opacity="0.3"/>
+  <text x="458" y="477" fill="#8b949e" font-size="11" font-weight="500" text-anchor="middle">TodoWrite</text>
+
+  <rect x="518" y="457" width="100" height="32" rx="6" fill="#161b22" stroke="#3fb950" stroke-width="1" stroke-opacity="0.3"/>
+  <text x="568" y="477" fill="#8b949e" font-size="11" font-weight="500" text-anchor="middle">MCP Tools</text>
+
+  <rect x="628" y="457" width="114" height="32" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1" stroke-dasharray="4,2"/>
+  <text x="685" y="477" fill="#8b949e" font-size="10" text-anchor="middle">+30 more...</text>
+
+  <!-- Downward connector -->
+  <line x1="400" y1="520" x2="400" y2="540" stroke="#30363d" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- ==================== LAYER 4: Services ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="540" width="720" height="110" rx="10" fill="url(#layer4Bg)" stroke="#d29922" stroke-width="1" stroke-opacity="0.4"/>
+  </g>
+  <rect x="40" y="540" width="6" height="110" rx="3" fill="#d29922"/>
+  <text x="68" y="563" fill="#d29922" font-size="13" font-weight="700">SERVICES</text>
+  <text x="68" y="580" fill="#8b949e" font-size="11">External integrations and side-channel systems</text>
+
+  <rect x="68" y="595" width="130" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="133" y="616" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">MCP Server</text>
+
+  <rect x="210" y="595" width="110" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="265" y="616" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">Hooks</text>
+
+  <rect x="332" y="595" width="110" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="387" y="616" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">Plugins</text>
+
+  <rect x="454" y="595" width="110" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="509" y="616" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">Settings</text>
+
+  <rect x="576" y="595" width="166" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="659" y="616" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">Telemetry / Auth</text>
+
+  <!-- Downward connector -->
+  <line x1="400" y1="650" x2="400" y2="670" stroke="#30363d" stroke-width="1" stroke-dasharray="4,3"/>
+
+  <!-- ==================== LAYER 5: Infrastructure ==================== -->
+  <g filter="url(#shadow)">
+    <rect x="40" y="670" width="720" height="110" rx="10" fill="url(#layer5Bg)" stroke="#f85149" stroke-width="1" stroke-opacity="0.3"/>
+  </g>
+  <rect x="40" y="670" width="6" height="110" rx="3" fill="#f85149"/>
+  <text x="68" y="693" fill="#f85149" font-size="13" font-weight="700">INFRASTRUCTURE</text>
+  <text x="68" y="710" fill="#8b949e" font-size="11">Sandbox, security, persistence, rendering</text>
+
+  <rect x="68" y="725" width="140" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="138" y="746" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">Sandbox (macOS)</text>
+
+  <rect x="220" y="725" width="130" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="285" y="746" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">Permissions</text>
+
+  <rect x="362" y="725" width="150" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="437" y="746" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">State / Persistence</text>
+
+  <rect x="524" y="725" width="110" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="579" y="746" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">Terminal UI</text>
+
+  <rect x="646" y="725" width="96" height="34" rx="6" fill="#161b22" stroke="#30363d" stroke-width="1"/>
+  <text x="694" y="746" fill="#e6edf3" font-size="11" font-weight="600" text-anchor="middle">Cost Ctrl</text>
+
+  <!-- Direction arrows on the right side showing data flow direction -->
+  <text x="775" y="170" fill="#30363d" font-size="18" text-anchor="middle" transform="rotate(90,775,170)">request</text>
+  <path d="M775,110 L775,220" fill="none" stroke="#30363d" stroke-width="1" stroke-dasharray="3,3"/>
+
+  <text x="775" y="510" fill="#30363d" font-size="18" text-anchor="middle" transform="rotate(90,775,510)">execution</text>
+  <path d="M775,390 L775,630" fill="none" stroke="#30363d" stroke-width="1" stroke-dasharray="3,3"/>
+</svg>

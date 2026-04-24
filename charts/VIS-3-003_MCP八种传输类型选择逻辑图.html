@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-3-003 | MCP八种传输类型选择逻辑图</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+html[data-lang="en"] .lz { display: none !important; }
+html[data-lang="zh"] .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--panel:#0f172a;--card:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#cbd5e1;--subtle:#64748b;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#cbd5e1;--orange:#fb923c}
+[data-theme="warm"]{--bg:#1c1410;--panel:#2a1f16;--card:#3d2d20;--border:#6b5640;--text:#f8ecd4;--muted:#e0c9a0;--subtle:#8b7355;--amber:#fcd34d;--cyan:#5eead4;--violet:#c4b5fd;--emerald:#6ee7b7;--rose:#fda4af;--slate:#e2e8f0;--orange:#fdba74}
+[data-theme="light"]{--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:#94a3b8;--text:#0f172a;--muted:#334155;--subtle:#64748b;--amber:#b45309;--cyan:#0e7490;--violet:#6d28d9;--emerald:#047857;--rose:#be123c;--slate:#334155;--orange:#c2410c}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:24px}
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:100}
+.ctrl button{font-family:'JetBrains Mono',monospace;font-size:12px;padding:7px 14px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:background 0.15s;font-weight:600}
+.ctrl button:hover{background:var(--border)}
+
+.header{max-width:1120px;margin:0 auto 22px;padding-top:8px}
+.header-tag{font-size:12px;color:var(--muted);letter-spacing:0.08em;text-transform:uppercase;margin-bottom:8px;font-weight:600}
+.header-title{font-size:24px;font-weight:700;color:var(--text);line-height:1.3;margin-bottom:8px}
+.header-sub{font-size:13px;color:var(--muted);line-height:1.6}
+
+.wrap{max-width:1120px;margin:0 auto;display:flex;flex-direction:column;gap:18px}
+
+.panel{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:22px}
+.panel-title{font-size:12px;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.1em;margin-bottom:14px}
+
+/* decision tree — full width */
+.tree svg{display:block;width:100%;height:auto}
+
+/* two-col: cards + perf */
+.row2{display:grid;grid-template-columns:1.35fr 1fr;gap:18px}
+@media (max-width: 860px){.row2{grid-template-columns:1fr}}
+
+.cards-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.tcard{background:var(--card);border-radius:8px;padding:14px;border-left:4px solid transparent;transition:transform 0.15s,box-shadow 0.15s}
+.tcard:hover{transform:translateY(-2px);box-shadow:0 6px 14px rgba(0,0,0,0.25)}
+.tcard-name{font-size:14px;font-weight:700;margin-bottom:6px;line-height:1.2}
+.tcard-desc{font-size:12px;color:var(--muted);line-height:1.55;margin-bottom:10px}
+.tcard-meta{display:flex;gap:6px;flex-wrap:wrap}
+.tag{font-size:11px;padding:3px 8px;border-radius:4px;background:var(--panel);color:var(--muted);border:1px solid var(--border);font-weight:500}
+
+.perf-row{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.perf-row:last-child{margin-bottom:0}
+.perf-label{font-size:12px;font-weight:700;width:104px;flex-shrink:0}
+.perf-bar-bg{flex:1;height:10px;background:var(--card);border-radius:5px;overflow:hidden;border:1px solid var(--border)}
+.perf-bar{height:100%;border-radius:5px;transition:width 0.6s ease}
+.perf-val{font-size:11px;color:var(--muted);width:78px;text-align:right;flex-shrink:0;font-weight:600}
+
+.summary-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media (max-width: 860px){.summary-grid{grid-template-columns:1fr}}
+.scard{background:var(--card);border-radius:8px;padding:16px;border-top:3px solid transparent}
+.scard-head{font-size:14px;font-weight:700;margin-bottom:8px}
+.scard-body{font-size:12px;color:var(--muted);line-height:1.6}
+
+.footer{max-width:1120px;margin:24px auto 0;font-size:11px;color:var(--subtle);text-align:right}
+</style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="cycleTheme()">Theme</button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<div class="header">
+  <div class="header-tag">VIS-3-003 · MCP Transport</div>
+  <div class="header-title">
+    <span class="lz">MCP 八种传输类型选择逻辑图</span>
+    <span class="le">MCP 8 Transport Types — Decision Map</span>
+  </div>
+  <div class="header-sub">
+    <span class="lz">Model Context Protocol 支持 8 种传输机制,Claude Code 根据部署上下文自动选择最合适的传输方式</span>
+    <span class="le">MCP supports 8 transport mechanisms; Claude Code selects the optimal one based on deployment context</span>
+  </div>
+</div>
+
+<div class="wrap">
+
+  <!-- =============== DECISION TREE (full width, horizontal) =============== -->
+  <div class="panel tree">
+    <div class="panel-title">
+      <span class="lz">传输类型选择决策树(从左到右)</span>
+      <span class="le">Transport Selection Decision Tree (left → right)</span>
+    </div>
+    <svg viewBox="0 0 1080 440" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <pattern id="grid" width="20" height="20" patternUnits="userSpaceOnUse">
+          <path d="M20 0L0 0 0 20" fill="none" stroke="var(--border)" stroke-width="0.4" opacity="0.35"/>
+        </pattern>
+        <marker id="arrow-muted" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+          <path d="M0,0 L0,7 L9,3.5 z" fill="var(--subtle)"/>
+        </marker>
+        <marker id="arrow-cyan" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+          <path d="M0,0 L0,7 L9,3.5 z" fill="var(--cyan)"/>
+        </marker>
+        <marker id="arrow-amber" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+          <path d="M0,0 L0,7 L9,3.5 z" fill="var(--amber)"/>
+        </marker>
+        <marker id="arrow-violet" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+          <path d="M0,0 L0,7 L9,3.5 z" fill="var(--violet)"/>
+        </marker>
+        <marker id="arrow-emerald" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+          <path d="M0,0 L0,7 L9,3.5 z" fill="var(--emerald)"/>
+        </marker>
+        <marker id="arrow-slate" markerWidth="9" markerHeight="9" refX="7" refY="3.5" orient="auto">
+          <path d="M0,0 L0,7 L9,3.5 z" fill="var(--slate)"/>
+        </marker>
+      </defs>
+
+      <rect width="1080" height="440" fill="var(--panel)" rx="8"/>
+      <rect width="1080" height="440" fill="url(#grid)" rx="8"/>
+
+      <!-- ===== Result boxes row (top, y=40~110) ===== -->
+      <!-- stdio (above Q1) -->
+      <rect x="158" y="40" width="124" height="70" rx="8" fill="var(--card)" stroke="var(--cyan)" stroke-width="2"/>
+      <text x="220" y="66" text-anchor="middle" font-size="15" font-weight="700" fill="var(--cyan)" font-family="JetBrains Mono,monospace">stdio</text>
+      <text x="220" y="86" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="lz">本地管道</text>
+      <text x="220" y="86" text-anchor="middle" font-size="11" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="le">local pipe</text>
+      <text x="220" y="101" text-anchor="middle" font-size="10" fill="var(--subtle)" font-family="JetBrains Mono,monospace">stdin/stdout</text>
+
+      <!-- WebSocket / WS-IDE (above Q2) -->
+      <rect x="338" y="40" width="124" height="70" rx="8" fill="var(--card)" stroke="var(--violet)" stroke-width="2"/>
+      <text x="400" y="62" text-anchor="middle" font-size="14" font-weight="700" fill="var(--violet)" font-family="JetBrains Mono,monospace">WebSocket</text>
+      <text x="400" y="80" text-anchor="middle" font-size="11" font-weight="600" fill="var(--rose)" font-family="JetBrains Mono,monospace">+ WS-IDE</text>
+      <text x="400" y="98" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="lz">双向全双工</text>
+      <text x="400" y="98" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="le">full-duplex</text>
+
+      <!-- SSE / SSE-IDE (above Q3) -->
+      <rect x="518" y="40" width="124" height="70" rx="8" fill="var(--card)" stroke="var(--amber)" stroke-width="2"/>
+      <text x="580" y="62" text-anchor="middle" font-size="14" font-weight="700" fill="var(--amber)" font-family="JetBrains Mono,monospace">SSE</text>
+      <text x="580" y="80" text-anchor="middle" font-size="11" font-weight="600" fill="var(--orange)" font-family="JetBrains Mono,monospace">+ SSE-IDE</text>
+      <text x="580" y="98" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="lz">服务端推流</text>
+      <text x="580" y="98" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="le">server-push</text>
+
+      <!-- HTTP Streamable (above Q4) -->
+      <rect x="698" y="40" width="124" height="70" rx="8" fill="var(--card)" stroke="var(--emerald)" stroke-width="2"/>
+      <text x="760" y="62" text-anchor="middle" font-size="14" font-weight="700" fill="var(--emerald)" font-family="JetBrains Mono,monospace">HTTP</text>
+      <text x="760" y="80" text-anchor="middle" font-size="11" font-weight="600" fill="var(--emerald)" font-family="JetBrains Mono,monospace">Streamable</text>
+      <text x="760" y="98" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="lz">分块流式</text>
+      <text x="760" y="98" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="le">chunked</text>
+
+      <!-- ===== Decision row (middle, y=160~260) ===== -->
+      <!-- Start -->
+      <rect x="20" y="185" width="96" height="50" rx="25" fill="var(--card)" stroke="var(--cyan)" stroke-width="2"/>
+      <text x="68" y="208" text-anchor="middle" font-size="12" font-weight="700" fill="var(--cyan)" font-family="JetBrains Mono,monospace" class="lz">选择</text>
+      <text x="68" y="208" text-anchor="middle" font-size="12" font-weight="700" fill="var(--cyan)" font-family="JetBrains Mono,monospace" class="le">Select</text>
+      <text x="68" y="224" text-anchor="middle" font-size="11" font-weight="600" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="lz">传输</text>
+      <text x="68" y="224" text-anchor="middle" font-size="11" font-weight="600" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="le">Transport</text>
+
+      <!-- Q1: Local process? -->
+      <polygon points="220,175 290,210 220,245 150,210" fill="var(--panel)" stroke="var(--amber)" stroke-width="2"/>
+      <text x="220" y="207" text-anchor="middle" font-size="13" font-weight="700" fill="var(--amber)" font-family="JetBrains Mono,monospace" class="lz">本地进程?</text>
+      <text x="220" y="207" text-anchor="middle" font-size="13" font-weight="700" fill="var(--amber)" font-family="JetBrains Mono,monospace" class="le">Local?</text>
+      <text x="220" y="224" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">Q1</text>
+
+      <!-- Q2: Bidirectional? -->
+      <polygon points="400,175 470,210 400,245 330,210" fill="var(--panel)" stroke="var(--violet)" stroke-width="2"/>
+      <text x="400" y="207" text-anchor="middle" font-size="13" font-weight="700" fill="var(--violet)" font-family="JetBrains Mono,monospace" class="lz">需双向?</text>
+      <text x="400" y="207" text-anchor="middle" font-size="13" font-weight="700" fill="var(--violet)" font-family="JetBrains Mono,monospace" class="le">Bidir?</text>
+      <text x="400" y="224" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">Q2</text>
+
+      <!-- Q3: Server push? -->
+      <polygon points="580,175 650,210 580,245 510,210" fill="var(--panel)" stroke="var(--amber)" stroke-width="2"/>
+      <text x="580" y="207" text-anchor="middle" font-size="13" font-weight="700" fill="var(--amber)" font-family="JetBrains Mono,monospace" class="lz">服务推流?</text>
+      <text x="580" y="207" text-anchor="middle" font-size="13" font-weight="700" fill="var(--amber)" font-family="JetBrains Mono,monospace" class="le">Push?</text>
+      <text x="580" y="224" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">Q3</text>
+
+      <!-- Q4: Simple HTTP? -->
+      <polygon points="760,175 830,210 760,245 690,210" fill="var(--panel)" stroke="var(--emerald)" stroke-width="2"/>
+      <text x="760" y="207" text-anchor="middle" font-size="13" font-weight="700" fill="var(--emerald)" font-family="JetBrains Mono,monospace" class="lz">简单HTTP?</text>
+      <text x="760" y="207" text-anchor="middle" font-size="13" font-weight="700" fill="var(--emerald)" font-family="JetBrains Mono,monospace" class="le">HTTP?</text>
+      <text x="760" y="224" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">Q4</text>
+
+      <!-- ===== Horizontal NO spine ===== -->
+      <line x1="116" y1="210" x2="150" y2="210" stroke="var(--subtle)" stroke-width="2" marker-end="url(#arrow-muted)"/>
+      <line x1="290" y1="210" x2="330" y2="210" stroke="var(--subtle)" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow-muted)"/>
+      <line x1="470" y1="210" x2="510" y2="210" stroke="var(--subtle)" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow-muted)"/>
+      <line x1="650" y1="210" x2="690" y2="210" stroke="var(--subtle)" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow-muted)"/>
+      <line x1="830" y1="210" x2="870" y2="210" stroke="var(--subtle)" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow-muted)"/>
+
+      <!-- NO labels -->
+      <text x="310" y="202" text-anchor="middle" font-size="11" font-weight="600" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="lz">否</text>
+      <text x="310" y="202" text-anchor="middle" font-size="11" font-weight="600" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="le">NO</text>
+      <text x="490" y="202" text-anchor="middle" font-size="11" font-weight="600" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="lz">否</text>
+      <text x="490" y="202" text-anchor="middle" font-size="11" font-weight="600" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="le">NO</text>
+      <text x="670" y="202" text-anchor="middle" font-size="11" font-weight="600" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="lz">否</text>
+      <text x="670" y="202" text-anchor="middle" font-size="11" font-weight="600" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="le">NO</text>
+      <text x="850" y="202" text-anchor="middle" font-size="11" font-weight="600" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="lz">否</text>
+      <text x="850" y="202" text-anchor="middle" font-size="11" font-weight="600" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="le">NO</text>
+
+      <!-- ===== YES branches UP to result boxes ===== -->
+      <line x1="220" y1="175" x2="220" y2="110" stroke="var(--cyan)" stroke-width="2" marker-end="url(#arrow-cyan)"/>
+      <text x="232" y="150" font-size="11" font-weight="700" fill="var(--cyan)" font-family="JetBrains Mono,monospace" class="lz">是</text>
+      <text x="232" y="150" font-size="11" font-weight="700" fill="var(--cyan)" font-family="JetBrains Mono,monospace" class="le">YES</text>
+
+      <line x1="400" y1="175" x2="400" y2="110" stroke="var(--violet)" stroke-width="2" marker-end="url(#arrow-violet)"/>
+      <text x="412" y="150" font-size="11" font-weight="700" fill="var(--violet)" font-family="JetBrains Mono,monospace" class="lz">是</text>
+      <text x="412" y="150" font-size="11" font-weight="700" fill="var(--violet)" font-family="JetBrains Mono,monospace" class="le">YES</text>
+
+      <line x1="580" y1="175" x2="580" y2="110" stroke="var(--amber)" stroke-width="2" marker-end="url(#arrow-amber)"/>
+      <text x="592" y="150" font-size="11" font-weight="700" fill="var(--amber)" font-family="JetBrains Mono,monospace" class="lz">是</text>
+      <text x="592" y="150" font-size="11" font-weight="700" fill="var(--amber)" font-family="JetBrains Mono,monospace" class="le">YES</text>
+
+      <line x1="760" y1="175" x2="760" y2="110" stroke="var(--emerald)" stroke-width="2" marker-end="url(#arrow-emerald)"/>
+      <text x="772" y="150" font-size="11" font-weight="700" fill="var(--emerald)" font-family="JetBrains Mono,monospace" class="lz">是</text>
+      <text x="772" y="150" font-size="11" font-weight="700" fill="var(--emerald)" font-family="JetBrains Mono,monospace" class="le">YES</text>
+
+      <!-- ===== Terminal fork (right side): SDK / claude.ai proxy ===== -->
+      <!-- Fork node -->
+      <circle cx="890" cy="210" r="10" fill="var(--card)" stroke="var(--slate)" stroke-width="2"/>
+      <text x="890" y="214" text-anchor="middle" font-size="11" font-weight="700" fill="var(--slate)" font-family="JetBrains Mono,monospace">?</text>
+
+      <!-- Fork to SDK (up) -->
+      <path d="M 890 200 L 890 160 L 950 160" fill="none" stroke="var(--slate)" stroke-width="2" marker-end="url(#arrow-slate)"/>
+      <rect x="950" y="135" width="116" height="50" rx="8" fill="var(--card)" stroke="var(--slate)" stroke-width="2"/>
+      <text x="1008" y="156" text-anchor="middle" font-size="14" font-weight="700" fill="var(--slate)" font-family="JetBrains Mono,monospace">SDK</text>
+      <text x="1008" y="174" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace">TS / Python</text>
+
+      <!-- Fork to claude.ai proxy (down) -->
+      <path d="M 890 220 L 890 260 L 950 260" fill="none" stroke="var(--cyan)" stroke-width="2" marker-end="url(#arrow-cyan)"/>
+      <rect x="950" y="235" width="116" height="50" rx="8" fill="var(--card)" stroke="var(--cyan)" stroke-width="2"/>
+      <text x="1008" y="256" text-anchor="middle" font-size="13" font-weight="700" fill="var(--cyan)" font-family="JetBrains Mono,monospace">claude.ai</text>
+      <text x="1008" y="274" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="lz">代理</text>
+      <text x="1008" y="274" text-anchor="middle" font-size="10" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="le">proxy</text>
+
+      <!-- fork labels -->
+      <text x="920" y="155" font-size="10" font-weight="600" fill="var(--slate)" font-family="JetBrains Mono,monospace" class="lz">SDK集成</text>
+      <text x="920" y="155" font-size="10" font-weight="600" fill="var(--slate)" font-family="JetBrains Mono,monospace" class="le">SDK</text>
+      <text x="920" y="278" font-size="10" font-weight="600" fill="var(--cyan)" font-family="JetBrains Mono,monospace" class="lz">托管</text>
+      <text x="920" y="278" font-size="10" font-weight="600" fill="var(--cyan)" font-family="JetBrains Mono,monospace" class="le">managed</text>
+
+      <!-- ===== Legend row (bottom, y=340~420) ===== -->
+      <rect x="20" y="340" width="1040" height="80" rx="8" fill="var(--card)" stroke="var(--border)" stroke-width="1"/>
+      <text x="40" y="365" font-size="12" font-weight="700" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="lz">图例</text>
+      <text x="40" y="365" font-size="12" font-weight="700" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="le">Legend</text>
+
+      <!-- decision node icon -->
+      <polygon points="140,370 160,380 140,390 120,380" fill="none" stroke="var(--amber)" stroke-width="2"/>
+      <text x="175" y="385" font-size="12" fill="var(--text)" font-family="JetBrains Mono,monospace" class="lz">决策节点</text>
+      <text x="175" y="385" font-size="12" fill="var(--text)" font-family="JetBrains Mono,monospace" class="le">Decision</text>
+
+      <!-- result box icon -->
+      <rect x="290" y="370" width="28" height="18" rx="4" fill="var(--card)" stroke="var(--cyan)" stroke-width="2"/>
+      <text x="328" y="385" font-size="12" fill="var(--text)" font-family="JetBrains Mono,monospace" class="lz">传输结果</text>
+      <text x="328" y="385" font-size="12" fill="var(--text)" font-family="JetBrains Mono,monospace" class="le">Transport</text>
+
+      <!-- YES arrow -->
+      <line x1="450" y1="380" x2="490" y2="380" stroke="var(--cyan)" stroke-width="2" marker-end="url(#arrow-cyan)"/>
+      <text x="500" y="385" font-size="12" fill="var(--text)" font-family="JetBrains Mono,monospace" class="lz">是 / 命中分支</text>
+      <text x="500" y="385" font-size="12" fill="var(--text)" font-family="JetBrains Mono,monospace" class="le">YES branch</text>
+
+      <!-- NO arrow -->
+      <line x1="660" y1="380" x2="700" y2="380" stroke="var(--subtle)" stroke-width="2" stroke-dasharray="5,3" marker-end="url(#arrow-muted)"/>
+      <text x="710" y="385" font-size="12" fill="var(--text)" font-family="JetBrains Mono,monospace" class="lz">否 / 继续下一问</text>
+      <text x="710" y="385" font-size="12" fill="var(--text)" font-family="JetBrains Mono,monospace" class="le">NO / next</text>
+
+      <text x="40" y="408" font-size="11" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="lz">阅读方式:从左侧"选择传输"出发,遇到决策菱形,命中则向上跳到结果框;未命中沿水平轴继续到下一问;全部未命中则到右侧 SDK/claude.ai 分叉。</text>
+      <text x="40" y="408" font-size="11" fill="var(--muted)" font-family="JetBrains Mono,monospace" class="le">Read left→right: at each diamond, YES jumps up to a transport box; NO continues along the spine; final fork at right selects SDK or claude.ai proxy.</text>
+    </svg>
+  </div>
+
+  <!-- =============== Row 2: Cards + Perf =============== -->
+  <div class="row2">
+
+    <div class="panel">
+      <div class="panel-title">
+        <span class="lz">8 种传输类型概览</span>
+        <span class="le">8 Transport Types Overview</span>
+      </div>
+      <div class="cards-grid">
+
+        <div class="tcard" style="border-left-color:var(--cyan)">
+          <div class="tcard-name" style="color:var(--cyan)">stdio</div>
+          <div class="tcard-desc">
+            <span class="lz">本地子进程,通过 stdin/stdout 管道通信</span>
+            <span class="le">Local subprocess via stdin/stdout pipes</span>
+          </div>
+          <div class="tcard-meta">
+            <span class="tag" style="border-color:var(--cyan);color:var(--cyan)"><span class="lz">本地</span><span class="le">local</span></span>
+            <span class="tag"><span class="lz">极低延迟</span><span class="le">very-low lat.</span></span>
+          </div>
+        </div>
+
+        <div class="tcard" style="border-left-color:var(--amber)">
+          <div class="tcard-name" style="color:var(--amber)">SSE</div>
+          <div class="tcard-desc">
+            <span class="lz">HTTP Server-Sent Events,服务端单向推流</span>
+            <span class="le">HTTP Server-Sent Events, server→client stream</span>
+          </div>
+          <div class="tcard-meta">
+            <span class="tag" style="border-color:var(--amber);color:var(--amber)"><span class="lz">远程</span><span class="le">remote</span></span>
+            <span class="tag"><span class="lz">中等延迟</span><span class="le">medium lat.</span></span>
+          </div>
+        </div>
+
+        <div class="tcard" style="border-left-color:var(--emerald)">
+          <div class="tcard-name" style="color:var(--emerald)">
+            <span class="lz">HTTP Streamable</span>
+            <span class="le">HTTP Streamable</span>
+          </div>
+          <div class="tcard-desc">
+            <span class="lz">HTTP 分块流式响应,简单单向场景</span>
+            <span class="le">HTTP chunked responses, simple unidirectional</span>
+          </div>
+          <div class="tcard-meta">
+            <span class="tag" style="border-color:var(--emerald);color:var(--emerald)"><span class="lz">远程</span><span class="le">remote</span></span>
+            <span class="tag"><span class="lz">中高延迟</span><span class="le">med-high lat.</span></span>
+          </div>
+        </div>
+
+        <div class="tcard" style="border-left-color:var(--violet)">
+          <div class="tcard-name" style="color:var(--violet)">WebSocket</div>
+          <div class="tcard-desc">
+            <span class="lz">全双工双向通信,支持 server→client 主动推送</span>
+            <span class="le">Full-duplex bidirectional, server-push capable</span>
+          </div>
+          <div class="tcard-meta">
+            <span class="tag" style="border-color:var(--violet);color:var(--violet)"><span class="lz">远程</span><span class="le">remote</span></span>
+            <span class="tag"><span class="lz">低延迟</span><span class="le">low lat.</span></span>
+          </div>
+        </div>
+
+        <div class="tcard" style="border-left-color:var(--orange)">
+          <div class="tcard-name" style="color:var(--orange)">SSE-IDE</div>
+          <div class="tcard-desc">
+            <span class="lz">IDE 专属 SSE 变体,针对编辑器插件优化</span>
+            <span class="le">IDE-specific SSE variant, optimized for plugins</span>
+          </div>
+          <div class="tcard-meta">
+            <span class="tag" style="border-color:var(--orange);color:var(--orange)">IDE</span>
+            <span class="tag"><span class="lz">中等延迟</span><span class="le">medium lat.</span></span>
+          </div>
+        </div>
+
+        <div class="tcard" style="border-left-color:var(--rose)">
+          <div class="tcard-name" style="color:var(--rose)">WS-IDE</div>
+          <div class="tcard-desc">
+            <span class="lz">IDE 专属 WebSocket 变体,双向 IDE 通信</span>
+            <span class="le">IDE-specific WebSocket, bidirectional IDE comms</span>
+          </div>
+          <div class="tcard-meta">
+            <span class="tag" style="border-color:var(--rose);color:var(--rose)">IDE</span>
+            <span class="tag"><span class="lz">低延迟</span><span class="le">low lat.</span></span>
+          </div>
+        </div>
+
+        <div class="tcard" style="border-left-color:var(--slate)">
+          <div class="tcard-name" style="color:var(--slate)">SDK</div>
+          <div class="tcard-desc">
+            <span class="lz">直接集成 TypeScript / Python SDK,无网络层</span>
+            <span class="le">Direct TS/Python SDK integration, no network layer</span>
+          </div>
+          <div class="tcard-meta">
+            <span class="tag" style="border-color:var(--slate);color:var(--slate)">SDK</span>
+            <span class="tag"><span class="lz">进程内</span><span class="le">in-process</span></span>
+          </div>
+        </div>
+
+        <div class="tcard" style="border-left-color:var(--cyan)">
+          <div class="tcard-name" style="color:var(--cyan)">
+            <span class="lz">claude.ai 代理</span>
+            <span class="le">claude.ai proxy</span>
+          </div>
+          <div class="tcard-desc">
+            <span class="lz">通过 claude.ai 平台路由,托管 MCP 连接</span>
+            <span class="le">Routed through claude.ai platform, managed MCP</span>
+          </div>
+          <div class="tcard-meta">
+            <span class="tag" style="border-color:var(--cyan);color:var(--cyan)"><span class="lz">托管</span><span class="le">managed</span></span>
+            <span class="tag"><span class="lz">平台级</span><span class="le">platform</span></span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">
+        <span class="lz">相对延迟对比(越短越好)</span>
+        <span class="le">Relative Latency Comparison (lower is better)</span>
+      </div>
+      <div style="margin-top:6px">
+        <div class="perf-row">
+          <div class="perf-label" style="color:var(--cyan)">stdio</div>
+          <div class="perf-bar-bg"><div class="perf-bar" style="width:15%;background:var(--cyan)"></div></div>
+          <div class="perf-val" style="color:var(--cyan)">~0.1ms</div>
+        </div>
+        <div class="perf-row">
+          <div class="perf-label" style="color:var(--slate)">SDK</div>
+          <div class="perf-bar-bg"><div class="perf-bar" style="width:18%;background:var(--slate)"></div></div>
+          <div class="perf-val" style="color:var(--slate)">~0.2ms</div>
+        </div>
+        <div class="perf-row">
+          <div class="perf-label" style="color:var(--violet)">WebSocket</div>
+          <div class="perf-bar-bg"><div class="perf-bar" style="width:38%;background:var(--violet)"></div></div>
+          <div class="perf-val" style="color:var(--violet)">~5ms</div>
+        </div>
+        <div class="perf-row">
+          <div class="perf-label" style="color:var(--rose)">WS-IDE</div>
+          <div class="perf-bar-bg"><div class="perf-bar" style="width:42%;background:var(--rose)"></div></div>
+          <div class="perf-val" style="color:var(--rose)">~6ms</div>
+        </div>
+        <div class="perf-row">
+          <div class="perf-label" style="color:var(--amber)">SSE</div>
+          <div class="perf-bar-bg"><div class="perf-bar" style="width:58%;background:var(--amber)"></div></div>
+          <div class="perf-val" style="color:var(--amber)">~15ms</div>
+        </div>
+        <div class="perf-row">
+          <div class="perf-label" style="color:var(--orange)">SSE-IDE</div>
+          <div class="perf-bar-bg"><div class="perf-bar" style="width:62%;background:var(--orange)"></div></div>
+          <div class="perf-val" style="color:var(--orange)">~18ms</div>
+        </div>
+        <div class="perf-row">
+          <div class="perf-label" style="color:var(--emerald)">
+            <span class="lz">HTTP流</span><span class="le">HTTP</span>
+          </div>
+          <div class="perf-bar-bg"><div class="perf-bar" style="width:74%;background:var(--emerald)"></div></div>
+          <div class="perf-val" style="color:var(--emerald)">~30ms</div>
+        </div>
+        <div class="perf-row">
+          <div class="perf-label" style="color:var(--cyan)">
+            <span class="lz">ai代理</span><span class="le">ai proxy</span>
+          </div>
+          <div class="perf-bar-bg"><div class="perf-bar" style="width:88%;background:var(--cyan)"></div></div>
+          <div class="perf-val" style="color:var(--cyan)">~80ms</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- =============== Summary (full width, 3 cards) =============== -->
+  <div class="panel">
+    <div class="panel-title">
+      <span class="lz">核心结论</span>
+      <span class="le">Key Takeaways</span>
+    </div>
+    <div class="summary-grid">
+      <div class="scard" style="border-top-color:var(--cyan)">
+        <div class="scard-head" style="color:var(--cyan)">
+          <span class="lz">stdio 最常用</span>
+          <span class="le">stdio = Default</span>
+        </div>
+        <div class="scard-body">
+          <span class="lz">本地 MCP Server 首选,零网络开销,进程间管道通信,延迟最低(约 0.1ms)</span>
+          <span class="le">Local MCP default — zero network overhead, IPC via pipes, lowest latency (~0.1ms)</span>
+        </div>
+      </div>
+      <div class="scard" style="border-top-color:var(--violet)">
+        <div class="scard-head" style="color:var(--violet)">
+          <span class="lz">WS 双向通信</span>
+          <span class="le">WS = Bidirectional</span>
+        </div>
+        <div class="scard-body">
+          <span class="lz">需要 server→client 主动推送时选 WebSocket,IDE 场景用 WS-IDE 变体</span>
+          <span class="le">Use WebSocket when server needs to push events; WS-IDE for IDE contexts</span>
+        </div>
+      </div>
+      <div class="scard" style="border-top-color:var(--amber)">
+        <div class="scard-head" style="color:var(--amber)">
+          <span class="lz">8 种统一接口</span>
+          <span class="le">Unified Protocol</span>
+        </div>
+        <div class="scard-body">
+          <span class="lz">协议层完全抽象,上层业务代码不感知传输差异,一键切换底层实现</span>
+          <span class="le">Transport-agnostic protocol layer — swap transports without app changes</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<div class="footer">VIS-3-003 · MCP Transport Decision Map · Claude Code Source Study · 2026</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-theme',t);
+  document.documentElement.setAttribute('data-lang',l);
+  document.getElementById('langBtn').textContent=l==='zh'?'EN':'中';
+
+  function applyLang(lang){
+    document.querySelectorAll('.le,.lz').forEach(function(e){
+      var isEn=e.classList.contains('le');
+      var show=(lang==='en')?isEn:!isEn;
+      e.style.display=show?'':'none';
+      if(e.tagName==='text'||e.closest('svg')){
+        e.setAttribute('display',show?'inline':'none');
+      }
+    });
+  }
+  applyLang(l);
+
+  window.cycleTheme=function(){
+    var themes=['dark','warm','light'];
+    var cur=document.documentElement.getAttribute('data-theme')||'dark';
+    var next=themes[(themes.indexOf(cur)+1)%themes.length];
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('vtheme',next);
+  };
+
+  window.toggleLang=function(){
+    var cur=document.documentElement.getAttribute('data-lang')||'zh';
+    var next=cur==='zh'?'en':'zh';
+    document.documentElement.setAttribute('data-lang',next);
+    localStorage.setItem('vlang',next);
+    document.getElementById('langBtn').textContent=next==='zh'?'EN':'中';
+    applyLang(next);
+  };
+})();
+</script>
+<script>
+/* v2-embed-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l != null && l !== '') {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.ctrl,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

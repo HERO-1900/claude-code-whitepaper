@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-3-006 | 退出码决策矩阵</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v3-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--panel:#0f172a;--card:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--subtle:#475569;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c;--rose-15:rgba(251,113,133,0.15);--emerald-12:rgba(52,211,153,0.12);--amber-10:rgba(251,191,36,0.10)}
+[data-theme="warm"]{--bg:#1c1410;--panel:#2a1f16;--card:#3d2d20;--border:#5c4a3a;--text:#f5e6d3;--muted:#c4a882;--subtle:#8b7355;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c;--rose-15:rgba(251,113,133,0.15);--emerald-12:rgba(52,211,153,0.12);--amber-10:rgba(251,191,36,0.10)}
+[data-theme="light"]{--bg:#f8fafc;--panel:#f1f5f9;--card:#e2e8f0;--border:#cbd5e1;--text:#0f172a;--muted:#475569;--subtle:#94a3b8;--amber:#d97706;--cyan:#0891b2;--violet:#7c3aed;--emerald:#059669;--rose:#e11d48;--slate:#475569;--orange:#ea580c;--rose-15:rgba(225,29,72,0.15);--emerald-12:rgba(5,150,105,0.12);--amber-10:rgba(217,119,6,0.10)}
+
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:24px 16px 48px}
+
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:100}
+.ctrl button{font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:background 0.15s}
+.ctrl button:hover{background:var(--border)}
+
+.page{max-width:1024px;margin:0 auto;padding-top:48px}
+
+/* Header */
+.header{text-align:center;margin-bottom:40px}
+.header .tag{display:inline-block;font-size:11px;letter-spacing:0.1em;color:var(--muted);border:1px solid var(--border);padding:4px 12px;border-radius:4px;margin-bottom:12px;text-transform:uppercase}
+.header h1{font-size:28px;font-weight:700;color:var(--text);line-height:1.2;margin-bottom:8px}
+.header .subtitle{font-size:13px;color:var(--muted);line-height:1.6}
+
+/* Section titles */
+.section-title{font-size:11px;letter-spacing:0.12em;text-transform:uppercase;color:var(--subtle);margin-bottom:16px;padding-bottom:8px;border-bottom:1px solid var(--border)}
+
+/* ===================== PART 1: Exit Code Legend ===================== */
+.legend-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:40px}
+@media(max-width:700px){.legend-grid{grid-template-columns:repeat(2,1fr)}}
+
+.legend-card{border-radius:10px;padding:20px 16px;border:1px solid;position:relative;overflow:hidden}
+.legend-card::before{content:'';position:absolute;inset:0;opacity:0.06}
+.legend-card .code-badge{font-size:22px;font-weight:700;letter-spacing:-0.02em;margin-bottom:8px;line-height:1}
+.legend-card .code-icon{font-size:18px;margin-left:6px;vertical-align:middle}
+.legend-card .label-zh{font-size:13px;font-weight:600;line-height:1.4;margin-bottom:4px}
+.legend-card .label-en{font-size:11px;opacity:0.7;line-height:1.4}
+.legend-card .desc{font-size:11px;line-height:1.5;margin-top:8px;opacity:0.85}
+
+/* Emerald card */
+.lc-emerald{background:rgba(52,211,153,0.08);border-color:rgba(52,211,153,0.35);color:var(--emerald)}
+.lc-emerald .label-zh,.lc-emerald .desc{color:var(--text)}
+.lc-emerald .label-en{color:var(--emerald)}
+
+/* Rose card */
+.lc-rose{background:rgba(251,113,133,0.1);border-color:rgba(251,113,133,0.4);color:var(--rose)}
+.lc-rose .label-zh,.lc-rose .desc{color:var(--text)}
+.lc-rose .label-en{color:var(--rose)}
+
+/* Amber card */
+.lc-amber{background:rgba(251,191,36,0.08);border-color:rgba(251,191,36,0.35);color:var(--amber)}
+.lc-amber .label-zh,.lc-amber .desc{color:var(--text)}
+.lc-amber .label-en{color:var(--amber)}
+
+/* Slate card */
+.lc-slate{background:rgba(148,163,184,0.08);border-color:rgba(148,163,184,0.3);color:var(--slate)}
+.lc-slate .label-zh,.lc-slate .desc{color:var(--text)}
+.lc-slate .label-en{color:var(--slate)}
+
+/* ===================== PART 2: Decision Flowchart ===================== */
+.flowchart-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:24px 16px;margin-bottom:40px;overflow-x:auto}
+.flowchart-wrap svg{display:block;margin:0 auto;max-width:100%}
+
+/* SVG text defaults */
+.fc-text{font-family:'JetBrains Mono',monospace;fill:var(--text)}
+
+/* ===================== PART 3: Matrix Table ===================== */
+.matrix-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:24px;margin-bottom:40px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12px;min-width:620px}
+thead th{background:var(--card);color:var(--muted);font-size:11px;letter-spacing:0.08em;text-transform:uppercase;padding:10px 12px;text-align:left;border-bottom:2px solid var(--border)}
+thead th:not(:first-child){text-align:center}
+tbody tr{border-bottom:1px solid var(--border)}
+tbody tr:last-child{border-bottom:none}
+tbody tr:hover{background:rgba(255,255,255,0.03)}
+tbody td{padding:10px 12px;vertical-align:middle;color:var(--text)}
+tbody td:not(:first-child){text-align:center}
+.td-hook{font-weight:600;color:var(--text);font-size:12px}
+.td-hook .hook-sub{font-size:10px;color:var(--muted);font-weight:400;margin-top:2px}
+
+/* Cell badge */
+.badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:600;padding:4px 10px;border-radius:20px;border:1px solid;white-space:nowrap}
+.badge-emerald{background:rgba(52,211,153,0.12);border-color:rgba(52,211,153,0.3);color:var(--emerald)}
+.badge-rose{background:rgba(251,113,133,0.12);border-color:rgba(251,113,133,0.35);color:var(--rose)}
+.badge-amber{background:rgba(251,191,36,0.10);border-color:rgba(251,191,36,0.3);color:var(--amber)}
+.badge-slate{background:rgba(148,163,184,0.10);border-color:rgba(148,163,184,0.25);color:var(--slate)}
+.badge-block{background:rgba(251,113,133,0.18);border-color:rgba(251,113,133,0.5);color:var(--rose);font-size:10px;font-weight:700}
+.badge-noblock{background:rgba(71,85,105,0.18);border-color:rgba(71,85,105,0.4);color:var(--subtle);font-size:10px}
+
+/* ===================== Summary Cards ===================== */
+.summary-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:40px}
+@media(max-width:680px){.summary-grid{grid-template-columns:1fr}}
+
+.summary-card{border-radius:10px;padding:20px;border:1px solid;position:relative}
+.summary-card .sc-code{font-size:20px;font-weight:700;margin-bottom:6px}
+.summary-card .sc-title{font-size:13px;font-weight:600;margin-bottom:6px;color:var(--text)}
+.summary-card .sc-desc{font-size:11px;line-height:1.6;color:var(--muted)}
+
+.sc-rose{background:rgba(251,113,133,0.07);border-color:rgba(251,113,133,0.3)}
+.sc-rose .sc-code{color:var(--rose)}
+.sc-emerald{background:rgba(52,211,153,0.07);border-color:rgba(52,211,153,0.3)}
+.sc-emerald .sc-code{color:var(--emerald)}
+.sc-amber{background:rgba(251,191,36,0.07);border-color:rgba(251,191,36,0.3)}
+.sc-amber .sc-code{color:var(--amber)}
+
+/* Divider */
+.section-gap{margin-bottom:40px}
+
+/* Footer */
+.footer{text-align:center;font-size:11px;color:var(--subtle);padding-top:24px;border-top:1px solid var(--border)}
+</style>
+</head>
+<body>
+
+<!-- Controls -->
+<div class="ctrl">
+  <button onclick="cycleTheme()">Theme</button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<div class="page">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="tag">VIS-3-006 · Hook System</div>
+    <h1>
+      <span class="lz">退出码决策矩阵</span>
+      <span class="le">Exit Code Decision Matrix</span>
+    </h1>
+    <p class="subtitle">
+      <span class="lz">Claude Code Hook 脚本退出码 → 行为映射 · 阻断型 vs 非阻断型事件全览</span>
+      <span class="le">Claude Code Hook script exit code → behavior mapping · Blocking vs Non-blocking events</span>
+    </p>
+  </div>
+
+  <!-- ============ PART 1: Exit Code Legend ============ -->
+  <div class="section-gap">
+    <div class="section-title">
+      <span class="lz">退出码速查</span><span class="le">Exit Code Reference</span>
+    </div>
+    <div class="legend-grid">
+
+      <!-- Exit 0 -->
+      <div class="legend-card lc-emerald">
+        <div class="code-badge" style="color:var(--emerald)">Exit 0</div>
+        <div class="label-zh">继续执行</div>
+        <div class="label-en">Continue normally</div>
+        <div class="desc">
+          <span class="lz">正常执行流程，无副作用。适用于所有 Hook 类型。</span>
+          <span class="le">Normal execution flow, no side-effects. Works on all hook types.</span>
+        </div>
+      </div>
+
+      <!-- Exit 2 -->
+      <div class="legend-card lc-rose">
+        <div class="code-badge" style="color:var(--rose)">Exit 2 <span class="code-icon">⊘</span></div>
+        <div class="label-zh">阻断操作</div>
+        <div class="label-en">BLOCK — halt the action</div>
+        <div class="desc">
+          <span class="lz">仅阻断型事件有效。终止 CC 正在执行的操作，错误返回给用户。非阻断型事件忽略此码。</span>
+          <span class="le">Only works on blockable events. Halts the action CC was about to perform and returns error to user. Ignored on non-blockable events.</span>
+        </div>
+      </div>
+
+      <!-- Exit 1+ -->
+      <div class="legend-card lc-amber">
+        <div class="code-badge" style="color:var(--amber)">Exit 1+</div>
+        <div class="label-zh">记录错误，继续</div>
+        <div class="label-en">Log error, continue</div>
+        <div class="desc">
+          <span class="lz">任何非零非2的退出码均视为错误。记录日志，但不中断 CC 执行。</span>
+          <span class="le">Any non-zero code other than 2. Logs error message but does not interrupt CC execution.</span>
+        </div>
+      </div>
+
+      <!-- Timeout -->
+      <div class="legend-card lc-slate">
+        <div class="code-badge" style="color:var(--slate)">Timeout</div>
+        <div class="label-zh">视为错误</div>
+        <div class="label-en">Treated as error</div>
+        <div class="desc">
+          <span class="lz">Hook 脚本超时未返回，等价于 Exit 1 — 记录错误日志，CC 继续执行。</span>
+          <span class="le">Hook script timed out. Equivalent to Exit 1 — logs error, CC continues.</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ============ PART 2: Decision Flowchart ============ -->
+  <div class="section-gap">
+    <div class="section-title">
+      <span class="lz">决策流程图</span><span class="le">Decision Flowchart</span>
+    </div>
+    <div class="flowchart-wrap">
+      <svg viewBox="0 0 960 420" width="960" height="420" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <marker id="arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="var(--subtle)"/>
+          </marker>
+          <marker id="arr-rose" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="var(--rose)"/>
+          </marker>
+          <marker id="arr-emerald" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="var(--emerald)"/>
+          </marker>
+          <marker id="arr-amber" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="var(--amber)"/>
+          </marker>
+          <style>
+            .fc-label{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:600}
+            .fc-node{font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500}
+            .fc-small{font-family:'JetBrains Mono',monospace;font-size:10px}
+            .fc-yes{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;fill:var(--emerald)}
+            .fc-no{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;fill:var(--rose)}
+            .fc-edge{stroke:var(--subtle);stroke-width:1.5;fill:none;marker-end:url(#arr)}
+            .fc-edge-rose{stroke:var(--rose);stroke-width:1.8;fill:none;marker-end:url(#arr-rose)}
+            .fc-edge-emerald{stroke:var(--emerald);stroke-width:1.8;fill:none;marker-end:url(#arr-emerald)}
+            .fc-edge-amber{stroke:var(--amber);stroke-width:1.8;fill:none;marker-end:url(#arr-amber)}
+          </style>
+        </defs>
+
+        <!-- START node -->
+        <rect x="380" y="20" width="200" height="40" rx="20" fill="var(--card)" stroke="var(--subtle)" stroke-width="1.5"/>
+        <text x="480" y="37" text-anchor="middle" class="fc-node" fill="var(--text)">Hook script exits</text>
+        <text x="480" y="52" text-anchor="middle" class="fc-small" fill="var(--muted)">with code X</text>
+
+        <!-- Arrow START → D1 -->
+        <line x1="480" y1="60" x2="480" y2="108" class="fc-edge"/>
+
+        <!-- D1: Exit code = 2? -->
+        <polygon points="480,108 590,130 480,152 370,130" fill="var(--card)" stroke="var(--violet)" stroke-width="2"/>
+        <text x="480" y="126" text-anchor="middle" class="fc-label" fill="var(--violet)">Exit code = 2 ?</text>
+        <text x="480" y="142" text-anchor="middle" class="fc-small lz" fill="var(--muted)">是否为 Exit 2</text>
+        <text x="480" y="142" text-anchor="middle" class="fc-small le" fill="var(--muted)">Is Exit 2?</text>
+
+        <!-- D1 YES → left → D2 -->
+        <line x1="370" y1="130" x2="210" y2="130" class="fc-edge"/>
+        <text x="340" y="122" class="fc-yes">YES</text>
+
+        <!-- D2: Event is blockable? centered at 210, 130 -->
+        <polygon points="210,108 320,130 210,152 100,130" fill="var(--card)" stroke="var(--rose)" stroke-width="2"/>
+        <text x="210" y="126" text-anchor="middle" class="fc-label" fill="var(--rose)">Blockable</text>
+        <text x="210" y="142" text-anchor="middle" class="fc-small lz" fill="var(--muted)">事件可阻断？</text>
+        <text x="210" y="142" text-anchor="middle" class="fc-small le" fill="var(--muted)">Event blockable?</text>
+
+        <!-- D2 YES → down → BLOCK box -->
+        <line x1="210" y1="152" x2="210" y2="218" class="fc-edge-rose"/>
+        <text x="220" y="180" class="fc-yes">YES</text>
+
+        <!-- BLOCK box -->
+        <rect x="95" y="218" width="230" height="60" rx="8" fill="var(--rose-15)" stroke="var(--rose)" stroke-width="2"/>
+        <text x="210" y="240" text-anchor="middle" class="fc-node" fill="var(--rose)">⊘  BLOCK</text>
+        <text x="210" y="256" text-anchor="middle" class="fc-small" fill="var(--text)">Halt the action</text>
+        <text x="210" y="270" text-anchor="middle" class="fc-small lz" fill="var(--muted)">返回错误给用户</text>
+        <text x="210" y="270" text-anchor="middle" class="fc-small le" fill="var(--muted)">Return error to user</text>
+
+        <!-- D2 NO → left → IGNORE box -->
+        <path d="M100,130 L30,130 L30,320 L90,320" stroke="var(--amber)" stroke-width="1.8" fill="none" marker-end="url(#arr-amber)"/>
+        <text x="62" y="122" class="fc-no">NO</text>
+
+        <!-- IGNORE box -->
+        <rect x="90" y="290" width="210" height="60" rx="8" fill="var(--amber-10)" stroke="var(--amber)" stroke-width="1.5"/>
+        <text x="195" y="312" text-anchor="middle" class="fc-node" fill="var(--amber)">⚠ Code 2 ignored</text>
+        <text x="195" y="328" text-anchor="middle" class="fc-small" fill="var(--text)">Non-blockable event</text>
+        <text x="195" y="342" text-anchor="middle" class="fc-small lz" fill="var(--muted)">记录警告，继续执行</text>
+        <text x="195" y="342" text-anchor="middle" class="fc-small le" fill="var(--muted)">Log warning, continue</text>
+
+        <!-- D1 NO → right → D3 -->
+        <line x1="590" y1="130" x2="750" y2="130" class="fc-edge"/>
+        <text x="630" y="122" class="fc-no">NO</text>
+
+        <!-- D3: Exit code = 0? centered at 750, 130 -->
+        <polygon points="750,108 860,130 750,152 640,130" fill="var(--card)" stroke="var(--cyan)" stroke-width="2"/>
+        <text x="750" y="126" text-anchor="middle" class="fc-label" fill="var(--cyan)">Exit code = 0 ?</text>
+        <text x="750" y="142" text-anchor="middle" class="fc-small lz" fill="var(--muted)">是否为 Exit 0</text>
+        <text x="750" y="142" text-anchor="middle" class="fc-small le" fill="var(--muted)">Is Exit 0?</text>
+
+        <!-- D3 YES → down → CONTINUE box -->
+        <line x1="750" y1="152" x2="750" y2="218" class="fc-edge-emerald"/>
+        <text x="760" y="180" class="fc-yes">YES</text>
+
+        <!-- CONTINUE box -->
+        <rect x="635" y="218" width="230" height="60" rx="8" fill="var(--emerald-12)" stroke="var(--emerald)" stroke-width="2"/>
+        <text x="750" y="240" text-anchor="middle" class="fc-node" fill="var(--emerald)">✓  Continue normally</text>
+        <text x="750" y="256" text-anchor="middle" class="fc-small lz" fill="var(--text)">正常执行流程</text>
+        <text x="750" y="256" text-anchor="middle" class="fc-small le" fill="var(--text)">Normal execution</text>
+        <text x="750" y="270" text-anchor="middle" class="fc-small lz" fill="var(--muted)">无副作用</text>
+        <text x="750" y="270" text-anchor="middle" class="fc-small le" fill="var(--muted)">No side-effects</text>
+
+        <!-- D3 NO → right-down → LOG ERROR box -->
+        <path d="M860,130 L920,130 L920,320 L870,320" stroke="var(--amber)" stroke-width="1.8" fill="none" marker-end="url(#arr-amber)"/>
+        <text x="877" y="122" class="fc-no">NO</text>
+
+        <!-- LOG ERROR box -->
+        <rect x="660" y="290" width="210" height="60" rx="8" fill="var(--amber-10)" stroke="var(--amber)" stroke-width="1.5"/>
+        <text x="765" y="312" text-anchor="middle" class="fc-node" fill="var(--amber)">⚠ Log error</text>
+        <text x="765" y="328" text-anchor="middle" class="fc-small lz" fill="var(--text)">记录错误日志</text>
+        <text x="765" y="328" text-anchor="middle" class="fc-small le" fill="var(--text)">Log error</text>
+        <text x="765" y="342" text-anchor="middle" class="fc-small lz" fill="var(--muted)">继续执行</text>
+        <text x="765" y="342" text-anchor="middle" class="fc-small le" fill="var(--muted)">Continue</text>
+
+        <!-- Legend area at bottom -->
+        <line x1="40" y1="365" x2="920" y2="365" stroke="var(--border)" stroke-width="1" stroke-dasharray="4 4"/>
+
+        <rect x="60" y="378" width="14" height="14" rx="2" fill="none" stroke="var(--violet)" stroke-width="1.5"/>
+        <text x="80" y="390" class="fc-small lz" fill="var(--muted)">判断节点 / Decision</text>
+        <text x="80" y="390" class="fc-small le" fill="var(--muted)">Decision</text>
+
+        <rect x="210" y="378" width="14" height="14" rx="2" fill="var(--rose-15)" stroke="var(--rose)" stroke-width="1.5"/>
+        <text x="230" y="390" class="fc-small lz" fill="var(--muted)">阻断 / Block</text>
+        <text x="230" y="390" class="fc-small le" fill="var(--muted)">Block</text>
+
+        <rect x="330" y="378" width="14" height="14" rx="2" fill="var(--emerald-12)" stroke="var(--emerald)" stroke-width="1.5"/>
+        <text x="350" y="390" class="fc-small lz" fill="var(--muted)">继续 / Continue</text>
+        <text x="350" y="390" class="fc-small le" fill="var(--muted)">Continue</text>
+
+        <rect x="450" y="378" width="14" height="14" rx="2" fill="var(--amber-10)" stroke="var(--amber)" stroke-width="1.5"/>
+        <text x="470" y="390" class="fc-small lz" fill="var(--muted)">警告记录 / Log &amp; continue</text>
+        <text x="470" y="390" class="fc-small le" fill="var(--muted)">Log &amp; continue</text>
+
+        <rect x="640" y="378" width="14" height="14" rx="2" fill="none" stroke="var(--cyan)" stroke-width="1.5"/>
+        <text x="660" y="390" class="fc-small lz" fill="var(--muted)">Exit 0 判断 / Zero check</text>
+        <text x="660" y="390" class="fc-small le" fill="var(--muted)">Zero check</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- ============ PART 3: Hook Type Matrix Table ============ -->
+  <div class="section-gap">
+    <div class="section-title">
+      <span class="lz">Hook 事件 × 退出码行为矩阵</span>
+      <span class="le">Hook Event × Exit Code Behavior Matrix</span>
+    </div>
+    <div class="matrix-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:28%"><span class="lz">Hook 事件</span><span class="le">Hook Event</span></th>
+            <th style="width:14%"><span class="lz">可阻断？</span><span class="le">Blockable?</span></th>
+            <th style="width:19%">Exit 0</th>
+            <th style="width:19%">Exit 2</th>
+            <th style="width:20%">Exit 1+</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Blockable events -->
+          <tr>
+            <td class="td-hook">UserPromptSubmit<div class="hook-sub lz">用户提交 Prompt 前</div><div class="hook-sub le">Before user submits prompt</div></td>
+            <td><span class="badge badge-block">⊘ <span class="lz">阻断型</span><span class="le">Blocking</span></span></td>
+            <td><span class="badge badge-emerald">✓ <span class="lz">继续</span><span class="le">Continue</span></span></td>
+            <td><span class="badge badge-rose">⊘ <span class="lz">阻断</span><span class="le">Block</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">记录</span><span class="le">Log</span></span></td>
+          </tr>
+          <tr>
+            <td class="td-hook">PreToolUse<div class="hook-sub lz">工具调用前执行</div><div class="hook-sub le">Before tool is invoked</div></td>
+            <td><span class="badge badge-block">⊘ <span class="lz">阻断型</span><span class="le">Blocking</span></span></td>
+            <td><span class="badge badge-emerald">✓ <span class="lz">继续</span><span class="le">Continue</span></span></td>
+            <td><span class="badge badge-rose">⊘ <span class="lz">阻断</span><span class="le">Block</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">记录</span><span class="le">Log</span></span></td>
+          </tr>
+          <tr>
+            <td class="td-hook">Stop<div class="hook-sub lz">Claude 停止响应时</div><div class="hook-sub le">When Claude stops responding</div></td>
+            <td><span class="badge badge-block">⊘ <span class="lz">阻断型</span><span class="le">Blocking</span></span></td>
+            <td><span class="badge badge-emerald">✓ <span class="lz">继续</span><span class="le">Continue</span></span></td>
+            <td><span class="badge badge-rose">⊘ <span class="lz">阻断</span><span class="le">Block</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">记录</span><span class="le">Log</span></span></td>
+          </tr>
+          <tr>
+            <td class="td-hook">PreCompact<div class="hook-sub lz">对话压缩前触发</div><div class="hook-sub le">Before conversation compaction</div></td>
+            <td><span class="badge badge-block">⊘ <span class="lz">阻断型</span><span class="le">Blocking</span></span></td>
+            <td><span class="badge badge-emerald">✓ <span class="lz">继续</span><span class="le">Continue</span></span></td>
+            <td><span class="badge badge-rose">⊘ <span class="lz">阻断</span><span class="le">Block</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">记录</span><span class="le">Log</span></span></td>
+          </tr>
+          <tr>
+            <td class="td-hook">SubagentStop<div class="hook-sub lz">子 Agent 停止时</div><div class="hook-sub le">When subagent stops</div></td>
+            <td><span class="badge badge-block">⊘ <span class="lz">阻断型</span><span class="le">Blocking</span></span></td>
+            <td><span class="badge badge-emerald">✓ <span class="lz">继续</span><span class="le">Continue</span></span></td>
+            <td><span class="badge badge-rose">⊘ <span class="lz">阻断</span><span class="le">Block</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">记录</span><span class="le">Log</span></span></td>
+          </tr>
+          <tr>
+            <td class="td-hook">ConfigChange<div class="hook-sub lz">配置变更时触发</div><div class="hook-sub le">On configuration change</div></td>
+            <td><span class="badge badge-block">⊘ <span class="lz">阻断型</span><span class="le">Blocking</span></span></td>
+            <td><span class="badge badge-emerald">✓ <span class="lz">继续</span><span class="le">Continue</span></span></td>
+            <td><span class="badge badge-rose">⊘ <span class="lz">阻断</span><span class="le">Block</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">记录</span><span class="le">Log</span></span></td>
+          </tr>
+          <tr>
+            <td class="td-hook">TeammateIdle<div class="hook-sub lz">队友空闲时触发</div><div class="hook-sub le">When teammate is idle</div></td>
+            <td><span class="badge badge-block">⊘ <span class="lz">阻断型</span><span class="le">Blocking</span></span></td>
+            <td><span class="badge badge-emerald">✓ <span class="lz">继续</span><span class="le">Continue</span></span></td>
+            <td><span class="badge badge-rose">⊘ <span class="lz">阻断</span><span class="le">Block</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">记录</span><span class="le">Log</span></span></td>
+          </tr>
+          <tr>
+            <td class="td-hook">TaskCreated<div class="hook-sub lz">新任务创建时</div><div class="hook-sub le">When a task is created</div></td>
+            <td><span class="badge badge-block">⊘ <span class="lz">阻断型</span><span class="le">Blocking</span></span></td>
+            <td><span class="badge badge-emerald">✓ <span class="lz">继续</span><span class="le">Continue</span></span></td>
+            <td><span class="badge badge-rose">⊘ <span class="lz">阻断</span><span class="le">Block</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">记录</span><span class="le">Log</span></span></td>
+          </tr>
+          <tr>
+            <td class="td-hook">TaskCompleted<div class="hook-sub lz">任务完成时触发</div><div class="hook-sub le">When a task completes</div></td>
+            <td><span class="badge badge-block">⊘ <span class="lz">阻断型</span><span class="le">Blocking</span></span></td>
+            <td><span class="badge badge-emerald">✓ <span class="lz">继续</span><span class="le">Continue</span></span></td>
+            <td><span class="badge badge-rose">⊘ <span class="lz">阻断</span><span class="le">Block</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">记录</span><span class="le">Log</span></span></td>
+          </tr>
+
+          <!-- Non-blockable events separator row -->
+          <tr style="background:rgba(71,85,105,0.12)">
+            <td colspan="5" style="padding:7px 12px;font-size:10px;color:var(--subtle);letter-spacing:0.08em;text-transform:uppercase">
+              <span class="lz">── 非阻断型事件（Exit 2 被忽略）──</span>
+              <span class="le">── Non-blockable events (Exit 2 is ignored) ──</span>
+            </td>
+          </tr>
+
+          <tr>
+            <td class="td-hook">PostToolUse<div class="hook-sub lz">工具调用完成后</div><div class="hook-sub le">After tool invocation completes</div></td>
+            <td><span class="badge badge-noblock">✗ <span class="lz">非阻断</span><span class="le">Non-blocking</span></span></td>
+            <td><span class="badge badge-emerald">✓ <span class="lz">继续</span><span class="le">Continue</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">忽略</span><span class="le">Ignored</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">记录</span><span class="le">Log</span></span></td>
+          </tr>
+          <tr>
+            <td class="td-hook">SessionStart<div class="hook-sub lz">会话启动时</div><div class="hook-sub le">On session start</div></td>
+            <td><span class="badge badge-noblock">✗ <span class="lz">非阻断</span><span class="le">Non-blocking</span></span></td>
+            <td><span class="badge badge-emerald">✓ <span class="lz">继续</span><span class="le">Continue</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">忽略</span><span class="le">Ignored</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">记录</span><span class="le">Log</span></span></td>
+          </tr>
+          <tr>
+            <td class="td-hook">SessionEnd<div class="hook-sub lz">会话结束时</div><div class="hook-sub le">On session end</div></td>
+            <td><span class="badge badge-noblock">✗ <span class="lz">非阻断</span><span class="le">Non-blocking</span></span></td>
+            <td><span class="badge badge-emerald">✓ <span class="lz">继续</span><span class="le">Continue</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">忽略</span><span class="le">Ignored</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">记录</span><span class="le">Log</span></span></td>
+          </tr>
+          <tr>
+            <td class="td-hook">Notification<div class="hook-sub lz">通知事件</div><div class="hook-sub le">Notification event</div></td>
+            <td><span class="badge badge-noblock">✗ <span class="lz">非阻断</span><span class="le">Non-blocking</span></span></td>
+            <td><span class="badge badge-emerald">✓ <span class="lz">继续</span><span class="le">Continue</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">忽略</span><span class="le">Ignored</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">记录</span><span class="le">Log</span></span></td>
+          </tr>
+          <tr>
+            <td class="td-hook">StopFailure<div class="hook-sub lz">停止失败时</div><div class="hook-sub le">On stop failure</div></td>
+            <td><span class="badge badge-noblock">✗ <span class="lz">非阻断</span><span class="le">Non-blocking</span></span></td>
+            <td><span class="badge badge-emerald">✓ <span class="lz">继续</span><span class="le">Continue</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">忽略</span><span class="le">Ignored</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">记录</span><span class="le">Log</span></span></td>
+          </tr>
+          <tr>
+            <td class="td-hook">PostToolUseFailure<div class="hook-sub lz">工具调用失败后</div><div class="hook-sub le">After tool invocation fails</div></td>
+            <td><span class="badge badge-noblock">✗ <span class="lz">非阻断</span><span class="le">Non-blocking</span></span></td>
+            <td><span class="badge badge-emerald">✓ <span class="lz">继续</span><span class="le">Continue</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">忽略</span><span class="le">Ignored</span></span></td>
+            <td><span class="badge badge-amber">⚠ <span class="lz">记录</span><span class="le">Log</span></span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ============ Summary Cards ============ -->
+  <div class="section-gap">
+    <div class="section-title">
+      <span class="lz">关键规则摘要</span><span class="le">Key Rules Summary</span>
+    </div>
+    <div class="summary-grid">
+
+      <div class="summary-card sc-rose">
+        <div class="sc-code">Exit 2 = <span class="lz">阻断</span><span class="le">Block</span></div>
+        <div class="sc-title">
+          <span class="lz">唯一能阻断的退出码</span>
+          <span class="le">The only code that blocks</span>
+        </div>
+        <div class="sc-desc">
+          <span class="lz">只有阻断型事件才生效。用于 Non-blockable 事件时被静默忽略，并记录一条警告日志。这是 CC Hook 系统中最重要的行为约束。</span>
+          <span class="le">Only works on blockable events. Silently ignored on non-blockable events (with a warning log). This is the most critical behavioral constraint in the CC Hook system.</span>
+        </div>
+      </div>
+
+      <div class="summary-card sc-emerald">
+        <div class="sc-code">Exit 0 = <span class="lz">继续</span><span class="le">Continue</span></div>
+        <div class="sc-title">
+          <span class="lz">安全的成功信号</span>
+          <span class="le">Safe success signal</span>
+        </div>
+        <div class="sc-desc">
+          <span class="lz">正常执行流程，无副作用。适用于所有 Hook 类型（阻断型和非阻断型）。Hook 脚本应在成功时始终返回 0。</span>
+          <span class="le">Normal execution flow, no side-effects. Works on all hook types (blocking and non-blocking). Hook scripts should always return 0 on success.</span>
+        </div>
+      </div>
+
+      <div class="summary-card sc-amber">
+        <div class="sc-code"><span class="lz">非零非2 = 警告</span><span class="le">Non-zero ≠ 2 = Warn</span></div>
+        <div class="sc-title">
+          <span class="lz">记录但不中断</span>
+          <span class="le">Log but don't stop</span>
+        </div>
+        <div class="sc-desc">
+          <span class="lz">任何 1、3、127 等退出码均被视为错误。CC 记录错误日志后继续执行。超时情况也按此处理。绝不会产生阻断效果。</span>
+          <span class="le">Any code like 1, 3, 127 is treated as an error. CC logs the error then continues. Timeouts are also treated this way. Never causes a block.</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="footer">
+    VIS-3-006 · Claude Code Hook Exit Code Matrix · <span class="lz">退出码决策矩阵</span><span class="le">Exit Code Decision Matrix</span>
+    &nbsp;·&nbsp; V3 Production
+  </div>
+
+</div><!-- /page -->
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-theme',t);
+  document.documentElement.setAttribute('data-lang',l);
+  document.getElementById('langBtn').textContent=l==='zh'?'EN':'中';
+  window.cycleTheme=function(){
+    var themes=['dark','warm','light'];
+    var cur=document.documentElement.getAttribute('data-theme')||'dark';
+    var next=themes[(themes.indexOf(cur)+1)%themes.length];
+    document.documentElement.setAttribute('data-theme',next);
+    localStorage.setItem('vtheme',next);
+  };
+  window.toggleLang=function(){
+    var cur=document.documentElement.getAttribute('data-lang')||'zh';
+    var next=cur==='zh'?'en':'zh';
+    document.documentElement.setAttribute('data-lang',next);
+    localStorage.setItem('vlang',next);
+    document.getElementById('langBtn').textContent=next==='zh'?'EN':'中';
+  };
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

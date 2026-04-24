@@ -1,0 +1,8 @@
+User-agent: *
+Allow: /
+Disallow: /handoff/
+Disallow: /scripts/
+Disallow: /archive/
+Disallow: /briefs/
+
+Sitemap: https://hero-1900.github.io/claude-code-whitepaper/sitemap.xml

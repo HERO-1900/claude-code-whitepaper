@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code 2.1.88 — Agent Operating System 架构全景</title>
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/styles/github-dark.min.css">
+</head>
+<body>
+  <!-- ==================== WELCOME / GUIDE VIEW ==================== -->
+  <div id="welcome" class="view active">
+    <div class="welcome-container">
+      <div class="welcome-hero">
+        <h1 class="welcome-title">Claude Code</h1>
+        <p class="welcome-version">v2.1.88 · 1,884 个 TypeScript 源文件 · 完整架构解析</p>
+        <p class="welcome-tagline">当你打开一个"聊天助手"的引擎盖，里面是一整座城市</p>
+      </div>
+
+      <div class="welcome-story">
+        <div class="story-card">
+          <div class="story-icon">💬</div>
+          <h3>你以为的 Claude Code</h3>
+          <p>一个终端里的聊天窗口，你打字、它回话、帮你写代码。</p>
+        </div>
+        <div class="story-arrow">→</div>
+        <div class="story-card highlight">
+          <div class="story-icon">🏙</div>
+          <h3>它实际上是</h3>
+          <p>一座<strong>智慧城市</strong>——有 43 个市政部门、行政审批局、城市预算局、档案馆、大使馆……全部在 300 毫秒内启动就绪。</p>
+        </div>
+      </div>
+
+      <div class="welcome-metaphor-intro">
+        <h2>两种理解方式，你选哪个？</h2>
+        <div class="metaphor-choice">
+          <button class="metaphor-btn" id="choose-city" data-metaphor="city">
+            <span class="metaphor-emoji">🏙</span>
+            <strong>城市比喻</strong>
+            <span class="metaphor-desc">用市政服务大厅、建设局、审批局来理解——适合所有人</span>
+          </button>
+          <button class="metaphor-btn" id="choose-os" data-metaphor="os">
+            <span class="metaphor-emoji">🖥</span>
+            <strong>操作系统比喻</strong>
+            <span class="metaphor-desc">用内核、系统调用、进程来理解——适合工程师</span>
+          </button>
+        </div>
+        <p class="metaphor-note">（随时可以在顶部切换）</p>
+      </div>
+
+      <div class="welcome-journey">
+        <h2>探索路线</h2>
+        <div class="journey-steps">
+          <div class="journey-step">
+            <div class="step-num">1</div>
+            <h4>全景地图</h4>
+            <p>先看整体——12 个核心组件如何协作</p>
+          </div>
+          <div class="journey-step">
+            <div class="step-num">2</div>
+            <h4>点击深入</h4>
+            <p>点击任意组件，看它做什么、为什么重要</p>
+          </div>
+          <div class="journey-step">
+            <div class="step-num">3</div>
+            <h4>阅读章节</h4>
+            <p>88 章完整解析，从入门到源码级深潜</p>
+          </div>
+        </div>
+      </div>
+
+      <button id="enter-map" class="btn-enter">进入架构全景 →</button>
+    </div>
+  </div>
+
+  <!-- ==================== LANDING / ENGINE VIEW ==================== -->
+  <div id="landing" class="view">
+    <header class="landing-header">
+      <h1 class="title-glow">Claude Code 2.1.88</h1>
+      <p class="subtitle" id="subtitle-text">智慧城市 — 架构全景</p>
+      <p class="hint">点击任意组件深入探索 · 滚动查看详情</p>
+    </header>
+
+    <div id="engine-container">
+      <svg id="engine-svg" viewBox="-600 -450 1200 900" xmlns="http://www.w3.org/2000/svg">
+        <!-- Grid background -->
+        <defs>
+          <pattern id="grid-small" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1a2332" stroke-width="0.5"/>
+          </pattern>
+          <pattern id="grid-large" width="100" height="100" patternUnits="userSpaceOnUse">
+            <rect width="100" height="100" fill="url(#grid-small)"/>
+            <path d="M 100 0 L 0 0 0 100" fill="none" stroke="#1e2d42" stroke-width="1"/>
+          </pattern>
+          <!-- Glow filters -->
+          <filter id="glow-cyan" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="6" result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+          </filter>
+          <filter id="glow-strong" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="12" result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+          </filter>
+          <!-- Animated dash for data flow -->
+          <marker id="arrow-cyan" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L8,3 L0,6" fill="#00d4ff" opacity="0.6"/>
+          </marker>
+          <marker id="arrow-purple" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L8,3 L0,6" fill="#7b61ff" opacity="0.6"/>
+          </marker>
+          <!-- Pulse animation for heart -->
+          <radialGradient id="heart-pulse" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.3">
+              <animate attributeName="stop-opacity" values="0.3;0.1;0.3" dur="2s" repeatCount="indefinite"/>
+            </stop>
+            <stop offset="100%" stop-color="#00d4ff" stop-opacity="0">
+              <animate attributeName="stop-opacity" values="0;0.05;0" dur="2s" repeatCount="indefinite"/>
+            </stop>
+          </radialGradient>
+        </defs>
+
+        <!-- Background grid -->
+        <rect x="-600" y="-450" width="1200" height="900" fill="url(#grid-large)"/>
+
+        <!-- Outer ring: Terminal UI (skin) -->
+        <ellipse cx="0" cy="0" rx="480" ry="360" fill="none" stroke="#2d3748" stroke-width="1.5" stroke-dasharray="8,4" opacity="0.5"/>
+        <text x="380" y="-340" class="label-outer" fill="#4a5568" font-size="11">Terminal UI · 皮肤</text>
+
+        <!-- Data flow paths (animated) -->
+        <g id="data-flows" opacity="0.5">
+          <!-- System Prompt → QueryEngine -->
+          <path class="flow-path flow-cyan" d="M0,-230 C0,-160 0,-120 0,-80" stroke="#00d4ff" fill="none" stroke-width="1.5"/>
+          <!-- QueryEngine → Tool Runtime -->
+          <path class="flow-path flow-cyan" d="M60,-10 C120,10 180,40 240,60" stroke="#00d4ff" fill="none" stroke-width="1.5"/>
+          <!-- QueryEngine → Agent Orchestration -->
+          <path class="flow-path flow-purple" d="M-60,-10 C-120,10 -180,40 -240,60" stroke="#7b61ff" fill="none" stroke-width="1.5"/>
+          <!-- Security → Tool Runtime -->
+          <path class="flow-path flow-red" d="M-240,60 C-120,100 120,100 240,60" stroke="#ff6b6b" fill="none" stroke-width="1"/>
+          <!-- Config → System Prompt -->
+          <path class="flow-path flow-gold" d="M-280,-180 C-180,-220 -80,-240 0,-230" stroke="#ffd93d" fill="none" stroke-width="1"/>
+          <!-- State → QueryEngine -->
+          <path class="flow-path flow-teal" d="M280,-180 C180,-140 80,-100 30,-60" stroke="#4ecdc4" fill="none" stroke-width="1"/>
+          <!-- Token → QueryEngine -->
+          <path class="flow-path flow-gold" d="M0,250 C0,180 0,120 0,60" stroke="#ffd93d" fill="none" stroke-width="1"/>
+          <!-- Extension → Tool Runtime -->
+          <path class="flow-path flow-green" d="M340,-80 C310,-20 280,20 250,50" stroke="#48bb78" fill="none" stroke-width="1"/>
+        </g>
+
+        <!-- ===== COMPONENT NODES ===== -->
+
+        <!-- CENTER: QueryEngine (Heart) -->
+        <g class="node node-heart" data-component="query-engine" tabindex="0">
+          <circle cx="0" cy="0" r="90" fill="url(#heart-pulse)"/>
+          <circle cx="0" cy="0" r="65" fill="#0d1520" stroke="#00d4ff" stroke-width="2.5" filter="url(#glow-cyan)">
+            <animate attributeName="r" values="65;68;65" dur="2s" repeatCount="indefinite"/>
+          </circle>
+          <text x="0" y="-12" text-anchor="middle" fill="#00d4ff" font-size="15" font-weight="bold">QueryEngine</text>
+          <text x="0" y="8" text-anchor="middle" fill="#00d4ff" font-size="20">♥</text>
+          <text x="0" y="28" text-anchor="middle" fill="#5a8a9e" font-size="11">心脏 · 查询循环</text>
+          <text x="0" y="44" text-anchor="middle" fill="#3d5a6e" font-size="9">1,295 行 · AsyncGenerator</text>
+        </g>
+
+        <!-- TOP: System Prompt (Brain/DNA) -->
+        <g class="node" data-component="system-prompt" tabindex="0">
+          <rect x="-90" y="-275" width="180" height="80" rx="8" fill="#0d1520" stroke="#e88dff" stroke-width="1.8"/>
+          <text x="0" y="-245" text-anchor="middle" fill="#e88dff" font-size="14" font-weight="bold">提示词工厂</text>
+          <text x="0" y="-225" text-anchor="middle" fill="#9a6db5" font-size="11">基因 · 六层三明治</text>
+          <text x="0" y="-207" text-anchor="middle" fill="#5a4070" font-size="9">15,000-34,000 token/次</text>
+        </g>
+
+        <!-- RIGHT: Tool Runtime (Hands) -->
+        <g class="node" data-component="tool-runtime" tabindex="0">
+          <rect x="170" y="20" width="170" height="80" rx="8" fill="#0d1520" stroke="#00d4ff" stroke-width="1.8"/>
+          <text x="255" y="50" text-anchor="middle" fill="#00d4ff" font-size="14" font-weight="bold">工具运行时</text>
+          <text x="255" y="70" text-anchor="middle" fill="#5a8a9e" font-size="11">双手 · 43 个工具</text>
+          <text x="255" y="86" text-anchor="middle" fill="#3d5a6e" font-size="9">七步执行管线</text>
+        </g>
+
+        <!-- LEFT: Agent Orchestration (Brain) -->
+        <g class="node" data-component="agent-orchestration" tabindex="0">
+          <rect x="-340" y="20" width="170" height="80" rx="8" fill="#0d1520" stroke="#7b61ff" stroke-width="1.8"/>
+          <text x="-255" y="50" text-anchor="middle" fill="#7b61ff" font-size="14" font-weight="bold">Agent 编排</text>
+          <text x="-255" y="70" text-anchor="middle" fill="#5c4d8a" font-size="11">大脑 · 七种任务类型</text>
+          <text x="-255" y="86" text-anchor="middle" fill="#3d3560" font-size="9">Coordinator + Workers</text>
+        </g>
+
+        <!-- UPPER-LEFT: Configuration (DNA) -->
+        <g class="node" data-component="configuration" tabindex="0">
+          <rect x="-370" y="-220" width="160" height="72" rx="8" fill="#0d1520" stroke="#ffd93d" stroke-width="1.8"/>
+          <text x="-290" y="-194" text-anchor="middle" fill="#ffd93d" font-size="13" font-weight="bold">配置治理</text>
+          <text x="-290" y="-175" text-anchor="middle" fill="#9e8a3d" font-size="11">套娃 · 九层优先级</text>
+          <text x="-290" y="-159" text-anchor="middle" fill="#6e6030" font-size="9">两套合并规则</text>
+        </g>
+
+        <!-- UPPER-RIGHT: State & Persistence (Memory) -->
+        <g class="node" data-component="state-persistence" tabindex="0">
+          <rect x="210" y="-220" width="160" height="72" rx="8" fill="#0d1520" stroke="#4ecdc4" stroke-width="1.8"/>
+          <text x="290" y="-194" text-anchor="middle" fill="#4ecdc4" font-size="13" font-weight="bold">状态与持久化</text>
+          <text x="290" y="-175" text-anchor="middle" fill="#3a8a84" font-size="11">记忆 · 四级存储</text>
+          <text x="290" y="-159" text-anchor="middle" fill="#2a6560" font-size="9">JSONL + 硬链接复用</text>
+        </g>
+
+        <!-- BOTTOM: Token Economics (Blood/Water) -->
+        <g class="node" data-component="token-economics" tabindex="0">
+          <rect x="-85" y="200" width="170" height="72" rx="8" fill="#0d1520" stroke="#ffd93d" stroke-width="1.8"/>
+          <text x="0" y="226" text-anchor="middle" fill="#ffd93d" font-size="13" font-weight="bold">Token 经济学</text>
+          <text x="0" y="246" text-anchor="middle" fill="#9e8a3d" font-size="11">血液 · 四种水价</text>
+          <text x="0" y="262" text-anchor="middle" fill="#6e6030" font-size="9">Cache Hit 省 10 倍</text>
+        </g>
+
+        <!-- LOWER-LEFT: Security (Immune System) -->
+        <g class="node" data-component="security" tabindex="0">
+          <rect x="-390" y="140" width="170" height="72" rx="8" fill="#0d1520" stroke="#ff6b6b" stroke-width="1.8"/>
+          <text x="-305" y="166" text-anchor="middle" fill="#ff6b6b" font-size="13" font-weight="bold">安全架构</text>
+          <text x="-305" y="186" text-anchor="middle" fill="#9e4a4a" font-size="11">免疫 · 四层纵深防御</text>
+          <text x="-305" y="202" text-anchor="middle" fill="#6e3535" font-size="9">十步权限状态机</text>
+        </g>
+
+        <!-- LOWER-RIGHT: Extension Ecosystem (Nervous System) -->
+        <g class="node" data-component="extension-ecosystem" tabindex="0">
+          <rect x="220" y="140" width="170" height="72" rx="8" fill="#0d1520" stroke="#48bb78" stroke-width="1.8"/>
+          <text x="305" y="166" text-anchor="middle" fill="#48bb78" font-size="13" font-weight="bold">扩展生态</text>
+          <text x="305" y="186" text-anchor="middle" fill="#3a8a58" font-size="11">神经 · MCP + Hooks</text>
+          <text x="305" y="202" text-anchor="middle" fill="#2a6540" font-size="9">8 种传输 · 27 事件</text>
+        </g>
+
+        <!-- FAR RIGHT: Boot Sequence -->
+        <g class="node" data-component="boot-sequence" tabindex="0">
+          <rect x="380" y="-100" width="140" height="64" rx="8" fill="#0d1520" stroke="#63b3ed" stroke-width="1.5"/>
+          <text x="450" y="-78" text-anchor="middle" fill="#63b3ed" font-size="12" font-weight="bold">启动序列</text>
+          <text x="450" y="-60" text-anchor="middle" fill="#4a8ab0" font-size="10">BIOS · ~300ms 就绪</text>
+          <text x="450" y="-46" text-anchor="middle" fill="#3a6a80" font-size="9">八种模式路由</text>
+        </g>
+
+        <!-- FAR LEFT: Code Map -->
+        <g class="node" data-component="code-map" tabindex="0">
+          <rect x="-520" y="-100" width="140" height="64" rx="8" fill="#0d1520" stroke="#a0aec0" stroke-width="1.5"/>
+          <text x="-450" y="-78" text-anchor="middle" fill="#a0aec0" font-size="12" font-weight="bold">代码地图</text>
+          <text x="-450" y="-60" text-anchor="middle" fill="#718096" font-size="10">全景 · 1,884 文件</text>
+          <text x="-450" y="-46" text-anchor="middle" fill="#4a5568" font-size="9">五区域 · 三条高速公路</text>
+        </g>
+
+        <!-- BOTTOM-CENTER: Terminal UI -->
+        <g class="node" data-component="terminal-ui" tabindex="0">
+          <rect x="-85" y="310" width="170" height="64" rx="8" fill="#0d1520" stroke="#a0aec0" stroke-width="1.5"/>
+          <text x="0" y="335" text-anchor="middle" fill="#a0aec0" font-size="13" font-weight="bold">终端 UI</text>
+          <text x="0" y="355" text-anchor="middle" fill="#718096" font-size="11">皮肤 · React + Ink</text>
+          <text x="0" y="368" text-anchor="middle" fill="#4a5568" font-size="9">389 组件 · 3 页面</text>
+        </g>
+
+        <!-- Animated particles along data flows -->
+        <g id="particles"></g>
+
+        <!-- Stats bar at bottom -->
+        <g transform="translate(0, 410)">
+          <text x="-500" y="0" fill="#4a5568" font-size="10">TypeScript 源文件: 1,884</text>
+          <text x="-280" y="0" fill="#4a5568" font-size="10">工具: 40</text>
+          <text x="-160" y="0" fill="#4a5568" font-size="10">命令: 101</text>
+          <text x="-40" y="0" fill="#4a5568" font-size="10">版本: 2.1.88</text>
+          <text x="100" y="0" fill="#4a5568" font-size="10">核心比喻: Agent OS</text>
+          <text x="310" y="0" fill="#4a5568" font-size="10">总章节: 88</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Scroll indicator -->
+    <div class="scroll-indicator">
+      <span>滚动探索</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    </div>
+
+    <!-- Quick stats strip with animated counters -->
+    <div class="stats-strip">
+      <div class="stat" data-tip="全部 TypeScript 文件，约 50 万行代码"><span class="stat-num counter" data-target="1884">0</span><span class="stat-label">源文件</span></div>
+      <div class="stat" data-tip="文件读写、Bash 执行、搜索、Agent 调度等"><span class="stat-num counter" data-target="40">0</span><span class="stat-label">工具</span></div>
+      <div class="stat" data-tip="斜杠命令 + 内置命令 + 扩展命令"><span class="stat-num counter" data-target="101">0</span><span class="stat-label">命令</span></div>
+      <div class="stat" data-tip="覆盖从入门到源码级的完整分析"><span class="stat-num counter" data-target="88">0</span><span class="stat-label">章节</span></div>
+      <div class="stat" data-tip="从 process.argv 到 REPL 就绪的全过程"><span class="stat-num">~300ms</span><span class="stat-label">启动耗时</span></div>
+      <div class="stat" data-tip="5 层公开配置 + 4 层企业策略子层"><span class="stat-num counter" data-target="9">0</span><span class="stat-label">配置层级</span></div>
+    </div>
+
+    <!-- ===== AGENT LOOP VISUALIZATION (ccunpacked-inspired) ===== -->
+    <section id="agent-loop-section" class="landing-section fade-in-section">
+      <div class="loop-section-header">
+        <span class="loop-section-num">01</span>
+        <h2 class="loop-title">The Agent Loop</h2>
+        <p class="loop-subtitle">From keypress to rendered response, step by step through the source.</p>
+      </div>
+
+      <div class="loop-diagram-img">
+        <img src="images/agent-loop-flow.svg" alt="Agent Loop 11-step circular flow diagram" loading="lazy" />
+      </div>
+
+      <div class="loop-timeline">
+        <div class="loop-track">
+          <div class="loop-step active" data-step="1"><div class="step-num">1</div><div class="step-label">Input</div></div>
+          <div class="loop-step" data-step="2"><div class="step-num">2</div><div class="step-label">Message</div></div>
+          <div class="loop-step" data-step="3"><div class="step-num">3</div><div class="step-label">History</div></div>
+          <div class="loop-step" data-step="4"><div class="step-num">4</div><div class="step-label">System</div></div>
+          <div class="loop-step" data-step="5"><div class="step-num">5</div><div class="step-label">API</div></div>
+          <div class="loop-step" data-step="6"><div class="step-num">6</div><div class="step-label">Tokens</div></div>
+          <div class="loop-step" data-step="7"><div class="step-num">7</div><div class="step-label">Tools?</div></div>
+          <div class="loop-step" data-step="8"><div class="step-num">8</div><div class="step-label">Loop</div></div>
+          <div class="loop-step" data-step="9"><div class="step-num">9</div><div class="step-label">Render</div></div>
+          <div class="loop-step" data-step="10"><div class="step-num">10</div><div class="step-label">Hooks</div></div>
+          <div class="loop-step" data-step="11"><div class="step-num">11</div><div class="step-label">Await</div></div>
+        </div>
+        <div class="loop-progress-bar"><div class="loop-progress-fill"></div></div>
+      </div>
+
+      <div class="loop-card">
+        <!-- Step 1: User Input -->
+        <div class="loop-detail" data-step="1">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">1</span> <strong>User Input</strong></div>
+            <a class="loop-src-link">📂 src/components/TextInput.tsx</a>
+          </div>
+          <p class="loop-desc">User types a message or pipes input through <code>stdin</code></p>
+          <div class="loop-viz">
+            <div class="term-mock">
+              <div class="term-header"><span class="term-dot red"></span><span class="term-dot yellow"></span><span class="term-dot green"></span></div>
+              <div class="term-body">
+                <div class="term-line"><span class="term-green">● claude-code</span></div>
+                <div class="term-line"><span class="term-white">$ </span><span class="term-cursor">Find all TODO comments in src/</span><span class="blink">▊</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="loop-note">Keyboard input comes from Ink's <code>TextInput</code> component. In non-interactive mode, it reads from piped <code>stdin</code> instead.</p>
+        </div>
+
+        <!-- Step 2: Message Construction -->
+        <div class="loop-detail hidden" data-step="2">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">2</span> <strong>Message Construction</strong></div>
+            <a class="loop-src-link">📂 src/utils/processUserInput.ts</a>
+          </div>
+          <p class="loop-desc">Text gets parsed through <code>processUserInput()</code> — 18 parameters, 3 dispatch paths</p>
+          <div class="loop-viz">
+            <div class="code-mock">
+              <div class="code-line"><span class="c-kw">const</span> result = <span class="c-fn">processUserInput</span>({</div>
+              <div class="code-line">  text: <span class="c-str">"Find all TODO comments in src/"</span>,</div>
+              <div class="code-line">  images: [],</div>
+              <div class="code-line">  abortController,</div>
+              <div class="code-line">  options: { <span class="c-comment">// ...18 params total</span> }</div>
+              <div class="code-line">})</div>
+              <div class="code-line"></div>
+              <div class="code-line"><span class="c-comment">// → dispatch: slash command? image? → UserMessage</span></div>
+              <div class="code-line"><span class="c-comment">// → UltraPlan keyword detection</span></div>
+              <div class="code-line"><span class="c-comment">// → Bridge security filtering</span></div>
+            </div>
+          </div>
+          <p class="loop-note">Slash commands get intercepted here. Images are resized. The output is always a standard <code>UserMessage</code> object.</p>
+        </div>
+
+        <!-- Step 3: History Management -->
+        <div class="loop-detail hidden" data-step="3">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">3</span> <strong>History Append</strong></div>
+            <a class="loop-src-link">📂 src/history.ts</a>
+          </div>
+          <p class="loop-desc">Message gets pushed onto the in-memory conversation array</p>
+          <div class="loop-viz">
+            <div class="history-mock">
+              <div class="hist-item"><span class="hist-role user">[user]</span> Set up the project structure</div>
+              <div class="hist-item"><span class="hist-role asst">[assistant]</span> I'll create the directory layout...</div>
+              <div class="hist-item"><span class="hist-role user">[user]</span> Now add the database models</div>
+              <div class="hist-item active"><span class="hist-role user">[user]</span> Find all TODO comments... <span class="hist-new">NEW</span></div>
+            </div>
+          </div>
+          <p class="loop-note">The conversation history is just an array that grows over the session. It's what the context window manager trims later.</p>
+        </div>
+
+        <!-- Step 4: System Prompt -->
+        <div class="loop-detail hidden" data-step="4">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">4</span> <strong>System Prompt Assembly</strong></div>
+            <a class="loop-src-link">📂 src/utils/systemPrompt/</a>
+          </div>
+          <p class="loop-desc">Six-layer sandwich: 15K–34K tokens assembled every turn</p>
+          <div class="loop-viz">
+            <div class="sandwich-mock">
+              <div class="sw-layer" style="--c:#ff6b6b">🔒 Enterprise Policy <span class="sw-size">~2K</span></div>
+              <div class="sw-layer" style="--c:#ffd93d">⚡ DYNAMIC_BOUNDARY <span class="sw-size">— cache split —</span></div>
+              <div class="sw-layer" style="--c:#48bb78">📄 CLAUDE.md + Memory <span class="sw-size">~3K</span></div>
+              <div class="sw-layer" style="--c:#7b61ff">🔧 Tool Descriptions (43) <span class="sw-size">~8K</span></div>
+              <div class="sw-layer" style="--c:#e88dff">📋 Base System Prompt <span class="sw-size">~6K</span></div>
+              <div class="sw-layer" style="--c:#00d4ff">🧬 Immutable Core <span class="sw-size">~2K</span></div>
+            </div>
+          </div>
+          <p class="loop-note">Everything below <code>DYNAMIC_BOUNDARY</code> gets Prompt Cached (saves 10x cost). Everything above changes per turn.</p>
+        </div>
+
+        <!-- Step 5: API Streaming -->
+        <div class="loop-detail hidden" data-step="5">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">5</span> <strong>API Streaming</strong></div>
+            <a class="loop-src-link">📂 src/services/claude.ts</a>
+          </div>
+          <p class="loop-desc">Stream to Claude API through the Anthropic SDK (server-sent events)</p>
+          <div class="loop-viz">
+            <div class="api-mock">
+              <div class="api-flow">
+                <div class="api-box">Your Machine</div>
+                <div class="api-arrow">→ SSE →</div>
+                <div class="api-box api-active">● Claude API</div>
+              </div>
+              <div class="sse-stream">
+                <div class="sse-line">data: {"type":"content_block_delta","delta":{"text":"I'll"}}</div>
+                <div class="sse-line">data: {"type":"content_block_delta","delta":{"text":" search"}}</div>
+                <div class="sse-line">data: {"type":"content_block_delta","delta":{"text":" for"}}</div>
+                <div class="sse-line">data: {"type":"content_block_delta","delta":{"text":" TODOs"}}</div>
+                <div class="sse-line">data: {"type":"content_block_delta","delta":{"text":" in"}}</div>
+              </div>
+            </div>
+          </div>
+          <p class="loop-note">Uses the SDK's streaming interface. Tokens arrive over <code>SSE</code> and get rendered as they land.</p>
+        </div>
+
+        <!-- Step 6: Token Accounting -->
+        <div class="loop-detail hidden" data-step="6">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">6</span> <strong>Token Accounting</strong></div>
+            <a class="loop-src-link">📂 src/cost-tracker.ts</a>
+          </div>
+          <p class="loop-desc">Four token tiers: <code>input</code> → <code>cache_write</code> → <code>cache_read</code> → <code>output</code></p>
+          <div class="loop-viz">
+            <div class="token-mock">
+              <div class="token-row"><span class="token-label">input</span><div class="token-bar" style="width:60%;background:#ff6b6b"></div><span class="token-val">$3.00/M</span></div>
+              <div class="token-row"><span class="token-label">cache_write</span><div class="token-bar" style="width:45%;background:#ffd93d"></div><span class="token-val">$3.75/M</span></div>
+              <div class="token-row"><span class="token-label">cache_read</span><div class="token-bar" style="width:8%;background:#48bb78"></div><span class="token-val">$0.30/M</span></div>
+              <div class="token-row"><span class="token-label">output</span><div class="token-bar" style="width:40%;background:#7b61ff"></div><span class="token-val">$15.00/M</span></div>
+            </div>
+          </div>
+          <p class="loop-note">Real-time cost tracking. When the running total hits <code>softLimit</code>, compression kicks in. <code>hardLimit</code> forces it.</p>
+        </div>
+
+        <!-- Step 7: Tool Detection -->
+        <div class="loop-detail hidden" data-step="7">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">7</span> <strong>Tool Detection</strong></div>
+            <a class="loop-src-link">📂 src/tools/tools.ts</a>
+          </div>
+          <p class="loop-desc">If <code>tool_use</code> blocks found: <code>findToolByName()</code> → <code>canUseTool()</code> → execute</p>
+          <div class="loop-viz">
+            <div class="code-mock">
+              <div class="code-line">I'll search for TODO comments...</div>
+              <div class="code-line">Let me use the bash tool to find them.</div>
+              <div class="code-line"></div>
+              <div class="code-line tool-use-block"><span class="c-kw">tool_use:</span></div>
+              <div class="code-line tool-use-block">  name: <span class="c-str">"bash"</span></div>
+              <div class="code-line tool-use-block">  input: <span class="c-str">"grep -r TODO src/"</span></div>
+              <div class="code-line"></div>
+              <div class="code-line"><span class="c-green">Permission check: allowed (pre-approved pattern)</span></div>
+            </div>
+          </div>
+          <p class="loop-note">The response can contain tool calls. Each gets resolved, permission-checked, and run. Multiple tools can execute in parallel.</p>
+        </div>
+
+        <!-- Step 8: Loop Decision -->
+        <div class="loop-detail hidden" data-step="8">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">8</span> <strong>Loop Decision</strong></div>
+            <a class="loop-src-link">📂 src/query.ts → shouldContinue()</a>
+          </div>
+          <p class="loop-desc">6 exit conditions checked: <code>end_turn</code> | abort | token limit | error | max turns | tool stop</p>
+          <div class="loop-viz">
+            <div class="decision-mock">
+              <div class="dec-q">Has tool results to return?</div>
+              <div class="dec-branches">
+                <div class="dec-yes">✓ YES → back to step 5<br><span class="dec-sub">append tool_result, call API again</span></div>
+                <div class="dec-no">✗ NO → continue to step 9<br><span class="dec-sub">end_turn or stop_sequence hit</span></div>
+              </div>
+              <div class="dec-loop-arrow">↺ This is why it's called a "loop"</div>
+            </div>
+          </div>
+          <p class="loop-note">Most conversations loop 2-5 times. Complex tasks with many file edits can loop 20+ times before <code>end_turn</code>.</p>
+        </div>
+
+        <!-- Step 9: Render Output -->
+        <div class="loop-detail hidden" data-step="9">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">9</span> <strong>Render Output</strong></div>
+            <a class="loop-src-link">📂 src/ink/ → reconciler → renderer</a>
+          </div>
+          <p class="loop-desc">Ink's React reconciler maps AI output to the terminal: vDOM diff → Yoga layout → ANSI</p>
+          <div class="loop-viz">
+            <div class="code-mock">
+              <div class="code-line"><span class="c-comment">// 7-step render pipeline (96 files)</span></div>
+              <div class="code-line">React.createElement → <span class="c-fn">reconciler</span></div>
+              <div class="code-line">  → <span class="c-fn">yogaLayout()</span>  <span class="c-comment">// flexbox in terminal</span></div>
+              <div class="code-line">  → <span class="c-fn">renderToString()</span></div>
+              <div class="code-line">  → <span class="c-fn">diffOutput()</span>  <span class="c-comment">// only changed lines</span></div>
+              <div class="code-line">  → <span class="c-fn">process.stdout.write()</span></div>
+              <div class="code-line"></div>
+              <div class="code-line"><span class="c-green">Found <strong>16</strong> TODO comments across the codebase:</span></div>
+              <div class="code-line">  src/query.ts:42  — Add retry logic</div>
+              <div class="code-line">  src/tools.ts:108 — Validate input</div>
+            </div>
+          </div>
+          <p class="loop-note">Streaming renders incrementally — text appears as tokens arrive, not after the full response.</p>
+        </div>
+
+        <!-- Step 10: Post-Sampling Hooks -->
+        <div class="loop-detail hidden" data-step="10">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">10</span> <strong>Post-Sampling Hooks</strong></div>
+            <a class="loop-src-link">📂 src/services/compact/autoCompact.ts</a>
+          </div>
+          <p class="loop-desc">Auto-compact if conversation is too long, extract memories, run dream mode</p>
+          <div class="loop-viz">
+            <div class="code-mock">
+              <div class="code-line"><span class="c-kw">TODO Summary</span></div>
+              <div class="code-line"></div>
+              <div class="code-line">Found <strong>**16 TODO comments**</strong> across the codebase:</div>
+              <div class="code-line">  - src/query.ts:42    — Add retry logic</div>
+              <div class="code-line">  - src/tools.ts:108   — Validate input</div>
+              <div class="code-line">  - src/context.ts:15  — Cache system prompt</div>
+            </div>
+          </div>
+          <p class="loop-note">After the response is done: trim the conversation if it's getting long, extract anything worth remembering, and optionally run <code>dream mode</code>.</p>
+        </div>
+
+        <!-- Step 11: Await Next Input -->
+        <div class="loop-detail hidden" data-step="11">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">11</span> <strong>Await Next Input</strong></div>
+            <a class="loop-src-link">📂 src/QueryEngine.ts</a>
+          </div>
+          <p class="loop-desc">Back to the REPL, waiting for the next message</p>
+          <div class="loop-viz">
+            <div class="term-mock">
+              <div class="term-header"><span class="term-dot red"></span><span class="term-dot yellow"></span><span class="term-dot green"></span></div>
+              <div class="term-body">
+                <div class="term-line"><span class="term-green">● claude-code</span></div>
+                <div class="term-line"><span class="term-white">$ </span><span class="blink">▊</span></div>
+                <div class="term-line term-center">The loop waits for your next message</div>
+              </div>
+            </div>
+          </div>
+          <p class="loop-note">The loop idles until user input. <code>Ctrl+C</code> is handled gracefully without losing conversation history.</p>
+        </div>
+      </div>
+
+      <div class="loop-controls">
+        <button id="loop-prev" class="loop-btn" disabled>&lt;</button>
+        <button id="loop-auto" class="loop-btn loop-btn-primary">⏸</button>
+        <button id="loop-next" class="loop-btn">&gt;</button>
+        <span class="loop-counter"><span id="loop-current">1</span> / 11</span>
+        <div class="loop-speed">
+          <button class="speed-btn" data-speed="5000">0.5x</button>
+          <button class="speed-btn active" data-speed="2500">1x</button>
+          <button class="speed-btn" data-speed="1200">2x</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ARCHITECTURE EXPLORER ===== -->
+    <section id="arch-section" class="landing-section fade-in-section">
+      <div class="arch-header">
+        <span class="loop-section-num">02</span>
+        <h2 class="loop-title">Architecture Explorer</h2>
+        <p class="loop-subtitle">1,884 files · 512,674 lines of TypeScript — interactive source code treemap</p>
+      </div>
+
+      <div class="loop-diagram-img" style="margin-bottom:2rem">
+        <img src="images/architecture-treemap.svg" alt="Claude Code layered architecture diagram" loading="lazy" />
+      </div>
+
+      <div class="arch-breadcrumb" id="arch-breadcrumb">
+        <span class="arch-crumb arch-crumb-root" data-path="root">src/</span>
+      </div>
+
+      <div class="arch-treemap" id="arch-treemap"></div>
+
+      <div class="arch-info" id="arch-info">
+        <div class="arch-info-name">点击模块进入查看子目录</div>
+        <div class="arch-info-stats"></div>
+      </div>
+
+      <div class="arch-legend" id="arch-legend"></div>
+    </section>
+
+    <!-- ===== TOOL GRID ===== -->
+    <section id="tool-grid-section" class="landing-section fade-in-section">
+      <h2 class="section-title">Tool System — 43 个内置工具</h2>
+      <p class="section-subtitle">AI 的双手：从读文件到操控屏幕，每个工具都是一种能力</p>
+      <div id="tool-grid"></div>
+    </section>
+
+    <!-- ===== COMMAND CATALOG ===== -->
+    <section id="command-catalog-section" class="landing-section fade-in-section">
+      <h2 class="section-title">Command Catalog — 斜杠命令全集</h2>
+      <p class="section-subtitle">用户侧的完整控制面板：<span class="cmd-count-public">0</span> 个公开命令 + <span class="cmd-count-internal">0</span> 个内部命令</p>
+      <div class="cmd-filter-bar">
+        <input type="text" id="cmd-search" class="cmd-search" placeholder="搜索命令..." autocomplete="off" />
+      </div>
+      <div id="command-grid"></div>
+      <div class="internal-commands-toggle">
+        <button id="show-internal" class="toggle-internal-btn">显示 Anthropic 内部命令 →</button>
+      </div>
+      <div id="internal-command-list" class="hidden">
+        <h3 class="internal-title">内部命令 (仅 Anthropic 员工可用)</h3>
+        <div id="internal-commands"></div>
+      </div>
+    </section>
+
+    <!-- ===== HIDDEN FEATURES ===== -->
+    <section id="hidden-features-section" class="landing-section fade-in-section">
+      <h2 class="section-title">Hidden Features — 未公开的秘密武器</h2>
+      <p class="section-subtitle">通过 <code>feature()</code> 门控的实验性功能——代码已就绪，开关未开启</p>
+      <div id="hidden-features-grid"></div>
+    </section>
+
+    <!-- ===== DATA FLOW VISUALIZATIONS ===== -->
+    <section id="dataflow-section" class="landing-section fade-in-section">
+      <div class="arch-header">
+        <span class="loop-section-num">03</span>
+        <h2 class="loop-title">Deep Dives</h2>
+        <p class="loop-subtitle">四个核心子系统的运行时数据流——从源码中提取的真实路径</p>
+      </div>
+
+      <!-- Tab selector -->
+      <div class="df-tabs">
+        <button class="df-tab active" data-df="token">Token 生命周期</button>
+        <button class="df-tab" data-df="permission">权限状态机</button>
+        <button class="df-tab" data-df="compact">上下文压缩</button>
+        <button class="df-tab" data-df="prompt">System Prompt 组装</button>
+      </div>
+
+      <!-- DF 1: Token Lifecycle -->
+      <div class="df-panel active" id="df-token">
+        <div class="df-diagram-img">
+          <img src="images/token-lifecycle.svg" alt="Token lifecycle flow diagram" loading="lazy" />
+        </div>
+        <div class="df-flow">
+          <div class="df-node df-node-start">用户输入<span class="df-node-sub">keypress → TextInput</span></div>
+          <div class="df-arrow">→</div>
+          <div class="df-node">processUserInput()<span class="df-node-sub">解析、拦截斜杠命令</span></div>
+          <div class="df-arrow">→</div>
+          <div class="df-node">System Prompt<span class="df-node-sub">15K-34K tokens</span></div>
+          <div class="df-arrow">→</div>
+          <div class="df-node df-node-api">API 请求<span class="df-node-sub">messages + system + tools</span></div>
+          <div class="df-arrow">→</div>
+          <div class="df-node df-node-end">SSE 响应流<span class="df-node-sub">content_block_delta</span></div>
+        </div>
+        <div class="df-detail-grid">
+          <div class="df-detail-card">
+            <div class="df-detail-title">📊 Token 四级计价</div>
+            <div class="df-bars">
+              <div class="df-bar-row"><span class="df-bar-label">input</span><div class="df-bar-track"><div class="df-bar-fill" style="width:40%;background:#ff6b6b"></div></div><span class="df-bar-val">$3/M</span></div>
+              <div class="df-bar-row"><span class="df-bar-label">cache_write</span><div class="df-bar-track"><div class="df-bar-fill" style="width:50%;background:#ffd93d"></div></div><span class="df-bar-val">$3.75/M</span></div>
+              <div class="df-bar-row"><span class="df-bar-label">cache_read</span><div class="df-bar-track"><div class="df-bar-fill" style="width:4%;background:#48bb78"></div></div><span class="df-bar-val">$0.30/M</span></div>
+              <div class="df-bar-row"><span class="df-bar-label">output</span><div class="df-bar-track"><div class="df-bar-fill" style="width:100%;background:#7b61ff"></div></div><span class="df-bar-val">$15/M</span></div>
+            </div>
+          </div>
+          <div class="df-detail-card">
+            <div class="df-detail-title">🎯 成本优化机制</div>
+            <div class="df-list">
+              <div class="df-list-item"><span class="df-tag green">Prompt Cache</span> system prompt 缓存复用，节省 90%</div>
+              <div class="df-list-item"><span class="df-tag gold">DYNAMIC_BOUNDARY</span> 将变化部分隔离在缓存线之上</div>
+              <div class="df-list-item"><span class="df-tag cyan">softLimit</span> 达到阈值时触发自动压缩</div>
+              <div class="df-list-item"><span class="df-tag red">hardLimit</span> 强制截断，防止单次请求超限</div>
+            </div>
+          </div>
+          <div class="df-detail-card">
+            <div class="df-detail-title">📂 关键源文件</div>
+            <div class="df-src-list">
+              <code>src/cost-tracker.ts</code> — 实时计费追踪<br>
+              <code>src/services/api/claude.ts</code> — API 请求构建<br>
+              <code>src/services/compact/</code> — 压缩触发器<br>
+              <code>src/utils/messages.ts</code> — 消息序列化
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DF 2: Permission State Machine -->
+      <div class="df-panel" id="df-permission">
+        <div class="df-diagram-img">
+          <img src="images/permission-state-machine.svg" alt="Permission state machine diagram" loading="lazy" />
+        </div>
+        <div class="df-state-machine">
+          <div class="df-sm-row">
+            <div class="df-sm-state df-sm-start">工具调用请求<span class="df-sm-sub">tool_use block from API</span></div>
+            <div class="df-sm-arrow">→</div>
+            <div class="df-sm-state df-sm-check">canUseTool()<span class="df-sm-sub">5 层权限检查</span></div>
+          </div>
+          <div class="df-sm-branches">
+            <div class="df-sm-branch df-sm-allow">
+              <div class="df-sm-label">✓ 允许</div>
+              <div class="df-sm-conditions">
+                <div class="df-sm-cond">YOLO 模式 (全部跳过)</div>
+                <div class="df-sm-cond">已预批准的 glob 模式匹配</div>
+                <div class="df-sm-cond">白名单命令 (ls, git status...)</div>
+              </div>
+            </div>
+            <div class="df-sm-branch df-sm-deny">
+              <div class="df-sm-label">✗ 拒绝</div>
+              <div class="df-sm-conditions">
+                <div class="df-sm-cond">企业策略 (Policy) 禁止</div>
+                <div class="df-sm-cond">文件路径在 deny 列表</div>
+                <div class="df-sm-cond">危险命令检测 (rm -rf...)</div>
+              </div>
+            </div>
+            <div class="df-sm-branch df-sm-ask">
+              <div class="df-sm-label">? 询问用户</div>
+              <div class="df-sm-conditions">
+                <div class="df-sm-cond">未知模式，需要确认</div>
+                <div class="df-sm-cond">用户可选择 "允许/拒绝/永久允许"</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="df-detail-grid">
+          <div class="df-detail-card">
+            <div class="df-detail-title">🏗 5 层权限堆栈</div>
+            <div class="df-stack">
+              <div class="df-stack-layer" style="--sc:#ff6b6b">1. Enterprise Policy（最高优先级）</div>
+              <div class="df-stack-layer" style="--sc:#ffd93d">2. 工具特定规则 (BashTool 危险命令表)</div>
+              <div class="df-stack-layer" style="--sc:#48bb78">3. 文件系统规则 (glob 匹配)</div>
+              <div class="df-stack-layer" style="--sc:#7b61ff">4. 用户运行时决策缓存</div>
+              <div class="df-stack-layer" style="--sc:#00d4ff">5. YOLO 模式 (跳过全部)</div>
+            </div>
+          </div>
+          <div class="df-detail-card">
+            <div class="df-detail-title">📂 关键源文件</div>
+            <div class="df-src-list">
+              <code>src/utils/permissions/</code> — 24 文件, 9409 行<br>
+              <code>src/utils/bash/</code> — Bash AST 安全分析<br>
+              <code>src/tools/tools.ts</code> — canUseTool() 入口<br>
+              <code>src/hooks/toolPermission/</code> — UI 权限弹窗
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DF 3: Context Compression Pipeline -->
+      <div class="df-panel" id="df-compact">
+        <div class="df-diagram-img">
+          <img src="images/context-compression-pipeline.svg" alt="Context compression pipeline diagram" loading="lazy" />
+        </div>
+        <div class="df-pipeline">
+          <div class="df-pipe-stage">
+            <div class="df-pipe-num">1</div>
+            <div class="df-pipe-content">
+              <div class="df-pipe-title">监测触发</div>
+              <div class="df-pipe-desc">每次 API 响应后检查 <code>usage.input_tokens</code></div>
+              <div class="df-pipe-threshold">
+                <span class="df-tag gold">softLimit</span> 上下文使用 &gt; 70% → 建议压缩<br>
+                <span class="df-tag red">hardLimit</span> 上下文使用 &gt; 95% → 强制压缩
+              </div>
+            </div>
+          </div>
+          <div class="df-pipe-connector">↓</div>
+          <div class="df-pipe-stage">
+            <div class="df-pipe-num">2</div>
+            <div class="df-pipe-content">
+              <div class="df-pipe-title">消息切片</div>
+              <div class="df-pipe-desc">保留最近 N 条消息不压缩（<code>preserveCount</code>），其余进入压缩队列</div>
+            </div>
+          </div>
+          <div class="df-pipe-connector">↓</div>
+          <div class="df-pipe-stage">
+            <div class="df-pipe-num">3</div>
+            <div class="df-pipe-content">
+              <div class="df-pipe-title">Claude 摘要</div>
+              <div class="df-pipe-desc">调用 Claude API 将旧消息压缩为 <code>&lt;context_window_summary&gt;</code> XML 块</div>
+              <div class="df-pipe-note">压缩后的摘要作为 system-reminder 注入，原消息删除</div>
+            </div>
+          </div>
+          <div class="df-pipe-connector">↓</div>
+          <div class="df-pipe-stage">
+            <div class="df-pipe-num">4</div>
+            <div class="df-pipe-content">
+              <div class="df-pipe-title">记忆提取</div>
+              <div class="df-pipe-desc">压缩时同时运行 <code>extractMemories()</code>，将重要信息写入 MEMORY.md</div>
+            </div>
+          </div>
+        </div>
+        <div class="df-detail-card" style="margin-top:16px">
+          <div class="df-detail-title">📂 关键源文件</div>
+          <div class="df-src-list">
+            <code>src/services/compact/autoCompact.ts</code> — 自动压缩触发器<br>
+            <code>src/services/compact/compactHistory.ts</code> — 历史消息压缩<br>
+            <code>src/services/extractMemories.ts</code> — 记忆提取<br>
+            <code>src/services/SessionMemory/</code> — 会话记忆管理
+          </div>
+        </div>
+      </div>
+
+      <!-- DF 4: System Prompt Assembly -->
+      <div class="df-panel" id="df-prompt">
+        <div class="df-diagram-img">
+          <img src="images/system-prompt-sandwich.svg" alt="System prompt 6-layer sandwich diagram" loading="lazy" />
+        </div>
+        <div class="df-assembly">
+          <div class="df-asm-title">System Prompt 组装流水线</div>
+          <div class="df-asm-subtitle">每次 API 调用前实时组装，6 层三明治结构</div>
+
+          <div class="df-asm-layers">
+            <div class="df-asm-layer" style="--lc:#ff6b6b">
+              <div class="df-asm-layer-head">
+                <span class="df-asm-layer-name">🔒 Enterprise Policy</span>
+                <span class="df-asm-layer-size">~2K tokens</span>
+              </div>
+              <div class="df-asm-layer-desc">企业管理员策略注入，最高优先级，不可被覆盖</div>
+              <div class="df-asm-layer-src"><code>getEnterprisePolicy()</code></div>
+            </div>
+            <div class="df-asm-cache-line">── ⚡ DYNAMIC_BOUNDARY ── 以下内容被 Prompt Cache ──</div>
+            <div class="df-asm-layer" style="--lc:#ffd93d">
+              <div class="df-asm-layer-head">
+                <span class="df-asm-layer-name">📄 CLAUDE.md + Memory</span>
+                <span class="df-asm-layer-size">~3K tokens</span>
+              </div>
+              <div class="df-asm-layer-desc">项目配置 + 用户记忆，通过 system-reminder 注入</div>
+              <div class="df-asm-layer-src"><code>getClaudeMdContent()</code> + <code>memoryFiles</code></div>
+            </div>
+            <div class="df-asm-layer" style="--lc:#7b61ff">
+              <div class="df-asm-layer-head">
+                <span class="df-asm-layer-name">🔧 Tool Descriptions</span>
+                <span class="df-asm-layer-size">~8K tokens</span>
+              </div>
+              <div class="df-asm-layer-desc">43 个工具的 JSON Schema 描述，含参数定义和使用说明</div>
+              <div class="df-asm-layer-src"><code>tools.map(t => t.toToolDefinition())</code></div>
+            </div>
+            <div class="df-asm-layer" style="--lc:#e88dff">
+              <div class="df-asm-layer-head">
+                <span class="df-asm-layer-name">📋 Base System Prompt</span>
+                <span class="df-asm-layer-size">~6K tokens</span>
+              </div>
+              <div class="df-asm-layer-desc">核心行为指令：安全边界、输出风格、工具使用规范</div>
+              <div class="df-asm-layer-src"><code>BASE_SYSTEM_PROMPT</code> 常量</div>
+            </div>
+            <div class="df-asm-layer" style="--lc:#00d4ff">
+              <div class="df-asm-layer-head">
+                <span class="df-asm-layer-name">🧬 Immutable Core</span>
+                <span class="df-asm-layer-size">~2K tokens</span>
+              </div>
+              <div class="df-asm-layer-desc">不可修改的安全核心：身份声明、越狱防御、红线规则</div>
+              <div class="df-asm-layer-src"><code>IMMUTABLE_SYSTEM_PROMPT</code></div>
+            </div>
+          </div>
+
+          <div class="df-asm-total">
+            总计 <strong>15K–34K tokens</strong>（取决于工具数量和 CLAUDE.md 大小）·
+            缓存命中率约 <strong>90%</strong>（仅 DYNAMIC_BOUNDARY 以上变化）
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== BOTTOM CTA ===== -->
+    <section class="landing-section fade-in-section landing-cta">
+      <h2 class="section-title" style="color:var(--text-primary)">准备好深入了解了吗？</h2>
+      <p class="section-subtitle">从 88 章完整解析中选择你最好奇的主题开始阅读</p>
+      <div class="cta-buttons">
+        <button id="cta-read" class="btn-cta btn-cta-primary">开始阅读 →</button>
+        <button id="cta-map" class="btn-cta btn-cta-secondary">返回全景地图 ↑</button>
+      </div>
+    </section>
+
+    <!-- Floating section nav (right side) -->
+    <nav class="section-nav" id="section-nav">
+      <a href="#engine-container" class="section-nav-dot active" title="引擎地图"></a>
+      <a href="#agent-loop-section" class="section-nav-dot" title="Agent Loop"></a>
+      <a href="#arch-section" class="section-nav-dot" title="架构探索器"></a>
+      <a href="#tool-grid-section" class="section-nav-dot" title="工具系统"></a>
+      <a href="#command-catalog-section" class="section-nav-dot" title="命令目录"></a>
+      <a href="#hidden-features-section" class="section-nav-dot" title="隐藏功能"></a>
+      <a href="#dataflow-section" class="section-nav-dot" title="深度解析"></a>
+    </nav>
+
+  </div>
+
+  <!-- ==================== DETAIL PANEL (slides in on node click) ==================== -->
+  <div id="detail-panel" class="panel hidden">
+    <button id="panel-close" class="panel-close-btn">&times;</button>
+    <div id="panel-content"></div>
+  </div>
+
+  <!-- ==================== CHAPTER READER VIEW ==================== -->
+  <div id="reader" class="view">
+    <nav id="sidebar">
+      <div class="sidebar-header">
+        <button id="back-to-map" class="btn-back">← 返回全景</button>
+        <h2>目录</h2>
+        <input type="text" id="toc-search" placeholder="搜索章节和正文内容..." autocomplete="off" />
+      </div>
+      <div id="search-results" class="search-results hidden"></div>
+      <div id="toc"></div>
+    </nav>
+    <main id="chapter-content">
+      <div id="reading-progress" class="reading-progress"></div>
+      <div id="chapter-nav-top" class="chapter-nav">
+        <button id="prev-chapter" class="chapter-nav-btn" disabled>← 上一章</button>
+        <span id="chapter-position"></span>
+        <button id="next-chapter" class="chapter-nav-btn" disabled>下一章 →</button>
+      </div>
+      <div id="chapter-body"></div>
+      <div id="chapter-nav-bottom" class="chapter-nav">
+        <button id="prev-chapter-bottom" class="chapter-nav-btn" disabled>← 上一章</button>
+        <span id="chapter-position-bottom"></span>
+        <button id="next-chapter-bottom" class="chapter-nav-btn" disabled>下一章 →</button>
+      </div>
+    </main>
+  </div>
+
+  <!-- ==================== NAVIGATION BAR ==================== -->
+  <nav id="topnav">
+    <div class="nav-left">
+      <button id="nav-guide" class="nav-btn" title="引导页">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/></svg>
+        首页
+      </button>
+      <button id="nav-home" class="nav-btn" title="全景地图">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+        全景
+      </button>
+      <button id="nav-reader" class="nav-btn" title="章节阅读">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+        阅读
+      </button>
+    </div>
+    <div class="nav-center">
+      <span id="breadcrumb">Claude Code 2.1.88 · 架构全景</span>
+    </div>
+    <div class="nav-right">
+      <button id="metaphor-toggle" class="metaphor-toggle" title="切换比喻体系">
+        <span id="metaphor-icon">🏙</span>
+        <span id="metaphor-label">城市</span>
+      </button>
+      <span class="version-badge">v2.1.88</span>
+      <button id="shortcuts-hint" class="shortcuts-btn" title="键盘快捷键">⌨</button>
+    </div>
+  </nav>
+
+  <!-- Keyboard shortcuts modal -->
+  <div id="shortcuts-modal" class="shortcuts-modal hidden">
+    <div class="shortcuts-content">
+      <h3>键盘快捷键</h3>
+      <div class="shortcut-row"><kbd>1</kbd> 全景地图</div>
+      <div class="shortcut-row"><kbd>2</kbd> 章节阅读</div>
+      <div class="shortcut-row"><kbd>←</kbd> <kbd>→</kbd> 上/下一章</div>
+      <div class="shortcut-row"><kbd>Esc</kbd> 返回 / 关闭面板</div>
+      <div class="shortcut-row"><kbd>Ctrl+滚轮</kbd> 缩放地图</div>
+      <button class="shortcuts-close">&times;</button>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/highlight.js/11.9.0/highlight.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="js/data.js"></script>
+  <script src="js/tools-data.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>

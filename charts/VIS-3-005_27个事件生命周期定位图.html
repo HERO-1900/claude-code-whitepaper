@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-3-005 | 27个事件生命周期定位图</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--panel:#0f172a;--card:#1e293b;--border:#334155;--text:#f1f5f9;--muted:#94a3b8;--subtle:#475569;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c;--pink:#f472b6;--sky:#38bdf8;--halo:rgba(15,23,42,0.85)}
+[data-theme="warm"]{--bg:#1c1410;--panel:#2a1f16;--card:#3d2d20;--border:#5c4a3a;--text:#f5e6d3;--muted:#c4a882;--subtle:#8b7355;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#fb923c;--pink:#f472b6;--sky:#38bdf8;--halo:rgba(42,31,22,0.85)}
+[data-theme="light"]{--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:#cbd5e1;--text:#0f172a;--muted:#475569;--subtle:#94a3b8;--amber:#b45309;--cyan:#0e7490;--violet:#6d28d9;--emerald:#047857;--rose:#be123c;--slate:#475569;--orange:#c2410c;--pink:#be185d;--sky:#0369a1;--halo:rgba(255,255,255,0.9)}
+*{box-sizing:border-box;margin:0;padding:0}
+body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;padding:20px}
+.ctrl{position:fixed;top:16px;right:16px;display:flex;gap:8px;z-index:100}
+.ctrl button{font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;background:var(--card);color:var(--text);border:1px solid var(--border);border-radius:6px;cursor:pointer;transition:background 0.2s}
+.ctrl button:hover{background:var(--border)}
+.header{text-align:center;margin-bottom:24px;padding:16px}
+.header .tag{font-size:11px;color:var(--muted);letter-spacing:2px;margin-bottom:8px}
+.header h1{font-size:22px;font-weight:700;color:var(--text);margin-bottom:6px}
+.header .sub{font-size:13px;color:var(--muted)}[data-lang="en"] .lz{display:none}
+[data-lang="en"] .le{display:inline}
+.svg-container{width:100%;max-width:1040px;margin:0 auto;background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:10px}
+svg{width:100%;height:auto;display:block}
+svg text{fill:var(--text)}
+svg .lbl-muted{fill:var(--muted)}
+svg .lbl-subtle{fill:var(--subtle)}
+svg .layer-label-bg{fill:var(--panel)}
+svg .ev-halo{fill:var(--halo)}
+.summary-row{display:flex;gap:16px;max-width:1040px;margin:20px auto 0;flex-wrap:wrap}
+.summary-card{flex:1;min-width:200px;background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px 20px}
+.summary-card .s-num{font-size:28px;font-weight:700;margin-bottom:4px}
+.summary-card .s-label{font-size:12px;color:var(--muted);line-height:1.5}
+.footer{text-align:center;margin-top:20px;font-size:11px;color:var(--subtle)}
+
+/* light theme SVG color overrides for contrast */
+[data-theme="light"] svg [fill="#fbbf24"] { fill: #b45309 !important; }
+[data-theme="light"] svg [stroke="#fbbf24"] { stroke: #b45309 !important; }
+[data-theme="light"] svg [fill="#22d3ee"] { fill: #0e7490 !important; }
+[data-theme="light"] svg [stroke="#22d3ee"] { stroke: #0e7490 !important; }
+[data-theme="light"] svg [fill="#34d399"] { fill: #047857 !important; }
+[data-theme="light"] svg [stroke="#34d399"] { stroke: #047857 !important; }
+[data-theme="light"] svg [fill="#a78bfa"] { fill: #6d28d9 !important; }
+[data-theme="light"] svg [stroke="#a78bfa"] { stroke: #6d28d9 !important; }
+[data-theme="light"] svg [fill="#fb7185"] { fill: #be123c !important; }
+[data-theme="light"] svg [stroke="#fb7185"] { stroke: #be123c !important; }
+[data-theme="light"] svg [fill="#94a3b8"] { fill: #475569 !important; }
+[data-theme="light"] svg [stroke="#94a3b8"] { stroke: #475569 !important; }
+[data-theme="light"] svg [fill="#fb923c"] { fill: #c2410c !important; }
+[data-theme="light"] svg [stroke="#fb923c"] { stroke: #c2410c !important; }
+[data-theme="light"] svg [fill="#f472b6"] { fill: #be185d !important; }
+[data-theme="light"] svg [stroke="#f472b6"] { stroke: #be185d !important; }
+[data-theme="light"] svg [fill="#c084fc"] { fill: #7c3aed !important; }
+[data-theme="light"] svg [stroke="#c084fc"] { stroke: #7c3aed !important; }
+[data-theme="light"] svg [fill="#38bdf8"] { fill: #0369a1 !important; }
+[data-theme="light"] svg [stroke="#38bdf8"] { stroke: #0369a1 !important; }
+[data-theme="light"] svg stop[style*="stop-color:#a78bfa"] { stop-color: #6d28d9 !important; }
+[data-theme="light"] svg stop[style*="stop-color:#22d3ee"] { stop-color: #0e7490 !important; }
+[data-theme="light"] svg stop[style*="stop-color:#34d399"] { stop-color: #047857 !important; }
+[data-theme="light"] svg stop[style*="stop-color:#fbbf24"] { stop-color: #b45309 !important; }
+</style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="cycleTheme()">Theme</button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<div class="header">
+  <div class="tag">VIS-3-005 · HOOK EVENTS</div>
+  <h1>
+    <span class="lz">27 个事件生命周期定位图</span>
+    <span class="le">27 Hook Events Lifecycle Map</span>
+  </h1>
+  <div class="sub">
+    <span class="lz">4 大生命周期层 · 可阻断 · Fire-and-Forget · 卫星事件组</span>
+    <span class="le">4 Lifecycle Layers · Blockable · Fire-and-Forget · Satellite Groups</span>
+  </div>
+</div>
+
+<div class="svg-container">
+<svg viewBox="0 0 1000 900" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="27 Hook Events Lifecycle Map">
+<defs>
+  <linearGradient id="grad-session" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" style="stop-color:#a78bfa;stop-opacity:0.12"/>
+    <stop offset="100%" style="stop-color:#a78bfa;stop-opacity:0.04"/>
+  </linearGradient>
+  <linearGradient id="grad-query" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" style="stop-color:#22d3ee;stop-opacity:0.12"/>
+    <stop offset="100%" style="stop-color:#22d3ee;stop-opacity:0.04"/>
+  </linearGradient>
+  <linearGradient id="grad-tool" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" style="stop-color:#34d399;stop-opacity:0.13"/>
+    <stop offset="100%" style="stop-color:#34d399;stop-opacity:0.04"/>
+  </linearGradient>
+  <linearGradient id="grad-agent" x1="0%" y1="0%" x2="100%" y2="100%">
+    <stop offset="0%" style="stop-color:#fbbf24;stop-opacity:0.16"/>
+    <stop offset="100%" style="stop-color:#fbbf24;stop-opacity:0.06"/>
+  </linearGradient>
+</defs>
+
+<!-- ══════════════════════════════════════════════════
+     LAYER 1 — SESSION (outermost, violet)
+     x=40, y=70, w=920, h=450
+     ══════════════════════════════════════════════════ -->
+<rect x="40" y="70" width="920" height="450" rx="14" ry="14"
+      fill="url(#grad-session)" stroke="#a78bfa" stroke-width="1.6" stroke-dasharray="6,3"/>
+<!-- Layer 1 label chip (pinned to top-left, outside layer overlap risk) -->
+<rect x="52" y="58" width="130" height="22" rx="4" class="layer-label-bg" stroke="#a78bfa" stroke-width="1"/>
+<text x="117" y="73" font-family="JetBrains Mono,monospace" font-size="12" font-weight="600" fill="#a78bfa" text-anchor="middle">
+  <tspan class="lz">Session 层</tspan><tspan class="le">Session Layer</tspan>
+</text>
+
+<!-- ══════════════════════════════════════════════════
+     LAYER 2 — QUERY (cyan)
+     x=80, y=110, w=840, h=370
+     ══════════════════════════════════════════════════ -->
+<rect x="80" y="110" width="840" height="370" rx="12" ry="12"
+      fill="url(#grad-query)" stroke="#22d3ee" stroke-width="1.6" stroke-dasharray="5,3"/>
+<rect x="92" y="98" width="120" height="22" rx="4" class="layer-label-bg" stroke="#22d3ee" stroke-width="1"/>
+<text x="152" y="113" font-family="JetBrains Mono,monospace" font-size="12" font-weight="600" fill="#22d3ee" text-anchor="middle">
+  <tspan class="lz">Query 层</tspan><tspan class="le">Query Layer</tspan>
+</text>
+
+<!-- ══════════════════════════════════════════════════
+     LAYER 3 — TOOL (emerald)
+     x=120, y=210, w=760, h=200
+     ══════════════════════════════════════════════════ -->
+<rect x="120" y="210" width="760" height="200" rx="10" ry="10"
+      fill="url(#grad-tool)" stroke="#34d399" stroke-width="1.6" stroke-dasharray="5,3"/>
+<rect x="132" y="198" width="110" height="22" rx="4" class="layer-label-bg" stroke="#34d399" stroke-width="1"/>
+<text x="187" y="213" font-family="JetBrains Mono,monospace" font-size="12" font-weight="600" fill="#34d399" text-anchor="middle">
+  <tspan class="lz">Tool 层</tspan><tspan class="le">Tool Layer</tspan>
+</text>
+
+<!-- ══════════════════════════════════════════════════
+     LAYER 4 — AGENT (innermost, amber)
+     x=160, y=300, w=680, h=90
+     ══════════════════════════════════════════════════ -->
+<rect x="160" y="300" width="680" height="90" rx="8" ry="8"
+      fill="url(#grad-agent)" stroke="#fbbf24" stroke-width="1.6" stroke-dasharray="4,3"/>
+<rect x="172" y="288" width="110" height="22" rx="4" class="layer-label-bg" stroke="#fbbf24" stroke-width="1"/>
+<text x="227" y="303" font-family="JetBrains Mono,monospace" font-size="12" font-weight="600" fill="#fbbf24" text-anchor="middle">
+  <tspan class="lz">Agent 层</tspan><tspan class="le">Agent Layer</tspan>
+</text>
+
+<!-- ══════════════════════════════════════════════════
+     EVENT MARKERS
+     ══════════════════════════════════════════════════ -->
+
+<!-- ── LAYER 4 AGENT EVENTS (inside agent layer, y=345 center) ── -->
+
+<!-- SubagentStart (regular, amber) -->
+<g id="ev-SubagentStart">
+  <circle cx="320" cy="332" r="5" fill="#fbbf24"/>
+  <line x1="320" y1="337" x2="320" y2="348" stroke="#fbbf24" stroke-width="1" opacity="0.6"/>
+  <rect x="254" y="348" width="132" height="32" rx="4" class="ev-halo" stroke="#fbbf24" stroke-width="0.8"/>
+  <text x="320" y="361" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#fbbf24" text-anchor="middle">SubagentStart</text>
+  <text x="320" y="373" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted" text-anchor="middle">
+    <tspan class="lz">子代理启动</tspan><tspan class="le">subagent start</tspan>
+  </text>
+</g>
+
+<!-- SubagentStop (BLOCKABLE, amber+rose ring) -->
+<g id="ev-SubagentStop">
+  <circle cx="680" cy="332" r="9" fill="none" stroke="#fb7185" stroke-width="1.6"/>
+  <circle cx="680" cy="332" r="5" fill="#fbbf24"/>
+  <line x1="680" y1="341" x2="680" y2="348" stroke="#fbbf24" stroke-width="1" opacity="0.6"/>
+  <rect x="614" y="348" width="132" height="32" rx="4" class="ev-halo" stroke="#fbbf24" stroke-width="0.8"/>
+  <text x="680" y="361" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#fbbf24" text-anchor="middle">SubagentStop <tspan fill="#fb7185">⬡</tspan></text>
+  <text x="680" y="373" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted" text-anchor="middle">
+    <tspan class="lz">子代理停止</tspan><tspan class="le">subagent stop</tspan>
+  </text>
+</g>
+
+<!-- ── LAYER 3 TOOL EVENTS (5 events, single row at y=240 with labels below) ── -->
+
+<!-- PreToolUse (BLOCKABLE, emerald+rose ring) -->
+<g id="ev-PreToolUse">
+  <circle cx="200" cy="240" r="9" fill="none" stroke="#fb7185" stroke-width="1.6"/>
+  <circle cx="200" cy="240" r="5" fill="#34d399"/>
+  <line x1="200" y1="249" x2="200" y2="256" stroke="#34d399" stroke-width="1" opacity="0.6"/>
+  <rect x="140" y="256" width="120" height="32" rx="4" class="ev-halo" stroke="#34d399" stroke-width="0.8"/>
+  <text x="200" y="269" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#34d399" text-anchor="middle">PreToolUse <tspan fill="#fb7185">⬡</tspan></text>
+  <text x="200" y="281" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted" text-anchor="middle">
+    <tspan class="lz">工具调用前</tspan><tspan class="le">before tool</tspan>
+  </text>
+</g>
+
+<!-- PostToolUse (regular, emerald) -->
+<g id="ev-PostToolUse">
+  <circle cx="340" cy="240" r="5" fill="#34d399"/>
+  <line x1="340" y1="245" x2="340" y2="256" stroke="#34d399" stroke-width="1" opacity="0.6"/>
+  <rect x="282" y="256" width="116" height="32" rx="4" class="ev-halo" stroke="#34d399" stroke-width="0.8"/>
+  <text x="340" y="269" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#34d399" text-anchor="middle">PostToolUse</text>
+  <text x="340" y="281" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted" text-anchor="middle">
+    <tspan class="lz">工具调用后</tspan><tspan class="le">after tool</tspan>
+  </text>
+</g>
+
+<!-- PostToolUseFailure (F&F, gray) -->
+<g id="ev-PostToolUseFailure">
+  <circle cx="500" cy="240" r="5" fill="#94a3b8"/>
+  <line x1="500" y1="245" x2="500" y2="256" stroke="#94a3b8" stroke-width="1" opacity="0.6"/>
+  <rect x="420" y="256" width="160" height="32" rx="4" class="ev-halo" stroke="#94a3b8" stroke-width="0.8"/>
+  <text x="500" y="269" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#94a3b8" text-anchor="middle">PostToolUseFailure</text>
+  <text x="500" y="281" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted" text-anchor="middle">
+    <tspan class="lz">工具失败 F&amp;F</tspan><tspan class="le">tool failure F&amp;F</tspan>
+  </text>
+</g>
+
+<!-- PermissionDenied (regular, emerald) -->
+<g id="ev-PermissionDenied">
+  <circle cx="680" cy="240" r="5" fill="#34d399"/>
+  <line x1="680" y1="245" x2="680" y2="256" stroke="#34d399" stroke-width="1" opacity="0.6"/>
+  <rect x="612" y="256" width="136" height="32" rx="4" class="ev-halo" stroke="#34d399" stroke-width="0.8"/>
+  <text x="680" y="269" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#34d399" text-anchor="middle">PermissionDenied</text>
+  <text x="680" y="281" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted" text-anchor="middle">
+    <tspan class="lz">权限拒绝</tspan><tspan class="le">perm denied</tspan>
+  </text>
+</g>
+
+<!-- PermissionRequest (BLOCKABLE) -->
+<g id="ev-PermissionRequest">
+  <circle cx="820" cy="240" r="9" fill="none" stroke="#fb7185" stroke-width="1.6"/>
+  <circle cx="820" cy="240" r="5" fill="#34d399"/>
+  <line x1="820" y1="249" x2="820" y2="256" stroke="#34d399" stroke-width="1" opacity="0.6"/>
+  <rect x="754" y="256" width="132" height="32" rx="4" class="ev-halo" stroke="#34d399" stroke-width="0.8"/>
+  <text x="820" y="269" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#34d399" text-anchor="middle">PermissionRequest <tspan fill="#fb7185">⬡</tspan></text>
+  <text x="820" y="281" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted" text-anchor="middle">
+    <tspan class="lz">权限请求</tspan><tspan class="le">perm request</tspan>
+  </text>
+</g>
+
+<!-- ── LAYER 2 QUERY EVENTS (6 on top row y=140 + PostCompact at bottom) ── -->
+
+<!-- UserPromptSubmit (BLOCKABLE) -->
+<g id="ev-UserPromptSubmit">
+  <circle cx="150" cy="140" r="9" fill="none" stroke="#fb7185" stroke-width="1.6"/>
+  <circle cx="150" cy="140" r="5" fill="#22d3ee"/>
+  <line x1="150" y1="149" x2="150" y2="156" stroke="#22d3ee" stroke-width="1" opacity="0.6"/>
+  <rect x="84" y="156" width="132" height="32" rx="4" class="ev-halo" stroke="#22d3ee" stroke-width="0.8"/>
+  <text x="150" y="169" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#22d3ee" text-anchor="middle">UserPromptSubmit <tspan fill="#fb7185">⬡</tspan></text>
+  <text x="150" y="181" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted" text-anchor="middle">
+    <tspan class="lz">用户提交</tspan><tspan class="le">user submit</tspan>
+  </text>
+</g>
+
+<!-- InstructionsLoaded (regular) -->
+<g id="ev-InstructionsLoaded">
+  <circle cx="290" cy="140" r="5" fill="#22d3ee"/>
+  <line x1="290" y1="145" x2="290" y2="156" stroke="#22d3ee" stroke-width="1" opacity="0.6"/>
+  <rect x="222" y="156" width="136" height="32" rx="4" class="ev-halo" stroke="#22d3ee" stroke-width="0.8"/>
+  <text x="290" y="169" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#22d3ee" text-anchor="middle">InstructionsLoaded</text>
+  <text x="290" y="181" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted" text-anchor="middle">
+    <tspan class="lz">指令加载</tspan><tspan class="le">instructions loaded</tspan>
+  </text>
+</g>
+
+<!-- Stop (BLOCKABLE) -->
+<g id="ev-Stop">
+  <circle cx="420" cy="140" r="9" fill="none" stroke="#fb7185" stroke-width="1.6"/>
+  <circle cx="420" cy="140" r="5" fill="#22d3ee"/>
+  <line x1="420" y1="149" x2="420" y2="156" stroke="#22d3ee" stroke-width="1" opacity="0.6"/>
+  <rect x="378" y="156" width="84" height="32" rx="4" class="ev-halo" stroke="#22d3ee" stroke-width="0.8"/>
+  <text x="420" y="169" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#22d3ee" text-anchor="middle">Stop <tspan fill="#fb7185">⬡</tspan></text>
+  <text x="420" y="181" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted" text-anchor="middle">
+    <tspan class="lz">停止</tspan><tspan class="le">stop</tspan>
+  </text>
+</g>
+
+<!-- StopFailure (F&F) -->
+<g id="ev-StopFailure">
+  <circle cx="540" cy="140" r="5" fill="#94a3b8"/>
+  <line x1="540" y1="145" x2="540" y2="156" stroke="#94a3b8" stroke-width="1" opacity="0.6"/>
+  <rect x="482" y="156" width="116" height="32" rx="4" class="ev-halo" stroke="#94a3b8" stroke-width="0.8"/>
+  <text x="540" y="169" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#94a3b8" text-anchor="middle">StopFailure</text>
+  <text x="540" y="181" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted" text-anchor="middle">
+    <tspan class="lz">停止失败 F&amp;F</tspan><tspan class="le">stop failure F&amp;F</tspan>
+  </text>
+</g>
+
+<!-- Notification (F&F) -->
+<g id="ev-Notification">
+  <circle cx="680" cy="140" r="5" fill="#94a3b8"/>
+  <line x1="680" y1="145" x2="680" y2="156" stroke="#94a3b8" stroke-width="1" opacity="0.6"/>
+  <rect x="622" y="156" width="116" height="32" rx="4" class="ev-halo" stroke="#94a3b8" stroke-width="0.8"/>
+  <text x="680" y="169" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#94a3b8" text-anchor="middle">Notification</text>
+  <text x="680" y="181" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted" text-anchor="middle">
+    <tspan class="lz">通知 F&amp;F</tspan><tspan class="le">notification F&amp;F</tspan>
+  </text>
+</g>
+
+<!-- PreCompact (BLOCKABLE) -->
+<g id="ev-PreCompact">
+  <circle cx="840" cy="140" r="9" fill="none" stroke="#fb7185" stroke-width="1.6"/>
+  <circle cx="840" cy="140" r="5" fill="#22d3ee"/>
+  <line x1="840" y1="149" x2="840" y2="156" stroke="#22d3ee" stroke-width="1" opacity="0.6"/>
+  <rect x="778" y="156" width="124" height="32" rx="4" class="ev-halo" stroke="#22d3ee" stroke-width="0.8"/>
+  <text x="840" y="169" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#22d3ee" text-anchor="middle">PreCompact <tspan fill="#fb7185">⬡</tspan></text>
+  <text x="840" y="181" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted" text-anchor="middle">
+    <tspan class="lz">压缩前</tspan><tspan class="le">pre-compact</tspan>
+  </text>
+</g>
+
+<!-- PostCompact (regular) — bottom of Query layer -->
+<g id="ev-PostCompact">
+  <circle cx="840" cy="450" r="5" fill="#22d3ee"/>
+  <line x1="840" y1="445" x2="840" y2="434" stroke="#22d3ee" stroke-width="1" opacity="0.6"/>
+  <rect x="780" y="418" width="120" height="32" rx="4" class="ev-halo" stroke="#22d3ee" stroke-width="0.8"/>
+  <text x="840" y="431" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#22d3ee" text-anchor="middle">PostCompact</text>
+  <text x="840" y="443" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted" text-anchor="middle">
+    <tspan class="lz">压缩后</tspan><tspan class="le">post-compact</tspan>
+  </text>
+</g>
+
+<!-- ── LAYER 1 SESSION EVENTS — inline layout in top band y=82-108 of session layer
+     Nodes on left+right of the horizontal band, labels to the right of the node ── -->
+
+<!-- SessionStart (BLOCKABLE, left side of session band) -->
+<g id="ev-SessionStart">
+  <circle cx="230" cy="94" r="9" fill="none" stroke="#fb7185" stroke-width="1.6"/>
+  <circle cx="230" cy="94" r="5" fill="#a78bfa"/>
+  <rect x="245" y="81" width="138" height="26" rx="4" class="ev-halo" stroke="#a78bfa" stroke-width="0.8"/>
+  <text x="314" y="93" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#a78bfa" text-anchor="middle">SessionStart <tspan fill="#fb7185">⬡</tspan></text>
+  <text x="314" y="103" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted" text-anchor="middle">
+    <tspan class="lz">会话开始</tspan><tspan class="le">session start</tspan>
+  </text>
+</g>
+
+<!-- SessionEnd (regular, right side of session band) -->
+<g id="ev-SessionEnd">
+  <circle cx="770" cy="94" r="5" fill="#a78bfa"/>
+  <rect x="620" y="81" width="138" height="26" rx="4" class="ev-halo" stroke="#a78bfa" stroke-width="0.8"/>
+  <text x="689" y="93" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#a78bfa" text-anchor="middle">SessionEnd</text>
+  <text x="689" y="103" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted" text-anchor="middle">
+    <tspan class="lz">会话结束</tspan><tspan class="le">session end</tspan>
+  </text>
+</g>
+
+<!-- ══════════════════════════════════════════════════
+     SATELLITE GROUPS — below main diagram, y=550+
+     ══════════════════════════════════════════════════ -->
+<rect x="40" y="550" width="920" height="200" rx="10" class="layer-label-bg" stroke="var(--border)" stroke-width="1"/>
+<text x="500" y="572" font-family="JetBrains Mono,monospace" font-size="12" font-weight="600" class="lbl-subtle" text-anchor="middle">
+  <tspan class="lz">— 卫星事件组（不属于核心生命周期层）—</tspan>
+  <tspan class="le">— Satellite Event Groups (outside core lifecycle) —</tspan>
+</text>
+
+<!-- PANEL 1: Config (pink) — 220 wide -->
+<rect x="56" y="584" width="220" height="156" rx="8" fill="var(--card)" stroke="#f472b6" stroke-width="1.2"/>
+<rect x="56" y="584" width="220" height="24" rx="8" fill="#f472b6" opacity="0.18"/>
+<text x="166" y="600" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="#f472b6" text-anchor="middle">
+  <tspan class="lz">Config 配置</tspan><tspan class="le">Config</tspan>
+</text>
+
+<!-- Setup -->
+<circle cx="78" cy="630" r="5" fill="#f472b6"/>
+<text x="92" y="628" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600">Setup</text>
+<text x="92" y="640" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted">
+  <tspan class="lz">环境设置</tspan><tspan class="le">env setup</tspan>
+</text>
+
+<!-- ConfigChange (BLOCKABLE) -->
+<circle cx="78" cy="668" r="9" fill="none" stroke="#fb7185" stroke-width="1.5"/>
+<circle cx="78" cy="668" r="5" fill="#f472b6"/>
+<text x="92" y="666" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600">ConfigChange <tspan fill="#fb7185">⬡</tspan></text>
+<text x="92" y="678" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted">
+  <tspan class="lz">配置变更</tspan><tspan class="le">config change</tspan>
+</text>
+
+<text x="78" y="712" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-subtle">
+  <tspan class="lz">→ InstructionsLoaded</tspan>
+  <tspan class="le">→ InstructionsLoaded</tspan>
+</text>
+<text x="78" y="724" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-subtle">
+  <tspan class="lz">   (见 Query 层)</tspan>
+  <tspan class="le">   (see Query layer)</tspan>
+</text>
+
+<!-- PANEL 2: Filesystem (orange) -->
+<rect x="288" y="584" width="220" height="156" rx="8" fill="var(--card)" stroke="#fb923c" stroke-width="1.2"/>
+<rect x="288" y="584" width="220" height="24" rx="8" fill="#fb923c" opacity="0.18"/>
+<text x="398" y="600" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="#fb923c" text-anchor="middle">
+  <tspan class="lz">Filesystem 文件系统</tspan><tspan class="le">Filesystem</tspan>
+</text>
+
+<circle cx="310" cy="628" r="5" fill="#fb923c"/>
+<text x="324" y="632" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600">WorktreeCreate</text>
+
+<circle cx="310" cy="654" r="5" fill="#fb923c"/>
+<text x="324" y="658" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600">WorktreeRemove</text>
+
+<circle cx="310" cy="680" r="5" fill="#fb923c"/>
+<text x="324" y="684" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600">CwdChanged</text>
+
+<circle cx="310" cy="706" r="5" fill="#fb923c"/>
+<text x="324" y="710" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600">FileChanged</text>
+
+<!-- PANEL 3: Team (violet) -->
+<rect x="520" y="584" width="220" height="156" rx="8" fill="var(--card)" stroke="#c084fc" stroke-width="1.2"/>
+<rect x="520" y="584" width="220" height="24" rx="8" fill="#c084fc" opacity="0.18"/>
+<text x="630" y="600" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="#c084fc" text-anchor="middle">
+  <tspan class="lz">Team 团队协作</tspan><tspan class="le">Team</tspan>
+</text>
+
+<!-- TeammateIdle (BLOCKABLE) -->
+<circle cx="544" cy="632" r="9" fill="none" stroke="#fb7185" stroke-width="1.5"/>
+<circle cx="544" cy="632" r="5" fill="#c084fc"/>
+<text x="560" y="636" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600">TeammateIdle <tspan fill="#fb7185">⬡</tspan></text>
+
+<!-- TaskCreated (BLOCKABLE) -->
+<circle cx="544" cy="668" r="9" fill="none" stroke="#fb7185" stroke-width="1.5"/>
+<circle cx="544" cy="668" r="5" fill="#c084fc"/>
+<text x="560" y="672" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600">TaskCreated <tspan fill="#fb7185">⬡</tspan></text>
+
+<!-- TaskCompleted (BLOCKABLE) -->
+<circle cx="544" cy="704" r="9" fill="none" stroke="#fb7185" stroke-width="1.5"/>
+<circle cx="544" cy="704" r="5" fill="#c084fc"/>
+<text x="560" y="708" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600">TaskCompleted <tspan fill="#fb7185">⬡</tspan></text>
+
+<!-- PANEL 4: MCP (sky) -->
+<rect x="752" y="584" width="208" height="156" rx="8" fill="var(--card)" stroke="#38bdf8" stroke-width="1.2"/>
+<rect x="752" y="584" width="208" height="24" rx="8" fill="#38bdf8" opacity="0.18"/>
+<text x="856" y="600" font-family="JetBrains Mono,monospace" font-size="11" font-weight="700" fill="#38bdf8" text-anchor="middle">
+  <tspan class="lz">MCP 协议</tspan><tspan class="le">MCP Protocol</tspan>
+</text>
+
+<circle cx="774" cy="636" r="5" fill="#38bdf8"/>
+<text x="788" y="634" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600">Elicitation</text>
+<text x="788" y="646" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted">
+  <tspan class="lz">请求用户输入</tspan><tspan class="le">request user input</tspan>
+</text>
+
+<circle cx="774" cy="686" r="5" fill="#38bdf8"/>
+<text x="788" y="684" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600">ElicitationResult</text>
+<text x="788" y="696" font-family="JetBrains Mono,monospace" font-size="10" class="lbl-muted">
+  <tspan class="lz">用户输入结果</tspan><tspan class="le">user input result</tspan>
+</text>
+
+<!-- ══════════════════════════════════════════════════
+     LEGEND
+     ══════════════════════════════════════════════════ -->
+<rect x="40" y="770" width="920" height="72" rx="8" fill="var(--card)" stroke="var(--border)" stroke-width="1"/>
+
+<!-- Row 1: Lifecycle layers + blockable/F&F -->
+<!-- Session swatch -->
+<circle cx="70" cy="792" r="6" fill="#a78bfa" stroke="var(--border)" stroke-width="0.5"/>
+<text x="82" y="796" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#a78bfa">
+  <tspan class="lz">Session 会话</tspan><tspan class="le">Session</tspan>
+</text>
+
+<!-- Query swatch -->
+<circle cx="200" cy="792" r="6" fill="#22d3ee" stroke="var(--border)" stroke-width="0.5"/>
+<text x="212" y="796" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#22d3ee">
+  <tspan class="lz">Query 查询</tspan><tspan class="le">Query</tspan>
+</text>
+
+<!-- Tool swatch -->
+<circle cx="320" cy="792" r="6" fill="#34d399" stroke="var(--border)" stroke-width="0.5"/>
+<text x="332" y="796" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#34d399">
+  <tspan class="lz">Tool 工具</tspan><tspan class="le">Tool</tspan>
+</text>
+
+<!-- Agent swatch -->
+<circle cx="430" cy="792" r="6" fill="#fbbf24" stroke="var(--border)" stroke-width="0.5"/>
+<text x="442" y="796" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#fbbf24">
+  <tspan class="lz">Agent 代理</tspan><tspan class="le">Agent</tspan>
+</text>
+
+<!-- Blockable indicator -->
+<circle cx="560" cy="792" r="9" fill="none" stroke="#fb7185" stroke-width="1.6"/>
+<circle cx="560" cy="792" r="4" fill="#94a3b8"/>
+<text x="575" y="796" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#fb7185">
+  <tspan class="lz">可阻断 (exit 2)</tspan><tspan class="le">Blockable (exit 2)</tspan>
+</text>
+
+<!-- Fire-and-forget indicator -->
+<circle cx="730" cy="792" r="6" fill="#94a3b8" stroke="var(--border)" stroke-width="0.5"/>
+<text x="742" y="796" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#94a3b8">
+  <tspan class="lz">Fire-and-Forget 不可阻断</tspan><tspan class="le">Fire-and-Forget (async)</tspan>
+</text>
+
+<!-- Count -->
+<text x="938" y="796" font-family="JetBrains Mono,monospace" font-size="10" font-weight="700" class="lbl-subtle" text-anchor="end">
+  <tspan class="lz">27 个事件</tspan><tspan class="le">27 events</tspan>
+</text>
+
+<!-- Row 2: Satellite groups -->
+<circle cx="70" cy="820" r="6" fill="#f472b6" stroke="var(--border)" stroke-width="0.5"/>
+<text x="82" y="824" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#f472b6">
+  <tspan class="lz">Config 配置</tspan><tspan class="le">Config</tspan>
+</text>
+
+<circle cx="200" cy="820" r="6" fill="#fb923c" stroke="var(--border)" stroke-width="0.5"/>
+<text x="212" y="824" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#fb923c">
+  <tspan class="lz">Filesystem 文件系统</tspan><tspan class="le">Filesystem</tspan>
+</text>
+
+<circle cx="350" cy="820" r="6" fill="#c084fc" stroke="var(--border)" stroke-width="0.5"/>
+<text x="362" y="824" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#c084fc">
+  <tspan class="lz">Team 团队协作</tspan><tspan class="le">Team</tspan>
+</text>
+
+<circle cx="480" cy="820" r="6" fill="#38bdf8" stroke="var(--border)" stroke-width="0.5"/>
+<text x="492" y="824" font-family="JetBrains Mono,monospace" font-size="10" font-weight="600" fill="#38bdf8">
+  <tspan class="lz">MCP 协议</tspan><tspan class="le">MCP Protocol</tspan>
+</text>
+
+</svg>
+</div>
+
+<!-- Summary cards -->
+<div class="summary-row">
+  <div class="summary-card">
+    <div class="s-num" style="color:var(--violet)">27</div>
+    <div class="s-label">
+      <span class="lz">个 Hook 事件<br>4 大生命周期层 + 4 个卫星组</span>
+      <span class="le">Hook Events Total<br>4 lifecycle layers + 4 satellite groups</span>
+    </div>
+  </div>
+  <div class="summary-card">
+    <div class="s-num" style="color:var(--rose)">11</div>
+    <div class="s-label">
+      <span class="lz">个可阻断事件<br>exit 2 可中止正在进行的操作</span>
+      <span class="le">Blockable Events<br>exit 2 stops the in-progress operation</span>
+    </div>
+  </div>
+  <div class="summary-card">
+    <div class="s-num" style="color:var(--slate)">3</div>
+    <div class="s-label">
+      <span class="lz">个 Fire-and-Forget 事件<br>通知类，异步执行，不可阻断</span>
+      <span class="le">Fire-and-Forget Events<br>async notifications, cannot be blocked</span>
+    </div>
+  </div>
+  <div class="summary-card">
+    <div class="s-num" style="color:var(--orange)">11</div>
+    <div class="s-label">
+      <span class="lz">个卫星事件<br>Config / Filesystem / Team / MCP 四组</span>
+      <span class="le">Satellite Events<br>Config / Filesystem / Team / MCP</span>
+    </div>
+  </div>
+</div>
+
+<div class="footer">VIS-3-005 · Claude Code Hook Events · 27 total · Production V3</div>
+
+<script>
+(function(){
+  var t = localStorage.getItem('vtheme') || 'dark';
+  var l = localStorage.getItem('vlang') || 'zh';
+  document.documentElement.setAttribute('data-theme', t);
+  document.documentElement.setAttribute('data-lang', l);
+  document.getElementById('langBtn').textContent = l === 'zh' ? 'EN' : '中';
+
+  window.cycleTheme = function(){
+    var themes = ['dark', 'warm', 'light'];
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = themes[(themes.indexOf(cur) + 1) % themes.length];
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('vtheme', next);
+  };
+
+  window.toggleLang = function(){
+    var cur = document.documentElement.getAttribute('data-lang') || 'zh';
+    var next = cur === 'zh' ? 'en' : 'zh';
+    document.documentElement.setAttribute('data-lang', next);
+    localStorage.setItem('vlang', next);
+    document.getElementById('langBtn').textContent = next === 'zh' ? 'EN' : '中';
+    document.querySelectorAll('svg .le, svg .lz').forEach(function(e){
+      var show = (next === 'en') ? e.classList.contains('le') : e.classList.contains('lz');
+      e.style.display = show ? '' : 'none';
+      e.setAttribute('display', show ? 'inline' : 'none');
+    });
+  };
+
+  // Apply initial lang hiding for SVG elements
+  if (l === 'en') {
+    document.querySelectorAll('svg .lz').forEach(function(e){
+      e.style.display = 'none';
+      e.setAttribute('display', 'none');
+    });
+  }
+})();
+</script>
+
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,139 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 600" width="800" height="600">
+  <defs>
+    <style>
+      text { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif; }
+      .title { fill: #ffffff; font-size: 20px; font-weight: 700; text-anchor: middle; }
+      .subtitle { fill: #888; font-size: 12px; text-anchor: middle; }
+      .box { rx: 8; ry: 8; stroke-width: 1.5; }
+      .box-text { fill: #e0e0e0; font-size: 11px; text-anchor: middle; font-weight: 600; dominant-baseline: central; }
+      .small-text { fill: #999; font-size: 9px; text-anchor: middle; }
+      .section-label { fill: #888; font-size: 13px; font-weight: 700; text-anchor: middle; letter-spacing: 2px; }
+    </style>
+    <marker id="arr" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="#ff9f43"/>
+    </marker>
+    <marker id="arrB" markerWidth="7" markerHeight="5" refX="7" refY="2.5" orient="auto">
+      <path d="M0,0 L7,2.5 L0,5" fill="#00d4ff"/>
+    </marker>
+    <linearGradient id="warmGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#ff9f43" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#ff6b6b" stop-opacity="0.05"/>
+    </linearGradient>
+    <linearGradient id="coolGrad" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.15"/>
+      <stop offset="100%" stop-color="#7b61ff" stop-opacity="0.05"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="800" height="600" fill="#12121a"/>
+
+  <text x="400" y="38" class="title">Token Lifecycle</text>
+  <text x="400" y="56" class="subtitle">From user input to cost tracking and compression</text>
+
+  <!-- Left column background -->
+  <rect x="30" y="75" width="350" height="420" rx="12" fill="url(#warmGrad)" stroke="#ff9f4333" stroke-width="1"/>
+  <text x="205" y="98" class="section-label" style="fill:#ff9f43">REQUEST PATH</text>
+
+  <!-- Right column background -->
+  <rect x="420" y="75" width="350" height="420" rx="12" fill="url(#coolGrad)" stroke="#00d4ff33" stroke-width="1"/>
+  <text x="595" y="98" class="section-label" style="fill:#00d4ff">RESPONSE PATH</text>
+
+  <!-- LEFT: Request Path boxes -->
+  <!-- User Input -->
+  <rect x="115" y="120" width="180" height="46" class="box" fill="#1a1a2e" stroke="#ff9f43"/>
+  <text x="205" y="140" class="box-text" style="fill:#ff9f43">User Input</text>
+  <text x="205" y="155" class="small-text">Text / file references</text>
+
+  <!-- processUserInput -->
+  <rect x="115" y="200" width="180" height="46" class="box" fill="#1a1a2e" stroke="#e88dff"/>
+  <text x="205" y="220" class="box-text" style="fill:#e88dff">processUserInput()</text>
+  <text x="205" y="235" class="small-text">Validate, parse, expand</text>
+
+  <!-- System Prompt Assembly -->
+  <rect x="115" y="280" width="180" height="46" class="box" fill="#1a1a2e" stroke="#ffd93d"/>
+  <text x="205" y="300" class="box-text" style="fill:#ffd93d">System Prompt Assembly</text>
+  <text x="205" y="315" class="small-text">6-layer sandwich build</text>
+
+  <!-- API Request -->
+  <rect x="115" y="360" width="180" height="46" class="box" fill="#1a1a2e" stroke="#ff6b6b"/>
+  <text x="205" y="380" class="box-text" style="fill:#ff6b6b">API Request</text>
+  <text x="205" y="395" class="small-text">messages + system + tools</text>
+
+  <!-- Left arrows -->
+  <line x1="205" y1="166" x2="205" y2="200" stroke="#ff9f43" stroke-width="1.3" marker-end="url(#arr)"/>
+  <line x1="205" y1="246" x2="205" y2="280" stroke="#ff9f43" stroke-width="1.3" marker-end="url(#arr)"/>
+  <line x1="205" y1="326" x2="205" y2="360" stroke="#ff9f43" stroke-width="1.3" marker-end="url(#arr)"/>
+
+  <!-- Cross arrow: API Request → SSE Stream -->
+  <path d="M295,383 Q400,410 505,370" fill="none" stroke="#666" stroke-width="1.3" stroke-dasharray="5,3" marker-end="url(#arrB)"/>
+  <text x="400" y="415" fill="#666" font-size="9" text-anchor="middle" style="font-family:sans-serif">HTTP POST / SSE</text>
+
+  <!-- RIGHT: Response Path boxes -->
+  <!-- SSE Stream -->
+  <rect x="505" y="120" width="180" height="46" class="box" fill="#1a1a2e" stroke="#00d4ff"/>
+  <text x="595" y="140" class="box-text" style="fill:#00d4ff">SSE Stream</text>
+  <text x="595" y="155" class="small-text">Server-sent events</text>
+
+  <!-- Token Counting -->
+  <rect x="505" y="200" width="180" height="46" class="box" fill="#1a1a2e" stroke="#7b61ff"/>
+  <text x="595" y="220" class="box-text" style="fill:#7b61ff">Token Counting</text>
+  <text x="595" y="235" class="small-text">API usage headers</text>
+
+  <!-- Cost Tracking -->
+  <rect x="505" y="280" width="180" height="46" class="box" fill="#1a1a2e" stroke="#48bb78"/>
+  <text x="595" y="300" class="box-text" style="fill:#48bb78">Cost Tracking</text>
+  <text x="595" y="315" class="small-text">Cumulative $ spent</text>
+
+  <!-- Compression Check -->
+  <rect x="505" y="360" width="180" height="46" class="box" fill="#1a1a2e" stroke="#ff6b6b"/>
+  <text x="595" y="380" class="box-text" style="fill:#ff6b6b">Compression Check</text>
+  <text x="595" y="395" class="small-text">softLimit / hardLimit</text>
+
+  <!-- Right arrows -->
+  <line x1="595" y1="166" x2="595" y2="200" stroke="#00d4ff" stroke-width="1.3" marker-end="url(#arrB)"/>
+  <line x1="595" y1="246" x2="595" y2="280" stroke="#00d4ff" stroke-width="1.3" marker-end="url(#arrB)"/>
+  <line x1="595" y1="326" x2="595" y2="360" stroke="#00d4ff" stroke-width="1.3" marker-end="url(#arrB)"/>
+
+  <!-- Token Pricing Bar Chart Inset -->
+  <rect x="130" y="435" width="540" height="130" rx="8" fill="#1a1a2e" stroke="#333" stroke-width="1"/>
+  <text x="400" y="458" fill="#e0e0e0" font-size="12" font-weight="700" text-anchor="middle" style="font-family:sans-serif">Token Pricing (per MTok)</text>
+
+  <!-- Bar chart -->
+  <!-- input $3 → bar height proportional: 3/15 * 70 = 14 -->
+  <!-- cache_write $3.75 → 17.5 -->
+  <!-- cache_read $0.30 → 1.4 -->
+  <!-- output $15 → 70 -->
+
+  <!-- Gridlines -->
+  <line x1="200" y1="470" x2="200" y2="550" stroke="#333" stroke-width="0.5"/>
+  <line x1="330" y1="470" x2="330" y2="550" stroke="#333" stroke-width="0.5"/>
+  <line x1="460" y1="470" x2="460" y2="550" stroke="#333" stroke-width="0.5"/>
+  <line x1="590" y1="470" x2="590" y2="550" stroke="#333" stroke-width="0.5"/>
+
+  <!-- Baseline -->
+  <line x1="170" y1="550" x2="620" y2="550" stroke="#555" stroke-width="1"/>
+
+  <!-- Bar: input -->
+  <rect x="177" y="536" width="46" height="14" rx="3" fill="#ff9f43"/>
+  <text x="200" y="532" fill="#ff9f43" font-size="10" font-weight="700" text-anchor="middle" style="font-family:sans-serif">$3.00</text>
+  <text x="200" y="562" fill="#999" font-size="9" text-anchor="middle" style="font-family:sans-serif">input</text>
+
+  <!-- Bar: cache_write -->
+  <rect x="307" y="532" width="46" height="18" rx="3" fill="#e88dff"/>
+  <text x="330" y="528" fill="#e88dff" font-size="10" font-weight="700" text-anchor="middle" style="font-family:sans-serif">$3.75</text>
+  <text x="330" y="562" fill="#999" font-size="9" text-anchor="middle" style="font-family:sans-serif">cache_write</text>
+
+  <!-- Bar: cache_read -->
+  <rect x="437" y="548" width="46" height="2" rx="1" fill="#48bb78"/>
+  <text x="460" y="544" fill="#48bb78" font-size="10" font-weight="700" text-anchor="middle" style="font-family:sans-serif">$0.30</text>
+  <text x="460" y="562" fill="#999" font-size="9" text-anchor="middle" style="font-family:sans-serif">cache_read</text>
+
+  <!-- Bar: output -->
+  <rect x="567" y="480" width="46" height="70" rx="3" fill="#ff6b6b"/>
+  <text x="590" y="476" fill="#ff6b6b" font-size="10" font-weight="700" text-anchor="middle" style="font-family:sans-serif">$15.00</text>
+  <text x="590" y="562" fill="#999" font-size="9" text-anchor="middle" style="font-family:sans-serif">output</text>
+
+  <!-- Scale label -->
+  <text x="155" y="555" fill="#555" font-size="8" text-anchor="end" style="font-family:sans-serif">$0</text>
+  <text x="155" y="485" fill="#555" font-size="8" text-anchor="end" style="font-family:sans-serif">$15</text>
+</svg>

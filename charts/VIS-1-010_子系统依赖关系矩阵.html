@@ -1,0 +1,606 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>子系统依赖关系矩阵 — Claude Code v4</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #020617; --bg-card: #0f172a; --bg-card2: #1e293b;
+  --txt: #f1f5f9; --txt2: #cbd5e1; --txt3: #94a3b8; --border: #334155;
+  --cell-bg: rgba(255,255,255,0.04);
+  --cell-hover: rgba(255,255,255,0.08);
+  --diag-bg: rgba(51,65,85,0.9);
+  --stat-row-bg: rgba(255,255,255,0.03);
+}
+[data-theme="warm"] {
+  --bg: #f8f6f3; --bg-card: #ffffff; --bg-card2: #f1ede6;
+  --txt: #1e293b; --txt2: #334155; --txt3: #64748b; --border: #d6cfc2;
+  --cell-bg: rgba(0,0,0,0.035);
+  --cell-hover: rgba(0,0,0,0.08);
+  --diag-bg: rgba(214,207,194,0.7);
+  --stat-row-bg: rgba(0,0,0,0.025);
+}
+[data-theme="light"] {
+  --bg: #ffffff; --bg-card: #f8fafc; --bg-card2: #e2e8f0;
+  --txt: #0f172a; --txt2: #1e293b; --txt3: #64748b; --border: #cbd5e1;
+  --cell-bg: rgba(0,0,0,0.035);
+  --cell-hover: rgba(0,0,0,0.08);
+  --diag-bg: rgba(203,213,225,0.7);
+  --stat-row-bg: rgba(0,0,0,0.025);
+}
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body {
+  font-family: 'JetBrains Mono', monospace;
+  background: var(--bg); color: var(--txt);
+  min-height: 100vh; display: flex; flex-direction: column;
+  align-items: center; padding: 48px 24px;
+  transition: background 0.3s, color 0.3s;
+}
+.header { text-align: center; margin-bottom: 32px; }
+.vis-id { font-size: 12px; color: var(--txt3); letter-spacing: 2px; margin-bottom: 10px; font-weight: 600; }
+.title { font-size: 28px; font-weight: 700; letter-spacing: -0.5px; margin-bottom: 10px; }
+.subtitle { font-size: 14px; color: var(--txt2); }
+.diagram-card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 16px; padding: 32px 24px;
+  max-width: 1100px; width: 100%; overflow-x: auto;
+}
+.matrix-wrap { overflow-x: auto; display: flex; justify-content: center; }
+table.matrix {
+  border-collapse: separate; border-spacing: 6px;
+  margin: 0 auto; font-family: 'JetBrains Mono', monospace;
+  table-layout: fixed;
+}
+table.matrix th, table.matrix td {
+  width: 64px; height: 64px;
+  text-align: center; vertical-align: middle;
+  padding: 0;
+}
+table.matrix th.corner {
+  width: 170px; height: 130px;
+  text-align: right; padding-right: 14px;
+  font-size: 12px; color: var(--txt2);
+  vertical-align: bottom; padding-bottom: 10px;
+  font-weight: 600; line-height: 1.5;
+}
+table.matrix th.col-h {
+  width: 64px; height: 130px;
+  vertical-align: bottom;
+  padding: 0 0 8px 0;
+  position: relative;
+}
+.col-h-inner {
+  display: inline-block;
+  transform: rotate(-45deg); transform-origin: center bottom;
+  white-space: nowrap;
+  font-size: 12px; font-weight: 600;
+  position: absolute;
+  bottom: 8px; left: 50%;
+  transform: translateX(-50%) rotate(-45deg);
+  transform-origin: left bottom;
+}
+table.matrix td.row-h {
+  width: 170px; height: 64px;
+  text-align: right; padding-right: 14px;
+  font-size: 12px; font-weight: 700;
+  vertical-align: middle;
+  line-height: 1.4;
+}
+.row-h .sub { display: block; font-size: 11px; color: var(--txt3); margin-top: 3px; font-weight: 400; }
+table.matrix td.cell {
+  background: var(--cell-bg); border-radius: 8px;
+  transition: background 0.2s;
+  position: relative;
+  width: 64px; height: 64px;
+}
+table.matrix td.cell:hover { background: var(--cell-hover); }
+table.matrix td.cell:not(.diag):not(.dep-strong):not(.dep-medium):not(.dep-weak):not(.dep-bidi)::after {
+  content: '·';
+  display: block;
+  font-size: 18px;
+  color: var(--txt3);
+  opacity: 0.4;
+  line-height: 64px;
+  text-align: center;
+}
+.diag { background: var(--diag-bg) !important; border-radius: 8px; }
+.diag::after {
+  content: '×';
+  display: block;
+  font-size: 22px;
+  color: var(--txt3);
+  font-weight: 300;
+  line-height: 64px;
+  text-align: center;
+}
+table.matrix td.stat-cell {
+  width: 64px; height: 64px;
+  padding: 10px 6px;
+  background: var(--stat-row-bg);
+  border-radius: 8px;
+  vertical-align: middle;
+}
+.stat-n {
+  font-size: 18px; font-weight: 700; color: var(--txt);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.stat-bar-bg { height: 6px; background: rgba(148,163,184,0.25); border-radius: 3px; }
+.stat-bar { height: 100%; border-radius: 3px; }
+[data-theme="warm"] .stat-bar-bg,
+[data-theme="light"] .stat-bar-bg { background: rgba(100,116,139,0.3); }
+[data-theme="warm"] .stat-bar,
+[data-theme="light"] .stat-bar { filter: brightness(0.85) saturate(1.3); }
+
+table.matrix td.stat-label {
+  width: 170px; height: 64px;
+  text-align: right; padding-right: 14px;
+  font-size: 12px; color: var(--txt2);
+  font-weight: 700;
+  vertical-align: middle;
+  background: var(--stat-row-bg);
+  border-radius: 8px;
+}
+
+.dep-strong::after {
+  content: ''; display: block;
+  width: 28px; height: 28px; border-radius: 50%;
+  background: #22d3ee; box-shadow: 0 0 14px rgba(34,211,238,0.55);
+  margin: 18px auto;
+}
+[data-theme="warm"] .dep-strong::after,
+[data-theme="light"] .dep-strong::after {
+  background: #0891b2; box-shadow: 0 0 10px rgba(8,145,178,0.4);
+}
+.dep-medium::after {
+  content: ''; display: block;
+  width: 24px; height: 24px; border-radius: 50%;
+  background: linear-gradient(to bottom, #a78bfa 50%, transparent 50%);
+  border: 2px solid #a78bfa;
+  margin: 20px auto;
+  box-sizing: border-box;
+}
+[data-theme="warm"] .dep-medium::after,
+[data-theme="light"] .dep-medium::after {
+  background: linear-gradient(to bottom, #7c3aed 50%, transparent 50%);
+  border-color: #7c3aed;
+}
+.dep-weak::after {
+  content: ''; display: block;
+  width: 20px; height: 20px; border-radius: 50%;
+  background: transparent; border: 2px solid #94a3b8;
+  margin: 22px auto;
+  box-sizing: border-box;
+}
+[data-theme="warm"] .dep-weak::after,
+[data-theme="light"] .dep-weak::after {
+  border-color: #475569;
+}
+.dep-bidi::after {
+  content: '⇄';
+  display: block;
+  font-size: 24px; color: #f97316; font-weight: 700;
+  line-height: 64px; text-align: center;
+}
+[data-theme="warm"] .dep-bidi::after,
+[data-theme="light"] .dep-bidi::after { color: #ea580c; }
+
+.c-qe { color: #22d3ee; }
+.c-sp { color: #fb7185; }
+.c-tr { color: #a78bfa; }
+.c-ag { color: #fbbf24; }
+.c-sa { color: #ef4444; }
+.c-st { color: #14b8a6; }
+.c-ex { color: #34d399; }
+.c-tu { color: #94a3b8; }
+[data-theme="warm"] .c-qe, [data-theme="light"] .c-qe { color: #0891b2; }
+[data-theme="warm"] .c-sp, [data-theme="light"] .c-sp { color: #e11d48; }
+[data-theme="warm"] .c-tr, [data-theme="light"] .c-tr { color: #7c3aed; }
+[data-theme="warm"] .c-ag, [data-theme="light"] .c-ag { color: #d97706; }
+[data-theme="warm"] .c-sa, [data-theme="light"] .c-sa { color: #dc2626; }
+[data-theme="warm"] .c-st, [data-theme="light"] .c-st { color: #0d9488; }
+[data-theme="warm"] .c-ex, [data-theme="light"] .c-ex { color: #059669; }
+[data-theme="warm"] .c-tu, [data-theme="light"] .c-tu { color: #475569; }
+
+.cards-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 14px; max-width: 1100px; width: 100%; margin-top: 18px;
+}
+@media (max-width: 720px) {
+  .cards-grid { grid-template-columns: 1fr; }
+}
+.card {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 10px; padding: 16px;
+}
+.card-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; flex-shrink: 0; }
+.card h3 { font-size: 13px; font-weight: 600; color: var(--txt); margin-bottom: 8px; display: flex; align-items: center; line-height: 1.4; }
+.card p { font-size: 12px; color: var(--txt2); line-height: 1.7; }
+.legend {
+  display: flex; gap: 24px; flex-wrap: wrap; justify-content: center;
+  margin-top: 24px; padding-top: 18px; border-top: 1px solid var(--border);
+}
+.legend-item { display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--txt2); font-weight: 500; }
+.controls {
+  position: fixed; top: 20px; right: 20px;
+  display: flex; gap: 8px; z-index: 100;
+}
+.ctrl-btn {
+  background: var(--bg-card); border: 1px solid var(--border);
+  border-radius: 8px; padding: 7px 13px; font-size: 12px;
+  font-family: inherit; color: var(--txt); cursor: pointer;
+  font-weight: 600;
+}
+.ctrl-btn:hover { background: var(--bg-card2); }
+[lang="en"] .lz { display: none; }
+:not([lang="en"]) .le { display: none; }
+[lang="en"] .le { display: inline; }
+</style>
+</head>
+<body>
+<div class="controls">
+  <button class="ctrl-btn" onclick="window.toggleLang()"><span class="lz">EN</span><span class="le">中</span></button>
+  <button class="ctrl-btn" onclick="window.setTheme('dark')"><span class="lz">暗</span><span class="le">Dark</span></button>
+  <button class="ctrl-btn" onclick="window.setTheme('warm')"><span class="lz">暖</span><span class="le">Warm</span></button>
+  <button class="ctrl-btn" onclick="window.setTheme('light')"><span class="lz">亮</span><span class="le">Light</span></button>
+</div>
+
+<div class="header">
+  <div class="vis-id">VIS-1-010 · CLAUDE CODE ARCHITECTURE</div>
+  <div class="title">
+    <span class="lz">子系统依赖关系矩阵</span>
+    <span class="le">Subsystem Dependency Matrix</span>
+  </div>
+  <div class="subtitle">
+    <span class="lz">8 × 8 全景依赖视图 — 行=调用方，列=被调用方</span>
+    <span class="le">8 × 8 panoramic dependency view — row=caller, col=callee</span>
+  </div>
+</div>
+
+<div class="diagram-card">
+<div class="matrix-wrap">
+<table class="matrix">
+  <thead>
+    <tr>
+      <th class="corner">
+        <span class="lz">调用方 ↓<br>被调用 →</span>
+        <span class="le">Caller ↓<br>Callee →</span>
+      </th>
+      <th class="col-h"><span class="col-h-inner c-qe">1. QueryEngine</span></th>
+      <th class="col-h"><span class="col-h-inner c-sp">2. System Prompt</span></th>
+      <th class="col-h"><span class="col-h-inner c-tr">3. Tool Runtime</span></th>
+      <th class="col-h"><span class="col-h-inner c-ag"><span class="lz">4. Agent编排</span><span class="le">4. Agent Orch.</span></span></th>
+      <th class="col-h"><span class="col-h-inner c-sa"><span class="lz">5. 安全架构</span><span class="le">5. Security Layer</span></span></th>
+      <th class="col-h"><span class="col-h-inner c-st"><span class="lz">6. 状态持久化</span><span class="le">6. State Layer</span></span></th>
+      <th class="col-h"><span class="col-h-inner c-ex"><span class="lz">7. 扩展生态</span><span class="le">7. Extensions</span></span></th>
+      <th class="col-h"><span class="col-h-inner c-tu"><span class="lz">8. 终端UI</span><span class="le">8. Terminal UI</span></span></th>
+      <th class="col-h"><span class="col-h-inner" style="color:var(--txt2)">
+        <span class="lz">输出依赖</span><span class="le">Out-deps</span>
+      </span></th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="row-h c-qe">
+        <span class="lz">QueryEngine</span><span class="le">QueryEngine</span>
+        <span class="sub"><span class="lz">查询循环</span><span class="le">Query Loop</span></span>
+      </td>
+      <td class="cell diag"></td>
+      <td class="cell dep-strong" title="组装提示词 · 强依赖"></td>
+      <td class="cell dep-strong" title="执行 tool_use · 强依赖"></td>
+      <td class="cell dep-bidi" title="Agent ↔ QE 双向"></td>
+      <td class="cell dep-medium" title="间接安全检查 · 中依赖"></td>
+      <td class="cell dep-strong" title="消息历史读写 · 强依赖"></td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="stat-cell">
+        <div class="stat-n">5</div>
+        <div class="stat-bar-bg"><div class="stat-bar" style="width:71%;background:#22d3ee"></div></div>
+      </td>
+    </tr>
+    <tr>
+      <td class="row-h c-sp">
+        <span class="lz">System Prompt</span><span class="le">System Prompt</span>
+        <span class="sub"><span class="lz">提示词工厂</span><span class="le">Prompt Factory</span></span>
+      </td>
+      <td class="cell"></td>
+      <td class="cell diag"></td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="cell dep-medium" title="注入 MCP 工具段 · 中依赖"></td>
+      <td class="cell"></td>
+      <td class="stat-cell">
+        <div class="stat-n">1</div>
+        <div class="stat-bar-bg"><div class="stat-bar" style="width:14%;background:#fb7185"></div></div>
+      </td>
+    </tr>
+    <tr>
+      <td class="row-h c-tr">
+        <span class="lz">Tool Runtime</span><span class="le">Tool Runtime</span>
+        <span class="sub"><span class="lz">工具运行时</span><span class="le">Execution Layer</span></span>
+      </td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="cell diag"></td>
+      <td class="cell"></td>
+      <td class="cell dep-strong" title="权限检查 · 强依赖"></td>
+      <td class="cell dep-medium" title="文件操作快照 · 中依赖"></td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="stat-cell">
+        <div class="stat-n">2</div>
+        <div class="stat-bar-bg"><div class="stat-bar" style="width:29%;background:#a78bfa"></div></div>
+      </td>
+    </tr>
+    <tr>
+      <td class="row-h c-ag">
+        <span class="lz">Agent编排</span><span class="le">Agent Orch.</span>
+        <span class="sub"><span class="lz">Orchestration</span><span class="le">Orchestration</span></span>
+      </td>
+      <td class="cell dep-bidi" title="子 Agent 复用 QE · 双向"></td>
+      <td class="cell"></td>
+      <td class="cell dep-medium" title="Agent 抽象为 Tool · 中依赖"></td>
+      <td class="cell diag"></td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="stat-cell">
+        <div class="stat-n">2</div>
+        <div class="stat-bar-bg"><div class="stat-bar" style="width:29%;background:#fbbf24"></div></div>
+      </td>
+    </tr>
+    <tr>
+      <td class="row-h c-sa">
+        <span class="lz">安全架构</span><span class="le">Security Layer</span>
+        <span class="sub"><span class="lz">Permission Chain</span><span class="le">Permission Chain</span></span>
+      </td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="cell diag"></td>
+      <td class="cell dep-weak" title="读取权限规则 · 弱依赖"></td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="stat-cell">
+        <div class="stat-n">1</div>
+        <div class="stat-bar-bg"><div class="stat-bar" style="width:14%;background:#ef4444"></div></div>
+      </td>
+    </tr>
+    <tr>
+      <td class="row-h c-st">
+        <span class="lz">状态持久化</span><span class="le">State Layer</span>
+        <span class="sub"><span class="lz">Persistence</span><span class="le">Persistence</span></span>
+      </td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="cell diag"></td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="stat-cell">
+        <div class="stat-n" style="color:#14b8a6">0</div>
+        <div class="stat-bar-bg"><div class="stat-bar" style="width:0%;background:#14b8a6"></div></div>
+      </td>
+    </tr>
+    <tr>
+      <td class="row-h c-ex">
+        <span class="lz">扩展生态</span><span class="le">Extensions</span>
+        <span class="sub"><span class="lz">MCP + Hooks</span><span class="le">MCP + Hooks</span></span>
+      </td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="cell dep-strong" title="MCP 注册到运行时 · 强依赖"></td>
+      <td class="cell"></td>
+      <td class="cell dep-medium" title="插件加载安全检查 · 中依赖"></td>
+      <td class="cell"></td>
+      <td class="cell diag"></td>
+      <td class="cell"></td>
+      <td class="stat-cell">
+        <div class="stat-n">2</div>
+        <div class="stat-bar-bg"><div class="stat-bar" style="width:29%;background:#34d399"></div></div>
+      </td>
+    </tr>
+    <tr>
+      <td class="row-h c-tu">
+        <span class="lz">终端UI</span><span class="le">Terminal UI</span>
+        <span class="sub"><span class="lz">React/Ink</span><span class="le">React/Ink</span></span>
+      </td>
+      <td class="cell dep-strong" title="用户输入触发查询循环 · 强依赖"></td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="cell"></td>
+      <td class="cell dep-medium" title="读取会话状态 · 中依赖"></td>
+      <td class="cell"></td>
+      <td class="cell diag"></td>
+      <td class="stat-cell">
+        <div class="stat-n">2</div>
+        <div class="stat-bar-bg"><div class="stat-bar" style="width:29%;background:#94a3b8"></div></div>
+      </td>
+    </tr>
+    <tr>
+      <td class="stat-label">
+        <span class="lz">被依赖数 ↑</span><span class="le">In-deps ↑</span>
+      </td>
+      <td class="stat-cell">
+        <div class="stat-n c-qe">2</div>
+        <div class="stat-bar-bg"><div class="stat-bar" style="width:29%;background:#22d3ee"></div></div>
+      </td>
+      <td class="stat-cell">
+        <div class="stat-n c-sp">1</div>
+        <div class="stat-bar-bg"><div class="stat-bar" style="width:14%;background:#fb7185"></div></div>
+      </td>
+      <td class="stat-cell">
+        <div class="stat-n c-tr">3</div>
+        <div class="stat-bar-bg"><div class="stat-bar" style="width:43%;background:#a78bfa"></div></div>
+      </td>
+      <td class="stat-cell">
+        <div class="stat-n c-ag">1</div>
+        <div class="stat-bar-bg"><div class="stat-bar" style="width:14%;background:#fbbf24"></div></div>
+      </td>
+      <td class="stat-cell">
+        <div class="stat-n c-sa">3</div>
+        <div class="stat-bar-bg"><div class="stat-bar" style="width:43%;background:#ef4444"></div></div>
+      </td>
+      <td class="stat-cell">
+        <div class="stat-n c-st">4</div>
+        <div class="stat-bar-bg"><div class="stat-bar" style="width:57%;background:#14b8a6"></div></div>
+      </td>
+      <td class="stat-cell">
+        <div class="stat-n c-ex">1</div>
+        <div class="stat-bar-bg"><div class="stat-bar" style="width:14%;background:#34d399"></div></div>
+      </td>
+      <td class="stat-cell">
+        <div class="stat-n" style="color:var(--txt3)">0</div>
+        <div class="stat-bar-bg"><div class="stat-bar" style="width:0%;background:#94a3b8"></div></div>
+      </td>
+      <td style="background:transparent"></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+
+<div class="legend">
+  <div class="legend-item">
+    <div style="width:22px;height:22px;border-radius:50%;background:#22d3ee;box-shadow:0 0 10px rgba(34,211,238,0.5)"></div>
+    <span><span class="lz">强依赖（核心调用链路）</span><span class="le">Strong dependency (core chain)</span></span>
+  </div>
+  <div class="legend-item">
+    <div style="width:20px;height:20px;border-radius:50%;background:linear-gradient(to bottom,#a78bfa 50%,transparent 50%);border:2px solid #a78bfa"></div>
+    <span><span class="lz">中依赖（功能性调用）</span><span class="le">Medium dependency (functional)</span></span>
+  </div>
+  <div class="legend-item">
+    <div style="width:18px;height:18px;border-radius:50%;border:2px solid #94a3b8"></div>
+    <span><span class="lz">弱依赖（配置读取）</span><span class="le">Weak dependency (config read)</span></span>
+  </div>
+  <div class="legend-item">
+    <span style="font-size:20px;color:#f97316;font-weight:700">⇄</span>
+    <span><span class="lz">双向依赖（互相调用）</span><span class="le">Bidirectional dependency</span></span>
+  </div>
+  <div class="legend-item">
+    <span style="font-size:20px;color:var(--txt3)">×</span>
+    <span><span class="lz">对角线（自身）</span><span class="le">Diagonal (self)</span></span>
+  </div>
+</div>
+</div>
+
+<div class="cards-grid">
+  <div class="card">
+    <h3><span class="card-dot" style="background:#22d3ee"></span>
+      <span class="lz">核心节点：状态持久化（4 入依赖）</span>
+      <span class="le">Core hub: State Layer (4 in-deps)</span></h3>
+    <p><span class="lz">状态持久化被依赖数 4，是全系统最广泛共享的服务。QueryEngine 被依赖数 2，但调用 5 个子系统，是最复杂的调用方；状态层保持 0 输出依赖，是最纯净的基础设施。</span>
+       <span class="le">State has 4 in-deps — the most widely shared service. QueryEngine has 2 in-deps but calls 5 subsystems (most complex caller); State has 0 out-deps (purest foundation).</span></p>
+  </div>
+  <div class="card">
+    <h3><span class="card-dot" style="background:#f97316"></span>
+      <span class="lz">唯一双向依赖：QE ⇄ Agent</span>
+      <span class="le">Only bidirectional: QE ⇄ Agent</span></h3>
+    <p><span class="lz">QueryEngine 调用 Agent 工具，Agent 编排又会创建新的 QueryEngine 实例供子 Agent 使用。这是系统中唯一的循环依赖，也是多 Agent 协作的根基。</span>
+       <span class="le">QueryEngine calls Agent tools; Agent orchestration spawns new QueryEngine instances for sub-agents. Only circular dep, foundation of multi-agent collaboration.</span></p>
+  </div>
+  <div class="card">
+    <h3><span class="card-dot" style="background:#34d399"></span>
+      <span class="lz">安全层的特殊地位</span>
+      <span class="le">Security layer's unique role</span></h3>
+    <p><span class="lz">安全层被依赖 3 次（QE 间接 + TR 直接 + EX），但只输出 1 个弱依赖（读配置）。高被依赖、低输出依赖 = 典型的基础设施安全层设计。</span>
+       <span class="le">Security layer has 3 in-deps but only 1 weak out-dep (config read). High in-dep, low out-dep = classic security infrastructure design.</span></p>
+  </div>
+</div>
+
+<script>
+(function() {
+  var theme = localStorage.getItem('vtheme') || 'dark';
+  var lang = localStorage.getItem('vlang') || 'zh';
+  document.documentElement.setAttribute('data-theme', theme);
+  document.documentElement.setAttribute('lang', lang === 'en' ? 'en' : 'zh-CN');
+  window.setTheme = function(t) {
+    theme = t; localStorage.setItem('vtheme', t);
+    document.documentElement.setAttribute('data-theme', t);
+  };
+  window.toggleLang = function() {
+    lang = lang === 'en' ? 'zh' : 'en';
+    localStorage.setItem('vlang', lang);
+    document.documentElement.setAttribute('lang', lang === 'en' ? 'en' : 'zh-CN');
+  };
+})();
+</script>
+<script>
+/* v2-embed-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<!--
+  VIS-05-A · 工具装配四层链 · Tool Assembly 4-Layer Chain
+  CC 白皮书 v2 图表体系 · 全主题 + 双语
+  4 层装配链：定义 → 注册 → 实例化 → 执行
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · 工具装配四层链</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    :root[data-theme="dark"]  {--bg:#0f172a;--panel:#1e293b;--card:#1e293b;--border:rgba(255,255,255,.08);--text:#f1f5f9;--muted:#94a3b8;--subtle:#334155;}
+    :root[data-theme="warm"]  {--bg:#1c1917;--panel:#292524;--card:#292524;--border:rgba(255,255,255,.08);--text:#f5f0eb;--muted:#a8a29e;--subtle:#3c3835;}
+    :root[data-theme="light"] {--bg:#f8fafc;--panel:#ffffff;--card:#f1f5f9;--border:rgba(0,0,0,.08);--text:#0f172a;--muted:#64748b;--subtle:#e2e8f0;}
+    :root{--amber:#f59e0b;--cyan:#22d3ee;--violet:#8b5cf6;--emerald:#10b981;--rose:#f43f5e;--slate:#64748b;--orange:#f97316;}
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    html,body{background:var(--bg);color:var(--text);}
+    body{font-family:'Inter','JetBrains Mono',system-ui,-apple-system,sans-serif;min-height:100vh;padding:2rem 1.5rem;transition:background .25s,color .25s;}
+    .container{max-width:1060px;margin:0 auto;}
+
+    /* Controls */
+    .controls{position:fixed;top:1rem;right:1rem;display:flex;gap:4px;z-index:100;
+      background:var(--panel);border:1px solid var(--border);border-radius:10px;
+      padding:5px 7px;backdrop-filter:blur(8px);}
+    .cb{font-family:inherit;font-size:11px;font-weight:500;padding:4px 10px;
+      border-radius:5px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+    .cb:hover{color:var(--text);border-color:var(--border);}
+    .cb.active{border-color:var(--cyan);color:var(--text);}
+    .cdiv{width:1px;background:var(--border);margin:2px;}
+
+    /* Header */
+    .header{margin-bottom:1.25rem;}
+    .header-row{display:flex;align-items:center;gap:.75rem;margin-bottom:.375rem;}
+    .pulse{width:8px;height:8px;border-radius:50%;background:var(--cyan);animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
+    h1{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;color:var(--text);}
+    .subtitle{font-size:.78rem;color:var(--muted);letter-spacing:.04em;}
+
+    /* Description */
+    .desc{background:var(--panel);border:1px solid var(--border);border-left:3px solid var(--cyan);
+      border-radius:8px;padding:.85rem 1.1rem;margin-bottom:1.25rem;font-size:.82rem;line-height:1.65;color:var(--muted);}
+    .desc strong{color:var(--text);}
+
+    /* Stats */
+    .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:.75rem;margin-bottom:1.25rem;}
+    .stat{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:.75rem 1rem;}
+    .stat-v{font-family:'JetBrains Mono',monospace;font-size:1.15rem;font-weight:700;letter-spacing:-.01em;margin-bottom:.15rem;}
+    .stat-l{font-size:.72rem;color:var(--muted);letter-spacing:.04em;}
+    .stat:nth-child(1) .stat-v{color:var(--cyan);}
+    .stat:nth-child(2) .stat-v{color:var(--violet);}
+    .stat:nth-child(3) .stat-v{color:var(--emerald);}
+
+    /* Chart */
+    .chart-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;
+      padding:1rem;margin-bottom:1.25rem;overflow:hidden;}
+    .chart-wrap svg{display:block;width:100%;height:auto;}
+
+    /* Legend */
+    .legend{display:flex;flex-wrap:wrap;gap:1rem;margin-bottom:1rem;padding:.75rem 1rem;
+      background:var(--panel);border:1px solid var(--border);border-radius:8px;}
+    .lg-item{display:flex;align-items:center;gap:.45rem;font-size:.72rem;color:var(--muted);}
+    .lg-dot{width:10px;height:10px;border-radius:3px;}
+
+    .footer{text-align:center;font-size:.68rem;color:var(--muted);letter-spacing:.05em;
+      padding-top:.75rem;border-top:1px solid var(--border);}
+
+</style>
+</head>
+<body>
+<div style="max-width:960px;margin:0 auto 16px;background:rgba(245,158,11,0.1);border:1px solid #f59e0b;border-radius:8px;padding:12px 16px;font-size:12px;color:var(--text);">
+  <strong style="color:#f59e0b"><span class="lz">⚠ 教学抽象</span><span class="le">⚠ Teaching Abstraction</span></strong><span class="lz"> · 四层装配链是抽象概括。源码实际采用函数式构造（<code style="background:var(--subtle);padding:2px 6px;border-radius:3px">buildTool()</code>），非 OOP class + Registry。图中代码片段为示意。真实实现见 src/tools/Tool.ts 与 tools.ts。</span><span class="le" style="display:none"> · Four-layer assembly is a conceptual abstraction. Source code actually uses functional construction (<code style="background:var(--subtle);padding:2px 6px;border-radius:3px">buildTool()</code>), not OOP class + Registry. Code snippets shown are illustrative. Real implementation: src/tools/Tool.ts and tools.ts.</span>
+</div>
+
+<div class="controls">
+  <button class="cb" onclick="cycleTheme()"><span class="lz">主题</span><span class="le">Theme</span></button>
+  <div class="cdiv"></div>
+  <button class="cb" onclick="toggleLang()"><span class="lz">EN</span><span class="le">中</span></button>
+</div>
+
+<div class="container">
+  <div class="header">
+    <div class="header-row">
+      <div class="pulse"></div>
+      <h1>
+        <span class="lz">工具装配四层链</span>
+        <span class="le">Tool Assembly 4-Layer Chain</span>
+      </h1>
+    </div>
+    <div class="subtitle">
+      <span class="lz">VIS-05-A · 工具定义 → 静态聚合 → 参数解析 → handler 执行</span>
+      <span class="le">VIS-05-A · buildTool → tools.ts array → parseToolUse → handler()</span>
+    </div>
+  </div>
+
+  <div class="desc">
+    <span class="lz"><strong>工具生命周期的四道工序（教学抽象）。</strong>一个工具从定义（buildTool 返回 plain object）到真正产出结果（handler 返回 content），概念上经过四层装配。聚合层是"工具清单"（tools.ts 里一个顶层 array），解析层负责从 assistant 消息里抽出 tool_use、用 Zod schema 校验并准备 ctx，执行层调用 handler 抓取副作用并包成统一返回格式。</span>
+    <span class="le"><strong>Four assembly stations in the tool lifecycle (teaching abstraction).</strong> Every tool travels from definition (buildTool returning a plain object) to a produced result (handler output) through four conceptual layers. Aggregation is the "tool list" (a top-level array in tools.ts), parse extracts tool_use blocks from the assistant message and validates input via the Zod schema, and execution invokes handler and wraps side-effects into a normalised return envelope.</span>
+  </div>
+
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-v">4 <span style="font-size:.75rem;font-weight:500;"><span class="lz">层装配链</span><span class="le">layers</span></span></div>
+      <div class="stat-l"><span class="lz">Def → Agg → Parse → Exec</span><span class="le">Def → Agg → Parse → Exec</span></div>
+    </div>
+    <div class="stat">
+      <div class="stat-v"><span class="lz">函数式构造</span><span class="le">Functional Build</span></div>
+      <div class="stat-l"><span class="lz">buildTool() 返回 plain object</span><span class="le">buildTool() returns plain object</span></div>
+    </div>
+    <div class="stat">
+      <div class="stat-v"><span class="lz">静态聚合</span><span class="le">Static Aggregation</span></div>
+      <div class="stat-l"><span class="lz">tools.ts 顶层 TOOLS 数组</span><span class="le">tools.ts top-level TOOLS array</span></div>
+    </div>
+  </div>
+
+  <div class="chart-wrap">
+    <svg viewBox="0 0 920 520" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Tool Assembly 4-Layer Chain">
+      <defs>
+        <marker id="arrDown" markerWidth="12" markerHeight="10" refX="6" refY="9" orient="auto">
+          <polygon points="0 0, 12 0, 6 9" fill="var(--muted)" opacity="0.7"/>
+        </marker>
+        <filter id="softShadow" x="-10%" y="-10%" width="120%" height="120%">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-opacity="0.18"/>
+        </filter>
+        <linearGradient id="cyanFill" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#22d3ee" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="#22d3ee" stop-opacity="0.04"/>
+        </linearGradient>
+        <linearGradient id="violetFill" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#8b5cf6" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="#8b5cf6" stop-opacity="0.04"/>
+        </linearGradient>
+        <linearGradient id="amberFill" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="#f59e0b" stop-opacity="0.04"/>
+        </linearGradient>
+        <linearGradient id="emeraldFill" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="#10b981" stop-opacity="0.18"/>
+          <stop offset="100%" stop-color="#10b981" stop-opacity="0.04"/>
+        </linearGradient>
+      </defs>
+
+      <!-- Backing column guides -->
+      <line x1="95" y1="30" x2="95" y2="500" stroke="var(--border)" stroke-width="1" stroke-dasharray="2,4"/>
+      <line x1="440" y1="30" x2="440" y2="500" stroke="var(--border)" stroke-width="1" stroke-dasharray="2,4"/>
+      <line x1="665" y1="30" x2="665" y2="500" stroke="var(--border)" stroke-width="1" stroke-dasharray="2,4"/>
+
+      <!-- Column headers -->
+      <text x="55" y="22" fill="var(--muted)" font-size="10" font-weight="600" letter-spacing="1.5" class="lz">编号</text>
+      <text x="55" y="22" fill="var(--muted)" font-size="10" font-weight="600" letter-spacing="1.5" class="le">#</text>
+      <text x="270" y="22" text-anchor="middle" fill="var(--muted)" font-size="10" font-weight="600" letter-spacing="1.5" class="lz">层级与数据结构</text>
+      <text x="270" y="22" text-anchor="middle" fill="var(--muted)" font-size="10" font-weight="600" letter-spacing="1.5" class="le">LAYER &amp; STRUCTURES</text>
+      <text x="780" y="22" text-anchor="middle" fill="var(--muted)" font-size="10" font-weight="600" letter-spacing="1.5" class="lz">代码示意</text>
+      <text x="780" y="22" text-anchor="middle" fill="var(--muted)" font-size="10" font-weight="600" letter-spacing="1.5" class="le">CODE SNIPPET</text>
+
+      <!-- ============== LAYER 1 · DEFINITION (CYAN) ============== -->
+      <g transform="translate(0,40)">
+        <!-- band -->
+        <rect x="30" y="0" width="860" height="100" rx="10" fill="url(#cyanFill)" stroke="#22d3ee" stroke-opacity="0.45" stroke-width="1.5" filter="url(#softShadow)"/>
+        <!-- number circle -->
+        <circle cx="70" cy="50" r="22" fill="#22d3ee" opacity="0.18"/>
+        <circle cx="70" cy="50" r="18" fill="none" stroke="#22d3ee" stroke-width="2"/>
+        <text x="70" y="56" text-anchor="middle" fill="#22d3ee" font-size="18" font-weight="700" font-family="JetBrains Mono, monospace">1</text>
+        <!-- title bilingual -->
+        <text x="110" y="30" fill="var(--text)" font-size="15" font-weight="700" class="lz">定义层 · Definition Layer</text>
+        <text x="110" y="30" fill="var(--text)" font-size="15" font-weight="700" class="le">Definition Layer · Layer 1</text>
+        <text x="110" y="48" fill="#22d3ee" font-size="10" font-weight="600" letter-spacing="1" class="lz">buildTool({...}) · 工具定义 TOOL DEFINITION</text>
+        <text x="110" y="48" fill="#22d3ee" font-size="10" font-weight="600" letter-spacing="1" class="le">buildTool({...}) · TOOL DEFINITION</text>
+        <!-- bullets -->
+        <text x="110" y="68" fill="var(--muted)" font-size="11" class="lz">• 函数式构造：buildTool({ name, inputSchema, handler })</text>
+        <text x="110" y="68" fill="var(--muted)" font-size="11" class="le">• Functional: buildTool({ name, inputSchema, handler })</text>
+        <text x="110" y="84" fill="var(--muted)" font-size="11" class="lz">• 入参 Schema（Zod）· 描述文本 · handler 闭包</text>
+        <text x="110" y="84" fill="var(--muted)" font-size="11" class="le">• Input schema (Zod) · description · handler closure</text>
+        <!-- right code snippet -->
+        <rect x="670" y="15" width="210" height="75" rx="6" fill="var(--card)" stroke="var(--border)" stroke-width="1"/>
+        <text x="680" y="33" fill="#22d3ee" font-size="10" font-family="JetBrains Mono, monospace" font-weight="600">const readTool = buildTool({</text>
+        <text x="688" y="48" fill="var(--muted)" font-size="10" font-family="JetBrains Mono, monospace">name: "Read",</text>
+        <text x="688" y="62" fill="var(--muted)" font-size="10" font-family="JetBrains Mono, monospace">inputSchema: z.object(..),</text>
+        <text x="688" y="76" fill="var(--muted)" font-size="10" font-family="JetBrains Mono, monospace">handler: async (i,c)=>..</text>
+        <text x="680" y="88" fill="#22d3ee" font-size="10" font-family="JetBrains Mono, monospace" font-weight="600">});</text>
+      </g>
+
+      <!-- arrow 1→2 -->
+      <line x1="460" y1="142" x2="460" y2="162" stroke="var(--muted)" stroke-width="2" opacity="0.6" marker-end="url(#arrDown)"/>
+
+      <!-- ============== LAYER 2 · REGISTRATION (VIOLET) ============== -->
+      <g transform="translate(0,170)">
+        <rect x="30" y="0" width="860" height="100" rx="10" fill="url(#violetFill)" stroke="#8b5cf6" stroke-opacity="0.45" stroke-width="1.5" filter="url(#softShadow)"/>
+        <circle cx="70" cy="50" r="22" fill="#8b5cf6" opacity="0.18"/>
+        <circle cx="70" cy="50" r="18" fill="none" stroke="#8b5cf6" stroke-width="2"/>
+        <text x="70" y="56" text-anchor="middle" fill="#8b5cf6" font-size="18" font-weight="700" font-family="JetBrains Mono, monospace">2</text>
+        <text x="110" y="30" fill="var(--text)" font-size="15" font-weight="700" class="lz">聚合层 · Aggregation Layer</text>
+        <text x="110" y="30" fill="var(--text)" font-size="15" font-weight="700" class="le">Aggregation Layer · Layer 2</text>
+        <text x="110" y="48" fill="#8b5cf6" font-size="10" font-weight="600" letter-spacing="1" class="lz">tools.ts EXPORT ARRAY · 静态聚合 STATIC AGGREGATION</text>
+        <text x="110" y="48" fill="#8b5cf6" font-size="10" font-weight="600" letter-spacing="1" class="le">tools.ts EXPORT ARRAY · STATIC AGGREGATION</text>
+        <text x="110" y="68" fill="var(--muted)" font-size="11" class="lz">• tools.ts 顶层 export const TOOLS = [readTool, bashTool, ...]</text>
+        <text x="110" y="68" fill="var(--muted)" font-size="11" class="le">• tools.ts: export const TOOLS = [readTool, bashTool, ...]</text>
+        <text x="110" y="84" fill="var(--muted)" font-size="11" class="lz">• 模块加载时一次性聚合 · 无动态注册 API</text>
+        <text x="110" y="84" fill="var(--muted)" font-size="11" class="le">• Module-load time aggregation · no dynamic register() API</text>
+        <rect x="670" y="15" width="210" height="75" rx="6" fill="var(--card)" stroke="var(--border)" stroke-width="1"/>
+        <text x="680" y="33" fill="#8b5cf6" font-size="10" font-family="JetBrains Mono, monospace" font-weight="600">// tools.ts</text>
+        <text x="680" y="48" fill="var(--muted)" font-size="10" font-family="JetBrains Mono, monospace">export const TOOLS = [</text>
+        <text x="688" y="62" fill="var(--muted)" font-size="10" font-family="JetBrains Mono, monospace">  readTool, bashTool,</text>
+        <text x="688" y="76" fill="var(--muted)" font-size="10" font-family="JetBrains Mono, monospace">  editTool, grepTool, ..</text>
+        <text x="680" y="88" fill="#8b5cf6" font-size="10" font-family="JetBrains Mono, monospace" font-weight="600">];</text>
+      </g>
+
+      <!-- arrow 2→3 -->
+      <line x1="460" y1="272" x2="460" y2="292" stroke="var(--muted)" stroke-width="2" opacity="0.6" marker-end="url(#arrDown)"/>
+
+      <!-- ============== LAYER 3 · INSTANTIATION (AMBER) ============== -->
+      <g transform="translate(0,300)">
+        <rect x="30" y="0" width="860" height="100" rx="10" fill="url(#amberFill)" stroke="#f59e0b" stroke-opacity="0.45" stroke-width="1.5" filter="url(#softShadow)"/>
+        <circle cx="70" cy="50" r="22" fill="#f59e0b" opacity="0.18"/>
+        <circle cx="70" cy="50" r="18" fill="none" stroke="#f59e0b" stroke-width="2"/>
+        <text x="70" y="56" text-anchor="middle" fill="#f59e0b" font-size="18" font-weight="700" font-family="JetBrains Mono, monospace">3</text>
+        <text x="110" y="30" fill="var(--text)" font-size="15" font-weight="700" class="lz">解析层 · Parse Layer</text>
+        <text x="110" y="30" fill="var(--text)" font-size="15" font-weight="700" class="le">Parse Layer · Layer 3</text>
+        <text x="110" y="48" fill="#f59e0b" font-size="10" font-weight="600" letter-spacing="1" class="lz">parseToolUse(msg) · 参数解析 PARSE PARAMS</text>
+        <text x="110" y="48" fill="#f59e0b" font-size="10" font-weight="600" letter-spacing="1" class="le">parseToolUse(msg) · PARSE PARAMS</text>
+        <text x="110" y="68" fill="var(--muted)" font-size="11" class="lz">• 从 assistant 消息里抽取 tool_use block · 按 name 查 TOOLS 数组</text>
+        <text x="110" y="68" fill="var(--muted)" font-size="11" class="le">• Extract tool_use block from assistant msg · lookup by name in TOOLS</text>
+        <text x="110" y="84" fill="var(--muted)" font-size="11" class="lz">• inputSchema.parse(input) · 绑定 ctx: session / fs / permissions</text>
+        <text x="110" y="84" fill="var(--muted)" font-size="11" class="le">• inputSchema.parse(input) · bind ctx: session / fs / permissions</text>
+        <rect x="670" y="15" width="210" height="75" rx="6" fill="var(--card)" stroke="var(--border)" stroke-width="1"/>
+        <text x="680" y="33" fill="#f59e0b" font-size="10" font-family="JetBrains Mono, monospace" font-weight="600">const call = parseToolUse(msg);</text>
+        <text x="680" y="48" fill="var(--muted)" font-size="10" font-family="JetBrains Mono, monospace">const tool = TOOLS.find(</text>
+        <text x="688" y="62" fill="var(--muted)" font-size="10" font-family="JetBrains Mono, monospace">  t => t.name === call.name);</text>
+        <text x="680" y="76" fill="var(--muted)" font-size="10" font-family="JetBrains Mono, monospace">const input = tool.inputSchema</text>
+        <text x="680" y="88" fill="#f59e0b" font-size="10" font-family="JetBrains Mono, monospace">  .parse(call.input);</text>
+      </g>
+
+      <!-- arrow 3→4 -->
+      <line x1="460" y1="402" x2="460" y2="422" stroke="var(--muted)" stroke-width="2" opacity="0.6" marker-end="url(#arrDown)"/>
+
+      <!-- ============== LAYER 4 · EXECUTION (EMERALD) ============== -->
+      <g transform="translate(0,430)">
+        <rect x="30" y="0" width="860" height="80" rx="10" fill="url(#emeraldFill)" stroke="#10b981" stroke-opacity="0.45" stroke-width="1.5" filter="url(#softShadow)"/>
+        <circle cx="70" cy="40" r="22" fill="#10b981" opacity="0.18"/>
+        <circle cx="70" cy="40" r="18" fill="none" stroke="#10b981" stroke-width="2"/>
+        <text x="70" y="46" text-anchor="middle" fill="#10b981" font-size="18" font-weight="700" font-family="JetBrains Mono, monospace">4</text>
+        <text x="110" y="26" fill="var(--text)" font-size="15" font-weight="700" class="lz">执行层 · Execution Layer</text>
+        <text x="110" y="26" fill="var(--text)" font-size="15" font-weight="700" class="le">Execution Layer · Layer 4</text>
+        <text x="110" y="44" fill="#10b981" font-size="10" font-weight="600" letter-spacing="1" class="lz">handler(input, ctx) · 执行 EXECUTE</text>
+        <text x="110" y="44" fill="#10b981" font-size="10" font-weight="600" letter-spacing="1" class="le">handler(input, ctx) · EXECUTE</text>
+        <text x="110" y="62" fill="var(--muted)" font-size="11" class="lz">• 调用 tool.handler(input, ctx) · 捕获 stdout/stderr/异常与副作用</text>
+        <text x="110" y="62" fill="var(--muted)" font-size="11" class="le">• Invoke tool.handler(input, ctx) · capture stdout/stderr/errors/side-effects</text>
+        <text x="110" y="76" fill="var(--muted)" font-size="11" class="lz">• 规范化格式返回给 Assistant 循环（tool_result block）</text>
+        <text x="110" y="76" fill="var(--muted)" font-size="11" class="le">• Return normalised tool_result block to the assistant loop</text>
+        <rect x="670" y="10" width="210" height="60" rx="6" fill="var(--card)" stroke="var(--border)" stroke-width="1"/>
+        <text x="680" y="28" fill="#10b981" font-size="10" font-family="JetBrains Mono, monospace" font-weight="600">const out = await</text>
+        <text x="688" y="42" fill="var(--muted)" font-size="10" font-family="JetBrains Mono, monospace">  tool.handler(input, ctx);</text>
+        <text x="680" y="58" fill="var(--muted)" font-size="10" font-family="JetBrains Mono, monospace">return {</text>
+        <text x="688" y="68" fill="#10b981" font-size="10" font-family="JetBrains Mono, monospace">type:"tool_result", ...</text>
+      </g>
+    </svg>
+  </div>
+
+  <div class="legend">
+    <div class="lg-item"><span class="lg-dot" style="background:#22d3ee;"></span><span class="lz">定义层（Definition）</span><span class="le">Definition</span></div>
+    <div class="lg-item"><span class="lg-dot" style="background:#8b5cf6;"></span><span class="lz">聚合层（Aggregation）</span><span class="le">Aggregation</span></div>
+    <div class="lg-item"><span class="lg-dot" style="background:#f59e0b;"></span><span class="lz">解析层（Parse）</span><span class="le">Parse</span></div>
+    <div class="lg-item"><span class="lg-dot" style="background:#10b981;"></span><span class="lz">执行层（Execution）</span><span class="le">Execution</span></div>
+  </div>
+
+  <div class="footer">
+    <span class="lz">VIS-05-A · Claude Code 源码白皮书 v2 · 工具装配四层链</span>
+    <span class="le">VIS-05-A · CC Source Whitepaper v2 · Tool Assembly 4-Layer Chain</span>
+  </div>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  var l=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('data-lang', l);
+  document.documentElement.setAttribute('data-theme',t);
+  function applyLang(){
+    document.documentElement.setAttribute('data-lang', l);
+  };
+  window.toggleLang=function(){l=l==='zh'?'en':'zh';localStorage.setItem('vlang',l);applyLang();};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

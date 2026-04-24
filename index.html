@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title data-i18n="meta.page_title">Claude Code 2.1.88 — Agent Operating System 架构全景</title>
+
+  <!-- ===== SEO · 社交卡片 ===== -->
+  <meta name="description" content="Claude Code 2.1.88 源码深度白皮书：88 章 · 131 张图表 · 185 个 Prompt 全收录。从 Terminal REPL 到 Agent Loop，全面拆解 AI Agent OS 的架构、算法和工程哲学。中英双语。">
+  <meta name="keywords" content="Claude Code, Agent OS, AI Coding, Anthropic, Source Code Analysis, LLM Agent, Tool Use Loop, Prompt Engineering">
+  <meta name="author" content="CC-Research Collective">
+  <meta name="theme-color" content="#1c1917">
+  <link rel="canonical" href="https://hero-1900.github.io/claude-code-whitepaper/">
+
+  <!-- Open Graph -->
+  <meta property="og:type" content="article">
+  <meta property="og:site_name" content="Claude Code 源码白皮书">
+  <meta property="og:title" content="Claude Code 2.1.88 — Agent OS 架构全景">
+  <meta property="og:description" content="88 章 · 131 张图表 · 185 个 Prompt 全收录 · 中英双语。Agent OS 架构、算法和工程哲学全面拆解。">
+  <meta property="og:url" content="https://hero-1900.github.io/claude-code-whitepaper/">
+  <meta property="og:image" content="https://hero-1900.github.io/claude-code-whitepaper/images/generated/VIS-0-001_%E8%8B%B1%E9%9B%84%E6%9E%B6%E6%9E%84%E5%9B%BE.png">
+  <meta property="og:image:width" content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale" content="zh_CN">
+  <meta property="og:locale:alternate" content="en_US">
+
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Claude Code 2.1.88 — Agent OS 架构全景">
+  <meta name="twitter:description" content="88 章 · 131 张图表 · 185 个 Prompt · 中英双语。AI Agent OS 深度拆解。">
+  <meta name="twitter:image" content="https://hero-1900.github.io/claude-code-whitepaper/images/generated/VIS-0-001_%E8%8B%B1%E9%9B%84%E6%9E%B6%E6%9E%84%E5%9B%BE.png">
+
+  <!-- Perf: preconnect to Google Fonts（可降级，慢网络自动走系统字体） -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+
+  <!-- ===== FOUC 防御脚本（必须在所有 CSS 之前执行）=====
+       在 CSS 解析之前把正确的 data-theme 注入 <html>，
+       避免页面先用默认样式渲染再切主题导致的白闪（FOUC）。
+       逻辑：读 localStorage → 合法值映射 → 默认 warm（V4 editorial 基底） -->
+  <script>
+    (function() {
+      try {
+        // V4 一次性迁移：旧用户 localStorage 里存着 'dark'，首次升级后强制切 warm
+        var migrated = localStorage.getItem('cc-theme-v4');
+        if (!migrated) {
+          localStorage.setItem('cc-theme', 'warm');
+          localStorage.setItem('cc-theme-v4', '1');
+        }
+        var stored = localStorage.getItem('cc-theme');
+        // 合法值：'dark' | 'light' | 'warm' | 'auto'
+        if (stored === 'light') {
+          document.documentElement.setAttribute('data-theme', 'light');
+        } else if (stored === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+        } else if (stored === 'auto') {
+          document.documentElement.removeAttribute('data-theme');
+        } else {
+          document.documentElement.setAttribute('data-theme', 'warm');
+        }
+      } catch(e) {
+        document.documentElement.setAttribute('data-theme', 'warm');
+      }
+    })();
+  </script>
+  <!-- Design Token 系统（必须在 style.css 之前加载，让 token 变量优先定义）-->
+  <link rel="stylesheet" href="css/tokens.css">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/lib/highlight-github-dark.min.css">
+</head>
+<body>
+  <!-- ==================== WELCOME / GUIDE VIEW ==================== -->
+  <div id="welcome" class="view active">
+    <!-- Skip 按钮挂在 #welcome 层，避免受 .welcome-container fadeInUp 动画影响 — 页面加载立即可见 -->
+    <button class="v4h-skip-btn v4h-skip-btn--global" id="v4h-skipBtn" type="button" aria-label="跳过动画" data-i18n="hero.v4_skip_btn" data-i18n-attr="aria-label:hero.v4_skip_aria">跳过动画 ⇥</button>
+    <div class="welcome-container">
+
+      <!-- 1. V4 Hero — 电影叙事开场动画（替换旧 .welcome-hero） -->
+      <div class="v4h-stage" id="v4h-stage">
+
+        <!-- Phase 1 + 2: Terminal & pillars -->
+        <div class="v4h-scene-terminal" id="v4h-sceneTerminal">
+          <svg class="v4h-pillars-svg" id="v4h-pillarsSvg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
+            <line class="v4h-pillar-line" data-i="0" x1="600" y1="400" x2="600" y2="180"></line>
+            <line class="v4h-pillar-line" data-i="1" x1="600" y1="400" x2="860" y2="290"></line>
+            <line class="v4h-pillar-line" data-i="2" x1="600" y1="400" x2="760" y2="590"></line>
+            <line class="v4h-pillar-line" data-i="3" x1="600" y1="400" x2="440" y2="590"></line>
+            <line class="v4h-pillar-line" data-i="4" x1="600" y1="400" x2="340" y2="290"></line>
+          </svg>
+
+          <div class="v4h-terminal-core" id="v4h-terminalCore">
+            <span class="v4h-prompt-sign" id="v4h-promptSign">$&nbsp;</span><span class="v4h-typed-cmd" id="v4h-typedCmd"></span><span class="v4h-cursor" id="v4h-cursor"></span>
+          </div>
+
+          <div class="v4h-pillar" data-i="0">
+            <div class="v4h-pillar-label">queryLoop</div>
+            <div class="v4h-pillar-cn" data-i18n="hero.v4_pillar_query_loop">查询循环</div>
+          </div>
+          <div class="v4h-pillar" data-i="1">
+            <div class="v4h-pillar-label">Tools</div>
+            <div class="v4h-pillar-cn" data-i18n="hero.v4_pillar_tools">工具系统</div>
+          </div>
+          <div class="v4h-pillar" data-i="2">
+            <div class="v4h-pillar-label">Bridge</div>
+            <div class="v4h-pillar-cn" data-i18n="hero.v4_pillar_bridge">远程桥接</div>
+          </div>
+          <div class="v4h-pillar" data-i="3">
+            <div class="v4h-pillar-label">Agent</div>
+            <div class="v4h-pillar-cn" data-i18n="hero.v4_pillar_agent">智能体</div>
+          </div>
+          <div class="v4h-pillar" data-i="4">
+            <div class="v4h-pillar-label">Memory</div>
+            <div class="v4h-pillar-cn" data-i18n="hero.v4_pillar_memory">记忆系统</div>
+          </div>
+        </div>
+
+        <!-- Phase 3: Final Hero -->
+        <div class="v4h-scene-final" id="v4h-sceneFinal">
+          <div class="v4h-version-tag">
+            <span class="v4h-dot"></span>Claude Code 2.1.88 &nbsp;·&nbsp; <span data-i18n="hero.v4_version_tag">源码白皮书</span>
+          </div>
+
+          <h1 class="v4h-hero-title">
+            <span class="v4h-title-line1">Claude Code <span class="v4h-accent">2.1.88</span></span><br><span data-i18n="hero.v4_title_sub">源码白皮书</span>
+          </h1>
+
+          <p class="v4h-hero-subtitle" data-i18n="hero.v4_subtitle">
+            把 Claude Code 的每一寸电路板呈现给你
+          </p>
+
+          <div class="v4h-kpi-row" role="list">
+            <div class="v4h-kpi-item" role="listitem"><span class="v4h-kpi-num">88</span>&nbsp;<span data-i18n="hero.v4_kpi_chapters_unit">章</span></div>
+            <div class="v4h-kpi-item" role="listitem"><span data-i18n="hero.v4_kpi_words_prefix">约</span><span class="v4h-kpi-num" data-i18n="hero.v4_kpi_words_num">39</span>&nbsp;<span data-i18n="hero.v4_kpi_words_unit">万字</span></div>
+            <div class="v4h-kpi-item" role="listitem"><span class="v4h-kpi-num">122</span>&nbsp;<span data-i18n="hero.v4_kpi_charts_unit">图表</span></div>
+            <div class="v4h-kpi-item" role="listitem"><span class="v4h-kpi-num">185</span>&nbsp;<span data-i18n="hero.v4_kpi_prompts_unit">Prompt 全收录</span></div>
+          </div>
+
+          <div class="v4h-cta-row">
+            <button class="v4h-btn v4h-btn-primary" id="v4h-cta-read" type="button" data-i18n="cta.v4_start_reading">开始阅读 &nbsp;→</button>
+            <button class="v4h-btn v4h-btn-ghost" id="v4h-cta-random" type="button" data-i18n="cta.v4_random_chapter">随机跳转一章 &nbsp;⇄</button>
+          </div>
+        </div>
+
+        <div class="v4h-live-indicator" id="v4h-liveIndicator">
+          <span class="v4h-blink"></span>READY · PRESS ANY CTA TO BEGIN
+        </div>
+      </div>
+
+      <!-- 难度信息已移至 TOC 目录色点 -->
+
+      <!-- 2. 核心数据亮点卡片 -->
+      <div class="cover-highlights">
+        <div class="highlight-card">
+          <div class="highlight-num" data-i18n="stats.highlight_chapters_num">88</div>
+          <div class="highlight-unit" data-i18n="stats.highlight_chapters_unit">章</div>
+          <p class="highlight-desc" data-i18n="stats.highlight_chapters_desc">从启动序列到安全架构的完整解析</p>
+        </div>
+        <div class="highlight-card">
+          <div class="highlight-num" data-i18n="stats.highlight_tools_num">40</div>
+          <div class="highlight-unit" data-i18n="stats.highlight_tools_unit">个工具</div>
+          <p class="highlight-desc" data-i18n="stats.highlight_tools_desc">逐一拆解每个内置工具的实现</p>
+        </div>
+        <div class="highlight-card">
+          <div class="highlight-num" data-i18n="stats.highlight_charts_num">122</div>
+          <div class="highlight-unit" data-i18n="stats.highlight_charts_unit">张图表</div>
+          <p class="highlight-desc" data-i18n="stats.highlight_charts_desc">交互式可视化辅助理解</p>
+        </div>
+      </div>
+
+      <!-- 3. 故事引言 (精简版) -->
+      <div class="cover-story">
+        <div class="story-before">
+          <span class="story-label" data-i18n="story.before_label">你以为的</span>
+          <p data-i18n="story.before_text">一个终端里的聊天窗口，你打字、它回话。</p>
+        </div>
+        <div class="story-arrow-icon">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </div>
+        <div class="story-after">
+          <span class="story-label" data-i18n="story.after_label">它实际上是</span>
+          <p data-i18n="story.after_text">一座<strong>完整的操作系统</strong>——40 个工具、9 层配置、4 层安全纵深，300ms 内启动就绪。</p>
+        </div>
+      </div>
+
+      <!-- 4. 快速入口区 -->
+      <div class="cover-actions">
+        <div class="cover-actions-main">
+          <button id="enter-map" class="btn-enter btn-primary-large">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            <span data-i18n="cta.start_reading">开始阅读</span>
+          </button>
+          <button id="enter-panorama" class="btn-enter btn-secondary-large">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/></svg>
+            <span data-i18n="cta.arch_panorama">架构全景</span>
+          </button>
+        </div>
+        <div class="cover-metaphor-switch">
+          <span class="metaphor-switch-label" data-i18n="metaphor.switch_label">选择比喻视角</span>
+          <div class="metaphor-choice-inline">
+            <button class="metaphor-btn-inline" id="choose-city" data-metaphor="city">
+              <span>🏙</span> <span data-i18n="metaphor.city">城市</span>
+            </button>
+            <button class="metaphor-btn-inline" id="choose-os" data-metaphor="os">
+              <span>🖥</span> <span data-i18n="metaphor.os">操作系统</span>
+            </button>
+          </div>
+          <span class="metaphor-switch-note" data-i18n="metaphor.switch_note">随时可在顶部切换</span>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- ==================== LANDING / ENGINE VIEW ==================== -->
+  <div id="landing" class="view">
+    <header class="landing-header">
+      <h1 class="title-glow">Claude Code 2.1.88</h1>
+      <p class="subtitle" id="subtitle-text" data-i18n="engine.subtitle_city">智慧城市 — 架构全景</p>
+      <p class="landing-lede" data-i18n="engine.lede">88 章深度拆解 · 122 图表 · 185 prompt 全收录 · Claude Code 2.1.88 源码白皮书</p>
+      <p class="hint" data-i18n="engine.hint">点击任意组件深入探索 · 滚动查看详情</p>
+    </header>
+
+    <div id="engine-container">
+      <svg id="engine-svg" viewBox="-600 -450 1200 900" xmlns="http://www.w3.org/2000/svg">
+        <!-- Grid background -->
+        <defs>
+          <pattern id="grid-small" width="20" height="20" patternUnits="userSpaceOnUse">
+            <path d="M 20 0 L 0 0 0 20" fill="none" stroke="#1a2332" stroke-width="0.5"/>
+          </pattern>
+          <pattern id="grid-large" width="100" height="100" patternUnits="userSpaceOnUse">
+            <rect width="100" height="100" fill="url(#grid-small)"/>
+            <path d="M 100 0 L 0 0 0 100" fill="none" stroke="#1e2d42" stroke-width="1"/>
+          </pattern>
+          <!-- Glow filters -->
+          <filter id="glow-cyan" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="6" result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+          </filter>
+          <filter id="glow-strong" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="12" result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+          </filter>
+          <!-- Animated dash for data flow -->
+          <marker id="arrow-cyan" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L8,3 L0,6" fill="#00d4ff" opacity="0.6"/>
+          </marker>
+          <marker id="arrow-purple" markerWidth="8" markerHeight="6" refX="8" refY="3" orient="auto">
+            <path d="M0,0 L8,3 L0,6" fill="#7b61ff" opacity="0.6"/>
+          </marker>
+          <!-- Pulse animation for heart -->
+          <radialGradient id="heart-pulse" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#00d4ff" stop-opacity="0.3">
+              <animate attributeName="stop-opacity" values="0.3;0.1;0.3" dur="2s" repeatCount="indefinite"/>
+            </stop>
+            <stop offset="100%" stop-color="#00d4ff" stop-opacity="0">
+              <animate attributeName="stop-opacity" values="0;0.05;0" dur="2s" repeatCount="indefinite"/>
+            </stop>
+          </radialGradient>
+        </defs>
+
+        <!-- Background grid -->
+        <rect x="-600" y="-450" width="1200" height="900" fill="url(#grid-large)"/>
+
+        <!-- Outer ring: Terminal UI (skin) -->
+        <ellipse cx="0" cy="0" rx="480" ry="360" fill="none" stroke="#2d3748" stroke-width="1.5" stroke-dasharray="8,4" opacity="0.5"/>
+        <text x="380" y="-340" class="label-outer" fill="#4a5568" font-size="11" data-i18n="engine.label_outer">Terminal UI · 皮肤</text>
+
+        <!-- Data flow paths (animated) -->
+        <g id="data-flows" opacity="0.5">
+          <!-- System Prompt → QueryEngine -->
+          <path class="flow-path flow-cyan" d="M0,-230 C0,-160 0,-120 0,-80" stroke="#00d4ff" fill="none" stroke-width="1.5"/>
+          <!-- QueryEngine → Tool Runtime -->
+          <path class="flow-path flow-cyan" d="M60,-10 C120,10 180,40 240,60" stroke="#00d4ff" fill="none" stroke-width="1.5"/>
+          <!-- QueryEngine → Agent Orchestration -->
+          <path class="flow-path flow-purple" d="M-60,-10 C-120,10 -180,40 -240,60" stroke="#7b61ff" fill="none" stroke-width="1.5"/>
+          <!-- Security → Tool Runtime -->
+          <path class="flow-path flow-red" d="M-240,60 C-120,100 120,100 240,60" stroke="#ff6b6b" fill="none" stroke-width="1"/>
+          <!-- Config → System Prompt -->
+          <path class="flow-path flow-gold" d="M-280,-180 C-180,-220 -80,-240 0,-230" stroke="#ffd93d" fill="none" stroke-width="1"/>
+          <!-- State → QueryEngine -->
+          <path class="flow-path flow-teal" d="M280,-180 C180,-140 80,-100 30,-60" stroke="#4ecdc4" fill="none" stroke-width="1"/>
+          <!-- Token → QueryEngine -->
+          <path class="flow-path flow-gold" d="M0,250 C0,180 0,120 0,60" stroke="#ffd93d" fill="none" stroke-width="1"/>
+          <!-- Extension → Tool Runtime -->
+          <path class="flow-path flow-green" d="M340,-80 C310,-20 280,20 250,50" stroke="#48bb78" fill="none" stroke-width="1"/>
+        </g>
+
+        <!-- ===== COMPONENT NODES ===== -->
+
+        <!-- CENTER: QueryEngine (Heart) -->
+        <g class="node node-heart" data-component="query-engine" tabindex="0">
+          <circle cx="0" cy="0" r="90" fill="url(#heart-pulse)"/>
+          <circle cx="0" cy="0" r="65" fill="#0d1520" stroke="#00d4ff" stroke-width="2.5" filter="url(#glow-cyan)">
+            <animate attributeName="r" values="65;68;65" dur="2s" repeatCount="indefinite"/>
+          </circle>
+          <text x="0" y="-12" text-anchor="middle" fill="#00d4ff" font-size="15" font-weight="bold" data-i18n="engine.node_query_engine">QueryEngine</text>
+          <text x="0" y="8" text-anchor="middle" fill="#00d4ff" font-size="20">♥</text>
+          <text x="0" y="28" text-anchor="middle" fill="#5a8a9e" font-size="11" data-i18n="engine.node_query_engine_sub">心脏 · 查询循环</text>
+          <text x="0" y="44" text-anchor="middle" fill="#3d5a6e" font-size="9" data-i18n="engine.node_query_engine_detail">1,295 行 · AsyncGenerator</text>
+        </g>
+
+        <!-- TOP: System Prompt (Brain/DNA) -->
+        <g class="node" data-component="system-prompt" tabindex="0">
+          <rect x="-90" y="-275" width="180" height="80" rx="8" fill="#0d1520" stroke="#e88dff" stroke-width="1.8"/>
+          <text x="0" y="-245" text-anchor="middle" fill="#e88dff" font-size="14" font-weight="bold" data-i18n="engine.node_system_prompt">提示词工厂</text>
+          <text x="0" y="-225" text-anchor="middle" fill="#9a6db5" font-size="11" data-i18n="engine.node_system_prompt_sub">基因 · 六层三明治</text>
+          <text x="0" y="-207" text-anchor="middle" fill="#5a4070" font-size="9" data-i18n="engine.node_system_prompt_detail">15,000-34,000 token/次</text>
+        </g>
+
+        <!-- RIGHT: Tool Runtime (Hands) -->
+        <g class="node" data-component="tool-runtime" tabindex="0">
+          <rect x="170" y="20" width="170" height="80" rx="8" fill="#0d1520" stroke="#00d4ff" stroke-width="1.8"/>
+          <text x="255" y="50" text-anchor="middle" fill="#00d4ff" font-size="14" font-weight="bold" data-i18n="engine.node_tool_runtime">工具运行时</text>
+          <text x="255" y="70" text-anchor="middle" fill="#5a8a9e" font-size="11" data-i18n="engine.node_tool_runtime_sub">双手 · 40 个工具</text>
+          <text x="255" y="86" text-anchor="middle" fill="#3d5a6e" font-size="9" data-i18n="engine.node_tool_runtime_detail">七步执行管线</text>
+        </g>
+
+        <!-- LEFT: Agent Orchestration (Brain) -->
+        <g class="node" data-component="agent-orchestration" tabindex="0">
+          <rect x="-340" y="20" width="170" height="80" rx="8" fill="#0d1520" stroke="#7b61ff" stroke-width="1.8"/>
+          <text x="-255" y="50" text-anchor="middle" fill="#7b61ff" font-size="14" font-weight="bold" data-i18n="engine.node_agent_orchestration">Agent 编排</text>
+          <text x="-255" y="70" text-anchor="middle" fill="#5c4d8a" font-size="11" data-i18n="engine.node_agent_orchestration_sub">大脑 · 七种任务类型</text>
+        </g>
+
+        <!-- UPPER-LEFT: Configuration (DNA) -->
+        <g class="node" data-component="configuration" tabindex="0">
+          <rect x="-370" y="-220" width="160" height="72" rx="8" fill="#0d1520" stroke="#ffd93d" stroke-width="1.8"/>
+          <text x="-290" y="-194" text-anchor="middle" fill="#ffd93d" font-size="13" font-weight="bold" data-i18n="engine.node_configuration">配置治理</text>
+          <text x="-290" y="-175" text-anchor="middle" fill="#9e8a3d" font-size="11" data-i18n="engine.node_configuration_sub">套娃 · 九层优先级</text>
+          <text x="-290" y="-159" text-anchor="middle" fill="#6e6030" font-size="9" data-i18n="engine.node_configuration_detail">两套合并规则</text>
+        </g>
+
+        <!-- UPPER-RIGHT: State & Persistence (Memory) -->
+        <g class="node" data-component="state-persistence" tabindex="0">
+          <rect x="210" y="-220" width="160" height="72" rx="8" fill="#0d1520" stroke="#4ecdc4" stroke-width="1.8"/>
+          <text x="290" y="-194" text-anchor="middle" fill="#4ecdc4" font-size="13" font-weight="bold" data-i18n="engine.node_state_persistence">状态与持久化</text>
+          <text x="290" y="-175" text-anchor="middle" fill="#3a8a84" font-size="11" data-i18n="engine.node_state_persistence_sub">记忆 · 四级存储</text>
+          <text x="290" y="-159" text-anchor="middle" fill="#2a6560" font-size="9" data-i18n="engine.node_state_persistence_detail">JSONL + 硬链接复用</text>
+        </g>
+
+        <!-- BOTTOM: Token Economics (Blood/Water) -->
+        <g class="node" data-component="token-economics" tabindex="0">
+          <rect x="-85" y="200" width="170" height="72" rx="8" fill="#0d1520" stroke="#ffd93d" stroke-width="1.8"/>
+          <text x="0" y="226" text-anchor="middle" fill="#ffd93d" font-size="13" font-weight="bold" data-i18n="engine.node_token_economics">Token 经济学</text>
+          <text x="0" y="246" text-anchor="middle" fill="#9e8a3d" font-size="11" data-i18n="engine.node_token_economics_sub">血液 · 四种水价</text>
+          <text x="0" y="262" text-anchor="middle" fill="#6e6030" font-size="9" data-i18n="engine.node_token_economics_detail">Cache Hit 省 10 倍</text>
+        </g>
+
+        <!-- LOWER-LEFT: Security (Immune System) -->
+        <g class="node" data-component="security" tabindex="0">
+          <rect x="-390" y="140" width="170" height="72" rx="8" fill="#0d1520" stroke="#ff6b6b" stroke-width="1.8"/>
+          <text x="-305" y="166" text-anchor="middle" fill="#ff6b6b" font-size="13" font-weight="bold" data-i18n="engine.node_security">安全架构</text>
+          <text x="-305" y="186" text-anchor="middle" fill="#9e4a4a" font-size="11" data-i18n="engine.node_security_sub">免疫 · 四层纵深防御</text>
+          <text x="-305" y="202" text-anchor="middle" fill="#6e3535" font-size="9" data-i18n="engine.node_security_detail">十步权限状态机</text>
+        </g>
+
+        <!-- LOWER-RIGHT: Extension Ecosystem (Nervous System) -->
+        <g class="node" data-component="extension-ecosystem" tabindex="0">
+          <rect x="220" y="140" width="170" height="72" rx="8" fill="#0d1520" stroke="#48bb78" stroke-width="1.8"/>
+          <text x="305" y="166" text-anchor="middle" fill="#48bb78" font-size="13" font-weight="bold" data-i18n="engine.node_extension">扩展生态</text>
+          <text x="305" y="186" text-anchor="middle" fill="#3a8a58" font-size="11" data-i18n="engine.node_extension_sub">神经 · MCP + Hooks</text>
+          <text x="305" y="202" text-anchor="middle" fill="#2a6540" font-size="9" data-i18n="engine.node_extension_detail">8 种传输 · 27 事件</text>
+        </g>
+
+        <!-- FAR RIGHT: Boot Sequence -->
+        <g class="node" data-component="boot-sequence" tabindex="0">
+          <rect x="380" y="-100" width="140" height="64" rx="8" fill="#0d1520" stroke="#63b3ed" stroke-width="1.5"/>
+          <text x="450" y="-78" text-anchor="middle" fill="#63b3ed" font-size="12" font-weight="bold" data-i18n="engine.node_boot_sequence">启动序列</text>
+          <text x="450" y="-60" text-anchor="middle" fill="#4a8ab0" font-size="10" data-i18n="engine.node_boot_sequence_sub">BIOS · ~300ms 就绪</text>
+          <text x="450" y="-46" text-anchor="middle" fill="#3a6a80" font-size="9" data-i18n="engine.node_boot_sequence_detail">八种模式路由</text>
+        </g>
+
+        <!-- FAR LEFT: Code Map -->
+        <g class="node" data-component="code-map" tabindex="0">
+          <rect x="-520" y="-100" width="140" height="64" rx="8" fill="#0d1520" stroke="#a0aec0" stroke-width="1.5"/>
+          <text x="-450" y="-78" text-anchor="middle" fill="#a0aec0" font-size="12" font-weight="bold" data-i18n="engine.node_code_map">代码地图</text>
+          <text x="-450" y="-60" text-anchor="middle" fill="#718096" font-size="10" data-i18n="engine.node_code_map_sub">全景 · 1,884 文件</text>
+          <text x="-450" y="-46" text-anchor="middle" fill="#4a5568" font-size="9" data-i18n="engine.node_code_map_detail">五区域 · 三条高速公路</text>
+        </g>
+
+        <!-- BOTTOM-CENTER: Terminal UI -->
+        <g class="node" data-component="terminal-ui" tabindex="0">
+          <rect x="-85" y="310" width="170" height="64" rx="8" fill="#0d1520" stroke="#a0aec0" stroke-width="1.5"/>
+          <text x="0" y="335" text-anchor="middle" fill="#a0aec0" font-size="13" font-weight="bold" data-i18n="engine.node_terminal_ui">终端 UI</text>
+          <text x="0" y="355" text-anchor="middle" fill="#718096" font-size="11" data-i18n="engine.node_terminal_ui_sub">皮肤 · React + Ink</text>
+          <text x="0" y="368" text-anchor="middle" fill="#4a5568" font-size="9" data-i18n="engine.node_terminal_ui_detail">389 组件 · 3 页面</text>
+        </g>
+
+        <!-- Animated particles along data flows -->
+        <g id="particles"></g>
+
+        <!-- Stats bar at bottom -->
+        <g transform="translate(0, 410)">
+          <text x="-500" y="0" fill="#4a5568" font-size="10" data-i18n="engine.svg_stat_files">TypeScript 源文件: 1,884</text>
+          <text x="-280" y="0" fill="#4a5568" font-size="10" data-i18n="engine.svg_stat_tools">工具: 40</text>
+          <text x="-160" y="0" fill="#4a5568" font-size="10" data-i18n="engine.svg_stat_commands">命令: 101</text>
+          <text x="-40" y="0" fill="#4a5568" font-size="10" data-i18n="engine.svg_stat_version">版本: 2.1.88</text>
+          <text x="100" y="0" fill="#4a5568" font-size="10" data-i18n="engine.svg_stat_metaphor">核心比喻: Agent OS</text>
+          <text x="310" y="0" fill="#4a5568" font-size="10" data-i18n="engine.svg_stat_chapters">总章节: 88</text>
+        </g>
+      </svg>
+    </div>
+
+    <!-- Scroll indicator -->
+    <div class="scroll-indicator">
+      <span data-i18n="engine.scroll_indicator">滚动探索</span>
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12l7 7 7-7"/></svg>
+    </div>
+
+    <!-- Quick stats strip with animated counters -->
+    <div class="stats-strip">
+      <div class="stat" data-tip="全部 TypeScript 文件，约 50 万行代码" data-i18n-attr="data-tip:stats.strip_files_tip"><span class="stat-num counter" data-target="1884">0</span><span class="stat-label" data-i18n="stats.strip_files_label">源文件</span></div>
+      <div class="stat" data-tip="文件读写、Bash 执行、搜索、Agent 调度等" data-i18n-attr="data-tip:stats.strip_tools_tip"><span class="stat-num counter" data-target="40">0</span><span class="stat-label" data-i18n="stats.strip_tools_label">工具</span></div>
+      <div class="stat" data-tip="斜杠命令 + 内置命令 + 扩展命令" data-i18n-attr="data-tip:stats.strip_commands_tip"><span class="stat-num counter" data-target="101">0</span><span class="stat-label" data-i18n="stats.strip_commands_label">命令</span></div>
+      <div class="stat" data-tip="覆盖从入门到源码级的完整分析" data-i18n-attr="data-tip:stats.strip_chapters_tip"><span class="stat-num counter" data-target="88">0</span><span class="stat-label" data-i18n="stats.strip_chapters_label">章节</span></div>
+      <div class="stat" data-tip="从 process.argv 到 REPL 就绪的全过程" data-i18n-attr="data-tip:stats.strip_boot_tip"><span class="stat-num">~300ms</span><span class="stat-label" data-i18n="stats.strip_boot_label">启动耗时</span></div>
+      <div class="stat" data-tip="5 层公开配置 + 4 层企业策略子层" data-i18n-attr="data-tip:stats.strip_config_tip"><span class="stat-num counter" data-target="9">0</span><span class="stat-label" data-i18n="stats.strip_config_label">配置层级</span></div>
+    </div>
+
+    <!-- ===== AGENT LOOP VISUALIZATION (ccunpacked-inspired) ===== -->
+    <section id="agent-loop-section" class="landing-section fade-in-section">
+      <div class="loop-section-header">
+        <span class="loop-section-num" data-i18n="sections.agent_loop_num">01</span>
+        <h2 class="loop-title">The Agent Loop</h2>
+        <p class="loop-subtitle" data-i18n="sections.agent_loop_subtitle">From keypress to rendered response, step by step through the source.</p>
+      </div>
+
+      <div class="loop-diagram-img">
+        <div class="embedded-diagram-host" data-src="images/agent-loop-flow.svg" aria-label="Agent Loop 11-step circular flow diagram" role="img"></div>
+      </div>
+
+      <div class="loop-timeline">
+        <div class="loop-track">
+          <div class="loop-step active" data-step="1"><div class="step-num">1</div><div class="step-label">Input</div></div>
+          <div class="loop-step" data-step="2"><div class="step-num">2</div><div class="step-label">Message</div></div>
+          <div class="loop-step" data-step="3"><div class="step-num">3</div><div class="step-label">History</div></div>
+          <div class="loop-step" data-step="4"><div class="step-num">4</div><div class="step-label">System</div></div>
+          <div class="loop-step" data-step="5"><div class="step-num">5</div><div class="step-label">API</div></div>
+          <div class="loop-step" data-step="6"><div class="step-num">6</div><div class="step-label">Tokens</div></div>
+          <div class="loop-step" data-step="7"><div class="step-num">7</div><div class="step-label">Tools?</div></div>
+          <div class="loop-step" data-step="8"><div class="step-num">8</div><div class="step-label">Loop</div></div>
+          <div class="loop-step" data-step="9"><div class="step-num">9</div><div class="step-label">Render</div></div>
+          <div class="loop-step" data-step="10"><div class="step-num">10</div><div class="step-label">Hooks</div></div>
+          <div class="loop-step" data-step="11"><div class="step-num">11</div><div class="step-label">Await</div></div>
+        </div>
+        <div class="loop-progress-bar"><div class="loop-progress-fill"></div></div>
+      </div>
+
+      <div class="loop-card">
+        <!-- Step 1: User Input -->
+        <div class="loop-detail" data-step="1">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">1</span> <strong>User Input</strong></div>
+            <a class="loop-src-link">📂 src/components/TextInput.tsx</a>
+          </div>
+          <p class="loop-desc">User types a message or pipes input through <code>stdin</code></p>
+          <div class="loop-viz">
+            <div class="term-mock">
+              <div class="term-header"><span class="term-dot red"></span><span class="term-dot yellow"></span><span class="term-dot green"></span></div>
+              <div class="term-body">
+                <div class="term-line"><span class="term-green">● claude-code</span></div>
+                <div class="term-line"><span class="term-white">$ </span><span class="term-cursor">Find all TODO comments in src/</span><span class="blink">▊</span></div>
+              </div>
+            </div>
+          </div>
+          <p class="loop-note">Keyboard input comes from Ink's <code>TextInput</code> component. In non-interactive mode, it reads from piped <code>stdin</code> instead.</p>
+        </div>
+
+        <!-- Step 2: Message Construction -->
+        <div class="loop-detail hidden" data-step="2">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">2</span> <strong>Message Construction</strong></div>
+            <a class="loop-src-link">📂 src/utils/processUserInput.ts</a>
+          </div>
+          <p class="loop-desc">Text gets parsed through <code>processUserInput()</code> — 18 parameters, 3 dispatch paths</p>
+          <div class="loop-viz">
+            <div class="code-mock">
+              <div class="code-line"><span class="c-kw">const</span> result = <span class="c-fn">processUserInput</span>({</div>
+              <div class="code-line">  text: <span class="c-str">"Find all TODO comments in src/"</span>,</div>
+              <div class="code-line">  images: [],</div>
+              <div class="code-line">  abortController,</div>
+              <div class="code-line">  options: { <span class="c-comment">// ...18 params total</span> }</div>
+              <div class="code-line">})</div>
+              <div class="code-line"></div>
+              <div class="code-line"><span class="c-comment">// → dispatch: slash command? image? → UserMessage</span></div>
+              <div class="code-line"><span class="c-comment">// → UltraPlan keyword detection</span></div>
+              <div class="code-line"><span class="c-comment">// → Bridge security filtering</span></div>
+            </div>
+          </div>
+          <p class="loop-note">Slash commands get intercepted here. Images are resized. The output is always a standard <code>UserMessage</code> object.</p>
+        </div>
+
+        <!-- Step 3: History Management -->
+        <div class="loop-detail hidden" data-step="3">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">3</span> <strong>History Append</strong></div>
+            <a class="loop-src-link">📂 src/history.ts</a>
+          </div>
+          <p class="loop-desc">Message gets pushed onto the in-memory conversation array</p>
+          <div class="loop-viz">
+            <div class="history-mock">
+              <div class="hist-item"><span class="hist-role user">[user]</span> Set up the project structure</div>
+              <div class="hist-item"><span class="hist-role asst">[assistant]</span> I'll create the directory layout...</div>
+              <div class="hist-item"><span class="hist-role user">[user]</span> Now add the database models</div>
+              <div class="hist-item active"><span class="hist-role user">[user]</span> Find all TODO comments... <span class="hist-new">NEW</span></div>
+            </div>
+          </div>
+          <p class="loop-note">The conversation history is just an array that grows over the session. It's what the context window manager trims later.</p>
+        </div>
+
+        <!-- Step 4: System Prompt -->
+        <div class="loop-detail hidden" data-step="4">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">4</span> <strong>System Prompt Assembly</strong></div>
+            <a class="loop-src-link">📂 src/utils/systemPrompt/</a>
+          </div>
+          <p class="loop-desc">Six-layer sandwich: 15K–34K tokens assembled every turn</p>
+          <div class="loop-viz">
+            <div class="sandwich-mock">
+              <div class="sw-layer" style="--c:#ff6b6b">🔒 Enterprise Policy <span class="sw-size">~2K</span></div>
+              <div class="sw-layer" style="--c:#ffd93d">⚡ DYNAMIC_BOUNDARY <span class="sw-size">— cache split —</span></div>
+              <div class="sw-layer" style="--c:#48bb78">📄 CLAUDE.md + Memory <span class="sw-size">~3K</span></div>
+              <div class="sw-layer" style="--c:#7b61ff">🔧 Tool Descriptions (40) <span class="sw-size">~8K</span></div>
+              <div class="sw-layer" style="--c:#e88dff">📋 Base System Prompt <span class="sw-size">~6K</span></div>
+              <div class="sw-layer" style="--c:#00d4ff">🧬 Immutable Core <span class="sw-size">~2K</span></div>
+            </div>
+          </div>
+          <p class="loop-note">Everything below <code>DYNAMIC_BOUNDARY</code> gets Prompt Cached (saves 10x cost). Everything above changes per turn.</p>
+        </div>
+
+        <!-- Step 5: API Streaming -->
+        <div class="loop-detail hidden" data-step="5">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">5</span> <strong>API Streaming</strong></div>
+            <a class="loop-src-link">📂 src/services/claude.ts</a>
+          </div>
+          <p class="loop-desc">Stream to Claude API through the Anthropic SDK (server-sent events)</p>
+          <div class="loop-viz">
+            <div class="api-mock">
+              <div class="api-flow">
+                <div class="api-box">Your Machine</div>
+                <div class="api-arrow">→ SSE →</div>
+                <div class="api-box api-active">● Claude API</div>
+              </div>
+              <div class="sse-stream">
+                <div class="sse-line">data: {"type":"content_block_delta","delta":{"text":"I'll"}}</div>
+                <div class="sse-line">data: {"type":"content_block_delta","delta":{"text":" search"}}</div>
+                <div class="sse-line">data: {"type":"content_block_delta","delta":{"text":" for"}}</div>
+                <div class="sse-line">data: {"type":"content_block_delta","delta":{"text":" TODOs"}}</div>
+                <div class="sse-line">data: {"type":"content_block_delta","delta":{"text":" in"}}</div>
+              </div>
+            </div>
+          </div>
+          <p class="loop-note">Uses the SDK's streaming interface. Tokens arrive over <code>SSE</code> and get rendered as they land.</p>
+        </div>
+
+        <!-- Step 6: Token Accounting -->
+        <div class="loop-detail hidden" data-step="6">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">6</span> <strong>Token Accounting</strong></div>
+            <a class="loop-src-link">📂 src/cost-tracker.ts</a>
+          </div>
+          <p class="loop-desc">Four token tiers: <code>input</code> → <code>cache_write</code> → <code>cache_read</code> → <code>output</code></p>
+          <div class="loop-viz">
+            <div class="token-mock">
+              <div class="token-row"><span class="token-label">input</span><div class="token-bar" style="width:60%;background:#ff6b6b"></div><span class="token-val">$3.00/M</span></div>
+              <div class="token-row"><span class="token-label">cache_write</span><div class="token-bar" style="width:45%;background:#ffd93d"></div><span class="token-val">$3.75/M</span></div>
+              <div class="token-row"><span class="token-label">cache_read</span><div class="token-bar" style="width:8%;background:#48bb78"></div><span class="token-val">$0.30/M</span></div>
+              <div class="token-row"><span class="token-label">output</span><div class="token-bar" style="width:40%;background:#7b61ff"></div><span class="token-val">$15.00/M</span></div>
+            </div>
+          </div>
+          <p class="loop-note">Real-time cost tracking. When the running total hits <code>softLimit</code>, compression kicks in. <code>hardLimit</code> forces it.</p>
+        </div>
+
+        <!-- Step 7: Tool Detection -->
+        <div class="loop-detail hidden" data-step="7">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">7</span> <strong>Tool Detection</strong></div>
+            <a class="loop-src-link">📂 src/tools/tools.ts</a>
+          </div>
+          <p class="loop-desc">If <code>tool_use</code> blocks found: <code>findToolByName()</code> → <code>canUseTool()</code> → execute</p>
+          <div class="loop-viz">
+            <div class="code-mock">
+              <div class="code-line">I'll search for TODO comments...</div>
+              <div class="code-line">Let me use the bash tool to find them.</div>
+              <div class="code-line"></div>
+              <div class="code-line tool-use-block"><span class="c-kw">tool_use:</span></div>
+              <div class="code-line tool-use-block">  name: <span class="c-str">"bash"</span></div>
+              <div class="code-line tool-use-block">  input: <span class="c-str">"grep -r TODO src/"</span></div>
+              <div class="code-line"></div>
+              <div class="code-line"><span class="c-green">Permission check: allowed (pre-approved pattern)</span></div>
+            </div>
+          </div>
+          <p class="loop-note">The response can contain tool calls. Each gets resolved, permission-checked, and run. Multiple tools can execute in parallel.</p>
+        </div>
+
+        <!-- Step 8: Loop Decision -->
+        <div class="loop-detail hidden" data-step="8">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">8</span> <strong>Loop Decision</strong></div>
+            <a class="loop-src-link">📂 src/query.ts → shouldContinue()</a>
+          </div>
+          <p class="loop-desc">6 exit conditions checked: <code>end_turn</code> | abort | token limit | error | max turns | tool stop</p>
+          <div class="loop-viz">
+            <div class="decision-mock">
+              <div class="dec-q">Has tool results to return?</div>
+              <div class="dec-branches">
+                <div class="dec-yes">✓ YES → back to step 5<br><span class="dec-sub">append tool_result, call API again</span></div>
+                <div class="dec-no">✗ NO → continue to step 9<br><span class="dec-sub">end_turn or stop_sequence hit</span></div>
+              </div>
+              <div class="dec-loop-arrow">↺ This is why it's called a "loop"</div>
+            </div>
+          </div>
+          <p class="loop-note">Most conversations loop 2-5 times. Complex tasks with many file edits can loop 20+ times before <code>end_turn</code>.</p>
+        </div>
+
+        <!-- Step 9: Render Output -->
+        <div class="loop-detail hidden" data-step="9">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">9</span> <strong>Render Output</strong></div>
+            <a class="loop-src-link">📂 src/ink/ → reconciler → renderer</a>
+          </div>
+          <p class="loop-desc">Ink's React reconciler maps AI output to the terminal: vDOM diff → Yoga layout → ANSI</p>
+          <div class="loop-viz">
+            <div class="code-mock">
+              <div class="code-line"><span class="c-comment">// 7-step render pipeline (96 files)</span></div>
+              <div class="code-line">React.createElement → <span class="c-fn">reconciler</span></div>
+              <div class="code-line">  → <span class="c-fn">yogaLayout()</span>  <span class="c-comment">// flexbox in terminal</span></div>
+              <div class="code-line">  → <span class="c-fn">renderToString()</span></div>
+              <div class="code-line">  → <span class="c-fn">diffOutput()</span>  <span class="c-comment">// only changed lines</span></div>
+              <div class="code-line">  → <span class="c-fn">process.stdout.write()</span></div>
+              <div class="code-line"></div>
+              <div class="code-line"><span class="c-green">Found <strong>16</strong> TODO comments across the codebase:</span></div>
+              <div class="code-line">  src/query.ts:42  — Add retry logic</div>
+              <div class="code-line">  src/tools.ts:108 — Validate input</div>
+            </div>
+          </div>
+          <p class="loop-note">Streaming renders incrementally — text appears as tokens arrive, not after the full response.</p>
+        </div>
+
+        <!-- Step 10: Post-Sampling Hooks -->
+        <div class="loop-detail hidden" data-step="10">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">10</span> <strong>Post-Sampling Hooks</strong></div>
+            <a class="loop-src-link">📂 src/services/compact/autoCompact.ts</a>
+          </div>
+          <p class="loop-desc">Auto-compact if conversation is too long, extract memories, run dream mode</p>
+          <div class="loop-viz">
+            <div class="code-mock">
+              <div class="code-line"><span class="c-kw">TODO Summary</span></div>
+              <div class="code-line"></div>
+              <div class="code-line">Found <strong>**16 TODO comments**</strong> across the codebase:</div>
+              <div class="code-line">  - src/query.ts:42    — Add retry logic</div>
+              <div class="code-line">  - src/tools.ts:108   — Validate input</div>
+              <div class="code-line">  - src/context.ts:15  — Cache system prompt</div>
+            </div>
+          </div>
+          <p class="loop-note">After the response is done: trim the conversation if it's getting long, extract anything worth remembering, and optionally run <code>dream mode</code>.</p>
+        </div>
+
+        <!-- Step 11: Await Next Input -->
+        <div class="loop-detail hidden" data-step="11">
+          <div class="loop-detail-header">
+            <div class="loop-step-badge"><span class="badge-num">11</span> <strong>Await Next Input</strong></div>
+            <a class="loop-src-link">📂 src/QueryEngine.ts</a>
+          </div>
+          <p class="loop-desc">Back to the REPL, waiting for the next message</p>
+          <div class="loop-viz">
+            <div class="term-mock">
+              <div class="term-header"><span class="term-dot red"></span><span class="term-dot yellow"></span><span class="term-dot green"></span></div>
+              <div class="term-body">
+                <div class="term-line"><span class="term-green">● claude-code</span></div>
+                <div class="term-line"><span class="term-white">$ </span><span class="blink">▊</span></div>
+                <div class="term-line term-center">The loop waits for your next message</div>
+              </div>
+            </div>
+          </div>
+          <p class="loop-note">The loop idles until user input. <code>Ctrl+C</code> is handled gracefully without losing conversation history.</p>
+        </div>
+      </div>
+
+      <div class="loop-controls">
+        <button id="loop-prev" class="loop-btn" disabled>&lt;</button>
+        <button id="loop-auto" class="loop-btn loop-btn-primary">⏸</button>
+        <button id="loop-next" class="loop-btn">&gt;</button>
+        <span class="loop-counter"><span id="loop-current">1</span> / 11</span>
+        <div class="loop-speed">
+          <button class="speed-btn" data-speed="5000">0.5x</button>
+          <button class="speed-btn active" data-speed="2500">1x</button>
+          <button class="speed-btn" data-speed="1200">2x</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== ARCHITECTURE EXPLORER ===== -->
+    <section id="arch-section" class="landing-section fade-in-section">
+      <div class="arch-header">
+        <span class="loop-section-num" data-i18n="sections.arch_num">02</span>
+        <h2 class="loop-title">Architecture Explorer</h2>
+        <p class="loop-subtitle">1,884 files · 512,674 lines of TypeScript — interactive source code treemap</p>
+      </div>
+
+      <div class="loop-diagram-img" style="margin-bottom:2rem">
+        <div class="embedded-diagram-host" data-src="images/architecture-treemap.svg" aria-label="Claude Code layered architecture diagram" role="img"></div>
+      </div>
+
+      <div class="arch-breadcrumb" id="arch-breadcrumb">
+        <span class="arch-crumb arch-crumb-root" data-path="root">src/</span>
+      </div>
+
+      <div class="arch-treemap" id="arch-treemap"></div>
+
+      <div class="arch-info" id="arch-info">
+        <div class="arch-info-name" data-i18n="sections.arch_info_default">点击模块进入查看子目录</div>
+        <div class="arch-info-stats"></div>
+      </div>
+
+      <div class="arch-legend" id="arch-legend"></div>
+    </section>
+
+    <!-- ===== TOOL GRID ===== -->
+    <section id="tool-grid-section" class="landing-section fade-in-section">
+      <h2 class="section-title" data-i18n="sections.tool_grid_title">Tool System — 40 个内置工具</h2>
+      <p class="section-subtitle" data-i18n="sections.tool_grid_subtitle">AI 的双手：从读文件到操控屏幕，每个工具都是一种能力</p>
+      <div id="tool-grid"></div>
+    </section>
+
+    <!-- ===== COMMAND CATALOG ===== -->
+    <section id="command-catalog-section" class="landing-section fade-in-section">
+      <h2 class="section-title" data-i18n="sections.command_catalog_title">Command Catalog — 斜杠命令全集</h2>
+      <p class="section-subtitle"><span data-i18n="sections.command_catalog_subtitle_prefix">用户侧的完整控制面板：</span><span class="cmd-count-public">0</span> <span data-i18n="sections.command_catalog_subtitle_public">个公开命令 +</span> <span class="cmd-count-internal">0</span> <span data-i18n="sections.command_catalog_subtitle_internal">个内部命令</span></p>
+      <div class="cmd-filter-bar">
+        <input type="text" id="cmd-search" class="cmd-search" placeholder="搜索命令..." autocomplete="off" data-i18n-attr="placeholder:search.cmd_placeholder" />
+      </div>
+      <div id="command-grid"></div>
+      <div class="internal-commands-toggle">
+        <button id="show-internal" class="toggle-internal-btn" data-i18n="commands.show_internal">显示 Anthropic 内部命令 →</button>
+      </div>
+      <div id="internal-command-list" class="hidden">
+        <h3 class="internal-title" data-i18n="commands.internal_title">内部命令 (仅 Anthropic 员工可用)</h3>
+        <div id="internal-commands"></div>
+      </div>
+    </section>
+
+    <!-- ===== HIDDEN FEATURES ===== -->
+    <section id="hidden-features-section" class="landing-section fade-in-section">
+      <h2 class="section-title" data-i18n="sections.hidden_features_title">Hidden Features — 未公开的秘密武器</h2>
+      <p class="section-subtitle" data-i18n="sections.hidden_features_subtitle">通过 feature() 门控的实验性功能——代码已就绪，开关未开启</p>
+      <div id="hidden-features-grid"></div>
+    </section>
+
+    <!-- ===== DATA FLOW VISUALIZATIONS ===== -->
+    <section id="dataflow-section" class="landing-section fade-in-section">
+      <div class="arch-header">
+        <span class="loop-section-num" data-i18n="sections.dataflow_num">03</span>
+        <h2 class="loop-title">Deep Dives</h2>
+        <p class="loop-subtitle" data-i18n="sections.dataflow_subtitle">四个核心子系统的运行时数据流——从源码中提取的真实路径</p>
+      </div>
+
+      <!-- Tab selector -->
+      <div class="df-tabs">
+        <button class="df-tab active" data-df="token" data-i18n="dataflow.tab_token">Token 生命周期</button>
+        <button class="df-tab" data-df="permission" data-i18n="dataflow.tab_permission">权限状态机</button>
+        <button class="df-tab" data-df="compact" data-i18n="dataflow.tab_compact">上下文压缩</button>
+        <button class="df-tab" data-df="prompt" data-i18n="dataflow.tab_prompt">System Prompt 组装</button>
+      </div>
+
+      <!-- DF 1: Token Lifecycle -->
+      <div class="df-panel active" id="df-token">
+        <div class="df-diagram-img">
+          <div class="embedded-diagram-host" data-src="images/token-lifecycle.svg" aria-label="Token lifecycle flow diagram" role="img"></div>
+        </div>
+        <div class="df-flow">
+          <div class="df-node df-node-start"><span data-i18n="dataflow.token_input_label">用户输入</span><span class="df-node-sub" data-i18n="dataflow.token_input_sub">keypress → TextInput</span></div>
+          <div class="df-arrow">→</div>
+          <div class="df-node">processUserInput()<span class="df-node-sub" data-i18n="dataflow.token_process_sub">解析、拦截斜杠命令</span></div>
+          <div class="df-arrow">→</div>
+          <div class="df-node">System Prompt<span class="df-node-sub">15K-34K tokens</span></div>
+          <div class="df-arrow">→</div>
+          <div class="df-node df-node-api"><span data-i18n="dataflow.token_api_label">API 请求</span><span class="df-node-sub">messages + system + tools</span></div>
+          <div class="df-arrow">→</div>
+          <div class="df-node df-node-end"><span data-i18n="dataflow.token_sse_label">SSE 响应流</span><span class="df-node-sub">content_block_delta</span></div>
+        </div>
+        <div class="df-detail-grid">
+          <div class="df-detail-card">
+            <div class="df-detail-title" data-i18n="dataflow.token_detail_pricing_title">📊 Token 四级计价</div>
+            <div class="df-bars">
+              <div class="df-bar-row"><span class="df-bar-label">input</span><div class="df-bar-track"><div class="df-bar-fill" style="width:40%;background:#ff6b6b"></div></div><span class="df-bar-val">$3/M</span></div>
+              <div class="df-bar-row"><span class="df-bar-label">cache_write</span><div class="df-bar-track"><div class="df-bar-fill" style="width:50%;background:#ffd93d"></div></div><span class="df-bar-val">$3.75/M</span></div>
+              <div class="df-bar-row"><span class="df-bar-label">cache_read</span><div class="df-bar-track"><div class="df-bar-fill" style="width:4%;background:#48bb78"></div></div><span class="df-bar-val">$0.30/M</span></div>
+              <div class="df-bar-row"><span class="df-bar-label">output</span><div class="df-bar-track"><div class="df-bar-fill" style="width:100%;background:#7b61ff"></div></div><span class="df-bar-val">$15/M</span></div>
+            </div>
+          </div>
+          <div class="df-detail-card">
+            <div class="df-detail-title" data-i18n="dataflow.token_detail_optimization_title">🎯 成本优化机制</div>
+            <div class="df-list">
+              <div class="df-list-item"><span class="df-tag green">Prompt Cache</span> <span data-i18n="dataflow.token_opt_cache">system prompt 缓存复用，节省 90%</span></div>
+              <div class="df-list-item"><span class="df-tag gold">DYNAMIC_BOUNDARY</span> <span data-i18n="dataflow.token_opt_boundary">将变化部分隔离在缓存线之上</span></div>
+              <div class="df-list-item"><span class="df-tag cyan">softLimit</span> <span data-i18n="dataflow.token_opt_soft">达到阈值时触发自动压缩</span></div>
+              <div class="df-list-item"><span class="df-tag red">hardLimit</span> <span data-i18n="dataflow.token_opt_hard">强制截断，防止单次请求超限</span></div>
+            </div>
+          </div>
+          <div class="df-detail-card">
+            <div class="df-detail-title" data-i18n="dataflow.token_detail_src_title">📂 关键源文件</div>
+            <div class="df-src-list">
+              <code>src/cost-tracker.ts</code> — <span data-i18n="dataflow.token_src_cost">实时计费追踪</span><br>
+              <code>src/services/api/claude.ts</code> — <span data-i18n="dataflow.token_src_api">API 请求构建</span><br>
+              <code>src/services/compact/</code> — <span data-i18n="dataflow.token_src_compact">压缩触发器</span><br>
+              <code>src/utils/messages.ts</code> — <span data-i18n="dataflow.token_src_messages">消息序列化</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DF 2: Permission State Machine -->
+      <div class="df-panel" id="df-permission">
+        <div class="df-diagram-img">
+          <div class="embedded-diagram-host" data-src="images/permission-state-machine.svg" aria-label="Permission state machine diagram" role="img"></div>
+        </div>
+        <div class="df-state-machine">
+          <div class="df-sm-row">
+            <div class="df-sm-state df-sm-start"><span data-i18n="dataflow.perm_request_label">工具调用请求</span><span class="df-sm-sub">tool_use block from API</span></div>
+            <div class="df-sm-arrow">→</div>
+            <div class="df-sm-state df-sm-check">canUseTool()<span class="df-sm-sub" data-i18n="dataflow.perm_check_label">5 层权限检查</span></div>
+          </div>
+          <div class="df-sm-branches">
+            <div class="df-sm-branch df-sm-allow">
+              <div class="df-sm-label" data-i18n="dataflow.perm_allow_label">✓ 允许</div>
+              <div class="df-sm-conditions">
+                <div class="df-sm-cond" data-i18n="dataflow.perm_allow_yolo">YOLO 模式 (全部跳过)</div>
+                <div class="df-sm-cond" data-i18n="dataflow.perm_allow_glob">已预批准的 glob 模式匹配</div>
+                <div class="df-sm-cond" data-i18n="dataflow.perm_allow_whitelist">白名单命令 (ls, git status...)</div>
+              </div>
+            </div>
+            <div class="df-sm-branch df-sm-deny">
+              <div class="df-sm-label" data-i18n="dataflow.perm_deny_label">✗ 拒绝</div>
+              <div class="df-sm-conditions">
+                <div class="df-sm-cond" data-i18n="dataflow.perm_deny_policy">企业策略 (Policy) 禁止</div>
+                <div class="df-sm-cond" data-i18n="dataflow.perm_deny_path">文件路径在 deny 列表</div>
+                <div class="df-sm-cond" data-i18n="dataflow.perm_deny_dangerous">危险命令检测 (rm -rf...)</div>
+              </div>
+            </div>
+            <div class="df-sm-branch df-sm-ask">
+              <div class="df-sm-label" data-i18n="dataflow.perm_ask_label">? 询问用户</div>
+              <div class="df-sm-conditions">
+                <div class="df-sm-cond" data-i18n="dataflow.perm_ask_unknown">未知模式，需要确认</div>
+                <div class="df-sm-cond" data-i18n="dataflow.perm_ask_choice">用户可选择 "允许/拒绝/永久允许"</div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="df-detail-grid">
+          <div class="df-detail-card">
+            <div class="df-detail-title" data-i18n="dataflow.perm_stack_title">🏗 5 层权限堆栈</div>
+            <div class="df-stack">
+              <div class="df-stack-layer" style="--sc:#ff6b6b" data-i18n="dataflow.perm_stack_1">1. Enterprise Policy（最高优先级）</div>
+              <div class="df-stack-layer" style="--sc:#ffd93d" data-i18n="dataflow.perm_stack_2">2. 工具特定规则 (BashTool 危险命令表)</div>
+              <div class="df-stack-layer" style="--sc:#48bb78" data-i18n="dataflow.perm_stack_3">3. 文件系统规则 (glob 匹配)</div>
+              <div class="df-stack-layer" style="--sc:#7b61ff" data-i18n="dataflow.perm_stack_4">4. 用户运行时决策缓存</div>
+              <div class="df-stack-layer" style="--sc:#00d4ff" data-i18n="dataflow.perm_stack_5">5. YOLO 模式 (跳过全部)</div>
+            </div>
+          </div>
+          <div class="df-detail-card">
+            <div class="df-detail-title" data-i18n="dataflow.perm_src_title">📂 关键源文件</div>
+            <div class="df-src-list">
+              <code>src/utils/permissions/</code> — <span data-i18n="dataflow.perm_src_permissions">24 文件, 9409 行</span><br>
+              <code>src/utils/bash/</code> — <span data-i18n="dataflow.perm_src_bash">Bash AST 安全分析</span><br>
+              <code>src/tools/tools.ts</code> — <span data-i18n="dataflow.perm_src_tools">canUseTool() 入口</span><br>
+              <code>src/hooks/toolPermission/</code> — <span data-i18n="dataflow.perm_src_hooks">UI 权限弹窗</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DF 3: Context Compression Pipeline -->
+      <div class="df-panel" id="df-compact">
+        <div class="df-diagram-img">
+          <div class="embedded-diagram-host" data-src="images/context-compression-pipeline.svg" aria-label="Context compression pipeline diagram" role="img"></div>
+        </div>
+        <div class="df-pipeline">
+          <div class="df-pipe-stage">
+            <div class="df-pipe-num">1</div>
+            <div class="df-pipe-content">
+              <div class="df-pipe-title" data-i18n="dataflow.compact_stage1_title">监测触发</div>
+              <div class="df-pipe-desc" data-i18n="dataflow.compact_stage1_desc">每次 API 响应后检查 usage.input_tokens</div>
+              <div class="df-pipe-threshold">
+                <span class="df-tag gold">softLimit</span> <span data-i18n="dataflow.compact_stage1_soft">上下文使用 &gt; 70% → 建议压缩</span><br>
+                <span class="df-tag red">hardLimit</span> <span data-i18n="dataflow.compact_stage1_hard">上下文使用 &gt; 95% → 强制压缩</span>
+              </div>
+            </div>
+          </div>
+          <div class="df-pipe-connector">↓</div>
+          <div class="df-pipe-stage">
+            <div class="df-pipe-num">2</div>
+            <div class="df-pipe-content">
+              <div class="df-pipe-title" data-i18n="dataflow.compact_stage2_title">消息切片</div>
+              <div class="df-pipe-desc" data-i18n="dataflow.compact_stage2_desc">保留最近 N 条消息不压缩（preserveCount），其余进入压缩队列</div>
+            </div>
+          </div>
+          <div class="df-pipe-connector">↓</div>
+          <div class="df-pipe-stage">
+            <div class="df-pipe-num">3</div>
+            <div class="df-pipe-content">
+              <div class="df-pipe-title" data-i18n="dataflow.compact_stage3_title">Claude 摘要</div>
+              <div class="df-pipe-desc" data-i18n="dataflow.compact_stage3_desc">调用 Claude API 将旧消息压缩为 &lt;context_window_summary&gt; XML 块</div>
+              <div class="df-pipe-note" data-i18n="dataflow.compact_stage3_note">压缩后的摘要作为 system-reminder 注入，原消息删除</div>
+            </div>
+          </div>
+          <div class="df-pipe-connector">↓</div>
+          <div class="df-pipe-stage">
+            <div class="df-pipe-num">4</div>
+            <div class="df-pipe-content">
+              <div class="df-pipe-title" data-i18n="dataflow.compact_stage4_title">记忆提取</div>
+              <div class="df-pipe-desc" data-i18n="dataflow.compact_stage4_desc">压缩时同时运行 extractMemories()，将重要信息写入 MEMORY.md</div>
+            </div>
+          </div>
+        </div>
+        <div class="df-detail-card" style="margin-top:16px">
+          <div class="df-detail-title" data-i18n="dataflow.compact_src_title">📂 关键源文件</div>
+          <div class="df-src-list">
+            <code>src/services/compact/autoCompact.ts</code> — <span data-i18n="dataflow.compact_src_auto">自动压缩触发器</span><br>
+            <code>src/services/compact/compactHistory.ts</code> — <span data-i18n="dataflow.compact_src_history">历史消息压缩</span><br>
+            <code>src/services/extractMemories.ts</code> — <span data-i18n="dataflow.compact_src_memory">记忆提取</span><br>
+            <code>src/services/SessionMemory/</code> — <span data-i18n="dataflow.compact_src_session">会话记忆管理</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- DF 4: System Prompt Assembly -->
+      <div class="df-panel" id="df-prompt">
+        <div class="df-diagram-img">
+          <div class="embedded-diagram-host" data-src="images/system-prompt-sandwich.svg" aria-label="System prompt 6-layer sandwich diagram" role="img"></div>
+        </div>
+        <div class="df-assembly">
+          <div class="df-asm-title" data-i18n="dataflow.prompt_asm_title">System Prompt 组装流水线</div>
+          <div class="df-asm-subtitle" data-i18n="dataflow.prompt_asm_subtitle">每次 API 调用前实时组装，6 层三明治结构</div>
+
+          <div class="df-asm-layers">
+            <div class="df-asm-layer" style="--lc:#ff6b6b">
+              <div class="df-asm-layer-head">
+                <span class="df-asm-layer-name">🔒 Enterprise Policy</span>
+                <span class="df-asm-layer-size">~2K tokens</span>
+              </div>
+              <div class="df-asm-layer-desc" data-i18n="dataflow.prompt_layer_enterprise_desc">企业管理员策略注入，最高优先级，不可被覆盖</div>
+              <div class="df-asm-layer-src"><code>getEnterprisePolicy()</code></div>
+            </div>
+            <div class="df-asm-cache-line" data-i18n="dataflow.prompt_cache_line">── ⚡ DYNAMIC_BOUNDARY ── 以下内容被 Prompt Cache ──</div>
+            <div class="df-asm-layer" style="--lc:#ffd93d">
+              <div class="df-asm-layer-head">
+                <span class="df-asm-layer-name">📄 CLAUDE.md + Memory</span>
+                <span class="df-asm-layer-size">~3K tokens</span>
+              </div>
+              <div class="df-asm-layer-desc" data-i18n="dataflow.prompt_layer_claude_md_desc">项目配置 + 用户记忆，通过 system-reminder 注入</div>
+              <div class="df-asm-layer-src"><code>getClaudeMdContent()</code> + <code>memoryFiles</code></div>
+            </div>
+            <div class="df-asm-layer" style="--lc:#7b61ff">
+              <div class="df-asm-layer-head">
+                <span class="df-asm-layer-name">🔧 Tool Descriptions</span>
+                <span class="df-asm-layer-size">~8K tokens</span>
+              </div>
+              <div class="df-asm-layer-desc" data-i18n="dataflow.prompt_layer_tools_desc">40 个工具的 JSON Schema 描述，含参数定义和使用说明</div>
+              <div class="df-asm-layer-src"><code>tools.map(t => t.toToolDefinition())</code></div>
+            </div>
+            <div class="df-asm-layer" style="--lc:#e88dff">
+              <div class="df-asm-layer-head">
+                <span class="df-asm-layer-name">📋 Base System Prompt</span>
+                <span class="df-asm-layer-size">~6K tokens</span>
+              </div>
+              <div class="df-asm-layer-desc" data-i18n="dataflow.prompt_layer_base_desc">核心行为指令：安全边界、输出风格、工具使用规范</div>
+              <div class="df-asm-layer-src"><code>BASE_SYSTEM_PROMPT</code> <span data-i18n="dataflow.prompt_src_base_label">常量</span></div>
+            </div>
+            <div class="df-asm-layer" style="--lc:#00d4ff">
+              <div class="df-asm-layer-head">
+                <span class="df-asm-layer-name">🧬 Immutable Core</span>
+                <span class="df-asm-layer-size">~2K tokens</span>
+              </div>
+              <div class="df-asm-layer-desc" data-i18n="dataflow.prompt_layer_immutable_desc">不可修改的安全核心：身份声明、越狱防御、红线规则</div>
+              <div class="df-asm-layer-src"><code>IMMUTABLE_SYSTEM_PROMPT</code></div>
+            </div>
+          </div>
+
+          <div class="df-asm-total" data-i18n="dataflow.prompt_total">
+            总计 15K–34K tokens（取决于工具数量和 CLAUDE.md 大小）·
+            缓存命中率约 90%（仅 DYNAMIC_BOUNDARY 以上变化）
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== BOTTOM CTA ===== -->
+    <section class="landing-section fade-in-section landing-cta">
+      <h2 class="section-title" style="color:var(--text-primary)" data-i18n="cta.bottom_heading">准备好深入了解了吗？</h2>
+      <p class="section-subtitle" data-i18n="cta.bottom_subtitle">从 88 章完整解析中选择你最好奇的主题开始阅读</p>
+      <div class="cta-buttons">
+        <button id="cta-read" class="btn-cta btn-cta-primary" data-i18n="cta.bottom_start_reading">开始阅读 →</button>
+        <button id="cta-map" class="btn-cta btn-cta-secondary" data-i18n="cta.bottom_back_to_map">返回全景地图 ↑</button>
+      </div>
+    </section>
+
+    <!-- Floating section nav (right side) -->
+    <nav class="section-nav" id="section-nav">
+      <a href="#engine-container" class="section-nav-dot active" title="引擎地图" data-i18n-attr="title:nav.section_nav_engine"></a>
+      <a href="#agent-loop-section" class="section-nav-dot" title="Agent Loop" data-i18n-attr="title:nav.section_nav_agent_loop"></a>
+      <a href="#arch-section" class="section-nav-dot" title="架构探索器" data-i18n-attr="title:nav.section_nav_arch"></a>
+      <a href="#tool-grid-section" class="section-nav-dot" title="工具系统" data-i18n-attr="title:nav.section_nav_tools"></a>
+      <a href="#command-catalog-section" class="section-nav-dot" title="命令目录" data-i18n-attr="title:nav.section_nav_commands"></a>
+      <a href="#hidden-features-section" class="section-nav-dot" title="隐藏功能" data-i18n-attr="title:nav.section_nav_hidden"></a>
+      <a href="#dataflow-section" class="section-nav-dot" title="深度解析" data-i18n-attr="title:nav.section_nav_dataflow"></a>
+    </nav>
+
+  </div>
+
+  <!-- ==================== DETAIL PANEL (slides in on node click) ==================== -->
+  <div id="detail-panel" class="panel hidden">
+    <button id="panel-close" class="panel-close-btn">&times;</button>
+    <div id="panel-content"></div>
+  </div>
+
+  <!-- ==================== CHAPTER READER VIEW ==================== -->
+  <div id="reader" class="view">
+    <nav id="sidebar">
+      <div class="sidebar-header">
+        <!-- 返回全景按钮已移除，顶部导航栏已覆盖此功能 -->
+        <h2 data-i18n="reader.toc_title">目录</h2>
+        <input type="text" id="toc-search" placeholder="搜索章节和正文内容..." autocomplete="off" data-i18n-attr="placeholder:search.toc_placeholder" />
+      </div>
+      <div id="search-results" class="search-results hidden"></div>
+      <div id="toc"></div>
+    </nav>
+    <main id="chapter-content">
+      <div id="reading-progress" class="reading-progress"></div>
+      <div id="chapter-nav-top" class="chapter-nav">
+        <button id="prev-chapter" class="chapter-nav-btn" disabled data-i18n="reader.prev_chapter">← 上一章</button>
+        <span id="chapter-position"></span>
+        <button id="next-chapter" class="chapter-nav-btn" disabled data-i18n="reader.next_chapter">下一章 →</button>
+      </div>
+      <div id="chapter-body"></div>
+      <div id="chapter-nav-bottom" class="chapter-nav">
+        <button id="prev-chapter-bottom" class="chapter-nav-btn" disabled data-i18n="reader.prev_chapter">← 上一章</button>
+        <span id="chapter-position-bottom"></span>
+        <button id="next-chapter-bottom" class="chapter-nav-btn" disabled data-i18n="reader.next_chapter">下一章 →</button>
+      </div>
+    </main>
+    <aside id="chapter-toc-panel" class="chapter-toc-panel"></aside>
+  </div>
+
+  <!-- ==================== CHART GALLERY VIEW ==================== -->
+  <div id="gallery" class="view">
+    <div id="gallery-container"></div>
+  </div>
+
+  <!-- ==================== INSPIRATION LAB VIEW ==================== -->
+  <div id="inspiration" class="view">
+    <div id="inspiration-container"></div>
+  </div>
+
+  <!-- ==================== NAVIGATION BAR ==================== -->
+  <nav id="topnav">
+    <div class="nav-left">
+      <!-- Mobile TOC drawer 开关（<=600px 下显示；其他时候隐藏） -->
+      <button id="mobile-toc-toggle" class="nav-btn mobile-only" title="章节目录" aria-label="打开目录" aria-expanded="false" aria-controls="sidebar" data-i18n-attr="title:nav.mobile_toc_title;aria-label:nav.mobile_toc_aria">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <button id="nav-home" class="nav-btn" title="全景地图" data-i18n-attr="title:nav.panorama_title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+        <span data-i18n="nav.panorama">全景</span>
+      </button>
+      <button id="nav-reader" class="nav-btn" title="章节阅读" data-i18n-attr="title:nav.reader_title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+        <span data-i18n="nav.reader">阅读</span>
+      </button>
+      <!-- 画廊按钮已移除（内部审图工具不面向读者） -->
+      <button id="nav-inspiration" class="nav-btn" title="灵感实验室" data-i18n-attr="title:nav.inspiration_title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        <span data-i18n="nav.inspiration">灵感</span>
+      </button>
+      <!-- 序章入口已移除，内容在阅读器 Part 0 -->
+    </div>
+    <div class="nav-center">
+      <span id="breadcrumb" data-i18n="nav.breadcrumb">Claude Code 2.1.88 · 架构全景</span>
+    </div>
+    <div class="nav-right">
+      <button id="metaphor-toggle" class="metaphor-toggle" title="切换比喻体系" data-i18n-attr="title:metaphor.toggle_title">
+        <span id="metaphor-icon">🏙</span>
+        <span id="metaphor-label" data-i18n="metaphor.label_city">城市</span>
+      </button>
+      <span class="version-badge" data-i18n="hero.meta_version">v2.1.88</span>
+      <button id="shortcuts-hint" class="shortcuts-btn" title="键盘快捷键" data-i18n-attr="title:shortcuts.btn_title">⌨</button>
+    </div>
+  </nav>
+
+  <!-- Keyboard shortcuts modal -->
+  <div id="shortcuts-modal" class="shortcuts-modal hidden">
+    <div class="shortcuts-content">
+      <h3 data-i18n="shortcuts.title">键盘快捷键</h3>
+      <div class="shortcut-row"><kbd>1</kbd> <span data-i18n="shortcuts.panorama_map">全景地图</span></div>
+      <div class="shortcut-row"><kbd>2</kbd> <span data-i18n="shortcuts.chapter_reading">章节阅读</span></div>
+      <div class="shortcut-row"><kbd>3</kbd> <span data-i18n="shortcuts.chart_gallery">图表画廊</span></div>
+      <div class="shortcut-row"><kbd>4</kbd> <span data-i18n="shortcuts.inspiration_lab">灵感实验室</span></div>
+      <div class="shortcut-row"><kbd>←</kbd> <kbd>→</kbd> <span data-i18n="shortcuts.prev_next_chapter">上/下一章</span></div>
+      <div class="shortcut-row"><kbd>Esc</kbd> <span data-i18n="shortcuts.back_close">返回 / 关闭面板</span></div>
+      <div class="shortcut-row"><kbd data-i18n="shortcuts.ctrl_scroll">Ctrl+滚轮</kbd> <span data-i18n="shortcuts.zoom_map">缩放地图</span></div>
+      <button class="shortcuts-close">&times;</button>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script src="js/lib/highlight.min.js"></script>
+  <script src="js/lib/marked.min.js"></script>
+  <script src="js/lib/mermaid.min.js"></script>
+  <script>mermaid.initialize({startOnLoad:false, theme:'base', securityLevel:'loose', flowchart:{curve:'basis', padding:20, nodeSpacing:40, rankSpacing:60, htmlLabels:true, useMaxWidth:false}, themeVariables:{primaryColor:'#fbf9f4',primaryBorderColor:'#c77d2e',primaryTextColor:'#2b2a27',lineColor:'#5a5a5a',secondaryColor:'#efeae1',tertiaryColor:'#f5f2ed',fontFamily:'-apple-system, BlinkMacSystemFont, PingFang SC, Noto Sans SC, sans-serif',fontSize:'18px',edgeLabelBackground:'#f5f2ed'}});</script>
+  <script src="js/data.js"></script>
+  <script src="js/tools-data.js"></script>
+  <script src="js/engine.js"></script>
+  <script src="js/chart-embed.js"></script>
+  <script src="js/glossary.js?v=20260413"></script>
+  <script src="js/gallery.js"></script>
+  <!-- review-mode.js 仅限开发环境，生产环境不加载 -->
+  <script src="js/inspiration-lab.js"></script>
+  <script src="js/i18n.js?v=20260414"></script>
+  <script src="js/app.js?v=20260414"></script>
+  <!-- SVG 构建时 bundle（6 张 panorama 流程图），svg-inline.js 优先查该 bundle -->
+  <script src="js/svg-inline-data.js?v=20260420"></script>
+  <script src="js/svg-inline.js?v=20260420b"></script>
+  <!-- difficulty-map.js 已弃用，难度信息改为 TOC 色点 -->
+
+  <!-- ===== V4 Hero 动画引擎 =====
+       电影叙事开场：黑底终端打字 → 五支柱辐射 → 沉降为暖色最终态
+       只在 #welcome 首次激活时播放一次 -->
+  <script>
+  (function () {
+    'use strict';
+
+    var stage = document.getElementById('v4h-stage');
+    if (!stage) return; // 安全退出
+
+    var promptSign = document.getElementById('v4h-promptSign');
+    var typedCmd = document.getElementById('v4h-typedCmd');
+    var sceneTerminal = document.getElementById('v4h-sceneTerminal');
+    var sceneFinal = document.getElementById('v4h-sceneFinal');
+    var liveIndicator = document.getElementById('v4h-liveIndicator');
+    var skipBtn = document.getElementById('v4h-skipBtn');
+    var pillarEls = stage.querySelectorAll('.v4h-pillar');
+    var pillarLines = stage.querySelectorAll('.v4h-pillar-line');
+
+    var timers = [];
+    var finished = false;
+    var heroPlayed = false; // 是否已经播放过
+
+    function setTimer(fn, delay) {
+      var id = setTimeout(fn, delay);
+      timers.push(id);
+      return id;
+    }
+
+    function clearAllTimers() {
+      timers.forEach(function (id) { clearTimeout(id); });
+      timers = [];
+    }
+
+    // 计算五支柱位置（五边形围绕中心）
+    function positionPillars() {
+      var w = stage.offsetWidth || window.innerWidth;
+      var h = stage.offsetHeight || window.innerHeight;
+
+      var radius;
+      if (w < 768) {
+        radius = Math.min(w, h) * 0.32;
+      } else if (w < 1024) {
+        radius = Math.min(w, h) * 0.34;
+      } else {
+        radius = Math.min(w, h) * 0.32;
+      }
+
+      var angles = [-90, -18, 54, 126, 198];
+      pillarEls.forEach(function (el, i) {
+        var a = angles[i] * Math.PI / 180;
+        el.dataset.tx = Math.cos(a) * radius;
+        el.dataset.ty = Math.sin(a) * radius;
+      });
+    }
+
+    positionPillars();
+    window.addEventListener('resize', positionPillars);
+
+    // ---------- Phase 1: 终端打字 ----------
+    function runPhase1(onDone) {
+      setTimer(function () {
+        promptSign.classList.add('v4h-visible');
+      }, 300);
+
+      var cmd = 'claude';
+      var startType = 600;
+      var charInterval = 90;
+
+      for (var i = 0; i < cmd.length; i++) {
+        (function (idx) {
+          setTimer(function () {
+            typedCmd.textContent = cmd.substring(0, idx + 1);
+          }, startType + idx * charInterval);
+        })(i);
+      }
+
+      setTimer(function () {
+        if (onDone) onDone();
+      }, 1500);
+    }
+
+    // ---------- Phase 2: 五支柱辐射 ----------
+    function runPhase2(onDone) {
+      pillarLines.forEach(function (line, i) {
+        setTimer(function () {
+          line.classList.add('v4h-active');
+        }, i * 300 + 50);
+      });
+
+      pillarEls.forEach(function (el, i) {
+        setTimer(function () {
+          var tx = parseFloat(el.dataset.tx || 0);
+          var ty = parseFloat(el.dataset.ty || 0);
+          el.style.transform = 'translate(calc(-50% + ' + tx + 'px), calc(-50% + ' + ty + 'px))';
+          el.classList.add('v4h-active');
+        }, i * 300);
+      });
+
+      setTimer(function () {
+        if (onDone) onDone();
+      }, 2500);
+    }
+
+    // ---------- Phase 3: 沉降为最终态 ----------
+    function runPhase3() {
+      sceneTerminal.classList.add('v4h-fading');
+      stage.classList.add('v4h-phase-final');
+
+      setTimer(function () {
+        sceneFinal.classList.add('v4h-active');
+        if (liveIndicator) liveIndicator.style.opacity = '1';
+      }, 800);
+
+      setTimer(function () {
+        skipBtn.classList.add('v4h-hidden');
+        finished = true;
+        heroPlayed = true;
+      }, 2000);
+    }
+
+    // ---------- 编排 ----------
+    function runFullSequence() {
+      runPhase1(function () {
+        runPhase2(function () {
+          runPhase3();
+        });
+      });
+    }
+
+    // ---------- 跳到最终态 ----------
+    function skipToFinal() {
+      if (finished) return;
+      clearAllTimers();
+
+      promptSign.classList.add('v4h-visible');
+      typedCmd.textContent = 'claude';
+      sceneTerminal.classList.add('v4h-fading');
+      stage.classList.add('v4h-phase-final');
+
+      setTimeout(function () {
+        sceneFinal.classList.add('v4h-active');
+        if (liveIndicator) liveIndicator.style.opacity = '1';
+        skipBtn.classList.add('v4h-hidden');
+        finished = true;
+        heroPlayed = true;
+      }, 200);
+    }
+
+    // 直接设置最终态（无动画）
+    function setFinalStateImmediate() {
+      promptSign.classList.add('v4h-visible');
+      typedCmd.textContent = 'claude';
+      sceneTerminal.classList.add('v4h-fading');
+      stage.classList.add('v4h-phase-final');
+      sceneFinal.classList.add('v4h-active');
+      if (liveIndicator) liveIndicator.style.opacity = '1';
+      skipBtn.classList.add('v4h-hidden');
+      finished = true;
+    }
+
+    skipBtn.addEventListener('click', skipToFinal);
+
+    // Esc / Space / Enter 也可跳过
+    document.addEventListener('keydown', function (e) {
+      if (finished) return;
+      // 只在 welcome 视图时响应
+      var welcomeView = document.getElementById('welcome');
+      if (!welcomeView || !welcomeView.classList.contains('active')) return;
+      if (e.key === 'Escape' || e.key === ' ' || e.key === 'Enter') {
+        skipToFinal();
+      }
+    });
+
+    // -- CTA 按钮事件 --
+    var ctaRead = document.getElementById('v4h-cta-read');
+    var ctaRandom = document.getElementById('v4h-cta-random');
+
+    if (ctaRead) {
+      ctaRead.addEventListener('click', function () {
+        // 调用 app.js 暴露的 showView（通过模拟点击导航按钮实现）
+        var readerBtn = document.getElementById('nav-reader');
+        if (readerBtn) readerBtn.click();
+      });
+    }
+
+    if (ctaRandom) {
+      ctaRandom.addEventListener('click', function () {
+        // 从 BOOK_STRUCTURE 随机选一章
+        if (typeof BOOK_STRUCTURE !== 'undefined') {
+          var allChapters = [];
+          BOOK_STRUCTURE.forEach(function (part) {
+            if (part.chapters) {
+              part.chapters.forEach(function (ch) {
+                allChapters.push(ch);
+              });
+            }
+          });
+          if (allChapters.length > 0) {
+            var randomCh = allChapters[Math.floor(Math.random() * allChapters.length)];
+            // 先切到 reader 视图
+            var readerBtn = document.getElementById('nav-reader');
+            if (readerBtn) readerBtn.click();
+            // 通过点击 TOC 里对应的章节条目来加载
+            var tocItem = document.querySelector('.toc-chapter[data-chapter-id="' + randomCh.id + '"]');
+            if (tocItem) {
+              // 确保父 part 展开
+              var partDiv = tocItem.closest('.toc-part');
+              if (partDiv && !partDiv.classList.contains('expanded')) {
+                partDiv.classList.add('expanded');
+              }
+              tocItem.click();
+            }
+          }
+        }
+      });
+    }
+
+    // -- 动画触发时机控制 --
+    // 监听 #welcome 视图的 class 变化，确保只播放一次
+    var welcomeView = document.getElementById('welcome');
+
+    function tryPlayHero() {
+      if (heroPlayed) {
+        // 已经播放过，直接显示最终态
+        setFinalStateImmediate();
+        return;
+      }
+      // 检查 prefers-reduced-motion
+      if (window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        setFinalStateImmediate();
+        heroPlayed = true;
+        return;
+      }
+      // 播放完整动画
+      requestAnimationFrame(function () {
+        requestAnimationFrame(runFullSequence);
+      });
+    }
+
+    // 首次加载时 welcome 已经是 active 的
+    if (welcomeView && welcomeView.classList.contains('active')) {
+      tryPlayHero();
+    }
+
+    // 监听视图切换：如果用户从别的视图切回 welcome，检查是否需要重播
+    if (welcomeView) {
+      new MutationObserver(function (mutations) {
+        mutations.forEach(function (m) {
+          if (m.attributeName === 'class' && welcomeView.classList.contains('active')) {
+            if (heroPlayed) {
+              setFinalStateImmediate();
+            }
+          }
+        });
+      }).observe(welcomeView, { attributes: true, attributeFilter: ['class'] });
+    }
+
+  })();
+  </script>
+
+  <!-- ===== 主题三态切换器 =====
+       在 app.js 之后运行，确保 #topnav 已渲染完成。
+       三态：dark（强制暗色）/ light（强制亮色）/ auto（跟随系统）
+       持久化：localStorage['cc-theme']
+       跨 Tab 同步：storage 事件监听 -->
+  <script>
+    (function() {
+      'use strict';
+
+      /* ---- 1. 工具函数 ---- */
+
+      /** 读取当前生效的主题（考虑 auto 回退到系统偏好） */
+      function getEffectiveTheme() {
+        var stored = localStorage.getItem('cc-theme') || 'warm';
+        if (stored === 'auto') {
+          return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'warm';
+        }
+        return stored;
+      }
+
+      /** 把 theme 应用到 <html> data-theme 属性 */
+      function applyTheme(theme) {
+        if (theme === 'auto') {
+          document.documentElement.removeAttribute('data-theme');
+        } else {
+          document.documentElement.setAttribute('data-theme', theme);
+        }
+      }
+
+      /** 把 theme 写入 localStorage 并应用 */
+      function setTheme(theme) {
+        try { localStorage.setItem('cc-theme', theme); } catch(e) {}
+        applyTheme(theme);
+        updateSwitcherUI(theme);
+      }
+
+      /** 更新切换器按钮的 active 状态 */
+      function updateSwitcherUI(theme) {
+        var btns = document.querySelectorAll('.cc-theme-btn');
+        btns.forEach(function(btn) {
+          btn.classList.toggle('active', btn.dataset.theme === theme);
+        });
+      }
+
+      /* ---- 2. 注入切换器 HTML ---- */
+
+      function injectSwitcher() {
+        var topnav = document.querySelector('#topnav .nav-right') ||
+                     document.querySelector('#topnav .nav-actions') ||
+                     document.querySelector('#topnav') ||
+                     document.querySelector('nav');
+        if (!topnav) {
+          // 如果没找到导航容器，挂到 body 右上角
+          var floatWrapper = document.createElement('div');
+          floatWrapper.style.cssText = 'position:fixed;top:12px;right:16px;z-index:9999;';
+          floatWrapper.innerHTML = buildSwitcherHTML();
+          document.body.appendChild(floatWrapper);
+          return floatWrapper;
+        }
+        var wrapper = document.createElement('div');
+        wrapper.innerHTML = buildSwitcherHTML();
+        topnav.appendChild(wrapper.firstElementChild);
+        return topnav;
+      }
+
+      function buildSwitcherHTML() {
+        var isEn = false;
+        try { isEn = (localStorage.getItem('cc-locale')||'zh')==='en'; } catch(e) {}
+        var L = isEn
+          ? { box: 'Switch theme', boxAria: 'Theme switcher',
+              warm: 'Editorial (warm)', warmAria: 'Editorial mode',
+              dark: 'Dark', darkAria: 'Dark mode',
+              light: 'Light', lightAria: 'Light mode',
+              auto: 'Follow system', autoAria: 'Follow system' }
+          : { box: '切换显示主题', boxAria: '主题切换器',
+              warm: '编辑感（暖色）', warmAria: '编辑感模式',
+              dark: '暗色模式', darkAria: '暗色模式',
+              light: '亮色模式', lightAria: '亮色模式',
+              auto: '跟随系统', autoAria: '跟随系统' };
+        return [
+          '<div class="cc-theme-switcher" title="'+L.box+'" aria-label="'+L.boxAria+'">',
+          '  <button class="cc-theme-btn" data-theme="warm"  title="'+L.warm+'" aria-label="'+L.warmAria+'">📖</button>',
+          '  <button class="cc-theme-btn" data-theme="dark"  title="'+L.dark+'" aria-label="'+L.darkAria+'">🌙</button>',
+          '  <button class="cc-theme-btn" data-theme="light" title="'+L.light+'" aria-label="'+L.lightAria+'">☀️</button>',
+          '  <button class="cc-theme-btn" data-theme="auto"  title="'+L.auto+'" aria-label="'+L.autoAria+'">⚙️</button>',
+          '</div>'
+        ].join('');
+      }
+
+      /* ---- 3. 绑定点击事件 ---- */
+
+      function bindEvents() {
+        document.addEventListener('click', function(e) {
+          var btn = e.target.closest('.cc-theme-btn');
+          if (btn && btn.dataset.theme) {
+            setTheme(btn.dataset.theme);
+          }
+        });
+      }
+
+      /* ---- 4. 跨 Tab 同步 ---- */
+
+      function bindStorageSync() {
+        window.addEventListener('storage', function(e) {
+          if (e.key === 'cc-theme' && e.newValue) {
+            applyTheme(e.newValue);
+            updateSwitcherUI(e.newValue);
+          }
+        });
+      }
+
+      /* ---- 5. 系统偏好变化时（auto 模式）自动刷新 ---- */
+
+      function bindSystemPreferenceChange() {
+        var mq = window.matchMedia('(prefers-color-scheme: light)');
+        mq.addEventListener('change', function() {
+          var current = localStorage.getItem('cc-theme') || 'warm';
+          if (current === 'auto') {
+            applyTheme('auto'); // 触发媒体查询重新计算
+          }
+        });
+      }
+
+      /* ---- 6. 初始化 ---- */
+
+      function init() {
+        var currentTheme = localStorage.getItem('cc-theme') || 'warm';
+        applyTheme(currentTheme); // 二次确认（FOUC 脚本已做一次，这里补全 auto 逻辑）
+        injectSwitcher();
+        updateSwitcherUI(currentTheme);
+        bindEvents();
+        bindStorageSync();
+        bindSystemPreferenceChange();
+      }
+
+      // DOM Ready 后执行
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+
+    })();
+  </script>
+
+  <!-- ===== 语言切换器 =====
+       两态：zh（中文）/ en（英文）
+       持久化：localStorage['cc-locale']
+       点击切换后刷新页面（BOOK_BASE 在 app.js 启动时读取 locale 决定）
+       ================================================== -->
+  <script>
+    (function() {
+      'use strict';
+
+      function getLocale() {
+        try { return localStorage.getItem('cc-locale') || 'zh'; } catch(e) { return 'zh'; }
+      }
+
+      function setLocale(locale) {
+        try { localStorage.setItem('cc-locale', locale); } catch(e) {}
+        // 优先：原地切换（无 reload）—— i18n.js 切换 DOM 文案 + app.js onLocaleChange
+        // 重建 TOC + 如在 reader 则 reload 当前章节 + 更新按钮 active 状态
+        if (window.i18n && typeof window.i18n.switch === 'function') {
+          window.i18n.switch(locale).then(function() {
+            if (typeof window.__appOnLocaleChange === 'function') {
+              window.__appOnLocaleChange();
+            } else {
+              window.location.reload();
+            }
+            // 更新按钮 active 状态（切完成后，而非切之前 —— 避免切换失败状态错位）
+            updateUI(locale);
+          });
+        } else {
+          window.location.reload();
+        }
+      }
+
+      function updateUI(locale) {
+        var btns = document.querySelectorAll('.cc-lang-btn');
+        btns.forEach(function(btn) {
+          btn.classList.toggle('active', btn.dataset.locale === locale);
+        });
+      }
+
+      function buildHTML() {
+        var isEn = false;
+        try { isEn = (localStorage.getItem('cc-locale')||'zh')==='en'; } catch(e) {}
+        var boxTitle = isEn ? 'Switch language' : '切换语言';
+        var boxAria = isEn ? 'Language switcher' : '语言切换器';
+        var zhLabel = isEn ? 'Switch to Chinese' : '切换到中文';
+        var enLabel = isEn ? 'English' : 'English';
+        var zhBtn = isEn ? 'Chinese' : '中文';
+        return [
+          '<div class="cc-lang-switcher" title="'+boxTitle+'" aria-label="'+boxAria+'">',
+          '  <button class="cc-lang-btn" data-locale="zh" title="'+zhBtn+'" aria-label="'+zhLabel+'">中</button>',
+          '  <button class="cc-lang-btn" data-locale="en" title="'+enLabel+'" aria-label="Switch to English">EN</button>',
+          '</div>'
+        ].join('');
+      }
+
+      function inject() {
+        // 跟主题切换器并排，放在主题切换器之前
+        var themeSwitcher = document.querySelector('.cc-theme-switcher');
+        var wrapper = document.createElement('div');
+        wrapper.innerHTML = buildHTML();
+        var el = wrapper.firstElementChild;
+        if (themeSwitcher && themeSwitcher.parentNode) {
+          themeSwitcher.parentNode.insertBefore(el, themeSwitcher);
+        } else {
+          // fallback：挂到 body 右上角
+          var float = document.createElement('div');
+          float.style.cssText = 'position:fixed;top:12px;right:120px;z-index:9999;';
+          float.appendChild(el);
+          document.body.appendChild(float);
+        }
+      }
+
+      function bindEvents() {
+        document.addEventListener('click', function(e) {
+          var btn = e.target.closest('.cc-lang-btn');
+          if (btn && btn.dataset.locale) {
+            var cur = getLocale();
+            if (btn.dataset.locale !== cur) setLocale(btn.dataset.locale);
+          }
+        });
+      }
+
+      function init() {
+        // 等主题切换器先注入
+        setTimeout(function() {
+          inject();
+          updateUI(getLocale());
+          bindEvents();
+        }, 50);
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+</body>
+</html>

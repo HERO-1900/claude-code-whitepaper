@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-2A-001 代码库五区域分布图 — Claude Code 白皮书</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--bg2:#0f172a;--bg3:#1e293b;--txt:#f1f5f9;--txt2:#cbd5e1;--txt3:#94a3b8;--brd:rgba(148,163,184,0.2);--card-bg:rgba(15,23,42,0.85);--ctrl-bg:rgba(30,41,59,0.9);--node-bg:#020617;--grid-stroke:#1e293b;--block-border:rgba(148,163,184,0.35);--num-stat:#f1f5f9;}
+[data-theme="warm"]{--bg:#f8f6f3;--bg2:#f1ede8;--bg3:#e8e2d9;--txt:#1e293b;--txt2:#334155;--txt3:#64748b;--brd:rgba(100,116,139,0.25);--card-bg:rgba(241,237,232,0.9);--ctrl-bg:rgba(241,237,232,0.95);--node-bg:#fbf9f6;--grid-stroke:#d8cfc2;--block-border:rgba(100,116,139,0.45);--num-stat:#1e293b;}
+[data-theme="light"]{--bg:#ffffff;--bg2:#f8fafc;--bg3:#f1f5f9;--txt:#0f172a;--txt2:#334155;--txt3:#64748b;--brd:rgba(100,116,139,0.2);--card-bg:rgba(248,250,252,0.95);--ctrl-bg:rgba(248,250,252,0.95);--node-bg:#ffffff;--grid-stroke:#e2e8f0;--block-border:rgba(100,116,139,0.4);--num-stat:#0f172a;}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--txt);min-height:100vh;transition:background .3s,color .3s}
+.page{max-width:1320px;margin:0 auto;padding:32px 20px}
+.hdr{display:flex;align-items:flex-start;gap:12px;margin-bottom:24px}
+.pulse{width:12px;height:12px;border-radius:50%;background:#a78bfa;animation:pulse 2s infinite;flex-shrink:0;margin-top:6px}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.85)}}
+h1{font-size:20px;font-weight:700;color:var(--txt)}
+.subtitle{font-size:11px;color:var(--txt2);margin-top:6px}
+.diagram-card{background:var(--card-bg);border:1px solid var(--brd);border-radius:14px;padding:20px 16px;margin-bottom:20px;overflow:hidden}
+.svg-bg{fill:var(--bg)}.grid-line{stroke:var(--grid-stroke)}.node-bg{fill:var(--node-bg)}.node-title{fill:var(--txt)}.node-meta{fill:var(--txt2)}
+.stat-val{fill:var(--txt)}
+.block-border{stroke:var(--block-border)}
+[data-theme="light"] .svg-filter-glow{filter:none!important}
+[data-theme="warm"] .svg-filter-glow{filter:none!important}
+[data-theme="light"] .node-meta,[data-theme="warm"] .node-meta{fill:var(--txt2)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}
+@media (max-width:820px){.cards{grid-template-columns:1fr}}
+.card{background:var(--card-bg);border:1px solid var(--brd);border-radius:10px;padding:16px}
+.card-hdr{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.card h3{font-size:11px;font-weight:600;color:var(--txt)}
+.card ul{list-style:none;font-size:10px;color:var(--txt2);line-height:1.8;padding-left:0;margin:0}
+.card ul li{margin-bottom:6px}
+footer{margin-top:20px;text-align:center;font-size:10px;color:var(--txt3)}
+.controls{position:fixed;top:14px;right:14px;display:flex;flex-direction:column;gap:6px;z-index:100}
+.ctrl{background:var(--ctrl-bg);border:1px solid var(--brd);border-radius:6px;padding:6px 12px;font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--txt);cursor:pointer;transition:all .2s}
+.ctrl:hover{border-color:#a78bfa;color:#a78bfa}
+</style>
+</head>
+<body>
+<div class="controls">
+  <button class="ctrl" onclick="window.cycleTheme()">Theme</button>
+  <button class="ctrl" onclick="window.toggleLang()">EN/中</button>
+</div>
+<div class="page">
+  <div class="hdr">
+    <div class="pulse"></div>
+    <div>
+      <h1><span class="lz">代码库五区域分布图</span><span class="le">Codebase Five-Zone Map</span></h1>
+      <p class="subtitle"><span class="lz">1,808 个源码文件按功能职责分为五大区域 — Claude Code 2.1.88</span><span class="le">1,808 source files organized into 5 functional zones — Claude Code 2.1.88</span></p>
+    </div>
+  </div>
+  <div class="diagram-card">
+    <svg viewBox="0 0 1140 680" width="100%" style="display:block" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="g2a1" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" class="grid-line" stroke-width="0.5"/>
+        </pattern>
+        <filter id="glow-heart"><feDropShadow stdDeviation="6" flood-color="#fb7185" flood-opacity="0.4"/></filter>
+        <filter id="glow-limbs"><feDropShadow stdDeviation="4" flood-color="#a78bfa" flood-opacity="0.3"/></filter>
+        <filter id="glow-skin"><feDropShadow stdDeviation="4" flood-color="#22d3ee" flood-opacity="0.3"/></filter>
+        <filter id="glow-skel"><feDropShadow stdDeviation="4" flood-color="#fbbf24" flood-opacity="0.3"/></filter>
+        <filter id="glow-dna"><feDropShadow stdDeviation="4" flood-color="#34d399" flood-opacity="0.3"/></filter>
+      </defs>
+      <rect width="1140" height="680" class="svg-bg"/>
+      <rect width="1140" height="680" fill="url(#g2a1)"/>
+
+      <!-- ─── ROW 1: Limbs | Heart | Skin ─── -->
+
+      <!-- LIMBS (violet, x=20..390, y=20..300) -->
+      <rect x="20" y="20" width="370" height="280" rx="12" class="node-bg"/>
+      <rect x="20" y="20" width="370" height="280" rx="12" fill="rgba(167,139,250,0.14)" stroke="#a78bfa" stroke-width="1.8" class="svg-filter-glow" filter="url(#glow-limbs)"/>
+      <text x="40" y="48" fill="#a78bfa" font-size="15" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">手脚区 / LIMBS ZONE</tspan><tspan class="le">LIMBS ZONE</tspan></text>
+      <text x="40" y="100" font-size="40" font-weight="700" fill="#a78bfa" font-family="JetBrains Mono,monospace">515</text>
+      <text x="160" y="100" font-size="16" font-family="JetBrains Mono,monospace" class="node-meta"><tspan class="lz">个文件</tspan><tspan class="le"> files</tspan></text>
+      <text x="40" y="128" font-size="13" font-family="JetBrains Mono,monospace" class="node-meta"><tspan class="lz">执行层：工具实现 / 命令定义 / 服务模块</tspan><tspan class="le">Execution: tools, commands, services</tspan></text>
+      <rect x="40" y="144" width="330" height="140" rx="8" fill="rgba(167,139,250,0.08)" stroke="#a78bfa" stroke-opacity="0.5" stroke-width="1"/>
+      <text x="56" y="170" fill="#a78bfa" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">tools/</text>
+      <text x="176" y="170" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace" class="stat-val">184 <tspan class="lz">文件</tspan><tspan class="le">files</tspan> · 43 <tspan class="lz">工具</tspan><tspan class="le">tools</tspan></text>
+      <text x="56" y="198" fill="#a78bfa" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">commands/</text>
+      <text x="176" y="198" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace" class="stat-val">189 <tspan class="lz">文件</tspan><tspan class="le">files</tspan> · 101 <tspan class="lz">命令</tspan><tspan class="le">cmds</tspan></text>
+      <text x="56" y="226" fill="#a78bfa" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">services/</text>
+      <text x="176" y="226" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace" class="stat-val">130 <tspan class="lz">文件</tspan><tspan class="le">files</tspan> · 30+ <tspan class="lz">模块</tspan><tspan class="le">mods</tspan></text>
+      <text x="56" y="254" fill="#a78bfa" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">tasks/</text>
+      <text x="176" y="254" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace" class="stat-val">12 <tspan class="lz">文件</tspan><tspan class="le">files</tspan></text>
+
+      <!-- HEART (rose, center, x=405..735, y=20..300) -->
+      <rect x="405" y="20" width="330" height="280" rx="12" class="node-bg"/>
+      <rect x="405" y="20" width="330" height="280" rx="12" fill="rgba(251,113,133,0.14)" stroke="#fb7185" stroke-width="2.2" class="svg-filter-glow" filter="url(#glow-heart)"/>
+      <text x="570" y="48" fill="#fb7185" font-size="15" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">心脏区 / HEART ZONE</tspan><tspan class="le">HEART ZONE</tspan></text>
+      <text x="570" y="82" font-size="30" font-weight="700" fill="#fb7185" text-anchor="middle" font-family="JetBrains Mono,monospace">7</text>
+      <text x="570" y="104" font-size="13" text-anchor="middle" font-family="JetBrains Mono,monospace" class="node-meta"><tspan class="lz">个核心文件 · ~5,000 LOC</tspan><tspan class="le">core files · ~5,000 LOC</tspan></text>
+      <circle cx="570" cy="178" r="48" fill="rgba(251,113,133,0.12)" stroke="#fb7185" stroke-width="2" stroke-dasharray="5,4"/>
+      <circle cx="570" cy="178" r="32" fill="rgba(251,113,133,0.22)" stroke="#fb7185" stroke-width="1.8"/>
+      <text x="570" y="176" fill="#fb7185" font-size="15" font-weight="700" text-anchor="middle" font-family="JetBrains Mono,monospace">CORE</text>
+      <text x="570" y="194" fill="#fb7185" font-size="12" text-anchor="middle" font-family="JetBrains Mono,monospace" opacity="0.9">ENGINE</text>
+      <text x="570" y="252" font-size="12" text-anchor="middle" font-family="JetBrains Mono,monospace" class="node-meta">main.tsx · QueryEngine.ts · query.ts</text>
+      <text x="570" y="272" font-size="12" text-anchor="middle" font-family="JetBrains Mono,monospace" class="node-meta">Tool.ts · Task.ts · context.ts · commands.ts</text>
+
+      <!-- SKIN (cyan, x=750..1120, y=20..300) -->
+      <rect x="750" y="20" width="370" height="280" rx="12" class="node-bg"/>
+      <rect x="750" y="20" width="370" height="280" rx="12" fill="rgba(34,211,238,0.14)" stroke="#22d3ee" stroke-width="1.8" class="svg-filter-glow" filter="url(#glow-skin)"/>
+      <text x="770" y="48" fill="#22d3ee" font-size="15" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">皮肤区 / SKIN ZONE</tspan><tspan class="le">SKIN ZONE</tspan></text>
+      <text x="770" y="100" font-size="40" font-weight="700" fill="#22d3ee" font-family="JetBrains Mono,monospace">502</text>
+      <text x="880" y="100" font-size="16" font-family="JetBrains Mono,monospace" class="node-meta"><tspan class="lz">个文件</tspan><tspan class="le"> files</tspan></text>
+      <text x="770" y="128" font-size="13" font-family="JetBrains Mono,monospace" class="node-meta"><tspan class="lz">界面层：React / Ink / 键盘绑定</tspan><tspan class="le">UI: React, Ink, keybindings</tspan></text>
+      <rect x="770" y="144" width="330" height="140" rx="8" fill="rgba(34,211,238,0.08)" stroke="#22d3ee" stroke-opacity="0.5" stroke-width="1"/>
+      <text x="786" y="170" fill="#22d3ee" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">components/</text>
+      <text x="940" y="170" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace" class="stat-val">389 <tspan class="lz">文件</tspan><tspan class="le">files</tspan></text>
+      <text x="786" y="198" fill="#22d3ee" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">ink/</text>
+      <text x="940" y="198" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace" class="stat-val">96 <tspan class="lz">文件</tspan><tspan class="le">files</tspan></text>
+      <text x="786" y="226" fill="#22d3ee" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">screens/</text>
+      <text x="940" y="226" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace" class="stat-val">3 <tspan class="lz">文件</tspan><tspan class="le">files</tspan></text>
+      <text x="786" y="254" fill="#22d3ee" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">keybindings/</text>
+      <text x="940" y="254" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace" class="stat-val">14 <tspan class="lz">文件</tspan><tspan class="le">files</tspan></text>
+
+      <!-- ─── ROW 2: Skeleton | DNA ─── -->
+
+      <!-- SKELETON (amber, x=20..560, y=320..640) -->
+      <rect x="20" y="320" width="540" height="320" rx="12" class="node-bg"/>
+      <rect x="20" y="320" width="540" height="320" rx="12" fill="rgba(251,191,36,0.14)" stroke="#fbbf24" stroke-width="1.8" class="svg-filter-glow" filter="url(#glow-skel)"/>
+      <text x="40" y="350" fill="#fbbf24" font-size="15" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">骨骼区 / SKELETON — 最大区域</tspan><tspan class="le">SKELETON ZONE — LARGEST</tspan></text>
+      <text x="40" y="408" font-size="48" font-weight="700" fill="#fbbf24" font-family="JetBrains Mono,monospace">707</text>
+      <text x="210" y="408" font-size="16" font-family="JetBrains Mono,monospace" class="node-meta"><tspan class="lz">个文件 (37%)</tspan><tspan class="le"> files (37%)</tspan></text>
+      <text x="40" y="436" font-size="13" font-family="JetBrains Mono,monospace" class="node-meta"><tspan class="lz">基础设施：工具函数 / Hooks / 类型 / 状态</tspan><tspan class="le">Infrastructure: utils, hooks, types, state</tspan></text>
+      <rect x="40" y="452" width="500" height="170" rx="8" fill="rgba(251,191,36,0.08)" stroke="#fbbf24" stroke-opacity="0.5" stroke-width="1"/>
+      <text x="56" y="480" fill="#fbbf24" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">utils/</text>
+      <text x="176" y="480" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace" class="stat-val">564 <tspan class="lz">文件 (占全库 30%)</tspan><tspan class="le">files (30% of repo)</tspan></text>
+      <text x="56" y="508" fill="#fbbf24" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">hooks/</text>
+      <text x="176" y="508" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace" class="stat-val">104 <tspan class="lz">文件</tspan><tspan class="le">files</tspan></text>
+      <text x="56" y="536" fill="#fbbf24" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">constants/</text>
+      <text x="176" y="536" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace" class="stat-val">21 <tspan class="lz">文件</tspan><tspan class="le">files</tspan></text>
+      <text x="56" y="564" fill="#fbbf24" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">types/</text>
+      <text x="176" y="564" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace" class="stat-val">11 <tspan class="lz">文件</tspan><tspan class="le">files</tspan></text>
+      <text x="56" y="592" fill="#fbbf24" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">schemas/ · state/</text>
+      <text x="250" y="592" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace" class="stat-val">1 + 6 <tspan class="lz">文件</tspan><tspan class="le">files</tspan></text>
+      <text x="56" y="614" fill="#fbbf24" font-size="12" font-family="JetBrains Mono,monospace" opacity="0.9"><tspan class="lz">基础设施层是所有其他区域的支撑骨架</tspan><tspan class="le">Infrastructure backbone supporting all zones</tspan></text>
+
+      <!-- DNA (emerald, x=580..1120, y=320..640) -->
+      <rect x="580" y="320" width="540" height="320" rx="12" class="node-bg"/>
+      <rect x="580" y="320" width="540" height="320" rx="12" fill="rgba(52,211,153,0.14)" stroke="#34d399" stroke-width="1.8" class="svg-filter-glow" filter="url(#glow-dna)"/>
+      <text x="600" y="350" fill="#34d399" font-size="15" font-weight="700" font-family="JetBrains Mono,monospace"><tspan class="lz">DNA区 / DNA ZONE — 扩展特性</tspan><tspan class="le">DNA ZONE — EXTENSIONS</tspan></text>
+      <text x="600" y="408" font-size="48" font-weight="700" fill="#34d399" font-family="JetBrains Mono,monospace">77</text>
+      <text x="700" y="408" font-size="16" font-family="JetBrains Mono,monospace" class="node-meta"><tspan class="lz">个文件</tspan><tspan class="le"> files</tspan></text>
+      <text x="600" y="436" font-size="13" font-family="JetBrains Mono,monospace" class="node-meta"><tspan class="lz">特性扩展：多智能体 / 语音 / Vim / 插件</tspan><tspan class="le">Features: multi-agent, voice, vim, plugins</tspan></text>
+      <rect x="600" y="452" width="500" height="170" rx="8" fill="rgba(52,211,153,0.08)" stroke="#34d399" stroke-opacity="0.5" stroke-width="1"/>
+      <text x="616" y="480" fill="#34d399" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">bridge/</text>
+      <text x="736" y="480" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace" class="stat-val">31 <tspan class="lz">文件 (Peer/Mirror/Teleport)</tspan><tspan class="le">files (Peer/Mirror/Teleport)</tspan></text>
+      <text x="616" y="508" fill="#34d399" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">coordinator/</text>
+      <text x="736" y="508" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace" class="stat-val">4 · buddy/ 6 · voice/ 1</text>
+      <text x="616" y="536" fill="#34d399" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">vim/</text>
+      <text x="736" y="536" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace" class="stat-val">5 · skills/ 20 · plugins/ 2</text>
+      <text x="616" y="564" fill="#34d399" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">memdir/</text>
+      <text x="736" y="564" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace" class="stat-val">8 <tspan class="lz">文件</tspan><tspan class="le">files</tspan></text>
+      <text x="616" y="614" fill="#34d399" font-size="12" font-family="JetBrains Mono,monospace" opacity="0.9"><tspan class="lz">专项功能基因库，独立演化但依托骨骼区</tspan><tspan class="le">Specialized gene pool, evolves independently</tspan></text>
+
+      <!-- Total bar at bottom -->
+      <rect x="20" y="646" width="1100" height="26" rx="6" fill="rgba(148,163,184,0.1)" class="block-border" stroke-width="1"/>
+      <text x="570" y="664" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace" class="node-meta"><tspan class="lz">总计：1,808 个源码文件 · 512,695 行代码 · Claude Code 2.1.88</tspan><tspan class="le">Total: 1,808 source files · 512,695 lines of code · Claude Code 2.1.88</tspan></text>
+    </svg>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-hdr"><div class="dot" style="background:#fb7185"></div><h3><span class="lz">心脏区与手脚区</span><span class="le">Heart + Limbs Zones</span></h3></div>
+      <ul>
+        <li><span class="lz">• 心脏区：7个核心文件，约5,000行代码，整个引擎的控制中心</span><span class="le">• Heart: 7 core files, ~5,000 LOC — engine control center</span></li>
+        <li><span class="lz">• 手脚区：515文件，含43工具 + 101命令 + 30+服务模块</span><span class="le">• Limbs: 515 files — 43 tools + 101 commands + 30+ services</span></li>
+        <li><span class="lz">• 两区合计：占全库 ~28%</span><span class="le">• Together: ~28% of total codebase</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="dot" style="background:#fbbf24"></div><h3><span class="lz">骨骼区（最大）</span><span class="le">Skeleton Zone (Largest)</span></h3></div>
+      <ul>
+        <li><span class="lz">• 707个文件，占全库37%，所有其他区域的基础设施</span><span class="le">• 707 files, 37% of codebase — pure infrastructure</span></li>
+        <li><span class="lz">• utils/ 独占564文件，覆盖所有通用工具函数</span><span class="le">• utils/ alone has 564 files covering all utilities</span></li>
+        <li><span class="lz">• hooks/ 104文件，React状态逻辑全在此</span><span class="le">• hooks/ 104 files, all React state logic lives here</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="dot" style="background:#34d399"></div><h3><span class="lz">皮肤区与DNA区</span><span class="le">Skin + DNA Zones</span></h3></div>
+      <ul>
+        <li><span class="lz">• 皮肤区：502文件，components/ 389文件是最大子目录</span><span class="le">• Skin: 502 files — components/ is largest subdirectory</span></li>
+        <li><span class="lz">• DNA区：77文件，含bridge/coordinator/buddy等扩展</span><span class="le">• DNA: 77 files — bridge, coordinator, buddy, voice</span></li>
+        <li><span class="lz">• 两区合计：约30%，产品差异化特性实现</span><span class="le">• Together ~30% — product differentiating features</span></li>
+      </ul>
+    </div>
+  </div>
+  <footer>VIS-2A-001 · Claude Code 2.1.88 <span class="lz">白皮书 · 代码库五区域分布图</span><span class="le">Whitepaper · Codebase Five-Zone Map</span> · v5.0</footer>
+</div>
+<script>
+(function(){
+  var themes=['dark','warm','light'],i=0;
+  var stored=localStorage.getItem('vtheme');
+  if(stored){i=themes.indexOf(stored);if(i<0)i=0;}
+  document.documentElement.setAttribute('data-theme',themes[i]);
+  window.cycleTheme=function(){i=(i+1)%3;var t=themes[i];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  var lang=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('lang',lang);
+  window.toggleLang=function(){lang=lang==='zh'?'en':'zh';document.documentElement.setAttribute('lang',lang);localStorage.setItem('vlang',lang);};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

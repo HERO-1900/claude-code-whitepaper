@@ -1,0 +1,980 @@
+[
+  {
+    "chapter": "01_权限系统完全解析",
+    "title": "权限系统完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "为什么 Claude Code 的每一次工具调用都必须经过权限系统？不信任 AI 的判断吗？",
+        "questionEn": "Why must every Claude Code tool call go through the permission system? Don't we trust the AI's judgment?",
+        "answer": "这不是信任问题，而是安全架构的基本原则。AI 模型可能因为提示词注入、理解偏差或用户指令歧义而做出意外操作。权限系统的核心作用是在「AI 想做什么」和「AI 被允许做什么」之间设一道关卡。每次工具调用都会经过四层检查（Killswitch → 服务端规则 → 本地配置 → 用户交互），确保即使 AI 判断失误，也不会执行危险操作。这和银行转账需要二次验证是同一个逻辑。",
+        "answerEn": "This isn't about trust, it's a basic principle of security architecture. AI models can take unexpected actions due to prompt injection, misinterpretation, or ambiguous user instructions. The permission system's core role is to place a checkpoint between 'what the AI wants to do' and 'what the AI is allowed to do.' Every tool call passes four layers of checks (Killswitch → server-side rules → local config → user interaction), ensuring that even if the AI misjudges, it won't execute dangerous operations. The logic is the same as why bank transfers require two-factor verification."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "Killswitch 远程关闭开关的设计意味着 Anthropic 可以随时收回用户权限。这是否构成过度控制？",
+        "questionEn": "The Killswitch remote shutdown design means Anthropic can revoke user permissions at any time. Does this amount to excessive control?",
+        "answer": "这是一个安全与自主权的经典权衡。Killswitch 让 Anthropic 能在发现严重安全漏洞时（比如某个工具被利用来执行恶意代码）远程禁用该功能，保护所有用户。但代价是用户对工具的使用权并非完全自主——Anthropic 保留了「最终否决权」。从工程角度看，这类似于手机厂商可以远程删除恶意 App 的能力。关键问题是透明度：Killswitch 的触发条件和频率是否公开、是否有申诉渠道。",
+        "answerEn": "It's the classic safety-vs-autonomy tradeoff. The Killswitch lets Anthropic remotely disable a feature when they discover a serious security vulnerability (e.g. a tool being exploited to execute malicious code), protecting all users. The cost is that user autonomy over the tool isn't absolute — Anthropic retains the 'final veto.' Engineering-wise, this is like phone vendors being able to remotely remove malicious apps. The key question is transparency: whether the triggers and frequency of Killswitch use are disclosed, and whether there's an appeals channel."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "权限规则的四层检查（远程→服务端→本地→用户）是否存在性能瓶颈？每次工具调用都要走四遍吗？",
+        "questionEn": "Does the four-layer permission check (remote → server → local → user) have a performance bottleneck? Does every tool call have to walk through all four?",
+        "answer": "理论上每次工具调用确实要依次经过四层检查，但实际设计做了大量优化。首先，Killswitch 和服务端规则在会话初始化时就已缓存到本地，不需要每次远程请求。其次，本地配置（allowlist/denylist）是内存中的快速匹配。最昂贵的是「用户交互」层——弹窗询问用户是否允许——但这只在工具首次使用或匹配到敏感规则时触发，用户可以选择「总是允许」来消除后续弹窗。所以四层检查在绝大多数情况下是微秒级操作，不构成性能瓶颈。",
+        "answerEn": "In theory yes — every tool call goes through all four layers — but the design has many optimizations. First, Killswitch and server-side rules are cached locally at session initialization, so no remote request per call. Second, local config (allowlist/denylist) is an in-memory fast match. The most expensive layer is 'user interaction' — popping a dialog to ask permission — but this only fires on a tool's first use or when a sensitive rule matches. Users can choose 'always allow' to suppress future prompts. So the four-layer check is a microsecond-level operation in the vast majority of cases, and isn't a performance bottleneck."
+      }
+    ]
+  },
+  {
+    "chapter": "02_投机执行子系统完全解析",
+    "title": "投机执行子系统完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "投机执行的核心思想是什么？为什么叫「投机」？",
+        "questionEn": "What's the core idea of speculative execution? Why is it called 'speculative'?",
+        "answer": "投机执行的核心是「赌一把」：在 AI 模型还没确认最终决策时，系统就提前执行最可能的操作。比如 AI 正在生成一个文件编辑指令，系统预判它大概率会执行这个编辑，就提前开始准备（读取目标文件、计算差异等）。如果预判正确，用户感受到的延迟大幅减少；如果预判错误，提前做的工作被丢弃，但代价很小。「投机」一词来自 CPU 设计中的投机执行（Speculative Execution）——同样是在确定结果前就提前行动。",
+        "answerEn": "The core idea of speculative execution is 'place a bet': before the AI model has finalized its decision, the system proactively executes the most likely next action. For example, as the AI is generating a file-edit instruction, the system predicts it will likely execute this edit and starts preparing ahead of time (reading the target file, computing the diff, etc.). If the prediction is right, user-perceived latency drops significantly; if wrong, the prefetched work is thrown away at very low cost. The word 'speculative' comes from CPU speculative execution — same idea of acting before the result is certain."
+      },
+      {
+        "level": "extend",
+        "difficulty": 4,
+        "question": "投机执行如何处理有副作用的操作？比如删除文件——总不能「先删了再说」吧？",
+        "questionEn": "How does speculative execution handle side-effect operations? Like deleting a file — you can't just 'delete first and ask later,' right?",
+        "answer": "这是投机执行设计中最关键的约束。系统将工具调用分为两类：只读操作（如读文件、搜索代码）可以安全地投机执行，因为即使预判错误也没有损害；而有副作用的操作（如写文件、删除、执行命令）绝对不能投机执行。系统的策略是：只对「准备阶段」投机，不对「执行阶段」投机。比如预判用户要编辑某文件时，可以提前读取文件内容和计算差异，但绝不会提前写入。这种「只投机准备、不投机执行」的原则确保了安全性。",
+        "answerEn": "This is the key constraint in speculative execution's design. The system splits tool calls into two classes: read-only operations (like reading files, searching code) can be safely speculated on, because a wrong prediction causes no harm; operations with side effects (writing files, deleting, executing commands) absolutely cannot be speculated on. The strategy is: only speculate on the 'preparation stage,' never on the 'execution stage.' For example, when predicting the user wants to edit a file, you can prefetch content and compute the diff, but you never write early. This 'speculate preparation, never speculate execution' rule ensures safety."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "投机执行的预判准确率如果不高，是否会浪费大量计算资源？",
+        "questionEn": "If speculative execution's prediction accuracy isn't high, does it waste large amounts of compute?",
+        "answer": "在 AI 编码助手场景下，投机执行的预判准确率通常很高（大部分工具调用是可预测的——读文件、搜索、编辑），所以资源浪费有限。但更重要的设计考量是：投机执行消耗的是「等待时间里的空闲算力」，而不是额外分配的资源。当 AI 模型还在生成 token 时，CPU 和 I/O 本来就是空闲的，投机执行只是利用了这段空闲。即使预判错误，丢弃的成本几乎为零（只是丢弃了一些文件读取结果），而预判正确时节省的是用户可感知的几百毫秒延迟。",
+        "answerEn": "In AI coding-assistant scenarios, speculative execution's prediction accuracy is usually high (most tool calls are predictable — read files, search, edit), so waste is limited. More importantly, speculative execution consumes 'idle compute during waiting,' not extra-allocated resources. While the AI is still generating tokens, the CPU and I/O are idle anyway; speculation just uses that idle time. Even when predictions are wrong, discard cost is near zero (just throw away some file-read results), while correct predictions save user-perceivable hundreds of milliseconds of latency."
+      }
+    ]
+  },
+  {
+    "chapter": "03_MCP平台完全解析",
+    "title": "MCP 平台完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "MCP（Model Context Protocol）为什么被比喻为「USB 转接口」？",
+        "questionEn": "Why is MCP (Model Context Protocol) compared to a 'USB adapter'?",
+        "answer": "在 MCP 出现之前，每个 AI 工具要连接外部服务（GitHub、数据库、Slack 等），都需要写专门的对接代码——就像早期每种手机都有不同的充电接口。MCP 定义了一个统一的通信协议，任何外部服务只要实现 MCP 接口（写一个 MCP Server），就能被任何支持 MCP 的 AI 工具连接。就像 USB-C 统一了充电口，MCP 统一了 AI 连接外部服务的方式。这降低了生态碎片化，让工具开发者不需要为每个 AI 产品单独适配。",
+        "answerEn": "Before MCP, every AI tool that wanted to connect to external services (GitHub, databases, Slack, etc.) had to write dedicated integration code — like how every early mobile phone had a different charging port. MCP defines a unified communication protocol: any external service that implements the MCP interface (writes an MCP Server) can connect to any MCP-compatible AI tool. Just as USB-C unified charging, MCP unifies how AI connects to external services. This reduces ecosystem fragmentation and saves tool developers from having to adapt separately for each AI product."
+      },
+      {
+        "level": "extend",
+        "difficulty": 4,
+        "question": "MCP 支持 stdio 和 StreamableHTTP 两种传输方式，它们各自适合什么场景？",
+        "questionEn": "MCP supports two transports — stdio and StreamableHTTP — what scenarios suit each?",
+        "answer": "stdio（标准输入输出）是最简单的传输方式——MCP Server 作为一个子进程启动，通过标准输入输出管道与 Claude Code 通信。优点是零配置、本地运行、延迟极低；缺点是只能运行在同一台机器上。适合本地工具如文件系统、数据库操作。StreamableHTTP 则通过 HTTP 协议通信，Server 可以运行在远程服务器上。适合云端服务、需要跨网络访问的场景（如公司内部 API、SaaS 服务）。Claude Code 的设计是：本地工具用 stdio 追求速度，远程服务用 HTTP 追求灵活性。",
+        "answerEn": "stdio (standard input/output) is the simplest transport — the MCP Server launches as a subprocess and communicates with Claude Code via stdio pipes. Pros: zero config, local execution, extremely low latency. Cons: only runs on the same machine. Good for local tools like filesystem or database operations. StreamableHTTP uses HTTP; the Server can run on a remote machine. Good for cloud services and scenarios needing cross-network access (company internal APIs, SaaS services). Claude Code's design: stdio for local tools (pursuing speed), HTTP for remote services (pursuing flexibility)."
+      },
+      {
+        "level": "critical",
+        "difficulty": 5,
+        "question": "MCP 的开放生态是否引入了供应链攻击风险？任何人都能发布 MCP Server。",
+        "questionEn": "Does MCP's open ecosystem introduce supply-chain attack risk? Anyone can publish an MCP Server.",
+        "answer": "是的，这是 MCP 设计中最大的安全隐患之一。任何人都可以编写并分享 MCP Server，用户安装后它就拥有了与 Claude Code 通信的能力。恶意 MCP Server 可以在工具描述中嵌入提示词注入攻击，或在执行工具时窃取用户数据。Claude Code 采取了多层防御：权限系统会审查 MCP 工具调用、用户首次使用需明确授权、Server 来源需声明。但根本问题是：MCP 生态还没有类似 npm/PyPI 的包审查机制和签名验证系统。这是一个「开放性 vs 安全性」的典型权衡——MCP 选择了生态活力，但安全风险需要用户自行承担。",
+        "answerEn": "Yes — this is one of MCP's biggest security risks. Anyone can write and share an MCP Server, and once installed, it has the ability to communicate with Claude Code. A malicious MCP Server can embed prompt-injection attacks in tool descriptions, or steal user data when a tool executes. Claude Code employs layered defenses: the permission system audits MCP tool calls, first-use requires explicit user authorization, and Server origin must be declared. But the fundamental problem is that the MCP ecosystem doesn't yet have package review and signature verification systems like npm/PyPI. This is a classic 'openness vs. security' tradeoff — MCP chose ecosystem vitality, and users bear the security risk."
+      }
+    ]
+  },
+  {
+    "chapter": "04_Hooks子系统完全解析",
+    "title": "Hooks 子系统完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "Hooks 机制让用户能在 AI 执行的特定时刻插入自定义逻辑。这和浏览器的事件监听（addEventListener）有什么异同？",
+        "questionEn": "The Hooks mechanism lets users insert custom logic at specific moments of AI execution. How is it similar to and different from browser event listeners (addEventListener)?",
+        "answer": "核心思想相同——都是「在特定事件发生时执行自定义代码」。浏览器事件监听的是用户交互（点击、滚动），Hooks 监听的是 AI 的生命周期事件（工具调用前、命令执行后、对话结束时）。关键区别在于控制力：浏览器事件监听只能「响应」事件，不能阻止默认行为（除非 preventDefault）；而 Claude Code 的 Hooks 可以通过返回 exit code 2 来彻底阻断 AI 的操作——比如在 AI 尝试执行危险命令前拦截它。这让 Hooks 不只是通知机制，还是一道安全防线。",
+        "answerEn": "The core idea is the same — 'execute custom code when a specific event fires.' Browser listeners watch user interactions (clicks, scrolls); Hooks watch AI lifecycle events (before tool call, after command execution, at session end). The key difference is control: browser listeners can only 'respond' to events, they can't stop default behavior (without preventDefault); Claude Code Hooks can return exit code 2 to completely block an AI operation — e.g. intercepting a dangerous command before the AI runs it. This makes Hooks not just a notification mechanism, but also a defense line."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "如果用户配置的 Hook 脚本本身有 bug（比如死循环），会不会让 Claude Code 整体卡死？",
+        "questionEn": "If a user-configured Hook script has a bug (like an infinite loop), can it hang all of Claude Code?",
+        "answer": "Claude Code 对 Hook 执行设有超时保护。每个 Hook 脚本有执行时间限制，超时后会被强制终止。此外，Hook 脚本运行在独立进程中，不会直接影响主进程。但如果 Hook 返回非预期的 exit code，可能导致工具调用被误拦截（exit 2）或错误信息传递给 AI。所以虽然不会「卡死」，但有 bug 的 Hook 脚本可能导致功能异常。最佳实践是：Hook 脚本保持简单、做好错误处理、使用明确的 exit code。",
+        "answerEn": "Claude Code has timeout protection for Hook execution. Each Hook script has an execution time limit, and is force-terminated if it exceeds. In addition, Hook scripts run in separate processes, so they can't directly impact the main process. But if a Hook returns an unexpected exit code, tool calls may be incorrectly intercepted (exit 2) or error messages passed to the AI. So while it won't 'hang,' a buggy Hook can cause functional anomalies. Best practice: keep Hook scripts simple, handle errors well, use explicit exit codes."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "Hooks 的配置存储在本地文件中。如果攻击者修改了 Hook 配置，能否绕过所有安全检查？",
+        "questionEn": "Hook configuration is stored in local files. If an attacker modifies the Hook config, can they bypass all security checks?",
+        "answer": "理论上可以。如果攻击者获得了本地文件写入权限，他可以修改 Hook 配置，把安全检查的 Hook 脚本替换成空操作（no-op），或者注入恶意脚本在每次工具调用时窃取数据。这就是为什么 Hooks 本身也需要被保护——Claude Code 对 Hook 配置文件使用了权限保护（限制写入来源），但根本防线还是操作系统层面的文件权限。这揭示了一个普遍的安全原则：任何安全机制本身也需要被保护，形成「元安全」层。",
+        "answerEn": "In theory, yes. If an attacker gains local file-write permission, they can modify Hook configuration to replace security-check Hook scripts with no-ops, or inject malicious scripts that steal data on every tool call. This is why Hooks themselves need protection — Claude Code applies permission protection to Hook config files (restricting write sources), but the fundamental defense is OS-level file permissions. This reveals a general security principle: any security mechanism itself needs to be protected, forming a 'meta-security' layer."
+      }
+    ]
+  },
+  {
+    "chapter": "05_插件系统完全解析",
+    "title": "插件系统完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "Claude Code 的「插件」包含 Skills、Hooks、MCP Server 等多种形态。为什么不统一成一种插件格式？",
+        "questionEn": "Claude Code's 'plugins' include Skills, Hooks, MCP Servers, and more. Why not unify them into a single plugin format?",
+        "answer": "因为不同类型的扩展需求差异很大。Skills 是预设的 prompt 模板，本质是文本替换，几乎没有安全风险；Hooks 是在生命周期事件中执行的脚本，需要进程管理和超时控制；MCP Server 是持续运行的外部服务进程，需要传输协议和认证。如果强行统一为一种格式，要么过度简化（无法满足复杂需求），要么过度复杂（简单场景也要写大量模板代码）。分开设计让每种扩展方式在自己的复杂度区间内最优。",
+        "answerEn": "Because different extension types have very different requirements. Skills are preset prompt templates — essentially text substitution, with almost no security risk. Hooks are scripts executed at lifecycle events, needing process management and timeout control. MCP Servers are long-running external processes, needing transport protocols and authentication. Forcing them into one format would either oversimplify (unable to meet complex needs) or overcomplicate (requiring boilerplate even for simple cases). Separate designs let each extension type be optimized within its own complexity range."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "插件系统使用深度优先搜索（DFS）来发现和加载插件。为什么不用广度优先搜索？",
+        "questionEn": "The plugin system uses depth-first search (DFS) to discover and load plugins. Why not breadth-first search?",
+        "answer": "深度优先搜索更适合文件系统的目录遍历场景。插件分布在从项目目录到用户全局目录的多层路径中，DFS 沿着每条路径一直搜索到底，找到插件后立即可以确定其优先级（越近的目录优先级越高）。BFS 需要先遍历所有同级目录再深入，对于深层嵌套的配置文件不够高效。此外，DFS 的内存消耗更可预测（与目录深度成正比），而 BFS 可能在某些扁平目录结构中消耗大量内存。",
+        "answerEn": "DFS fits filesystem directory traversal better. Plugins are distributed across multi-level paths from the project directory to the user global directory; DFS walks each path to the bottom and can immediately determine a plugin's priority when found (closer directories have higher priority). BFS requires traversing all siblings at a level before descending, which is inefficient for deeply nested config files. Also, DFS's memory usage is more predictable (proportional to directory depth), while BFS can consume a lot of memory with some flat directory structures."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "插件系统允许项目级和用户级两个层面安装插件。当两者冲突时的优先级规则是否足够清晰？",
+        "questionEn": "The plugin system allows installations at both the project and user levels. Is the priority rule when they conflict clear enough?",
+        "answer": "优先级规则本身是清晰的（项目级 > 用户级），但在实践中可能带来困惑。比如用户全局安装了一个 MCP Server 连接公司数据库，某个项目的 CLAUDE.md 中声明禁用该 MCP Server——这时用户可能困惑为什么在该项目中无法访问数据库。更深层的问题是：当前没有一个命令能让用户一目了然地看到「最终生效的插件列表是什么」以及每个插件的配置来源。这类似于 CSS 的样式层叠问题——规则本身合理，但调试时难以追溯。",
+        "answerEn": "The priority rule itself is clear (project > user), but can cause confusion in practice. For example, a user globally installs an MCP Server connecting to a company database, but a specific project's CLAUDE.md disables that MCP Server — the user may be puzzled why database access doesn't work in that project. A deeper issue: there's currently no command that shows at a glance 'what is the final effective plugin list' and each plugin's config source. This mirrors CSS cascading — the rules themselves are reasonable, but debugging is hard to trace."
+      }
+    ]
+  },
+  {
+    "chapter": "06_CLAUDE_md加载系统完全解析",
+    "title": "CLAUDE.md 加载系统完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "CLAUDE.md 文件为什么选择放在项目目录里，而不是作为 Claude Code 的全局配置？",
+        "questionEn": "Why does the CLAUDE.md file live in the project directory rather than as Claude Code global configuration?",
+        "answer": "因为不同项目有不同的编码规范和约束。比如前端项目可能要求 CLAUDE.md 中写「所有组件用 React 函数组件」，而后端项目写「所有 API 用 RESTful 风格」。放在项目目录里让每个项目有自己的规则，就像每个部门有自己的《工作手册》。同时，Claude Code 也支持用户全局的 CLAUDE.md（放在 ~/.claude/ 目录），两者通过优先级合并——项目级规则覆盖全局规则。",
+        "answerEn": "Because different projects have different coding conventions and constraints. A frontend project's CLAUDE.md might say 'use React function components for all components,' while a backend project says 'all APIs follow RESTful style.' Keeping it in the project directory gives each project its own rules, like each department having its own handbook. Claude Code also supports a user-global CLAUDE.md (under ~/.claude/); the two merge via priority — project-level rules override global rules."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "CLAUDE.md 支持 @include 语法引入外部文件。这带来了什么好处和风险？",
+        "questionEn": "CLAUDE.md supports @include syntax to import external files. What benefits and risks does this bring?",
+        "answer": "@include 让大型项目可以将规则按模块拆分（前端规则、后端规则、安全规则各一个文件），主 CLAUDE.md 只做汇总引用。好处是可维护性——修改某个模块的规则不需要编辑庞大的主文件。风险在于引用链可能形成循环（A include B，B include A），以及外部文件被恶意篡改后会影响 AI 行为。Claude Code 对此有循环检测机制，但对引用文件的完整性校验还不够强——这是一个潜在的供应链攻击入口。",
+        "answerEn": "@include lets large projects split rules by module (frontend rules, backend rules, security rules each in separate files), with the main CLAUDE.md just aggregating imports. Benefit: maintainability — modifying one module's rules doesn't require editing a huge main file. Risks: reference chains can form cycles (A includes B, B includes A), and if an external file is maliciously altered, AI behavior is affected. Claude Code has cycle detection, but integrity verification for referenced files isn't strong enough — this is a potential supply-chain attack surface."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "CLAUDE.md 本质上是用自然语言给 AI 下指令。如果指令之间矛盾怎么办？",
+        "questionEn": "CLAUDE.md is essentially natural-language instructions for the AI. What happens when instructions contradict each other?",
+        "answer": "这是 CLAUDE.md 设计中的一个根本性局限。自然语言指令不像代码那样有严格的逻辑校验——你可以在一行写「优先保证代码简洁」，另一行写「所有函数都要详细注释」，这两条可能矛盾。Claude Code 的处理策略是：后出现的规则覆盖先出现的（类似 CSS 后写的样式覆盖先写的）。但 AI 对自然语言的理解可能和人不同，「简洁」和「详细注释」的边界在哪里是主观的。这也是为什么 Claude Code 团队在考虑用结构化格式（如 YAML）替代部分自然语言规则。",
+        "answerEn": "This is a fundamental limitation of CLAUDE.md. Natural-language instructions don't have the strict logical validation of code — one line can say 'prioritize code conciseness,' another 'all functions need detailed comments,' and the two may contradict. Claude Code's strategy: later rules override earlier ones (like CSS later styles overriding earlier). But the AI's understanding of natural language may differ from a human's — where 'concise' ends and 'detailed comments' begins is subjective. This is why the Claude Code team is considering replacing some natural-language rules with structured formats (like YAML)."
+      }
+    ]
+  },
+  {
+    "chapter": "07_Sandbox沙箱系统完全解析",
+    "title": "Sandbox 沙箱系统完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "沙箱系统为什么在 macOS 上使用 Apple Seatbelt 而不是 Docker？",
+        "questionEn": "Why does the sandbox system use Apple Seatbelt on macOS instead of Docker?",
+        "answer": "两个原因：轻量和原生。Docker 需要运行一个完整的容器守护进程，启动容器本身就有几百毫秒的开销，不适合频繁的工具调用场景。Apple Seatbelt 是 macOS 内核级的沙箱机制，几乎零开销就能限制进程的文件访问、网络通信等能力。Claude Code 调用的命令（如 grep、cat、git）每个都可能触发沙箱检查，如果每次都启动 Docker 容器，延迟会累积到不可接受的程度。所以选择了操作系统原生的轻量级沙箱。",
+        "answerEn": "Two reasons: lightweight and native. Docker requires running a full container daemon, and starting a container itself costs hundreds of milliseconds — unsuitable for frequent tool-call scenarios. Apple Seatbelt is a kernel-level sandbox on macOS that can restrict a process's file access, network communication, etc. at near-zero overhead. The commands Claude Code invokes (grep, cat, git) may each trigger sandbox checks; if each one spun up a Docker container, latency would pile up to unacceptable levels. So we chose the OS-native lightweight sandbox."
+      },
+      {
+        "level": "extend",
+        "difficulty": 4,
+        "question": "Linux 上沙箱使用的是什么机制？跨平台一致性如何保证？",
+        "questionEn": "What sandbox mechanism does the Linux implementation use? How is cross-platform consistency maintained?",
+        "answer": "Linux 上 Claude Code 使用了基于 namespace 和 seccomp 的沙箱方案。核心挑战是：不同操作系统的沙箱 API 完全不同（macOS 是 Seatbelt profile、Linux 是 seccomp-bpf 和 namespace、Windows 基本没有原生方案）。Claude Code 的解决方式是定义一个抽象的「沙箱能力层」——上层代码只声明「禁止网络访问」「只读文件系统」等语义，由平台特定的实现去翻译成系统调用。跨平台一致性不是 100% 的——某些 Linux 发行版的内核配置可能不支持所有沙箱特性——所以系统设计了优雅降级：如果某个沙箱能力不可用，会记录警告并回退到上层的权限检查。",
+        "answerEn": "On Linux, Claude Code uses a namespace- and seccomp-based sandbox. The core challenge is that sandbox APIs differ completely across operating systems (macOS uses Seatbelt profiles, Linux uses seccomp-bpf and namespaces, Windows has essentially no native solution). Claude Code's approach is to define an abstract 'sandbox capability layer' — upper-level code just declares semantics like 'forbid network access' or 'read-only filesystem,' and platform-specific implementations translate into system calls. Cross-platform consistency isn't 100% — some Linux distributions' kernel configs don't support every sandbox feature — so the system designs graceful degradation: if a sandbox capability is unavailable, it logs a warning and falls back to upper-level permission checks."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "沙箱保护的是「AI 执行的命令不越界」，但如果 AI 构造的命令本身就在沙箱允许范围内呢？",
+        "questionEn": "Sandboxing protects 'AI-executed commands from going out of bounds' — but what if the command the AI constructs is itself within the sandbox's allowed scope?",
+        "answer": "这揭示了沙箱的根本局限：沙箱只能限制「做什么」，不能限制「怎么做」。比如沙箱允许写入项目目录内的文件——这是必要的（AI 需要编辑代码）。但 AI 可能写入一个恶意的 .bashrc 或 package.json 的 postinstall 脚本，这些操作都在沙箱允许范围内，但后果可能严重。这就是为什么 Claude Code 不只依赖沙箱一层，而是设计了多层防线（权限系统+沙箱+Hooks+用户确认）——每一层防不同类型的攻击，叠加起来才形成有效保护。",
+        "answerEn": "This reveals the fundamental limit of sandboxing: sandboxes restrict 'what,' not 'how.' For example, the sandbox allows writing to files in the project directory — this is necessary (the AI needs to edit code). But the AI could write a malicious .bashrc or a postinstall script in package.json; these actions are within sandbox scope but consequences can be severe. This is why Claude Code doesn't rely on sandboxing alone but designs layered defenses (permissions + sandbox + Hooks + user confirmation) — each layer defends a different kind of attack, and only the stack provides effective protection."
+      }
+    ]
+  },
+  {
+    "chapter": "08_遥测与可观测性完全解析",
+    "title": "遥测与可观测性完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "遥测数据和用户隐私之间如何平衡？Anthropic 收集了哪些数据？",
+        "questionEn": "How is telemetry balanced against user privacy? What data does Anthropic collect?",
+        "answer": "Claude Code 的遥测分为两类：性能指标（响应延迟、token 消耗、缓存命中率）和使用模式（哪些工具被调用、会话时长）。关键原则是：不收集对话内容和代码内容。遥测数据主要用于改进产品性能和发现 bug。用户可以通过配置完全关闭遥测。这与浏览器的匿名使用统计类似——知道「这个按钮被点了多少次」但不知道「按钮背后的页面写了什么」。",
+        "answerEn": "Claude Code's telemetry splits into two categories: performance metrics (response latency, token consumption, cache hit rate) and usage patterns (which tools are called, session duration). The key principle is: do not collect conversation content or code content. Telemetry is used mainly to improve product performance and find bugs. Users can disable telemetry entirely via configuration. This is similar to anonymous browser usage stats — knowing 'how many times this button was clicked' but not 'what the page behind the button said.'"
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "遥测系统使用了采样策略而非全量收集。采样率如何确定？",
+        "questionEn": "The telemetry system uses sampling rather than full collection. How are sampling rates determined?",
+        "answer": "采样策略是在数据完整性和系统开销之间的权衡。全量收集每一次工具调用的详细数据会产生巨大的网络流量和存储成本。Claude Code 对不同类型的事件使用不同采样率：错误事件 100% 收集（每个 bug 都重要）、性能指标按固定比例采样（如 10%）、常规使用事件按自适应比例采样（用户量大时降低采样率）。关键设计是保证采样的随机性，避免系统性偏差导致某类问题永远被忽略。",
+        "answerEn": "Sampling strategy is a tradeoff between data completeness and system overhead. Collecting full detail on every tool call would generate enormous network traffic and storage cost. Claude Code uses different sampling rates for different event types: error events are collected 100% (every bug matters), performance metrics at a fixed ratio (like 10%), normal usage events at an adaptive ratio (lower rate when user volume is high). The key design is ensuring sampling randomness, avoiding systemic bias that could make a class of issues permanently invisible."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "如果遥测系统本身出了 bug，如何调试一个「负责监控的系统自身不工作」的问题？",
+        "questionEn": "If the telemetry system itself has a bug, how do you debug the problem of 'the monitoring system itself not working'?",
+        "answer": "这是「谁来监控监控系统」的经典递归问题。Claude Code 的解决方式是多层冗余：遥测系统有独立的健康检查机制（心跳信号），如果遥测数据流中断，服务端会触发告警。同时，遥测代码遵循「不影响主流程」原则——所有遥测调用都包裹在 try-catch 中，遥测失败不会导致用户功能异常。最后一道防线是日志：即使遥测管道完全断裂，本地日志仍然会记录关键事件，工程师可以通过回放日志来定位问题。",
+        "answerEn": "This is the classic recursive 'who monitors the monitor?' problem. Claude Code's solution is layered redundancy: the telemetry system has an independent health-check mechanism (heartbeat signals) — if the telemetry data stream breaks, the server triggers an alert. Telemetry code also follows the 'don't affect main flow' principle — all telemetry calls are wrapped in try-catch; telemetry failures don't cause user-facing bugs. The last line of defense is logs: even if the telemetry pipeline is completely severed, local logs still record key events, and engineers can diagnose by replaying logs."
+      }
+    ]
+  },
+  {
+    "chapter": "09_设置系统完全解析",
+    "title": "设置系统完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "为什么设置系统需要五层优先级（Killswitch → 服务端 → 项目 → 用户 → 默认）而不是简单的两层？",
+        "questionEn": "Why does the settings system need five layers of priority (Killswitch → server → project → user → default) instead of a simple two-layer design?",
+        "answer": "因为不同的配置来源代表不同的权威等级。Killswitch 是紧急安全开关，必须最高优先级；服务端规则是 Anthropic 的全局策略；项目设置是团队共识；用户设置是个人偏好；默认值是兜底。如果只有两层，就无法区分「公司安全策略」和「个人偏好」谁优先的问题。五层设计就像法律层级——宪法 > 法律 > 法规 > 部门规章 > 惯例——让冲突时有明确的裁决规则。",
+        "answerEn": "Because different configuration sources represent different levels of authority. Killswitch is the emergency safety switch, must be highest priority; server-side rules are Anthropic's global policy; project settings are team consensus; user settings are personal preference; defaults are the fallback. With only two layers, there'd be no way to distinguish 'company security policy' from 'personal preference.' The five-layer design is like a legal hierarchy — constitution > law > regulation > department rule > custom — giving conflicts a clear adjudication rule."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "用户如何调试「为什么我的设置没有生效」？系统是否提供了足够的可见性？",
+        "questionEn": "How does a user debug 'why my setting didn't take effect'? Does the system provide enough visibility?",
+        "answer": "这是多层设置系统的常见痛点。当用户的设置被更高优先级的层覆盖时，他可能完全不知道发生了什么——只看到「我明明设了 A 但系统行为是 B」。Claude Code 目前的做法是在日志中记录设置的最终解析结果和来源，但用户需要主动查看日志。一个改进方向是提供类似浏览器 DevTools 中「computed styles」的功能——显示每个设置的最终值以及「为什么是这个值」（被哪一层覆盖了）。",
+        "answerEn": "A common pain point with multi-layer config systems. When a user's setting is overridden by a higher-priority layer, they may have no idea what happened — they just see 'I set A but the system behaves like B.' Claude Code currently logs the final resolved setting and its source, but the user has to actively check logs. An improvement direction is providing something like browser DevTools' 'computed styles' feature — showing each setting's final value and 'why it's that value' (which layer overrode it)."
+      },
+      {
+        "level": "critical",
+        "difficulty": 3,
+        "question": "设置系统是否存在「过度配置化」的问题——选项太多反而让用户无从下手？",
+        "questionEn": "Does the settings system suffer from 'overconfigurability' — so many options that users don't know where to start?",
+        "answer": "是的，这是可配置性与易用性的经典矛盾。Claude Code 的大多数用户可能只需要默认设置就能工作，但面对数十个可配置项可能感到茫然。设计上的缓解措施是：默认值经过精心调校以覆盖 90% 场景，只有遇到特殊需求时才需要修改设置。但文档中缺少「何时需要修改」的场景指南——这比列出所有选项更有价值。",
+        "answerEn": "Yes — the classic configurability-vs-usability tension. Most Claude Code users can work with defaults, but can feel lost when facing dozens of config options. The mitigation is that defaults are carefully tuned to cover 90% of scenarios, and users only need to modify settings for special needs. But the documentation lacks 'when should you modify this' scenario guides — which would be more valuable than listing every option."
+      }
+    ]
+  },
+  {
+    "chapter": "10_Agent与任务系统完全解析",
+    "title": "Agent 与任务系统完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "为什么需要「子 Agent」？一个 Agent 从头到尾做完所有事不行吗？",
+        "questionEn": "Why do we need 'sub-agents'? Can't one agent handle everything end-to-end?",
+        "answer": "可以，但效率低且风险大。子 Agent 解决两个问题：一是并行——一个复杂任务可以拆成多个子任务并行执行（比如同时在不同文件中搜索），速度成倍提升。二是隔离——子 Agent 在独立的上下文中运行，一个子任务的失败不会污染其他子任务的状态。就像公司项目拆给不同小组并行推进：速度快、互不干扰、某个小组出问题不影响整体。",
+        "answerEn": "It can, but it's inefficient and risky. Sub-agents solve two problems: first, parallelism — a complex task can be split into subtasks running concurrently (e.g. searching different files simultaneously), multiplying speed. Second, isolation — sub-agents run in independent contexts, and one subtask's failure doesn't pollute another's state. Like splitting a company project across teams working in parallel: fast, non-interfering, and a problem in one group doesn't bring down the whole."
+      },
+      {
+        "level": "extend",
+        "difficulty": 4,
+        "question": "子 Agent 使用 Git Worktree 实现代码隔离。如果多个子 Agent 同时修改同一个文件怎么办？",
+        "questionEn": "Sub-agents use Git Worktree for code isolation. What happens if multiple sub-agents modify the same file simultaneously?",
+        "answer": "Git Worktree 提供的是目录级隔离——每个子 Agent 在自己的工作目录副本中操作，互不干扰。但当子 Agent 完成后需要合并回主分支时，如果修改了同一文件就会产生 Git 合并冲突。Claude Code 的处理策略是：主 Agent 在分配任务时尽量让子 Agent 处理不同的文件（任务拆分的粒度以文件为单位），减少冲突概率。万一冲突，主 Agent 负责解决合并冲突——这和人类团队使用 Git 的流程一样。",
+        "answerEn": "Git Worktree provides directory-level isolation — each sub-agent operates in its own copy of the working directory without interfering. But when sub-agents finish and merge back to the main branch, if they modified the same file, there's a Git merge conflict. Claude Code's strategy: when assigning tasks, the main agent tries to have sub-agents work on different files (task decomposition at file granularity) to reduce conflict likelihood. On conflict, the main agent resolves the merge — same flow as human teams using Git."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "子 Agent 的嵌套深度有限制吗？子 Agent 能创建自己的子 Agent 吗？",
+        "questionEn": "Is there a limit on sub-agent nesting depth? Can a sub-agent spawn its own sub-agents?",
+        "answer": "可以，但实践中受到资源限制的约束。每个子 Agent 都有自己的上下文窗口（消耗 token）和执行环境（消耗内存和进程），嵌套越深消耗越大。Claude Code 设计了 token 预算机制——每个子 Agent 分配一定的 token 配额，用完就必须结束。这自然限制了嵌套深度：深层子 Agent 分到的配额越少，能做的事越有限。本质上这是一个「分布式系统中的资源管理」问题——和微服务架构中限制调用链深度是同一个思路。",
+        "answerEn": "Yes, but constrained by resource limits in practice. Every sub-agent has its own context window (consuming tokens) and execution environment (consuming memory and process), so deeper nesting consumes more. Claude Code designed a token-budget mechanism — each sub-agent is allocated a token quota and must end when it runs out. This naturally limits nesting depth: deeper sub-agents get smaller quotas, so there's less they can do. Fundamentally this is a 'resource management in distributed systems' problem — the same logic as microservice architectures limiting call-chain depth."
+      }
+    ]
+  },
+  {
+    "chapter": "11_文件历史系统完全解析",
+    "title": "文件历史系统完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "文件历史系统和 Git 有什么区别？为什么不直接用 Git 的版本控制？",
+        "questionEn": "What's the difference between the file history system and Git? Why not just use Git's version control?",
+        "answer": "文件历史系统是 Git 之上的一层细粒度记录。Git 的最小版本单位是一次 commit，通常包含多个文件的多处改动。而文件历史系统记录的是 AI 每一次对单个文件的修改——粒度更细。这样当用户对 AI 的某一步编辑不满意时，可以精确回退到该文件的上一个版本，而不用 revert 整个 commit。就像 Photoshop 的历史记录面板——每一步操作都可以单独撤销，不需要一次性撤回所有修改。",
+        "answerEn": "The file history system is a finer-grained layer on top of Git. Git's minimum version unit is a commit, usually containing multiple edits across multiple files. The file history system records every single AI modification to an individual file — finer granularity. When the user isn't happy with one of the AI's edits, they can precisely revert that file to its previous state, instead of reverting an entire commit. Like Photoshop's history panel — every step can be undone individually, without needing to undo all changes at once."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "文件历史记录存储在哪里？会不会占用大量磁盘空间？",
+        "questionEn": "Where is file history stored? Does it consume a lot of disk space?",
+        "answer": "文件历史存储在项目的 .claude/ 目录中，使用差异（diff）格式而非完整副本——只记录每次改动的具体内容，不重复存储未改动的部分。这和 Git 的 delta 压缩类似，大幅节省空间。此外，系统设有保留策略：超过一定时间或数量的旧版本会被自动清理。一个典型的开发会话可能产生几十到几百次文件编辑，以 diff 格式存储通常只占几十 KB。",
+        "answerEn": "File history is stored under the project's .claude/ directory using diff format rather than full copies — recording only what changed each time, not duplicating unchanged portions. Similar to Git's delta compression, this saves significant space. The system also has a retention policy: old versions past a certain age or count get auto-cleaned. A typical development session may produce dozens to hundreds of file edits; in diff format they usually occupy only tens of KB."
+      },
+      {
+        "level": "critical",
+        "difficulty": 3,
+        "question": "如果用户在文件历史中回退了某个文件，但其他文件依赖该文件的新版本（比如导入关系），系统如何处理这种不一致？",
+        "questionEn": "If the user reverts a file in file history but other files depend on its new version (e.g. imports), how does the system handle the inconsistency?",
+        "answer": "当前系统不自动处理跨文件依赖的一致性问题——这是有意为之的设计选择。文件历史系统的定位是「单文件粒度的撤销工具」，不是「项目状态管理器」。跨文件依赖的一致性留给了更高层面的工具（Git commit revert 或 AI 辅助修复）。如果自动追踪跨文件依赖并联动回退，复杂度会指数级上升，且可能误触用户不想改动的文件。这是一个「做好一件事」vs「做全所有事」的取舍。",
+        "answerEn": "The current system doesn't automatically handle cross-file dependency consistency — an intentional design choice. File history is positioned as a 'single-file-granularity undo tool,' not a 'project state manager.' Cross-file consistency is left to higher-level tools (Git commit revert, or AI-assisted fixes). Automatically tracking and cascading reverts across file dependencies would make complexity explode and could touch files the user didn't want changed. This is a 'do one thing well' vs. 'do everything' tradeoff."
+      }
+    ]
+  },
+  {
+    "chapter": "12_Bridge远程架构完全解析",
+    "title": "Bridge 远程架构完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "Bridge 让用户可以从浏览器远程操控本地的 Claude Code。这和远程桌面有什么区别？",
+        "questionEn": "Bridge lets users remotely control local Claude Code from a browser. How is it different from remote desktop?",
+        "answer": "远程桌面传输的是整个屏幕画面，带宽消耗大、延迟高。Bridge 只传输 AI 的消息流和工具调用指令——体积小几个数量级。用户在浏览器中看到的是专门为 Claude Code 交互设计的界面，而非通用的桌面画面。但更关键的差别是：Bridge 其实有三条宿主链——`claude remote-control` 是完整控制端（能发消息、能回答权限、能插手工作）；`claude assistant` 是 viewerOnly 模式（能看、能鼓掌、能举手提问，但不能走上台去）；`runBridgeHeadless()` 是无头脚本模式。远程桌面只有「完整控制或不控制」一个选项，Bridge 的三种角色对应不同使用场景。代价是 Bridge 只能控制 Claude Code，不能做其他电脑操作。",
+        "answerEn": "Remote desktop transmits an entire screen image — high bandwidth, high latency. Bridge only transmits the AI's message stream and tool-call instructions — orders of magnitude smaller. In the browser, the user sees an interface designed for Claude Code interaction, not a generic desktop. But the more important difference: Bridge actually has three host modes — `claude remote-control` is a full control endpoint (can send messages, answer permission prompts, step in). `claude assistant` is viewerOnly mode (can watch, applaud, raise a hand to ask — but can't walk onto the stage). `runBridgeHeadless()` is a headless scripting mode. Remote desktop only offers 'full control or no control'; Bridge's three roles match different use cases. The cost: Bridge can only control Claude Code, not other computer operations."
+      },
+      {
+        "level": "extend",
+        "difficulty": 4,
+        "question": "Bridge 走的是什么传输协议？如果网络断开再恢复，会话能恢复吗？",
+        "questionEn": "What transport protocol does Bridge use? If the network drops and reconnects, can the session recover?",
+        "answer": "Bridge 走的是「服务器中继 + SSE（Server-Sent Events）长轮询」，而不是 WebSocket——所有消息走 HTTP 上行，服务器用 SSE 把 AI 回复推回客户端（参见 Ch12 §10 的 CCR v2 演进路径）。断开恢复有两条机制叠加：(1) 本地进程状态不会因网络断开而丢失，客户端可以重连；(2) 更强的是 `bridge-pointer.json` 机制（Ch12 §9）——bridge 会定期把当前会话的指针（session id / TTL 4h / worktree 路径）持久化到本地，下次 `claude assistant` 或 `claude remote-control` 启动时可以根据指针直接 attach 回原 session，而不是从零开始。perpetual bridge（Ch12 §10）甚至不在 query 结束时 teardown transport，让 assistant 模式的 bridge 可以跨多次 query 持续存在。可以类比：早期 tmux/screen 只是「进程存活」，bridge-pointer 更像「会话书签 + 自动跳回」。",
+        "answerEn": "Bridge uses 'server relay + SSE (Server-Sent Events) long polling' rather than WebSocket — all messages go upstream via HTTP, and the server pushes AI replies back to the client via SSE (see Ch12 §10's CCR v2 evolution path). Reconnection recovery layers two mechanisms: (1) Local process state isn't lost when the network drops; the client can reconnect. (2) More powerful: the `bridge-pointer.json` mechanism (Ch12 §9) — bridge periodically persists the current session's pointer (session id / 4h TTL / worktree path) to local disk. Next time `claude assistant` or `claude remote-control` starts, it can attach directly back to the original session via the pointer instead of starting from scratch. Perpetual bridge (Ch12 §10) doesn't even tear down the transport at query end, letting assistant-mode bridges persist across multiple queries. Analogy: early tmux/screen was just 'process persistence,' bridge-pointer is more like 'session bookmark + auto jump back.'"
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "Bridge 通过互联网暴露了本地 Claude Code 的操作接口。安全模型够强吗？",
+        "questionEn": "Bridge exposes local Claude Code's operational interface through the internet. Is the security model strong enough?",
+        "answer": "这是 Bridge 最敏感的设计点。Bridge 使用 OAuth token 验证身份、每个会话唯一密钥、全程加密，但 Ch12 明确指出比 token 泄露更结构性的风险是：**Anthropic 中继服务器是所有远程会话的单点信任锚**——所有 Bridge 流量都要经过这台中继机，意味着中继服务器本身一旦被攻陷或被内部滥用，整条信任链就塌了。另一个容易忽略的风险是 Work Secret 可能包含 `environment_variables`（含 API Key / Secret Key 等），这些会通过中继转发到远端。Ch25 的 file_uuid 附件闭环（Web Composer 上传文件→经中继→落到本地 `~/.claude/uploads/{sessionId}/`）共享同一根信任链，所以 Web 端一旦被劫持，不只是消息泄露，还可能写入本地文件。缓解措施包括 token 过期 / IP 绑定 / 操作日志审计 / bypass-immune 规则（即使 bypass 模式也不能绕过全局配置文件保护）。结论：相比纯本地使用，Bridge 确实显著扩大了攻击面，部署时需要对「中继即根信任」这件事有清醒认知。",
+        "answerEn": "This is Bridge's most sensitive design point. Bridge uses OAuth tokens for identity, per-session unique keys, and end-to-end encryption — but Ch12 explicitly notes that more structural than token leakage is this: **Anthropic's relay server is the single-point trust anchor for all remote sessions.** All Bridge traffic goes through that relay machine, meaning if the relay itself is compromised or internally abused, the entire trust chain collapses. Another easy-to-miss risk: Work Secret may contain `environment_variables` (including API Key / Secret Key, etc.), and these get forwarded through the relay to the remote. Ch25's file_uuid attachment loop (Web Composer uploads file → through relay → lands at local `~/.claude/uploads/{sessionId}/`) shares the same root trust, so if the web side is hijacked, it's not just message leakage — local files can be written. Mitigations include token expiration / IP binding / operation audit logs / bypass-immune rules (even bypass mode can't bypass global config file protection). Conclusion: compared to pure local use, Bridge significantly expands the attack surface; deployment requires a clear-eyed understanding that 'the relay is root trust.'"
+      }
+    ]
+  },
+  {
+    "chapter": "13_Buddy伴侣系统完全解析",
+    "title": "Buddy 伴侣系统完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "Buddy 系统的核心功能是什么？它和主对话有什么区别？",
+        "questionEn": "What is Buddy's core function? How does it differ from the main conversation?",
+        "answer": "Buddy 是 Claude Code 的「旁路对话」系统——在主对话之外提供轻量级的辅助交互。主对话处理完整的编码任务（读文件、写代码、执行命令），Buddy 负责快速的问答和提示（解释一个概念、回答一个语法问题）。区别在于 Buddy 没有工具调用能力（不会修改文件或执行命令），上下文窗口更小，响应更快。就像你有一个全栈工程师（主对话）和一个知识问答助手（Buddy）并行工作。",
+        "answerEn": "Buddy is Claude Code's 'side-channel conversation' system — providing lightweight auxiliary interaction alongside the main conversation. The main conversation handles full coding tasks (reading files, writing code, executing commands); Buddy handles quick Q&A and hints (explaining a concept, answering a syntax question). The difference is that Buddy has no tool-call capability (won't modify files or run commands), a smaller context window, and faster responses. Like having a full-stack engineer (main conversation) and a Q&A assistant (Buddy) working in parallel."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "Buddy 和主对话是否共享上下文？如果 Buddy 不知道主对话在做什么，它的回答会不会不准确？",
+        "questionEn": "Do Buddy and the main conversation share context? If Buddy doesn't know what the main conversation is doing, won't its answers be inaccurate?",
+        "answer": "Buddy 有受限的上下文共享——它能看到当前打开的文件和基本的项目信息，但不会看到主对话的完整历史。这是有意设计：如果完全共享上下文，Buddy 的 token 成本会和主对话一样高，就失去了「轻量」的意义。代价是 Buddy 可能回答不够精确（不知道主对话的具体进展），但对于通用知识问答已经够用。用户如果需要精确的上下文相关回答，应该在主对话中提问。",
+        "answerEn": "Buddy has limited context sharing — it can see currently open files and basic project info but not the full main-conversation history. This is intentional: if Buddy shared context fully, its token cost would match the main conversation's, losing the 'lightweight' point. The cost is that Buddy's answers may be less precise (unaware of main-conversation progress), but for general Q&A that's enough. Users needing precise context-dependent answers should ask in the main conversation."
+      },
+      {
+        "level": "critical",
+        "difficulty": 3,
+        "question": "Buddy 的存在是否意味着 Claude Code 承认单一对话模式的不足？",
+        "questionEn": "Does Buddy's existence mean Claude Code acknowledges the inadequacy of a single-conversation model?",
+        "answer": "可以这么理解。单一长对话有两个问题：一是上下文窗口膨胀导致响应变慢、成本增加；二是简单问题和复杂任务混在一起，让对话历史杂乱。Buddy 本质上是对「所有交互都走一个通道」模式的优化——把高频低成本的交互分流出去。这和微服务架构中把读操作和写操作分离（CQRS 模式）是同一个思路。未来可能还会有更多「旁路通道」满足不同类型的交互需求。",
+        "answerEn": "You could read it that way. A single long conversation has two problems: context window bloat slowing response and raising cost, and mixing simple questions with complex tasks creating messy history. Buddy is essentially an optimization of the 'all interactions through one channel' model — diverting high-frequency low-cost interactions. This mirrors CQRS in microservice architectures, separating reads from writes. More 'side channels' may appear in the future to serve different interaction types."
+      }
+    ]
+  },
+  {
+    "chapter": "14_语音系统完全解析",
+    "title": "语音系统完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "在终端中使用语音输入有什么特殊挑战？和手机语音助手有什么不同？",
+        "questionEn": "What are the unique challenges of voice input in a terminal? How is it different from mobile voice assistants?",
+        "answer": "终端环境的语音输入面临三个独特挑战：一是技术词汇识别——编程相关的术语（函数名、文件路径、命令参数）不在通用语音模型的高频词汇中，识别准确率低。二是操作确认——手机语音助手播放音乐出错无所谓，但 AI 编码助手执行错误的命令可能删除文件。三是上下文切换——用户可能在语音和键盘之间频繁切换，系统需要无缝整合两种输入方式。",
+        "answerEn": "Voice input in the terminal faces three unique challenges: first, technical vocabulary recognition — programming terms (function names, file paths, command arguments) aren't in general voice models' high-frequency vocabularies, so recognition accuracy is low. Second, action confirmation — a mobile voice assistant playing the wrong song is harmless, but an AI coding assistant running the wrong command may delete files. Third, context switching — users may frequently switch between voice and keyboard, and the system needs to integrate both input methods seamlessly."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "语音输入经过了哪些处理步骤才变成 Claude 能理解的文本指令？",
+        "questionEn": "What processing steps does voice input go through to become text instructions Claude can understand?",
+        "answer": "语音输入经历三个阶段：录制→转录→处理。录制阶段通过系统音频 API 捕获麦克风输入，同时做静音检测（判断用户是否说完了）。转录阶段将音频发送到语音识别模型（ASR），获得文本。处理阶段对转录结果做后处理——包括标点恢复、技术词修正（把听起来像普通词但应该是技术词的部分替换）。最终的文本被插入到对话中，和键盘输入走相同的后续流程。",
+        "answerEn": "Voice input goes through three stages: recording → transcription → processing. Recording captures microphone input through system audio APIs while doing silence detection (determining whether the user is done speaking). Transcription sends audio to a speech recognition model (ASR) and gets text. Processing does post-processing on the transcription — punctuation restoration, technical-term correction (replacing parts that sound like normal words but should be technical terms). The final text is inserted into the conversation and follows the same downstream flow as keyboard input."
+      },
+      {
+        "level": "critical",
+        "difficulty": 3,
+        "question": "语音输入在编程场景中真的比打字更高效吗？还是只是一个锦上添花的功能？",
+        "questionEn": "Is voice input actually more efficient than typing in programming scenarios, or is it just a nice-to-have?",
+        "answer": "在当前技术水平下，语音输入对大多数编程场景并不比打字高效。编程需要精确的语法（括号、缩进、变量名），语音的错误率太高。但语音在特定场景中有明确价值：描述高层意图（「帮我重构这个函数，把回调改成 async/await」）、在移动或不方便打字的环境中操控 AI、以及辅助功能（为手部不便的开发者提供替代输入方式）。定位应该是「补充输入方式」而非「替代键盘」。",
+        "answerEn": "At current tech levels, voice input isn't more efficient than typing for most programming scenarios. Programming requires precise syntax (brackets, indentation, variable names), and voice error rates are too high. But voice has clear value in specific scenarios: describing high-level intent ('refactor this function, change callbacks to async/await'), controlling AI on mobile or typing-unfriendly environments, and accessibility (providing alternative input for developers with hand mobility issues). It should be positioned as 'complementary input,' not 'keyboard replacement.'"
+      }
+    ]
+  },
+  {
+    "chapter": "15_Skill加载基础设施完全解析",
+    "title": "Skill 加载基础设施完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "Skill 和普通的 prompt 模板有什么区别？为什么需要专门的「加载基础设施」？",
+        "questionEn": "How is a Skill different from a regular prompt template? Why does it need dedicated 'loading infrastructure'?",
+        "answer": "普通 prompt 模板是静态文本，而 Skill 是可动态组装的 prompt 片段。一个 Skill 可能包含条件逻辑（根据项目类型选择不同的指令）、外部引用（加载项目的编码规范文件）和参数插值（把当前文件路径注入模板）。「加载基础设施」处理的就是这些动态能力：从文件系统发现 Skill 文件、解析元数据、处理依赖关系、最终生成注入到 AI 上下文中的完整 prompt。这类似于 Web 框架中的模板引擎——不只是读取 HTML 文件，还要处理变量替换和条件渲染。",
+        "answerEn": "A regular prompt template is static text; a Skill is a dynamically assembled prompt fragment. A Skill can include conditional logic (picking instructions based on project type), external references (loading the project's coding style file), and parameter interpolation (injecting the current file path into the template). The 'loading infrastructure' handles these dynamic capabilities: discovering Skill files on the filesystem, parsing metadata, resolving dependencies, and finally generating the complete prompt that gets injected into the AI's context. Similar to template engines in web frameworks — not just reading HTML files, but handling variable substitution and conditional rendering."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "Skill 的发现机制是怎样的？系统从哪些位置加载 Skill？",
+        "questionEn": "How does Skill discovery work? From which locations does the system load Skills?",
+        "answer": "Skill 的发现遵循「就近优先」原则：首先搜索项目目录下的 .claude/skills/，然后是用户全局目录 ~/.claude/skills/，最后是 Claude Code 内置的 bundled skills。优先级从近到远递减——项目级 Skill 覆盖同名的全局 Skill，全局 Skill 覆盖内置 Skill。这让团队可以在项目中定义特定于项目的 Skill（如项目特有的部署流程），同时保留用户个人和系统默认的 Skill。",
+        "answerEn": "Skill discovery follows the 'nearest first' principle: first search the project's .claude/skills/, then the user global ~/.claude/skills/, and finally Claude Code's bundled skills. Priority decreases with distance — project Skills override same-named global ones, global ones override bundled. This lets teams define project-specific Skills (like a project's custom deployment flow) while preserving personal user Skills and system defaults."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "Skill 系统是否存在版本管理和兼容性问题？当 Claude Code 升级后，旧 Skill 还能正常工作吗？",
+        "questionEn": "Does the Skill system have versioning and compatibility issues? When Claude Code upgrades, do old Skills still work?",
+        "answer": "这是当前 Skill 系统的一个弱点。Skill 本质是自然语言 prompt，不像代码有明确的 API 契约。Claude Code 升级后如果改变了系统提示词的格式或 AI 的行为模式，某些依赖特定行为的 Skill 可能不再按预期工作。当前没有 Skill 的版本声明或兼容性检查机制。这和浏览器 API 的向后兼容性问题类似，但更难解决——因为 AI 行为的变化往往不像 API 变更那样有明确的 breaking change 列表。",
+        "answerEn": "This is a weakness of the current Skill system. Skills are essentially natural-language prompts, not code with clear API contracts. When Claude Code upgrades and changes system-prompt format or AI behavior patterns, Skills that relied on specific behaviors may no longer work as expected. There's currently no Skill version declaration or compatibility check mechanism. Similar to browser API backward-compatibility issues, but harder — AI behavior changes often don't come with a clear breaking-change list like API changes do."
+      }
+    ]
+  },
+  {
+    "chapter": "16_输出样式系统完全解析",
+    "title": "输出样式系统完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 1,
+        "question": "为什么 AI 的输出需要专门的「样式系统」？直接显示文本不行吗？",
+        "questionEn": "Why does AI output need a dedicated 'style system'? Can't we just display text directly?",
+        "answer": "直接显示纯文本当然可以，但可读性会很差。代码块需要语法高亮（不同颜色区分关键字、字符串、注释）、Markdown 需要渲染（标题加粗、列表缩进、表格对齐）、长输出需要折叠、差异需要红绿对比。输出样式系统把 AI 返回的原始 Markdown 文本转换为终端中美观可读的格式。这和浏览器把 HTML 渲染成网页是同一个过程——内容（HTML/Markdown）和呈现（CSS/终端样式）分离。",
+        "answerEn": "Displaying plain text works, but readability would suffer. Code blocks need syntax highlighting (different colors for keywords, strings, comments); Markdown needs rendering (bold headings, indented lists, aligned tables); long outputs need folding; diffs need red-green contrast. The output-style system converts the AI's raw Markdown text into a beautiful, readable terminal format. This is the same process as a browser rendering HTML into a webpage — separating content (HTML/Markdown) from presentation (CSS/terminal styling)."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "终端的渲染能力比浏览器弱很多。输出样式系统如何在终端限制内实现丰富的展示？",
+        "questionEn": "Terminal rendering capabilities are much weaker than browsers. How does the output-style system achieve rich display within terminal constraints?",
+        "answer": "终端只支持有限的 ANSI 转义序列（颜色、粗体、下划线），不支持字体、浮动布局、图片。输出样式系统在这些限制内做了大量工程优化：用 Unicode 字符绘制表格边框和进度条、用 256 色/真彩色终端配色方案做代码高亮、用缩进和空行模拟段落间距、用可折叠区域控制信息密度。对于终端不支持的内容（如图片），会降级为文字描述或 ASCII art。",
+        "answerEn": "Terminals only support limited ANSI escape sequences (colors, bold, underline), not fonts, floating layouts, or images. The output-style system does a lot of engineering within these constraints: drawing table borders and progress bars with Unicode characters, doing code highlighting with 256-color/truecolor palettes, simulating paragraph spacing with indentation and blank lines, controlling information density with foldable regions. For content terminals don't support (like images), it degrades to text descriptions or ASCII art."
+      },
+      {
+        "level": "critical",
+        "difficulty": 2,
+        "question": "不同终端对 ANSI 转义序列的支持差异很大。如何保证跨终端的一致体验？",
+        "questionEn": "Different terminals vary wildly in ANSI escape sequence support. How is a consistent cross-terminal experience ensured?",
+        "answer": "做不到完全一致——这是终端生态的固有碎片化。macOS Terminal、iTerm2、Windows Terminal、VS Code 内置终端对颜色范围、Unicode 字符宽度、光标控制的支持都不同。Claude Code 的策略是：检测终端能力（通过 TERM 环境变量和 terminfo），然后选择对应的渲染模式。对于最基础的终端只使用 8 色和 ASCII 字符，对于现代终端使用真彩色和 Unicode。这种「能力检测 + 优雅降级」是终端应用的标准做法。",
+        "answerEn": "You can't be fully consistent — that's the inherent fragmentation of the terminal ecosystem. macOS Terminal, iTerm2, Windows Terminal, and VS Code's built-in terminal differ in color range, Unicode character width, and cursor control. Claude Code's strategy: detect terminal capabilities (via TERM env var and terminfo), then pick a matching render mode. For the most basic terminals use only 8 colors and ASCII, for modern terminals use truecolor and Unicode. This 'capability detection + graceful degradation' is standard practice for terminal applications."
+      }
+    ]
+  },
+  {
+    "chapter": "17_遥测与分析系统完全解析",
+    "title": "遥测与分析系统完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "这一章的「遥测与分析」和 08 章的「遥测与可观测性」有什么区别？",
+        "questionEn": "How is this chapter's 'telemetry and analytics' different from Chapter 08's 'telemetry and observability'?",
+        "answer": "08 章侧重于运行时的可观测性——「系统现在在做什么」（实时日志、性能指标、健康检查）。这一章侧重于事后的数据分析——「用户群体在怎么使用这个产品」（使用模式统计、功能采用率、用户留存）。前者是工程师调试用的「仪表盘」，后者是产品经理决策用的「数据分析平台」。两个系统共享底层的数据收集管道，但消费数据的方式和目的完全不同。",
+        "answerEn": "Chapter 08 focuses on runtime observability — 'what is the system doing right now' (real-time logs, performance metrics, health checks). This chapter focuses on retrospective data analysis — 'how are user cohorts using the product' (usage pattern statistics, feature adoption, user retention). The former is an engineer's debugging dashboard, the latter is a product manager's data analytics platform. Both systems share the underlying data collection pipeline, but consume data in completely different ways and for completely different purposes."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "分析系统收集的数据如何指导产品决策？能举一个具体例子吗？",
+        "questionEn": "How does data collected by the analytics system guide product decisions? Can you give a concrete example?",
+        "answer": "比如分析数据可能发现：80% 的用户在首次使用后的第二天就不再回来。深入分析发现，流失用户的共同特点是第一次会话中 AI 的响应延迟超过了 10 秒。这直接指导了优先级：优化首次使用的冷启动性能。另一个例子：数据显示「子 Agent」功能的使用率只有 5%，但使用过的用户留存率比不使用的高 3 倍——这说明功能本身有价值，但发现和引导流程需要改进。",
+        "answerEn": "For example, analytics might find: 80% of users don't return after their first day. Deeper analysis shows the churning users share a trait — AI response latency exceeded 10 seconds in their first session. This directly informs priority: optimize first-use cold-start performance. Another example: data shows the 'sub-agent' feature has only 5% usage, but users who've tried it retain at 3x the rate of those who haven't — this says the feature has value, but discovery and onboarding need improvement."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "遥测数据的匿名化处理是否足够？理论上能否通过使用模式反推出用户身份？",
+        "questionEn": "Is the anonymization of telemetry data sufficient? Could usage patterns theoretically reveal user identity?",
+        "answer": "这是数据隐私领域的核心挑战。即使不收集姓名和邮箱，如果收集了足够详细的使用模式（哪些文件被操作、什么时间活跃、使用了哪些工具），理论上可以通过去匿名化攻击推断出用户身份。比如，如果你知道某人在特定时区、操作特定项目、使用特定语言，候选人范围可能很小。Claude Code 的做法是对高维度数据做聚合和噪声注入（差分隐私的思路），但在产品分析的精度需求和隐私保护之间，始终存在张力。",
+        "answerEn": "This is the core challenge in data privacy. Even without collecting names and emails, if enough detailed usage patterns are collected (which files are operated on, when active, which tools used), de-anonymization attacks can theoretically infer user identity. For example, if you know someone is in a specific timezone, working on a specific project, using a specific language, the candidate pool may be very small. Claude Code's approach is to aggregate high-dimensional data and inject noise (differential-privacy idea), but there's always tension between product analytics precision and privacy protection."
+      }
+    ]
+  },
+  {
+    "chapter": "Vim模式完全解析",
+    "title": "Vim 模式完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "为什么 Claude Code 要支持 Vim 模式？不是所有人都用 Vim。",
+        "questionEn": "Why does Claude Code support Vim mode? Not everyone uses Vim.",
+        "answer": "Vim 键绑定是程序员群体中最强烈的偏好之一——使用 Vim 的开发者通常在所有工具中都期望 Vim 风格的操作方式（hjkl 移动、模式切换、文本对象）。如果 Claude Code 不支持 Vim 模式，这部分用户在输入文本时会感到极度不适应。更务实的原因是：Vim 用户群虽然不是多数，但他们往往是技术社区中最有影响力的早期采用者。支持 Vim 模式是一个低投入高回报的功能决策。",
+        "answerEn": "Vim keybindings are one of the strongest preferences in the programmer community — Vim users typically expect Vim-style operations (hjkl movement, mode switching, text objects) in every tool. If Claude Code didn't support Vim mode, these users would feel intensely uncomfortable typing text. The more pragmatic reason: although Vim users aren't the majority, they tend to be the most influential early adopters in tech communities. Supporting Vim mode is a low-investment, high-return feature decision."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "在终端 AI 助手中实现 Vim 模式有哪些独特挑战？",
+        "questionEn": "What are the unique challenges of implementing Vim mode in a terminal AI assistant?",
+        "answer": "最大的挑战是 Vim 的「模式」概念和 AI 对话的交互模式冲突。Vim 有 Normal、Insert、Visual 三种模式，而对话界面通常只需要一种输入模式。实现时需要解决：按键冲突（Esc 在 Vim 中退出 Insert 模式，但在 Claude Code 中可能有其他含义）、光标控制（终端中精确定位光标比 GUI 编辑器复杂）、命令集范围（实现完整的 Vim 命令集工作量巨大，需要决定支持到什么程度）。",
+        "answerEn": "The biggest challenge is the conflict between Vim's 'mode' concept and AI conversation's interaction model. Vim has Normal, Insert, Visual modes; conversation interfaces usually only need one input mode. Implementation must address: key conflicts (Esc exits Insert mode in Vim, but may have another meaning in Claude Code); cursor control (precise cursor positioning in a terminal is harder than in a GUI editor); command-set scope (implementing the full Vim command set is a huge effort, and you have to decide how much to support)."
+      },
+      {
+        "level": "critical",
+        "difficulty": 3,
+        "question": "Vim 模式是否值得维护成本？在 AI 辅助编码时代，文本编辑效率还那么重要吗？",
+        "questionEn": "Is Vim mode worth the maintenance cost? In the AI-assisted coding era, is text-editing efficiency still that important?",
+        "answer": "这是一个好问题。AI 辅助编码正在改变开发者的工作模式——从「大量手动编写代码」转向「描述意图 + 审查 AI 生成的代码」。在这种模式下，精细的文本编辑操作（Vim 的核心优势）确实不如以前重要。但 Vim 模式的价值更多在于「用户习惯」而非「效率」——多年 Vim 用户的肌肉记忆无法轻易改变。长远看，随着 AI 能力提升，手动编辑可能越来越少，Vim 模式可能从「效率工具」变为「舒适度功能」。",
+        "answerEn": "A good question. AI-assisted coding is changing developer workflows — from 'writing lots of code by hand' to 'describe intent + review AI-generated code.' In this mode, fine-grained text-editing (Vim's core strength) is indeed less important. But Vim mode's value is more in 'user habit' than 'efficiency' — years of muscle memory can't easily be changed. Long-term, as AI capabilities improve, manual editing may shrink further, and Vim mode may shift from an 'efficiency tool' to a 'comfort feature.'"
+      }
+    ]
+  },
+  {
+    "chapter": "键绑定系统完全解析",
+    "title": "键绑定系统完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 1,
+        "question": "键绑定系统解决什么问题？为什么不直接硬编码快捷键？",
+        "questionEn": "What problem does the keybinding system solve? Why not just hardcode shortcuts?",
+        "answer": "不同用户有不同的快捷键偏好（Vim 用户习惯 hjkl，Emacs 用户习惯 Ctrl 组合键），硬编码意味着只能满足一种风格。键绑定系统让用户可以自定义快捷键映射——同一个操作（如「上一章」）可以绑定到不同的按键。这和游戏中的按键映射设置是同一个概念：允许玩家把「跳跃」绑定到任意按钮。",
+        "answerEn": "Different users have different shortcut preferences (Vim users prefer hjkl, Emacs users prefer Ctrl combinations); hardcoding means only satisfying one style. The keybinding system lets users customize mapping — the same action (like 'previous chapter') can be bound to different keys. This is the same concept as key-mapping settings in games: let players bind 'jump' to any button."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "键绑定系统如何处理快捷键冲突？如果用户把同一个按键绑定到两个功能怎么办？",
+        "questionEn": "How does the keybinding system handle shortcut conflicts? What if the user binds the same key to two functions?",
+        "answer": "键绑定系统使用「上下文优先」策略——同一个按键在不同上下文中可以有不同含义。比如在对话输入区，Enter 是发送消息；在代码预览区，Enter 是确认选择。当同一上下文中确实出现冲突（两个功能绑定到同一按键），系统使用「后注册覆盖先注册」的规则——用户自定义的绑定覆盖默认绑定。系统也会在检测到冲突时发出警告。",
+        "answerEn": "The keybinding system uses a 'context priority' strategy — the same key can mean different things in different contexts. For example, in the conversation input area Enter sends a message; in a code preview area Enter confirms a selection. When a genuine conflict exists in the same context (two functions bound to the same key), the system uses 'later registration overrides earlier' — user custom bindings override defaults. The system also warns when it detects conflicts."
+      },
+      {
+        "level": "critical",
+        "difficulty": 2,
+        "question": "终端环境中按键检测的可靠性如何？复杂组合键是否在所有终端上都能正确识别？",
+        "questionEn": "How reliable is key detection in terminal environments? Are complex combinations correctly recognized across all terminals?",
+        "answer": "这是终端应用的普遍痛点。不同终端对特殊按键（如 Ctrl+Shift+字母、功能键 F1-F12、Alt 组合键）的转义序列编码不一致。有些终端根本不传递某些组合键（比如 Ctrl+S 可能被操作系统拦截用于保存）。Claude Code 的做法是只在默认绑定中使用「最通用」的按键组合（Esc、方向键、简单 Ctrl 组合），把高级组合键留给用户自定义——如果某个用户的终端支持，他可以自行配置。",
+        "answerEn": "A common pain point for terminal applications. Different terminals encode special keys (Ctrl+Shift+letter, function keys F1-F12, Alt combinations) inconsistently. Some terminals don't pass certain combinations at all (e.g. Ctrl+S may be intercepted by the OS for saving). Claude Code's approach is to use only 'most common' combinations in default bindings (Esc, arrows, simple Ctrl combinations) and leave advanced combinations for user customization — users whose terminals support them can configure themselves."
+      }
+    ]
+  },
+  {
+    "chapter": "协调器模式完全解析",
+    "title": "协调器模式完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "协调器模式的核心职责是什么？它和「主 Agent」有什么关系？",
+        "questionEn": "What's the core responsibility of orchestrator mode? How does it relate to the 'main agent'?",
+        "answer": "协调器是主 Agent 在管理子 Agent 时采用的工作模式。当一个任务足够复杂，需要拆分成多个子任务并行执行时，主 Agent 切换到「协调器模式」——不再直接写代码，而是专注于任务分解、子 Agent 分配、进度监控和结果合并。就像交响乐指挥——自己不演奏任何乐器，但负责协调所有乐手的节奏和配合。",
+        "answerEn": "Orchestrator mode is the working mode the main agent adopts when managing sub-agents. When a task is complex enough to need decomposition into multiple parallel subtasks, the main agent switches into 'orchestrator mode' — no longer writing code directly, but focusing on task decomposition, sub-agent assignment, progress monitoring, and result merging. Like a symphony conductor — doesn't play any instrument themselves, but coordinates the rhythm and interplay of all musicians."
+      },
+      {
+        "level": "extend",
+        "difficulty": 4,
+        "question": "协调器如何决定一个任务是否值得拆分给子 Agent？有什么判断标准？",
+        "questionEn": "How does the orchestrator decide whether a task is worth splitting across sub-agents? What are the criteria?",
+        "answer": "判断标准主要有三个：独立性（子任务之间是否有数据依赖——依赖越少越适合并行）、规模（小任务拆分的协调开销可能大于串行执行的节省——存在最小拆分阈值）、风险（涉及破坏性操作的任务不适合并行，因为回滚困难）。实际中，协调器倾向于在文件层面拆分——不同文件的编辑天然独立。对于同一文件的多处修改，通常保持串行以避免合并冲突。",
+        "answerEn": "Three main criteria: independence (do subtasks have data dependencies — fewer dependencies means better parallelism); size (splitting small tasks may have coordination overhead exceeding the savings from parallelism — there's a minimum split threshold); risk (tasks with destructive operations don't suit parallelism, because rollback is hard). In practice, orchestrators prefer splitting at file granularity — edits to different files are naturally independent. For multiple edits within the same file, serial execution is usually preferred to avoid merge conflicts."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "协调器模式增加了系统的复杂性和 token 消耗。什么时候不应该使用协调器？",
+        "questionEn": "Orchestrator mode adds system complexity and token cost. When should you not use the orchestrator?",
+        "answer": "不应该使用协调器的场景：一是简单任务——修改一个函数、修复一个 bug 这类任务，拆分的协调开销反而大于直接执行。二是强依赖链条——如果子任务 B 依赖子任务 A 的结果，并行没有意义。三是探索性任务——当需求不明确、需要反复试错时，并行可能导致多个子 Agent 往错误方向走，浪费大量 token。协调器模式最适合的是「确定性高、可独立拆分、文件数量多」的批量操作任务。",
+        "answerEn": "When not to use the orchestrator: first, simple tasks — modifying one function or fixing one bug, where split coordination overhead exceeds direct execution. Second, strong dependency chains — if subtask B depends on subtask A's result, parallelism is pointless. Third, exploratory tasks — when requirements aren't clear and multiple attempts are needed, parallelism may cause multiple sub-agents to head in wrong directions, wasting many tokens. Orchestrator mode fits best for 'high-certainty, independently splittable, many-files' batch operations."
+      }
+    ]
+  },
+  {
+    "chapter": "任务执行管道完全解析",
+    "title": "任务执行管道完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "「管道」这个比喻意味着什么？任务执行为什么像流水线？",
+        "questionEn": "What does the 'pipeline' metaphor mean? Why does task execution resemble an assembly line?",
+        "answer": "管道（Pipeline）意味着任务经过一系列固定的处理阶段，每个阶段做一件事，上一阶段的输出是下一阶段的输入。就像工厂流水线——原料经过切割→打磨→组装→检验→包装，每个工位只负责一道工序。Claude Code 的任务执行管道类似：用户输入 → 意图解析 → 上下文组装 → 模型调用 → 结果处理 → 工具执行 → 输出渲染。管道设计的好处是每个阶段可以独立优化和测试。",
+        "answerEn": "A pipeline means tasks flow through a fixed series of processing stages, each stage doing one thing, with the previous stage's output being the next stage's input. Like a factory assembly line — raw materials go through cutting → polishing → assembly → inspection → packaging, each station owning one step. Claude Code's task execution pipeline is similar: user input → intent parsing → context assembly → model call → result processing → tool execution → output rendering. The benefit of pipeline design is that each stage can be independently optimized and tested."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "管道的某个阶段执行失败时，系统是整体回滚还是部分重试？",
+        "questionEn": "When a pipeline stage fails, does the system roll back entirely or retry partially?",
+        "answer": "取决于失败的阶段和错误类型。对于可恢复的错误（如网络超时导致模型调用失败），系统在该阶段自动重试，不影响之前的阶段。对于不可恢复的错误（如模型返回格式异常），系统会跳过后续阶段，直接向用户报错。重要的是：管道不做整体回滚——已经执行的工具操作（写文件、执行命令）不会被自动撤销。这是因为某些操作有外部副作用（如创建了 Git commit），无法可靠撤回。文件历史系统提供了手动回退的能力。",
+        "answerEn": "Depends on which stage failed and what kind of error. For recoverable errors (like a network timeout causing a model call to fail), the system auto-retries at that stage without affecting earlier stages. For unrecoverable errors (like unexpected model response format), the system skips remaining stages and reports to the user. Importantly: the pipeline doesn't do full rollback — already-executed tool operations (file writes, command executions) aren't auto-undone. This is because some operations have external side effects (e.g. a Git commit was created) that can't be reliably reversed. The file history system provides manual rollback capability."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "管道模式假设任务是线性的（一步接一步）。但 AI 的实际推理过程是非线性的——它可能中途改变策略。这个矛盾如何解决？",
+        "questionEn": "Pipeline mode assumes tasks are linear (one step after another). But AI's actual reasoning is nonlinear — it may change strategy mid-way. How is this contradiction resolved?",
+        "answer": "好问题。管道处理的是「执行」而非「推理」——每一轮管道执行的是 AI 已经决定好的一个具体动作，AI 的非线性推理发生在模型内部，在管道看来只是「输入一段对话，输出一个动作」。如果 AI 中途改变策略，它会在下一轮对话中表达新策略，管道会执行新的动作。所以管道不需要处理非线性——它只是忠实地执行每一轮的决策。整个多轮对话的「非线性」由更高层的查询循环（Query Loop）管理。",
+        "answerEn": "Good question. The pipeline handles 'execution,' not 'reasoning' — each round executes a specific action the AI has already decided on. AI's nonlinear reasoning happens inside the model; to the pipeline it's just 'input a conversation, output an action.' If the AI changes strategy mid-way, it expresses the new strategy in the next conversation turn and the pipeline executes a new action. So the pipeline doesn't need to handle nonlinearity — it just faithfully executes each round's decision. The 'nonlinearity' of the whole multi-turn conversation is managed by the higher-level Query Loop."
+      }
+    ]
+  },
+  {
+    "chapter": "记忆系统完全解析",
+    "title": "记忆系统完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "为什么 AI 助手需要「跨会话记忆」？每次对话重新说明需求不行吗？",
+        "questionEn": "Why do AI assistants need 'cross-session memory'? Can't you just restate requirements every conversation?",
+        "answer": "可以，但效率很低。想象你每次去同一家咖啡店都要重新解释你的口味偏好——「我喜欢少糖、燕麦奶、不要奶油」。有记忆的 AI 就像认识你的咖啡师——知道你的偏好，直接做你常喝的那杯。在编程场景中，记忆保存的是项目的技术偏好（用 TypeScript 不用 JavaScript）、代码风格（prefer const over let）、人员分工（前端找 Alice，后端找 Bob）等。这些信息在每次对话中都有用，手动重复说明是巨大的浪费。",
+        "answerEn": "You can, but it's very inefficient. Imagine having to re-explain your taste preferences every time you visit the same coffee shop — 'I like less sugar, oat milk, no whipped cream.' An AI with memory is like a barista who knows you — they know your preferences and make your usual. In programming scenarios, memory stores project tech preferences (TypeScript not JavaScript), code style (prefer const over let), team responsibilities (Alice for frontend, Bob for backend). This info is useful every conversation; repeating it manually is a massive waste."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "记忆系统用 Tulving 的记忆分类框架（语义/情景/程序性记忆）来设计。这个心理学框架真的适合 AI 吗？",
+        "questionEn": "The memory system uses Tulving's memory classification framework (semantic/episodic/procedural). Is this psychology framework really suitable for AI?",
+        "answer": "框架的启发价值大于精确映射。人类的语义记忆（事实知识）映射到 AI 的 CLAUDE.md 和项目规则；情景记忆（特定事件）映射到对话历史和 memory 笔记；程序性记忆（如何做事的技能）映射到 Skills 和 prompt 模板。但差异也明显：人类记忆是模糊的、会随时间改变的，AI 的记忆是精确的文本。人类会「忘记」不重要的细节，AI 的记忆需要显式的清理机制（Dream 整合）。框架提供了有用的设计隐喻，但不应该机械套用。",
+        "answerEn": "The framework is valuable more as inspiration than as precise mapping. Human semantic memory (factual knowledge) maps to Claude's CLAUDE.md and project rules; episodic memory (specific events) maps to conversation history and memory notes; procedural memory (how-to skills) maps to Skills and prompt templates. But differences are clear: human memory is fuzzy and changes over time; AI memory is precise text. Humans 'forget' unimportant details; AI memory needs explicit cleanup (Dream consolidation). The framework provides useful design metaphors, but shouldn't be applied mechanically."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "记忆系统的 Dream 整合机制在后台自动整理记忆。这种「AI 自主修改自己的记忆」是否有风险？",
+        "questionEn": "The memory system's Dream consolidation automatically reorganizes memory in the background. Is 'AI autonomously modifying its own memory' risky?",
+        "answer": "确实有。Dream 整合可能合并两条看似相关但实际矛盾的记忆、删除它认为过时但用户认为仍然重要的信息、或者在整理过程中引入错误的总结。更深层的风险是「记忆漂移」——经过多轮 Dream 整合后，记忆可能偏离原始事实。缓解措施包括：保留原始记忆的备份、整合后让用户审核、限制 Dream 只做格式整理不做语义重写。但如果要完全避免风险，就只能放弃自动整理——让用户手动管理日益膨胀的记忆库。又是一个自动化便利性与控制安全性的权衡。",
+        "answerEn": "Yes, really. Dream consolidation may merge two memories that look related but actually contradict each other, delete information it deems outdated that users still consider important, or introduce incorrect summaries during reorganization. A deeper risk is 'memory drift' — after multiple rounds of Dream consolidation, memory may diverge from original facts. Mitigations: keep backups of original memories, let users review after consolidation, restrict Dream to format cleanup rather than semantic rewriting. But completely avoiding risk means giving up automated organization — leaving users to manually manage an ever-growing memory store. Another automation-convenience vs. control-safety tradeoff."
+      }
+    ]
+  },
+  {
+    "chapter": "远程Agent管理完全解析",
+    "title": "远程 Agent 管理完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "什么是「远程 Agent」？它和本地运行的 Claude Code 有什么区别？",
+        "questionEn": "What is a 'remote agent'? How does it differ from locally running Claude Code?",
+        "answer": "远程 Agent 是运行在云端服务器上的 Claude Code 实例。本地运行意味着 AI 在你的电脑上操作文件和执行命令，远程 Agent 则在 Anthropic 或其他云平台的服务器上做这些操作。主要区别是：远程 Agent 不受你电脑配置限制（云端有更多 CPU 和内存）、可以 24 小时持续运行（关机也不影响）、但需要将代码同步到云端（可能有安全顾虑）。适合长时间运行的大型任务（如全项目重构、批量测试）。",
+        "answerEn": "A remote agent is a Claude Code instance running on a cloud server. Local mode means the AI operates on your computer's files and runs commands locally; remote agents do the same on Anthropic's or another cloud platform's servers. Main differences: remote agents aren't constrained by your machine's specs (clouds have more CPU and memory), can run 24/7 (shutting down your laptop doesn't matter), but require syncing code to the cloud (possibly a security concern). Suits long-running large tasks (whole-project refactoring, batch testing)."
+      },
+      {
+        "level": "extend",
+        "difficulty": 4,
+        "question": "远程 Agent 如何保证代码安全？毕竟代码要上传到别人的服务器上。",
+        "questionEn": "How do remote agents ensure code safety? After all, code gets uploaded to someone else's servers.",
+        "answer": "这是远程 Agent 最大的采用障碍。Claude Code 的远程环境（CCR）使用了隔离的容器和加密存储——每个远程 Agent 运行在独立的沙箱中，代码在传输和存储时都加密。Anthropic 承诺不会访问用户代码。但根本问题是「信任」：你必须信任 Anthropic 的安全实践和承诺。对于处理高度敏感代码（如国防项目、金融核心系统）的组织，远程 Agent 可能不可接受。这是「云计算便利性 vs 数据主权」这个更大争论在 AI 工具领域的具体体现。",
+        "answerEn": "This is the biggest adoption barrier for remote agents. Claude Code's remote environment (CCR) uses isolated containers and encrypted storage — each remote agent runs in a separate sandbox, and code is encrypted in transit and at rest. Anthropic pledges not to access user code. But the fundamental issue is 'trust': you have to trust Anthropic's security practices and commitments. For organizations handling highly sensitive code (defense projects, core financial systems), remote agents may be unacceptable. This is the 'cloud convenience vs. data sovereignty' debate playing out in the AI tooling space."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "多个远程 Agent 同时操作同一个代码仓库时，如何避免冲突？",
+        "questionEn": "When multiple remote agents operate on the same code repository simultaneously, how are conflicts avoided?",
+        "answer": "远程 Agent 管理系统使用了类似 Git 分支的隔离策略——每个 Agent 在自己的分支上工作，完成后通过 Pull Request 的方式合并回主分支。如果多个 Agent 修改了相同的文件，合并时会触发冲突解决流程（可能由另一个 Agent 自动处理，也可能需要人工介入）。但更深层的问题是「语义冲突」——两个 Agent 的修改分别在语法上都正确，但合并后语义矛盾（如一个把函数改成 async，另一个在同步调用它）。当前系统对语义冲突的检测能力有限，这是分布式 AI 协作的开放挑战。",
+        "answerEn": "The remote agent management system uses a Git-branch-like isolation strategy — each agent works on its own branch and merges back to the main branch via Pull Request. If multiple agents modify the same file, merge time triggers a conflict-resolution flow (potentially handled by another agent automatically, or requiring human intervention). The deeper issue is 'semantic conflict' — two agents' changes are each syntactically correct, but semantically contradictory after merging (e.g. one makes a function async, another calls it synchronously). The current system has limited ability to detect semantic conflicts — an open challenge for distributed AI collaboration."
+      }
+    ]
+  },
+  {
+    "chapter": "18_Bash_AST解析器完全解析",
+    "title": "Bash AST 解析器完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "为什么 Claude Code 要花 35,000 行代码来「理解」一条 bash 命令？直接执行不好吗？",
+        "questionEn": "Why does Claude Code spend 35,000 lines of code to 'understand' a bash command? Why not just execute it?",
+        "answer": "想象你让一个刚来的实习生在公司电脑上执行命令——你不会让他闭眼执行任何命令，而是先问「你要执行什么？为什么？」35,000 行代码做的就是这件事：在 AI 执行命令之前，先「看懂」这条命令要做什么。AI 可能因为提示词注入、理解偏差生成一条 rm -rf / 或者被诱导执行恶意脚本。如果不做检查直接执行，一次失误就可能删掉用户所有文件。这 35,000 行代码是 Claude Code 作为「可以在你电脑上自主行动的 AI」的安全基石。",
+        "answerEn": "Imagine letting a new intern run commands on your company computer — you wouldn't let them blindly run anything, you'd first ask 'what are you running and why?' That's what the 35,000 lines do: before the AI runs a command, first 'understand' what it does. The AI might generate rm -rf / due to prompt injection or misinterpretation, or be tricked into running a malicious script. Without checks, one mistake could delete all your files. These 35,000 lines are the safety foundation of Claude Code as 'an AI that can autonomously act on your machine.'"
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "FAIL-CLOSED 和 FAIL-OPEN 有什么区别？为什么安全系统选 FAIL-CLOSED？",
+        "questionEn": "What's the difference between FAIL-CLOSED and FAIL-OPEN? Why do security systems choose FAIL-CLOSED?",
+        "answer": "FAIL-CLOSED 意味着「不确定时拒绝」——遇到不认识的命令结构，默认拦截并请求用户确认。FAIL-OPEN 相反——不确定时放行。就像药品审批：FAIL-CLOSED 只允许经过验证的成分，未知成分一律拒绝；FAIL-OPEN 只禁止已知有害成分，其他都放行。安全系统选 FAIL-CLOSED 因为攻击者不断发明新手法，黑名单永远追不上。白名单虽然可能误拦合法命令（让用户多点一次确认），但绝不会放过未知威胁。",
+        "answerEn": "FAIL-CLOSED means 'deny when uncertain' — when encountering an unfamiliar command structure, block by default and request user confirmation. FAIL-OPEN is the opposite — allow when uncertain. Like drug approval: FAIL-CLOSED only allows verified ingredients and rejects anything unknown; FAIL-OPEN only blocks known-harmful ingredients and lets the rest through. Security systems choose FAIL-CLOSED because attackers constantly invent new techniques — blacklists can never keep up. Whitelists may incorrectly block legitimate commands (requiring one more user click), but will never let an unknown threat through."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "「差异攻击」是什么？为什么解析器和 bash 对同一条命令的理解不同会成为安全漏洞？",
+        "questionEn": "What is a 'differential attack'? Why is it a security vulnerability when the parser and bash interpret the same command differently?",
+        "answer": "差异攻击利用「解析器看到的」和「bash 实际执行的」之间的差异。例如：命令中嵌入 NULL 字符（0x00），解析器可能在 NULL 处截断认为命令很安全，但 bash 静默丢弃 NULL 继续执行隐藏的恶意命令。Unicode 不可见空格（NBSP）在解析器看来是普通空格（分隔两个词），但 bash 把它当作词的一部分——git\\xa0push 看起来是两个词（会被拦截），bash 执行时是一个词（绕过拦截）。Claude Code 通过前置检查（检测控制字符、Unicode 空格、Zsh 语法）把这些差异标记为 too-complex 来防御。",
+        "answerEn": "A differential attack exploits the difference between 'what the parser sees' and 'what bash actually executes.' For example: embedding a NULL character (0x00) in a command — the parser may truncate at NULL and consider the command safe, but bash silently drops the NULL and continues executing the hidden malicious command. A Unicode invisible space (NBSP) looks like a normal space to the parser (separating two words), but bash treats it as part of a single word — git\\xa0push appears as two words (would be blocked), but bash executes it as one word (bypassing the block). Claude Code defends by marking these differences as 'too-complex' through pre-checks (detecting control characters, Unicode spaces, Zsh syntax)."
+      }
+    ]
+  },
+  {
+    "chapter": "19_Cron调度系统完全解析",
+    "title": "Cron 调度系统完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 1,
+        "question": "Cron 调度系统有什么用？为什么 AI 编程工具需要定时任务？",
+        "questionEn": "What's the cron scheduling system for? Why does an AI coding tool need scheduled tasks?",
+        "answer": "Cron 让 Claude Code 像值班员一样定时工作——比如「每 30 分钟检查部署状态」或「每天早上跑测试」。这把 AI 从「你问一句它答一句」的被动模式升级为有自己工作日程的主动模式。实际场景：监控生产环境、定期跑代码质量检查、自动更新文档。没有这个系统，用户每次都得手动触发，就像每次想喝水都得重新设闹钟一样麻烦。",
+        "answerEn": "Cron lets Claude Code work on a schedule like an on-call staffer — 'check deployment status every 30 minutes' or 'run tests every morning.' This upgrades the AI from passive mode ('ask me a question, I answer') to proactive mode (with its own work schedule). Real scenarios: monitoring production, periodic code quality checks, automated doc updates. Without this system, users would have to manually trigger every time — as annoying as having to reset an alarm every time you want to drink water."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "多个 Claude Code 实例同时运行时，怎么防止同一个定时任务被执行两次？",
+        "questionEn": "When multiple Claude Code instances run simultaneously, how is the same scheduled task prevented from running twice?",
+        "answer": "系统使用文件锁（类似打印机的「占用中」标志）——第一个获取锁的实例负责执行，其他实例跳过。如果持锁进程崩溃，系统有「死进程探测」：锁文件记录了持有者的 PID 和时间，其他实例会检查 PID 是否还活着（发送信号 0），进程已死或超时就自动接管。这避免了「持锁进程崩溃导致所有任务永远无法执行」的死锁问题。",
+        "answerEn": "The system uses file locks (like a printer's 'in use' flag) — the first instance to acquire the lock runs the task, others skip. If the lock-holding process crashes, the system has 'dead process detection': the lock file records the holder's PID and timestamp, and other instances check whether the PID is still alive (sending signal 0). If the process is dead or timed out, another takes over automatically. This avoids the deadlock where 'a crashed lock holder prevents any task from ever running.'"
+      },
+      {
+        "level": "critical",
+        "difficulty": 3,
+        "question": "定时任务 7 天自动过期是好设计还是坏设计？",
+        "questionEn": "Is the 7-day auto-expiration of scheduled tasks good design or bad?",
+        "answer": "7 天 TTL 是务实的平衡。好处：防止遗忘的任务持续消耗 API 费用（每5分钟一次的任务每天 288 次调用）。坏处：长期监控任务（如每天检查安全漏洞）7 天后静默停止。更好的方案可能是区分场景：短期 debug 任务默认 24 小时，长期任务显式标记 permanent 不过期但每周提醒确认。当前一刀切的 TTL 不区分使用场景，是个待改进点。",
+        "answerEn": "The 7-day TTL is a pragmatic balance. Pro: prevents forgotten tasks from continuously consuming API costs (a task running every 5 minutes makes 288 calls a day). Con: long-term monitoring tasks (like daily security checks) silently stop after 7 days. A better design might distinguish scenarios: short-term debug tasks default to 24 hours, long-term tasks explicitly marked 'permanent' don't expire but require weekly reconfirmation. The current one-size-fits-all TTL doesn't distinguish use cases — a point for improvement."
+      }
+    ]
+  },
+  {
+    "chapter": "20_团队记忆同步完全解析",
+    "title": "团队记忆同步完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "团队记忆同步和 CLAUDE.md 有什么区别？",
+        "questionEn": "What's the difference between team memory sync and CLAUDE.md?",
+        "answer": "CLAUDE.md 是静态的「项目手册」——人类手写、通过 git 同步，内容是确定性指令（如「使用 ESM 模块」）。团队记忆是动态的「AI 学到的知识」——AI 在交互中自动积累、通过 API 实时同步，内容是观察到的非显式知识（如「张三喜欢简洁的 PR 描述」）。简单说：CLAUDE.md 是你写给 AI 的员工手册，团队记忆是 AI 自己的工作笔记本。前者在 git 里所有人可见，后者只在 AI 之间共享。",
+        "answerEn": "CLAUDE.md is a static 'project handbook' — human-written, synced via git, containing deterministic instructions (like 'use ESM modules'). Team memory is dynamic 'AI-learned knowledge' — accumulated automatically by the AI during interactions, synced via API in real time, containing observed implicit knowledge (like 'Alice prefers concise PR descriptions'). In short: CLAUDE.md is the employee handbook you write for the AI; team memory is the AI's own work notebook. The former is visible to everyone in git; the latter is only shared among AIs."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "上传团队记忆前为什么要做密钥扫描？AI 的记忆里怎么会有密码？",
+        "questionEn": "Why scan for secrets before uploading team memory? How would passwords end up in AI memory?",
+        "answer": "AI 的记忆来自交互——如果用户说「记住 staging 密码是 abc123」，或 AI 读取 .env 文件时将内容记入记忆，密钥就会混入。一旦同步到云端，团队成员都能看到——这是安全事故。扫描器通过正则检测常见密钥模式（API Key、JWT、私钥、AWS 凭证等），上传前拦截。代价是假阳性——比如记忆「API Key 格式是 sk-xxx-yyy」也会被拦截。",
+        "answerEn": "AI memory comes from interactions — if a user says 'remember the staging password is abc123,' or the AI reads a .env file and commits its content to memory, secrets end up mixed in. Once synced to the cloud, every team member can see them — a security incident. The scanner uses regex to detect common secret patterns (API keys, JWT, private keys, AWS credentials) and blocks uploads. The cost is false positives — e.g. a memory like 'the API key format is sk-xxx-yyy' would also get blocked."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "团队记忆的「服务器权威」模式有什么风险？",
+        "questionEn": "What are the risks of team memory's 'server authoritative' model?",
+        "answer": "服务器权威意味着 pull 不做合并——后提交覆盖先提交。风险：你让 Claude 记住「用 React 18」，同事的 Claude 错记为「用 Vue 3」，后者覆盖前者后你的 Claude 拿到错误信息。更严重的隐私风险：你可能在 AI 记忆中存储个人偏好（如对某同事代码风格的评价），同步后团队共享。当前没有「私有 vs 团队」记忆的分界，这是产品设计层面需要解决的问题。",
+        "answerEn": "Server authoritative means pulls don't merge — later commits overwrite earlier ones. Risk: you tell Claude to remember 'use React 18,' a coworker's Claude mistakenly records 'use Vue 3,' and after the latter overwrites the former, your Claude gets the wrong info. A worse privacy risk: you might store personal preferences in AI memory (like comments on a coworker's code style), which gets shared with the team after sync. There's currently no 'private vs. team' memory boundary — a product-design problem that needs addressing."
+      }
+    ]
+  },
+  {
+    "chapter": "21_FastMode与UltraPlan完全解析",
+    "title": "Fast Mode 与 UltraPlan 完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 1,
+        "question": "Fast Mode 是用了更快但更笨的模型吗？",
+        "questionEn": "Does Fast Mode use a faster but dumber model?",
+        "answer": "不是——Fast Mode 仍然是 Opus 4.6，只是推理引擎输出更快。不一直开着的原因：1）可能在边际情况下牺牲推理深度；2）有速率限制和冷却期；3）仅 Anthropic 直连 API 可用（不支持 Bedrock/Vertex）；4）组织管理员可全局禁用（成本管控）。所以它更像按需加速而非默认模式。",
+        "answerEn": "No — Fast Mode is still Opus 4.6, the inference engine just outputs faster. Reasons it's not always on: 1) may sacrifice reasoning depth at the margins; 2) has rate limits and cooldown periods; 3) only available on direct Anthropic API (not supported on Bedrock/Vertex); 4) organization admins can globally disable it (cost control). So it's more of an on-demand accelerator than a default mode."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "UltraPlan 的「传送」机制是什么？为什么需要在云端规划然后传回本地？",
+        "questionEn": "What is UltraPlan's 'teleport' mechanism? Why plan in the cloud and send the plan back locally?",
+        "answer": "传送是远程 Claude 完成 30 分钟规划后把方案传回本地。设计原因：云端 Claude 有更多计算资源和上下文窗口，适合大规模代码探索。但执行时用户可能需要本地环境（特定工具链、环境变量、访问权限）。传送让规划和执行解耦——远程做复杂思考，本地做精确执行。用户也可以不传送，让远程 Claude 直接执行并创建 PR。",
+        "answerEn": "Teleport is where a remote Claude finishes 30 minutes of planning and sends the plan back locally. Reasoning: remote Claude has more compute and larger context windows — good for large-scale code exploration. But execution may need the local environment (specific toolchain, env vars, access permissions). Teleport decouples planning from execution — remote does complex thinking, local does precise execution. Users can also skip teleport and let remote Claude execute directly and create a PR."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "Fast Mode 的组织级控制和冷却机制背后的产品逻辑是什么？",
+        "questionEn": "What's the product logic behind Fast Mode's organization-level control and cooldown mechanisms?",
+        "answer": "这反映 AI 工具的成本控制难题。Fast Mode 消耗更多推理资源——所有用户同时开启会压垮 GPU 容量。组织级控制让管理员管理成本（像管控差旅预算）；冷却机制是自动熔断器——检测到速率限制时自动降回普通模式并指数退避（5分钟→15分钟→1小时），确保系统不被疯狂重试压垮。深层意义：AI 工具的能力和成本不可分离，产品设计必须在两者间找到可持续平衡。",
+        "answerEn": "This reflects the cost-control challenge of AI tools. Fast Mode consumes more inference resources — if every user turned it on simultaneously, it would overwhelm GPU capacity. Organization-level controls let admins manage costs (like travel budgets); the cooldown mechanism is an automatic circuit breaker — when rate limits are detected, it auto-demotes to normal mode and backs off exponentially (5min → 15min → 1 hour), ensuring the system isn't crushed by wild retry loops. Deeper meaning: in AI tools, capability and cost are inseparable — product design must find a sustainable balance between them."
+      }
+    ]
+  },
+  {
+    "chapter": "22_PromptCache可观测性完全解析",
+    "title": "Prompt Cache 可观测性完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "Prompt Cache 失效对用户有什么影响？为什么需要专门的检测系统？",
+        "questionEn": "What impact does Prompt Cache invalidation have on users? Why does it need a dedicated detection system?",
+        "answer": "Cache 命中时系统提示词费用只有 1/10，失效则贵 10 倍——频繁使用的开发者可能每天多花几美元甚至几十美元。问题是失效是静默的——用户不收到通知，只在月底账单发现异常。检测系统的作用是让隐形成本可见——追踪每次 API 调用的缓存状态，失效时精确定位原因，帮开发者快速修复。",
+        "answerEn": "On a cache hit, system-prompt costs are 1/10 — on a miss, 10x. Heavy users may pay a few extra dollars per day, sometimes tens. The problem is that invalidation is silent — no notification, users only notice at month-end billing. The detection system's job is making the hidden cost visible — tracking every API call's cache state, pinpointing invalidation causes, helping developers quickly fix them."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "77% 的缓存失效来自工具描述变化——这意味着什么？",
+        "questionEn": "77% of cache invalidations come from tool description changes — what does that mean?",
+        "answer": "意味着 MCP 服务器是缓存稳定性的最大威胁。每次启动 MCP 工具（Slack、GitHub 等），其 schema 被包含在 API 请求中。如果 schema 有细微变化（如版本更新后 description 多了个空格），整个缓存就失效。解决：对每个工具单独哈希（已实现，能精确定位变化的工具）；MCP 服务器保证 schema 稳定性（需第三方配合，不可控）；缓存策略分层（系统提示词和工具描述使用不同缓存边界）。",
+        "answerEn": "It means MCP Servers are the biggest threat to cache stability. Every MCP tool launch (Slack, GitHub, etc.) includes its schema in API requests. If the schema has even minor changes (e.g. an extra space in description after a version update), the entire cache invalidates. Solutions: hash each tool separately (already implemented, can pinpoint the changed tool); have MCP Servers guarantee schema stability (requires third-party cooperation, not controllable); layered caching strategy (separate cache boundaries for system prompt and tool descriptions)."
+      },
+      {
+        "level": "critical",
+        "difficulty": 3,
+        "question": "「粘性闩锁」机制解决了什么问题？",
+        "questionEn": "What problem does the 'sticky latch' mechanism solve?",
+        "answer": "防止状态抖动导致缓存反复失效。比如用户超额计费状态在 free 和 overage 间快速切换（用量恰好在阈值附近），每次切换改变 beta headers 导致缓存失效。粘性闩锁：一旦进入 overage 就不切换回来——像空调不会因 0.1 度波动反复开关。牺牲状态精确性（短暂恢复时仍按 overage 处理），换来缓存稳定性（避免频繁失效和成本激增）。",
+        "answerEn": "Preventing state thrashing from repeatedly invalidating the cache. For example, a user's overage billing state may flip between 'free' and 'overage' (usage hovering right at the threshold), and each flip changes beta headers, invalidating the cache. Sticky latch: once entering overage, it doesn't switch back — like an air conditioner not toggling for 0.1-degree fluctuations. Sacrifices state precision (during brief recoveries it's still treated as overage) in exchange for cache stability (avoiding frequent invalidations and cost spikes)."
+      }
+    ]
+  },
+  {
+    "chapter": "23_Peer与Session发现层完全解析",
+    "title": "Peer 与 Session 发现层完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 3,
+        "question": "为什么 Claude Code 要支持同一台机器跑多个实例？单窗口单 Agent 不就够了吗？",
+        "questionEn": "Why does Claude Code support running multiple instances on the same machine? Isn't a single window with a single agent enough?",
+        "answer": "因为 Claude Code 的定位不是「聊天窗口」而是「Agent 工作台」——一个开发者可能同时跑 5 个 Agent 做不同的事：一个在后端仓库修 bug、一个在前端仓库做重构、一个在文档仓库写 changelog、还有两个在做长时间的代码探索。Cursor/Cline/Aider 这一类同类产品都是「单实例单窗口」模型，你同时开两个 Cursor 窗口它们彼此不知道对方存在；Claude Code 刻意为「多 Agent 并行」做了发现层（Peer Registry + Session Registry），让同一台机器上的实例能互相看到、互相发消息。这是 Agent 工作台定位的直接推论，也是 Claude Code 在这个类目里独一份的设计。引用 Ch23 §1 的行业对比表。",
+        "answerEn": "Because Claude Code's positioning isn't a 'chat window' but an 'agent workbench' — a developer may run 5 agents simultaneously doing different things: one fixing bugs in the backend repo, one refactoring the frontend repo, one writing a changelog in the docs repo, and two doing long code exploration. Cursor/Cline/Aider-class products are all 'one instance per window' — open two Cursor windows and they don't know about each other. Claude Code deliberately built a discovery layer (Peer Registry + Session Registry) for 'multi-agent parallelism,' letting instances on the same machine see each other and send messages. This is a direct corollary of the agent-workbench positioning, and a unique design in this category. References Ch23 §1's industry comparison table."
+      },
+      {
+        "level": "concept",
+        "difficulty": 3,
+        "question": "两个 Claude 实例之间发消息，对方会实时收到吗？如果对方在跑 Bash 卡住了呢？",
+        "questionEn": "When two Claude instances send each other messages, does the other side receive in real time? What if they're stuck running Bash?",
+        "answer": "不是实时的——Claude Code 的跨实例消息走的是 mailbox-pull 语义：消息排队等着，直到接收方下次进入工具循环时自然拉取。不等于邮件的 store-and-forward（那个有服务器主动推送），也不等于 WebSocket 的实时双向。如果对方正在跑 Bash 卡住，消息就一直在邮箱里等，等到那个 Bash 返回、接收方重新进入 query loop 再拉取。Ch23 §5 特意指出：Claude Code 故意不给 ListPeersTool 暴露 busy state——因为「给了你也没用」，消息本来就是异步的，你知道对方忙也不能让它早点看到。这个设计是对「Agent 之间协作」这个使用场景的最小假设：所有跨 Agent 通信都是异步消息，不假设对方立即响应。",
+        "answerEn": "Not in real time — Claude Code cross-instance messaging uses mailbox-pull semantics: messages queue in a mailbox until the receiver next enters the tool loop and naturally pulls them. Not like email's store-and-forward (where the server pushes), not like WebSocket's real-time bidirectional. If the other side is stuck running Bash, the message just waits in the mailbox until that Bash returns and the receiver re-enters the query loop. Ch23 §5 specifically notes: Claude Code deliberately doesn't expose busy state through ListPeersTool — because 'even if you knew, you couldn't do anything.' Messages are inherently async; knowing the other side is busy can't make them see it earlier. This design makes the minimum assumption about 'agent-to-agent collaboration': all cross-agent communication is async messaging, and no immediate response is assumed."
+      },
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "live session 和 transcript 这两个概念到底有什么区别？`--continue` 会优先用哪个？",
+        "questionEn": "What's the actual difference between 'live session' and 'transcript'? Which does `--continue` prefer?",
+        "answer": "live session = 通过 UDS 还能联系上的、当前确实在运行的会话（live truth——进程活着、socket 还开着）；transcript = 已经结束的会话留下的对话日志文件（`~/.claude/logs/session_*.jsonl`）。`--continue` 的行为是**先信 live truth**：先看 PID Registry 里有没有还活着的会话，有的话就提示你「这个会话还活着，不要接管它」（避免两个实例同时操作同一个 session）；只有都不活了，才去翻最近的 transcript 里按时间序找出最近的那一条。比喻：回办公室找人，先看谁还在工位，不在的才去翻最近的工作记录。这个顺序不是小事——如果 `--continue` 直接从 transcript 读，就可能把一个还在后台跑的 session 抢走，导致两个实例对同一份状态做双写。引用 Ch23 §6。",
+        "answerEn": "live session = a session currently running and still reachable via UDS (live truth — process alive, socket open); transcript = the conversation log file (`~/.claude/logs/session_*.jsonl`) left by an ended session. `--continue`'s behavior is **trust live truth first**: first check PID Registry for a live session — if one exists, prompt 'this session is still alive, don't take it over' (preventing two instances from operating the same session). Only when no live session exists does it sort recent transcripts by time and pick the latest. Analogy: when returning to the office to find someone, first look who's at their desk; if no one's there, then check recent work records. This order matters — if `--continue` read directly from transcript, it could steal a session still running in the background, causing two instances to double-write the same state. References Ch23 §6."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "Peer 发现层有没有被攻击面？本地别的进程能不能伪装成 Claude 给我发消息？",
+        "questionEn": "Is the peer discovery layer under attack? Can other local processes impersonate Claude and send me messages?",
+        "answer": "Ch23 §9 明确指出这是一个开放的安全缺口：本地恶意脚本理论上可以通过 UDS 构造 `from=session_xxx` 的跨会话消息，因为 UDS 的默认访问控制只靠文件系统权限，只要攻击者能写到 `~/.claude/peers/` 这个目录就能注入。接收端的 `UserCrossSessionMessage` 是一个**无 fallback 的硬渲染依赖**——消息会被直接放进接收方 Claude 的上下文窗口，构成「本地进程 → Claude 模型上下文注入」的路径。风险等级取决于接收方信任程度：如果接收方是 autonomous Agent 在 bypass 模式下跑，这条注入路径可能诱导它执行任意命令。缓解方向：接收端做 envelope 签名校验（源 session 用私钥签，接收方用公钥验）、或者对 UDS 目录做更严格的 inotify 监控。这属于生产部署的审计项，不是普通用户需要担心的事，但写安全公告的人必须知道。",
+        "answerEn": "Ch23 §9 explicitly flags this as an open security gap: a local malicious script can theoretically construct a cross-session message via UDS with `from=session_xxx`, because UDS default access control relies only on filesystem permissions — as long as the attacker can write to `~/.claude/peers/`, they can inject. The receiver's `UserCrossSessionMessage` is a **hard-rendering dependency with no fallback** — the message gets placed directly into the receiving Claude's context window, forming a 'local process → Claude model context injection' path. Risk level depends on receiver trust: if the receiver is an autonomous agent running in bypass mode, this injection path could induce arbitrary command execution. Mitigation directions: receiver does envelope signature verification (source session signs with private key, receiver verifies with public key), or stricter inotify monitoring on the UDS directory. This is a production-deployment audit item, not something ordinary users need to worry about — but anyone writing security advisories must know."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "claude ps / /peers / ListPeersTool 这三个东西我平时怎么用？分别对应什么场景？",
+        "questionEn": "How do I use claude ps / /peers / ListPeersTool day-to-day? What scenarios do each correspond to?",
+        "answer": "三张表面是**同一份 session registry 的三种视图投影**，各服务不同角色：(1) `claude ps` 是 CLI 运维视图——给你看「本机上有哪些 Claude 进程在跑、各自 PID、启动时间、cwd」，类似 `ps aux | grep claude`，运维用来检查有没有僵尸进程或者跑飞的 Agent。(2) `/peers` 是交互式对话命令——给人类开发者在 REPL 里看「我有哪些会话可以沟通」，输出一个可点击的名单。(3) `ListPeersTool` 是给 AI 模型用的工具——模型要发跨会话消息时，先调这个工具拿地址簿（谁在哪、名字叫啥），然后才能调 `SendMessageTool`。三张表面对应三类「谁需要看这份数据」：运维 / 人类 / AI，字段投影也不同（AI 看不到 PID 细节，运维看不到 teammate 别名）。Ch23 §5 有一张对照表，给用户一个「我该用哪个」的选择指南。",
+        "answerEn": "These three surfaces are **three view projections of the same session registry**, each serving a different role: (1) `claude ps` is the CLI ops view — shows 'which Claude processes are running on this machine, their PIDs, start times, cwd,' similar to `ps aux | grep claude`. Ops uses it to check for zombie processes or runaway agents. (2) `/peers` is an interactive conversation command — shows human developers in the REPL 'which sessions can I talk to?' with a clickable list. (3) `ListPeersTool` is a tool for the AI model — when the model wants to send a cross-session message, it first calls this tool to get the address book (who's where, what's their name), then calls `SendMessageTool`. The three surfaces match three audiences for this data: ops / human / AI, with different field projections (AI doesn't see PID details, ops doesn't see teammate aliases). Ch23 §5 has a comparison table serving as a 'which should I use' guide."
+      }
+    ]
+  },
+  {
+    "chapter": "24_Assistant等于Viewer完全解析",
+    "title": "Assistant = Viewer 完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 3,
+        "question": "`claude assistant` 是什么？它是启动了一个更强的 Agent 模式吗？",
+        "questionEn": "What is `claude assistant`? Does it launch a more powerful agent mode?",
+        "answer": "不是。`claude assistant` 做的事情是 **attach 到远端 CCR 上已经在跑的一个 Agent session**，以「观察者」身份观看和轻交互。它不是启动一个新 Agent，而是给你一张进入已存在会话的门票。最贴切的类比是 `ssh -t user@server tmux attach`——你不是开新 shell，而是看已有的 shell 正在干什么，并且可以插嘴。这是 Ch24 开头的核心反直觉点：`assistant` 这个词容易让人以为是「助手模式」或者「更智能的模式」，实际它是一个**连接模式**——assistant 等于 viewer，名字来自产品命名历史而非技术语义。理解这一点之后，Ch24 的其他所有概念（viewerOnly / perpetual / KAIROS gate）都能串起来。",
+        "answerEn": "No. What `claude assistant` does is **attach to an already-running agent session on the remote CCR** as a 'viewer' — watching and doing light interaction. It doesn't launch a new agent, it gives you a ticket into an existing session. The closest analogy is `ssh -t user@server tmux attach` — you're not opening a new shell, you're seeing what an existing shell is doing and able to chime in. This is Ch24's opening counterintuitive point: the word 'assistant' makes people think 'assistant mode' or 'smarter mode,' but it's actually a **connection mode** — assistant equals viewer. The name comes from product naming history, not technical semantics. Once you understand this, all of Ch24's other concepts (viewerOnly / perpetual / KAIROS gate) click into place."
+      },
+      {
+        "level": "concept",
+        "difficulty": 2,
+        "question": "viewerOnly 模式是不是等于只读？",
+        "questionEn": "Does viewerOnly mode equal read-only?",
+        "answer": "不是。viewerOnly 是**角色重定义**而不是权限削减。进入 viewerOnly 后确实关掉了一些能力：interrupt（不能打断正在跑的工具）、watchdog（不负责心跳检测）、title ownership（标题栏不归你管）；但保留的能力很多：能收能发消息、能回答权限确认（permission prompt 会穿越过来）、能做 feedback 操作（👍/👎/评论）、能看到 tool_result 的完整渲染。比喻：电影院里的列席观众——能鼓掌（feedback）、能举手提问（发消息）、甚至能回答主持人提的问题（permission 穿越），但**不能走上台去换演员**（没有 ownership、没有 interrupt）。「只读」会误导读者以为 assistant 是被动的摄像头，viewerOnly 实际上保留了完整的双向轻交互能力。引用 Ch24 §3。",
+        "answerEn": "No. viewerOnly is **role redefinition**, not permission reduction. After entering viewerOnly, some capabilities are turned off: interrupt (can't interrupt running tools), watchdog (not responsible for heartbeat detection), title ownership (the title bar isn't yours); but many are retained: can receive and send messages, answer permission confirmations (permission prompts pass through), do feedback actions (👍/👎/comments), see full tool_result rendering. Analogy: audience members at a theater — can applaud (feedback), raise hands to ask questions (send messages), even answer the host's questions (permission pass-through), but **can't walk onto the stage to replace actors** (no ownership, no interrupt). 'Read-only' would mislead readers into thinking assistant is a passive camera; viewerOnly actually preserves full two-way light interaction. References Ch24 §3."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "KAIROS 是什么？为什么听起来像希腊神名？",
+        "questionEn": "What is KAIROS? Why does it sound like a Greek god's name?",
+        "answer": "KAIROS 是 Claude Code 内部对 assistant 模式的代号。希腊语里 Kairos 意思是「对的时机」，和 Chronos（线性时间）相对——推测代号选这个是因为 assistant 模式的核心特征是「连接到一个正在发生的时刻」，而不是「开启一段新时间线」。这个代号在源码里出现的频率极高（Ch24 §5 统计了分布，是顶级 feature flag 之一）：启动模式门控走 `feature('KAIROS')`、记忆模式切换走 `if KAIROS`、perpetual 触发条件也挂在 KAIROS 上。作为一个代号它**同时承担了多重语义**——启动 / 记忆 / perpetual 三条独立的控制轴都用 KAIROS 做开关。Ch24 §5 也批评了这种多义性：一个代号当三个 flag 用，未来想拆分就要做大范围替换，这是实现滞后留下的技术债。",
+        "answerEn": "KAIROS is Claude Code's internal codename for assistant mode. In Greek, Kairos means 'the right moment,' opposite to Chronos (linear time) — the codename was likely chosen because assistant mode's core feature is 'connecting to a moment that's happening,' not 'starting a new timeline.' This codename appears extremely frequently in the source (Ch24 §5 counts the distribution — one of the top feature flags): startup mode gating via `feature('KAIROS')`, memory mode switching via `if KAIROS`, perpetual trigger conditions also hung on KAIROS. As a codename, it **carries multiple semantics simultaneously** — startup, memory, and perpetual are three independent control axes all switched by KAIROS. Ch24 §5 also criticizes this polysemy: a single codename used as three flags means any future split requires wide-scale replacement — tech debt from implementation lag."
+      },
+      {
+        "level": "extend",
+        "difficulty": 4,
+        "question": "为什么 assistant 模式下自动整理记忆功能 autoDream 就被禁用了？",
+        "questionEn": "Why is the autoDream automatic memory consolidation feature disabled in assistant mode?",
+        "answer": "因为 autoDream 的底层假设是「会话有明确的结束点」——autoDream 在 session 结束后触发一次，把这段 session 的对话做语义整合，写入长期记忆。但 assistant 模式是 perpetual 的——会话**没有结束点**，它可以跨多次 query 持续存在（Ch24 §6）。如果 autoDream 还按正常模式跑，它就不知道该在哪个时刻触发：现在这段「还没结束」，以后也不会结束，永远不会整合。所以 KAIROS 模式下记忆系统切到 append-only 日志模式——像流水账，每条消息都记下来但不整合，只保留手动 `/dream` 作为离线整合的逃生通道。这是一个典型的「长驻 vs 定时」冲突：任何假设「会话有终点」的后台任务，在 perpetual 模式下都要被禁用或改写。",
+        "answerEn": "Because autoDream's underlying assumption is 'sessions have a clear endpoint' — autoDream fires once after a session ends, semantically consolidating that session's conversation into long-term memory. But assistant mode is perpetual — the session **has no endpoint**, it persists across multiple queries (Ch24 §6). If autoDream ran in normal mode, it wouldn't know when to trigger: 'this session hasn't ended yet' now, and won't end later, so it would never consolidate. Therefore KAIROS mode switches the memory system to append-only log mode — like a running ledger, every message is recorded but not consolidated, keeping only manual `/dream` as an offline consolidation escape hatch. This is a classic 'long-running vs. scheduled' conflict: any background task that assumes 'sessions have endpoints' must be disabled or rewritten in perpetual mode."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "perpetual bridge 和普通 bridge 的核心差别是什么？",
+        "questionEn": "What's the core difference between perpetual bridge and regular bridge?",
+        "answer": "普通 bridge 在 query 结束时做一整套 teardown：发 final result → stopWork → close transport → 清理 session state，下次用需要重新握手。perpetual bridge **只停轮询、清 flush gate、刷新 pointer.json，但不关 transport**——transport 层保持打开，下次 query 直接复用同一条连接。这让 assistant 模式可以跨多次 query 持续 attach 到同一个远端 session，不需要每次重连。代价是两个：(1) transport 长期持有占用资源（连接池里有一条 idle 连接）；(2) **perpetual 当前与 bridge v2（env-less）互斥**——bridge v2 依赖 teardown 时的环境变量清理，perpetual 不 teardown 就没法清理，这是 Ch12 §10 指出的实现滞后技术债（initReplBridge.ts:407-410 的代码注释甚至写了「not yet implemented here」）。理解 perpetual 是理解 assistant 模式可用性的关键：没有 perpetual，assistant 每次 query 都要重连，体验不可用；有了 perpetual，assistant 就像 tmux 一样可以长期挂着。",
+        "answerEn": "Regular bridge does a full teardown at query end: send final result → stopWork → close transport → clean session state, requiring a fresh handshake next time. Perpetual bridge **only stops polling, clears the flush gate, and refreshes pointer.json — it doesn't close transport** — the transport layer stays open, and the next query reuses the same connection. This lets assistant mode continuously attach to the same remote session across multiple queries without reconnecting. Two costs: (1) transport is held long-term, consuming resources (one idle connection in the pool); (2) **perpetual is currently incompatible with bridge v2 (env-less)** — bridge v2 depends on env var cleanup at teardown; perpetual doesn't teardown so can't clean up. This is the implementation-lag tech debt flagged by Ch12 §10 (initReplBridge.ts:407-410 even has a 'not yet implemented here' comment). Understanding perpetual is key to understanding assistant mode's usability: without perpetual, assistant would reconnect every query and be unusable; with perpetual, assistant can hang around long-term like tmux."
+      }
+    ]
+  },
+  {
+    "chapter": "25_Brief通信家族与Viewer结构化通道完全解析",
+    "title": "Brief 通信家族与 Viewer 结构化通道完全解析",
+    "qa": [
+      {
+        "level": "concept",
+        "difficulty": 3,
+        "question": "我在 claude.ai 网页给远端 Claude 发一条消息和发一个文件，为什么效果不一样？",
+        "questionEn": "When I send a message versus a file from claude.ai web to remote Claude, why is the effect different?",
+        "answer": "因为 Brief 和 SendUserFile 是双成员但**不对称**。Brief 工具发消息时触发 `dropText` 语义：Claude 之前在当前 turn 的回复会被丢弃，你的新消息替换那段回复，就像撤回重发（避免「Claude 说了一半 + 你又说一句」造成的语境混乱）。SendUserFile 发文件时**不触发 dropText**：保留 assistant 上下文，追加附件，相当于「Claude 说了一半，你递过去一份补充材料，它继续说」。比喻：Brief 像微信的「撤回 + 重发」，SendUserFile 像邮件的「追加附件」。这两个不对称不是 bug，是产品语义的刻意区分——文本发送假设「我改主意了」，文件发送假设「我补充资料」。引用 Ch25 §1 Messages.tsx:513 两个数组的定义。",
+        "answerEn": "Because Brief and SendUserFile are a pair but **asymmetric**. The Brief tool's message sending triggers `dropText` semantics: Claude's earlier reply in the current turn is discarded, your new message replaces that reply — like retract-and-resend (avoiding the context confusion of 'Claude mid-sentence + you interrupting'). SendUserFile **doesn't trigger dropText**: it preserves the assistant context and appends the attachment, like 'Claude is talking, you hand over supplemental material, it keeps going.' Analogy: Brief is like WeChat's 'retract + resend'; SendUserFile is like email's 'attach file.' The asymmetry isn't a bug, it's deliberate product semantics — text sending assumes 'I changed my mind,' file sending assumes 'I'm providing more material.' References the two-array definition at Messages.tsx:513 in Ch25 §1."
+      },
+      {
+        "level": "concept",
+        "difficulty": 3,
+        "question": "Web 端上传的文件是怎么到达本地 Claude Code 的？会落到我电脑的哪里？",
+        "questionEn": "How does a file uploaded from the web reach local Claude Code? Where does it land on my machine?",
+        "answer": "完整链路有五步（Ch25 §3）：(1) Web Composer 上传文件到 Anthropic 存储，拿到一个 file_uuid；(2) Composer 发一条消息给本地 Claude，消息的 attachments 字段带上这个 file_uuid；(3) 本地 `bridge/inboundAttachments.ts` 收到消息后检测到 file_uuid，走 OAuth 协议发 `GET /api/oauth/files/{uuid}/content`；(4) 下载到的原始字节写入 `~/.claude/uploads/{sessionId}/{原始文件名}`——sessionId 是一个**本地随机值**（不是 session_id 本体），用来防 path traversal 和命名冲突；(5) 本地 Claude 在下一个工具调用里看到的是一个 `@\"~/.claude/uploads/xxx/file.pdf\"` 风格的路径引用，可以直接让 Read/Grep 等工具读。关键设计：云端的 file_uuid 从不直接进入模型上下文，模型看到的只有本地路径——云端 ID 是传输凭证，本地路径是使用凭证。",
+        "answerEn": "The full chain is five steps (Ch25 §3): (1) Web Composer uploads the file to Anthropic storage and gets a file_uuid. (2) Composer sends a message to local Claude with this file_uuid in the attachments field. (3) Local `bridge/inboundAttachments.ts` receives the message, detects the file_uuid, and uses OAuth protocol to call `GET /api/oauth/files/{uuid}/content`. (4) Downloaded raw bytes are written to `~/.claude/uploads/{sessionId}/{original filename}` — the sessionId is a **local random value** (not the session_id itself), used to prevent path traversal and name collisions. (5) On the next tool call, local Claude sees an `@\"~/.claude/uploads/xxx/file.pdf\"` style path reference, readable directly by Read/Grep etc. Key design: the cloud file_uuid never enters model context directly — the model only sees the local path. Cloud ID is the transport credential, local path is the usage credential."
+      },
+      {
+        "level": "extend",
+        "difficulty": 4,
+        "question": "什么是 side-channel？为什么 file_uuid 不污染模型上下文？",
+        "questionEn": "What is a side-channel? Why doesn't file_uuid pollute the model's context?",
+        "answer": "side-channel（侧信道）是主通道之外的平行传输路径——用于送给系统工具看的元数据，而不是送给模型的正文内容。file_uuid 走的是 protobuf 消息的 **catchall 字段**（Ch25 §4），这个字段就像信封上的备注栏：web viewer 渲染时能读到它（知道「这条消息关联了一个文件」，展示文件名预览），但模型的 context window 构造阶段会**跳过这个字段**——模型看不到 file_uuid 本体，只看到最终解析出的本地路径。好处有两个：(1) 节省 token——模型不需要读一串 36 字符的 UUID，那是纯噪声；(2) 避免干扰模型推理——如果模型看到「这个消息带一个名为 abc-123-def 的文件」，它可能尝试「理解」这个 ID 的语义，反而误导。比喻：快递包裹的条形码——物流系统扫描使用，收件人不看也不需要看。Ch25 §4 用这个机制解释了为什么 viewer 能看到文件预览卡片但模型只看到 `@path` 风格引用。",
+        "answerEn": "A side-channel is a parallel transport path alongside the main channel — for metadata visible to system tools, not body content shown to the model. file_uuid travels in the protobuf message's **catchall field** (Ch25 §4) — this field is like the memo field on an envelope: the web viewer can read it during rendering (knowing 'this message is associated with a file' and showing a filename preview), but the model's context-window construction **skips this field** — the model doesn't see the file_uuid itself, only the resolved local path. Two benefits: (1) saves tokens — the model doesn't need to read a 36-character UUID, pure noise; (2) avoids derailing model reasoning — if the model saw 'this message has a file named abc-123-def,' it might try to 'interpret' the ID's semantics, which would actually mislead. Analogy: package barcodes — the logistics system scans them, the recipient neither sees nor needs to see. Ch25 §4 uses this mechanism to explain why the viewer can show file preview cards while the model only sees `@path`-style references."
+      },
+      {
+        "level": "extend",
+        "difficulty": 3,
+        "question": "为什么跨会话消息只能发纯文本？不能发 structured message（如按钮、表单）吗？",
+        "questionEn": "Why can cross-session messages only be plain text? Why can't they include structured messages (like buttons, forms)?",
+        "answer": "不能。`SendMessageTool.ts:635-641` 在**连接检查之前**就直接拒绝 structured message——这不是「连接层暂时不支持」的临时限制，是**产品级永久语义**。源码注释里解释了原因（Ch25 §5 引用）：避免用户在会话断开重连后以为 structured message 也能恢复，而实际上 structured UI 组件的状态根本不在 session registry 里存，重连会丢。与其让这个不对称成为一个只能靠用户「自己记得」的陷阱，不如在工具层彻底禁用。比喻：办公室里传纸条只能传文字，不能传复杂表格——这不是因为窗户太小，而是因为大家都知道「纸条不负责传表格，要表格就走邮件」。设计决策背后的原则是：**宁可能力收窄，也不做不可靠的恢复**。",
+        "answerEn": "They can't. `SendMessageTool.ts:635-641` rejects structured messages outright **before the connection check** — this isn't a 'temporarily unsupported at the connection layer' restriction, it's **permanent product semantics**. The source comment explains why (quoted in Ch25 §5): preventing users from thinking structured messages can also recover after session disconnect + reconnect, when in fact structured UI component state isn't stored in the session registry and is lost on reconnect. Rather than making this asymmetry a trap users have to remember themselves, the tool layer disables it completely. Analogy: office sticky notes can only pass text, not complex tables — not because the window is small, but because everyone knows 'sticky notes aren't for tables; tables go through email.' The principle behind the decision: **narrow capability is better than unreliable recovery**."
+      },
+      {
+        "level": "critical",
+        "difficulty": 4,
+        "question": "SendUserFile 为什么只有在 assistant 模式下才能用？Brief 发文本却不需要？",
+        "questionEn": "Why is SendUserFile only available in assistant mode, while Brief sending text doesn't require it?",
+        "answer": "因为它们的**攻击面不同**。Brief 只传文本，走的是现有的消息通道，最多是上下文注入风险——这个风险在任何模式下都存在，收窄它没意义。SendUserFile 涉及**文件落盘**（写 `~/.claude/uploads/{sessionId}/`），攻击面大得多：路径注入、文件覆盖、存储耗尽、敏感文件落本地等一系列新风险。所以 SendUserFile 被 `feature('KAIROS')` 硬门控（Ch25 §1 引用 tools.ts:42-44）——只在 assistant 模式（用户明确决定「我要远程控制本地」时）才开放。这是 Claude Code 的一个普适设计原则：**读操作可以宽松，写操作必须显式授权**。bypass 模式可以绕过命令权限，但不能绕过这种「能力级 gate」——Ch27 提的 bypass-immune 概念就是这类 gate 的总称。",
+        "answerEn": "Because their **attack surfaces are different**. Brief only transmits text through existing message channels — at most a context injection risk, which exists in any mode and narrowing it wouldn't help. SendUserFile involves **files landing on disk** (writing to `~/.claude/uploads/{sessionId}/`), with a much larger attack surface: path injection, file overwrite, storage exhaustion, sensitive files hitting local disk — a whole set of new risks. So SendUserFile is hard-gated by `feature('KAIROS')` (Ch25 §1 cites tools.ts:42-44) — only opened in assistant mode (when the user has explicitly decided 'I want to remotely control local'). This is a universal Claude Code design principle: **reads can be lenient, writes must be explicitly authorized**. Bypass mode can bypass command permissions but cannot bypass this kind of 'capability-level gate' — Ch27's 'bypass-immune' concept is the umbrella term for these gates."
+      }
+    ]
+  }
+]

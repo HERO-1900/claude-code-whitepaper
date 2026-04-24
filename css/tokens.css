@@ -1,0 +1,628 @@
+/* ============================================================
+   tokens.css — CC 白皮书 Design Token 系统（正式生产版）
+   ------------------------------------------------------------
+
+   设计哲学（双层 Token 架构）：
+   ┌─────────────────────────────────────────────────┐
+   │ Layer 1: 原子层（Primitives）                    │
+   │   纯色值/字号/间距，不带"用途"语义               │
+   │   命名：--cc-primitive-{family}-{shade}          │
+   │   规则：组件层禁止直接引用本层变量               │
+   ├─────────────────────────────────────────────────┤
+   │ Layer 2: 语义层（Semantic）                      │
+   │   带"用途"语义，组件只引用这一层                 │
+   │   命名：--cc-{category}-{role}                   │
+   │   规则：切主题时只改这层指向的原子值              │
+   └─────────────────────────────────────────────────┘
+
+   命名前缀：所有变量统一用 --cc- 前缀，避免与第三方库冲突。
+
+   主题机制：
+   - :root 默认 = 暗色（与现有 style.css 保持一致，防闪白）
+   - [data-theme="dark"]  = 强制暗色
+   - [data-theme="light"] = 强制亮色
+   - @media prefers-color-scheme: dark = 系统自动跟随
+
+   兼容别名（过渡用）：
+   - style.css 现有 --bg-primary 等变量原封不动保留
+   - 本文件末尾额外声明 --cc-* 别名，供新组件按语义引用
+   - 阶段 2 将批量把 style.css 里的硬编码颜色替换为 --cc-* 变量
+
+   PoC 来源：sandbox/theme-tokens.css（已验证可行）
+   生成日期：2026-04-06
+   ============================================================ */
+
+/* ------------------------------------------------------------
+   Layer 1: 原子层（Primitives）
+   ------------------------------------------------------------
+   不含任何"用途"含义，只声明"本站设计系统里有这些颜色"。
+   组件层 **禁止** 直接引用本层变量。
+   ------------------------------------------------------------ */
+:root {
+  /* —— 中性深色灰阶（站点主色调为深蓝黑，偏冷色调）—— */
+  --cc-primitive-slate-50:  #fafafa;
+  --cc-primitive-slate-100: #f0f0f5;
+  --cc-primitive-slate-200: #e8e8f0;
+  --cc-primitive-slate-300: #d4d4de;
+  --cc-primitive-slate-400: #9898a8;
+  --cc-primitive-slate-500: #6a6a7a;
+  --cc-primitive-slate-600: #4a4a5a;
+  --cc-primitive-slate-700: #2a2a3a;
+  --cc-primitive-slate-800: #1e1e2e;
+  --cc-primitive-slate-850: #1a1a26;
+  --cc-primitive-slate-900: #12121a;
+  --cc-primitive-slate-950: #0a0a0f;
+
+  /* —— 品牌青色（accent，主站现用 #00d4ff）—— */
+  --cc-primitive-cyan-300: #33ddff;
+  --cc-primitive-cyan-400: #00d4ff;   /* 与 style.css --accent-cyan 一致 */
+  --cc-primitive-cyan-500: #00b8e0;
+  --cc-primitive-cyan-600: #009dc4;
+
+  /* —— 品牌紫色（secondary accent）—— */
+  --cc-primitive-violet-400: #9588f5;
+  --cc-primitive-violet-500: #7b61ff;  /* 与 style.css --accent-purple 一致 */
+  --cc-primitive-violet-600: #6c5ce7;
+
+  /* —— 金色 / 暖黄（高亮/警告）—— */
+  --cc-primitive-amber-300: #ffd93d;   /* 与 style.css --accent-gold 一致 */
+  --cc-primitive-amber-400: #fbbf24;
+  --cc-primitive-amber-600: #d97706;
+
+  /* —— 状态色 —— */
+  --cc-primitive-green-400:  #48bb78;  /* 与 style.css --accent-green 一致 */
+  --cc-primitive-green-500:  #3fb950;
+  --cc-primitive-green-600:  #059669;
+  --cc-primitive-red-400:    #ff6b6b;  /* 与 style.css --accent-red 一致 */
+  --cc-primitive-red-500:    #fc8181;
+  --cc-primitive-red-600:    #dc2626;
+  --cc-primitive-teal-400:   #4ecdc4;  /* 与 style.css --accent-teal 一致 */
+  --cc-primitive-blue-400:   #63b3ed;  /* 与 style.css --accent-blue 一致 */
+  --cc-primitive-pink-400:   #e88dff;  /* 与 style.css --accent-pink 一致 */
+
+  /* —— 站点专属深色背景（与 style.css 完全对应）—— */
+  --cc-primitive-dark-bg-900: #0a0e17;   /* style.css --bg-primary */
+  --cc-primitive-dark-bg-800: #0d1520;   /* style.css --bg-secondary */
+  --cc-primitive-dark-bg-700: #111827;   /* style.css --bg-card */
+  --cc-primitive-dark-bg-600: #1a2332;   /* style.css --bg-hover */
+  --cc-primitive-dark-border: #1e2d42;   /* style.css --border */
+
+  /* —— 字号阶梯（rem 单位，支持用户字体缩放）—— */
+  --cc-primitive-font-xs:   0.75rem;
+  --cc-primitive-font-sm:   0.875rem;
+  --cc-primitive-font-base: 1rem;
+  --cc-primitive-font-lg:   1.125rem;
+  --cc-primitive-font-xl:   1.25rem;
+  --cc-primitive-font-2xl:  1.5rem;
+  --cc-primitive-font-3xl:  1.875rem;
+  --cc-primitive-font-4xl:  2.25rem;
+
+  /* —— 间距阶梯 —— */
+  --cc-primitive-space-1:  0.25rem;
+  --cc-primitive-space-2:  0.5rem;
+  --cc-primitive-space-3:  0.75rem;
+  --cc-primitive-space-4:  1rem;
+  --cc-primitive-space-6:  1.5rem;
+  --cc-primitive-space-8:  2rem;
+  --cc-primitive-space-12: 3rem;
+  --cc-primitive-space-16: 4rem;
+
+  /* —— 圆角 —— */
+  --cc-primitive-radius-sm: 4px;
+  --cc-primitive-radius-md: 8px;
+  --cc-primitive-radius-lg: 12px;
+  --cc-primitive-radius-xl: 16px;
+
+  /* —— 动效曲线 —— */
+  --cc-primitive-ease-fast:   150ms ease;
+  --cc-primitive-ease-normal: 250ms ease;
+  --cc-primitive-ease-slow:   400ms ease;
+
+  /* —— 字体族 —— */
+  --cc-primitive-font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI",
+                             "PingFang SC", "Noto Sans SC", "Microsoft YaHei",
+                             system-ui, sans-serif;
+  --cc-primitive-font-mono: "SF Mono", "Fira Code", "Cascadia Code",
+                             "JetBrains Mono", "Source Code Pro", monospace;
+  --cc-primitive-font-serif: "Noto Serif SC", "Source Han Serif SC",
+                              "STSong", serif;
+  --cc-primitive-font-serif-heading: Georgia, "Noto Serif SC", "Source Han Serif SC",
+                                      "PingFang SC", serif;
+
+  /* —— 暖色原语（warm 主题专用，2026-04-13 新增）—— */
+  --cc-primitive-warm-50:  #fbf9f4;
+  --cc-primitive-warm-100: #f5f2ed;
+  --cc-primitive-warm-200: #efeae1;
+  --cc-primitive-warm-300: #e8e1d2;
+  --cc-primitive-warm-400: #d8cfbc;
+  --cc-primitive-warm-500: #b8ab94;
+  --cc-primitive-warm-600: #9a8b76;
+  --cc-primitive-warm-700: #6b5d4a;
+  --cc-primitive-warm-800: #3d3028;
+  --cc-primitive-warm-900: #2b2a27;
+  --cc-primitive-warm-950: #1a1815;
+
+  --cc-primitive-amber-500: #c77d2e;
+  --cc-primitive-amber-700: #a66520;
+}
+
+
+/* ============================================================
+   Layer 2: 语义层 — 暗色（默认）
+   ============================================================
+   why default = dark：
+   - 生产站点本就是暗色主题，默认暗色可保证首次访问视觉一致，
+     避免"先白闪再变黑"的 FOUC 问题。
+   - data-theme 属性挂在 <html> 上，FOUC 防御脚本在最早的
+     <script> 块里注入，CSS 解析前已生效。
+   ============================================================ */
+:root,
+:root[data-theme="dark"] {
+  /* ---------- 背景层级（从最深到最浅）---------- */
+  --cc-bg-primary:    var(--cc-primitive-dark-bg-900); /* 页面底色（最深） */
+  --cc-bg-secondary:  var(--cc-primitive-dark-bg-800); /* 导航/侧边栏底色 */
+  --cc-bg-elevated:   var(--cc-primitive-dark-bg-700); /* 卡片/面板底色 */
+  --cc-bg-hover:      var(--cc-primitive-dark-bg-600); /* 悬停态背景 */
+
+  /* ---------- 边框 ---------- */
+  --cc-border-default: var(--cc-primitive-dark-border); /* 常规边框 */
+  --cc-border-strong:  rgba(255, 255, 255, 0.12);       /* 更明显的边框 */
+
+  /* ---------- 文字 ---------- */
+  --cc-text-primary:   #e0e6ed;                          /* 正文主色 */
+  --cc-text-secondary: #8a9bb5;                          /* 次要文字 */
+  --cc-text-muted:     #4a5568;                          /* 弱化文字/占位符 */
+
+  /* ---------- 强调色（品牌青）---------- */
+  --cc-accent-primary: var(--cc-primitive-cyan-400);    /* 主强调色（青色） */
+  --cc-accent-hover:   var(--cc-primitive-cyan-300);    /* 悬停时更亮 */
+  --cc-accent-bg:      rgba(0, 212, 255, 0.08);         /* 强调色浅底 */
+  --cc-accent-bg-strong: rgba(0, 212, 255, 0.15);       /* 强调色较深底 */
+
+  /* ---------- 副强调色（紫）---------- */
+  --cc-accent-secondary:       var(--cc-primitive-violet-500);
+  --cc-accent-secondary-hover: var(--cc-primitive-violet-400);
+
+  /* ---------- 功能色（金/绿/红/青）---------- */
+  --cc-color-gold:    var(--cc-primitive-amber-300);    /* 高亮/特殊标注 */
+  --cc-color-green:   var(--cc-primitive-green-400);    /* 成功/通过/允许 */
+  --cc-color-red:     var(--cc-primitive-red-400);      /* 错误/拒绝/危险 */
+  --cc-color-teal:    var(--cc-primitive-teal-400);     /* 次要功能色 */
+  --cc-color-blue:    var(--cc-primitive-blue-400);     /* 信息/链接辅助 */
+  --cc-color-pink:    var(--cc-primitive-pink-400);     /* 特殊标注 */
+
+  /* ---------- 状态色（语义明确）---------- */
+  --cc-status-success: var(--cc-primitive-green-400);
+  --cc-status-warning: var(--cc-primitive-amber-300);
+  --cc-status-error:   var(--cc-primitive-red-400);
+  --cc-status-info:    var(--cc-primitive-blue-400);
+
+  /* ---------- 阴影（暗色下需要较深的黑）---------- */
+  --cc-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
+  --cc-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --cc-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
+
+  /* ---------- 主题标识（供 chart-embed.js 等 JS 读取）---------- */
+  --cc-theme-mode: "dark";
+
+  /* 让浏览器原生 UI（滚动条/表单控件）也跟随暗色 */
+  color-scheme: dark;
+}
+
+
+/* ============================================================
+   Layer 2: 语义层 — 亮色
+   ============================================================
+   注意：站点原始设计为纯暗色，亮色主题是新增功能。
+   配色以"可读性优先"为原则，对比度参考 WCAG AA 标准。
+   ============================================================ */
+:root[data-theme="light"] {
+  /* ---------- 背景层级 ---------- */
+  --cc-bg-primary:    #f8f9fc;                          /* 页面底色（浅灰白） */
+  --cc-bg-secondary:  #f0f2f7;                          /* 导航/侧边栏底色 */
+  --cc-bg-elevated:   #ffffff;                          /* 卡片/面板底色（纯白） */
+  --cc-bg-hover:      #e8ecf4;                          /* 悬停态背景 */
+
+  /* ---------- 边框 ---------- */
+  --cc-border-default: #d0d7e8;                         /* 常规边框 */
+  --cc-border-strong:  #b0bcd6;                         /* 更明显的边框 */
+
+  /* ---------- 文字 ---------- */
+  --cc-text-primary:   #1a2035;                         /* 正文主色（深蓝黑） */
+  --cc-text-secondary: #4a5878;                         /* 次要文字 */
+  --cc-text-muted:     #7a8ba8;                         /* 弱化文字 */
+
+  /* ---------- 强调色（品牌青，亮色下需要更深才够对比度）---------- */
+  --cc-accent-primary: #0099cc;                         /* 亮色下的主强调（加深版） */
+  --cc-accent-hover:   #007aad;                         /* 悬停时更深 */
+  --cc-accent-bg:      rgba(0, 153, 204, 0.08);         /* 强调色浅底 */
+  --cc-accent-bg-strong: rgba(0, 153, 204, 0.14);       /* 强调色较深底 */
+
+  /* ---------- 副强调色（紫）---------- */
+  --cc-accent-secondary:       var(--cc-primitive-violet-600);
+  --cc-accent-secondary-hover: var(--cc-primitive-violet-500);
+
+  /* ---------- 功能色（亮色下提一档对比度）---------- */
+  --cc-color-gold:    #c8900a;                          /* 金色加深（白底可读） */
+  --cc-color-green:   #1a8a4a;                          /* 绿色加深 */
+  --cc-color-red:     #d93535;                          /* 红色加深 */
+  --cc-color-teal:    #1a9b96;                          /* teal 加深 */
+  --cc-color-blue:    #2d7ab5;                          /* 蓝色加深 */
+  --cc-color-pink:    #a050c8;                          /* 粉紫加深 */
+
+  /* ---------- 状态色 ---------- */
+  --cc-status-success: #059669;
+  --cc-status-warning: #d97706;
+  --cc-status-error:   #dc2626;
+  --cc-status-info:    #2563eb;
+
+  /* ---------- 阴影（亮色下浅阴影）---------- */
+  --cc-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+  --cc-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --cc-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+  /* ---------- 主题标识 ---------- */
+  --cc-theme-mode: "light";
+
+  color-scheme: light;
+}
+
+
+/* ============================================================
+   Layer 2: 语义层 — 暖色 editorial（warm）
+   ============================================================
+   2026-04-13 新增。Anthropic 官方温暖风。
+   V2+ 融合方向：暖米色底 + 衬线标题 + 琥珀 accent + 编辑感留白。
+   用户选择此主题后 data-theme="warm" 挂在 <html> 上。
+   ============================================================ */
+:root[data-theme="warm"] {
+  /* ---------- 背景层级 ---------- */
+  --cc-bg-primary:    var(--cc-primitive-warm-100);  /* #f5f2ed 页面底色（暖米色） */
+  --cc-bg-secondary:  var(--cc-primitive-warm-200);  /* #efeae1 导航/侧边栏底色 */
+  --cc-bg-elevated:   var(--cc-primitive-warm-50);   /* #fbf9f4 卡片/面板底色 */
+  --cc-bg-hover:      var(--cc-primitive-warm-300);  /* #e8e1d2 悬停态背景 */
+
+  /* ---------- 边框 ---------- */
+  --cc-border-default: var(--cc-primitive-warm-400); /* #d8cfbc 常规边框 */
+  --cc-border-strong:  var(--cc-primitive-warm-500); /* #b8ab94 强调边框 */
+
+  /* ---------- 文字 ---------- */
+  --cc-text-primary:   var(--cc-primitive-warm-900); /* #2b2a27 正文（深炭黑） */
+  --cc-text-secondary: var(--cc-primitive-warm-700); /* #6b5d4a 次要（暖灰） */
+  --cc-text-muted:     var(--cc-primitive-warm-600); /* #9a8b76 弱化 */
+
+  /* ---------- 强调色（暖琥珀）---------- */
+  --cc-accent-primary:    var(--cc-primitive-amber-500); /* #c77d2e */
+  --cc-accent-hover:      var(--cc-primitive-amber-700); /* #a66520 */
+  --cc-accent-bg:         rgba(199, 125, 46, 0.08);
+  --cc-accent-bg-strong:  rgba(199, 125, 46, 0.16);
+
+  /* ---------- 副强调色（深棕，手绘/线条用）---------- */
+  --cc-accent-secondary:       var(--cc-primitive-warm-800); /* #3d3028 */
+  --cc-accent-secondary-hover: var(--cc-primitive-warm-950); /* #1a1815 */
+
+  /* ---------- 功能色（暖化处理）---------- */
+  --cc-color-gold:    #c8900a;
+  --cc-color-green:   #4a7c50;
+  --cc-color-red:     #b84a3a;
+  --cc-color-teal:    #3e8a7f;
+  --cc-color-blue:    #4a6b8a;
+  --cc-color-pink:    #a05c7a;
+
+  /* ---------- 状态色 ---------- */
+  --cc-status-success: #4a7c50;
+  --cc-status-warning: #c77d2e;
+  --cc-status-error:   #b84a3a;
+  --cc-status-info:    #4a6b8a;
+
+  /* ---------- 额外 token（审计补充）---------- */
+  --cc-bg-primary-rgb: 245, 242, 237;         /* #f5f2ed 的 RGB 分量，供 rgba() 使用 */
+  --cc-text-on-accent: #fbf9f4;               /* 在 accent 填充按钮上的文字色（暖白） */
+  --cc-color-orange: #d4883f;                 /* 橙色功能色（Review/Gallery 用） */
+
+  /* ---------- 阴影（暖褐色阴影，不是纯黑）---------- */
+  --cc-shadow-sm: 0 1px 2px rgba(61, 48, 40, 0.08);
+  --cc-shadow-md: 0 4px 12px rgba(61, 48, 40, 0.10);
+  --cc-shadow-lg: 0 8px 24px rgba(61, 48, 40, 0.14);
+
+  /* ---------- 字体覆盖（warm 用衬线优先）---------- */
+  --cc-font-sans:  var(--cc-primitive-font-sans);
+  --cc-font-mono:  var(--cc-primitive-font-mono);
+  --cc-font-serif: var(--cc-primitive-font-serif-heading);
+
+  /* ---------- warm 专用语义字体 ---------- */
+  --cc-font-heading: var(--cc-primitive-font-serif-heading);
+  --cc-font-body:    var(--cc-primitive-font-serif);
+  --cc-font-ui:      var(--cc-primitive-font-sans);
+
+  /* ---------- warm 行高（紧凑舒适）---------- */
+  --cc-line-height-normal: 1.7;
+
+  /* ---------- warm 动效（克制）---------- */
+  --cc-transition-fast:   150ms ease;
+  --cc-transition-normal: 250ms ease;
+  --cc-transition-slow:   400ms ease;
+
+  /* ---------- 主题标识 ---------- */
+  --cc-theme-mode: "warm";
+
+  color-scheme: light;
+}
+
+
+/* ============================================================
+   系统跟随：@media prefers-color-scheme
+   ============================================================
+   仅在用户没有手动设置 data-theme 时生效。
+   JS 会在 data-theme="auto" 时移除 data-theme 属性，
+   让媒体查询接管，实现真正的系统跟随。
+   ============================================================ */
+@media (prefers-color-scheme: light) {
+  :root:not([data-theme="dark"]):not([data-theme="light"]):not([data-theme="warm"]) {
+    /* 复制亮色语义层，让系统偏好亮色时自动生效 */
+    --cc-bg-primary:    #f8f9fc;
+    --cc-bg-secondary:  #f0f2f7;
+    --cc-bg-elevated:   #ffffff;
+    --cc-bg-hover:      #e8ecf4;
+
+    --cc-border-default: #d0d7e8;
+    --cc-border-strong:  #b0bcd6;
+
+    --cc-text-primary:   #1a2035;
+    --cc-text-secondary: #4a5878;
+    --cc-text-muted:     #7a8ba8;
+
+    --cc-accent-primary: #0099cc;
+    --cc-accent-hover:   #007aad;
+    --cc-accent-bg:      rgba(0, 153, 204, 0.08);
+    --cc-accent-bg-strong: rgba(0, 153, 204, 0.14);
+
+    --cc-accent-secondary:       var(--cc-primitive-violet-600);
+    --cc-accent-secondary-hover: var(--cc-primitive-violet-500);
+
+    --cc-color-gold:  #c8900a;
+    --cc-color-green: #1a8a4a;
+    --cc-color-red:   #d93535;
+    --cc-color-teal:  #1a9b96;
+    --cc-color-blue:  #2d7ab5;
+    --cc-color-pink:  #a050c8;
+
+    --cc-status-success: #059669;
+    --cc-status-warning: #d97706;
+    --cc-status-error:   #dc2626;
+    --cc-status-info:    #2563eb;
+
+    --cc-shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --cc-shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --cc-shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+
+    --cc-theme-mode: "light";
+
+    color-scheme: light;
+  }
+}
+
+
+/* ============================================================
+   排版 / 间距 / 动效 token（与主题无关）
+   ============================================================ */
+:root {
+  /* ---------- 字体族 ---------- */
+  --cc-font-sans:  var(--cc-primitive-font-sans);  /* 界面主字体（含 CJK fallback） */
+  --cc-font-mono:  var(--cc-primitive-font-mono);  /* 代码/终端字体 */
+  --cc-font-serif: var(--cc-primitive-font-serif); /* 正文长文字体（可选） */
+
+  /* ---------- 字号阶梯 ---------- */
+  --cc-font-size-xs:   var(--cc-primitive-font-xs);
+  --cc-font-size-sm:   var(--cc-primitive-font-sm);
+  --cc-font-size-base: var(--cc-primitive-font-base);
+  --cc-font-size-lg:   var(--cc-primitive-font-lg);
+  --cc-font-size-xl:   var(--cc-primitive-font-xl);
+  --cc-font-size-2xl:  var(--cc-primitive-font-2xl);
+  --cc-font-size-3xl:  var(--cc-primitive-font-3xl);
+  --cc-font-size-4xl:  var(--cc-primitive-font-4xl);
+
+  /* ---------- CJK 行高（比 Latin 大约高 0.2~0.3）---------- */
+  --cc-line-height-tight:   1.4;
+  --cc-line-height-normal:  1.8;
+  --cc-line-height-relaxed: 2.0;
+
+  /* ---------- 间距阶梯 ---------- */
+  --cc-space-1:  var(--cc-primitive-space-1);
+  --cc-space-2:  var(--cc-primitive-space-2);
+  --cc-space-3:  var(--cc-primitive-space-3);
+  --cc-space-4:  var(--cc-primitive-space-4);
+  --cc-space-6:  var(--cc-primitive-space-6);
+  --cc-space-8:  var(--cc-primitive-space-8);
+  --cc-space-12: var(--cc-primitive-space-12);
+  --cc-space-16: var(--cc-primitive-space-16);
+
+  /* ---------- 圆角 ---------- */
+  --cc-radius-sm: var(--cc-primitive-radius-sm);
+  --cc-radius-md: var(--cc-primitive-radius-md);
+  --cc-radius-lg: var(--cc-primitive-radius-lg);
+  --cc-radius-xl: var(--cc-primitive-radius-xl);
+
+  /* ---------- 过渡动效 ---------- */
+  --cc-transition-fast:   var(--cc-primitive-ease-fast);   /* 150ms */
+  --cc-transition-normal: var(--cc-primitive-ease-normal); /* 250ms */
+  --cc-transition-slow:   var(--cc-primitive-ease-slow);   /* 400ms */
+}
+
+
+/* ============================================================
+   无障碍：减少动效偏好
+   ============================================================ */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --cc-transition-fast:   0ms;
+    --cc-transition-normal: 0ms;
+    --cc-transition-slow:   0ms;
+  }
+}
+
+
+/* ============================================================
+   主题切换器 UI 样式（三态按钮组）
+   ============================================================
+   按钮 HTML 由 index.html 末尾的内联 script 注入到 #topnav。
+   此处只写样式，不写逻辑。
+   ============================================================ */
+.cc-theme-switcher {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid var(--cc-border-default, #1e2d42);
+  border-radius: 8px;
+  padding: 3px;
+  margin-left: 8px;
+}
+
+.cc-theme-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  border-radius: 5px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--cc-text-secondary, #8a9bb5);
+  transition: background var(--cc-transition-fast, 150ms ease),
+              color var(--cc-transition-fast, 150ms ease);
+  position: relative;
+}
+
+.cc-theme-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--cc-text-primary, #e0e6ed);
+}
+
+.cc-theme-btn.active {
+  background: var(--cc-accent-bg, rgba(0, 212, 255, 0.08));
+  color: var(--cc-accent-primary, #00d4ff);
+}
+
+/* 亮色主题下切换器样式调整 */
+[data-theme="light"] .cc-theme-switcher,
+:root:not([data-theme="dark"]):not([data-theme="light"]):not([data-theme="warm"]) .cc-theme-switcher {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: var(--cc-border-default, #d0d7e8);
+}
+
+[data-theme="light"] .cc-theme-btn:hover,
+:root:not([data-theme="dark"]):not([data-theme="light"]):not([data-theme="warm"]) .cc-theme-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--cc-text-primary, #1a2035);
+}
+
+[data-theme="light"] .cc-theme-btn.active,
+:root:not([data-theme="dark"]):not([data-theme="light"]):not([data-theme="warm"]) .cc-theme-btn.active {
+  background: var(--cc-accent-bg, rgba(0, 153, 204, 0.08));
+  color: var(--cc-accent-primary, #0099cc);
+}
+
+/* warm 主题下切换器样式 */
+[data-theme="warm"] .cc-theme-switcher {
+  background: rgba(61, 48, 40, 0.05);
+  border-color: var(--cc-border-default, #d8cfbc);
+}
+
+[data-theme="warm"] .cc-theme-btn {
+  color: var(--cc-text-secondary, #6b5d4a);
+}
+
+[data-theme="warm"] .cc-theme-btn:hover {
+  background: rgba(61, 48, 40, 0.08);
+  color: var(--cc-text-primary, #2b2a27);
+}
+
+[data-theme="warm"] .cc-theme-btn.active {
+  background: rgba(199, 125, 46, 0.12);
+  color: var(--cc-accent-primary, #c77d2e);
+}
+
+/* ============================================================
+   语言切换器 — 中 / EN
+   样式模式复用主题切换器，但字母按钮所以宽度更大一点
+   ============================================================ */
+.cc-lang-switcher {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 3px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--cc-border-default, rgba(255, 255, 255, 0.08));
+  border-radius: 10px;
+  margin-right: 8px;
+}
+
+.cc-lang-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 34px;
+  height: 28px;
+  padding: 0 8px;
+  background: transparent;
+  border: none;
+  border-radius: 7px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--cc-text-secondary, #8a94a6);
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.cc-lang-btn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--cc-text-primary, #e0e6ed);
+}
+
+.cc-lang-btn.active {
+  background: var(--cc-accent-bg, rgba(0, 212, 255, 0.08));
+  color: var(--cc-accent-primary, #00d4ff);
+}
+
+/* 亮色主题下 */
+[data-theme="light"] .cc-lang-switcher,
+:root:not([data-theme="dark"]):not([data-theme="light"]):not([data-theme="warm"]) .cc-lang-switcher {
+  background: rgba(0, 0, 0, 0.04);
+  border-color: var(--cc-border-default, #d0d7e8);
+}
+
+[data-theme="light"] .cc-lang-btn:hover,
+:root:not([data-theme="dark"]):not([data-theme="light"]):not([data-theme="warm"]) .cc-lang-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+  color: var(--cc-text-primary, #1a2035);
+}
+
+[data-theme="light"] .cc-lang-btn.active,
+:root:not([data-theme="dark"]):not([data-theme="light"]):not([data-theme="warm"]) .cc-lang-btn.active {
+  background: var(--cc-accent-bg, rgba(0, 153, 204, 0.08));
+  color: var(--cc-accent-primary, #0099cc);
+}
+
+/* warm 主题下 */
+[data-theme="warm"] .cc-lang-switcher {
+  background: rgba(61, 48, 40, 0.05);
+  border-color: var(--cc-border-default, #d8cfbc);
+}
+
+[data-theme="warm"] .cc-lang-btn {
+  color: var(--cc-text-secondary, #6b5d4a);
+}
+
+[data-theme="warm"] .cc-lang-btn:hover {
+  background: rgba(61, 48, 40, 0.08);
+  color: var(--cc-text-primary, #2b2a27);
+}
+
+[data-theme="warm"] .cc-lang-btn.active {
+  background: rgba(199, 125, 46, 0.12);
+  color: var(--cc-accent-primary, #c77d2e);
+}

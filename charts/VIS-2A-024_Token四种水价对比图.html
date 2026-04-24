@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VIS-2A-024 Token 四种水价对比图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* v4-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    :root{
+      --bg:#0b1220;--panel:#111a2e;--card:#111a2e;--border:#243049;--text:#eef2f8;--muted:#9aa7bd;--subtle:#3a4661;
+      --c-read:#10b981;       /* emerald 缓存读 */
+      --c-read-2:#34d399;
+      --c-input:#3b82f6;      /* blue 输入 */
+      --c-input-2:#60a5fa;
+      --c-write:#f59e0b;      /* amber 缓存写 */
+      --c-write-2:#fbbf24;
+      --c-output:#ef4444;     /* red 输出 */
+      --c-output-2:#f87171;
+      --slate:#94a3b8;
+    }
+    [data-theme="warm"]{
+      --bg:#f7f1e8;--panel:#fffaf2;--card:#fffaf2;--border:#d9c8ad;--text:#241a0e;--muted:#6b5a44;--subtle:#c8b491;
+      --c-read:#047857;--c-read-2:#059669;
+      --c-input:#1d4ed8;--c-input-2:#2563eb;
+      --c-write:#b45309;--c-write-2:#d97706;
+      --c-output:#b91c1c;--c-output-2:#dc2626;
+      --slate:#6b5a44;
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--panel:#f7f9fc;--card:#f7f9fc;--border:#d6dde8;--text:#0b1220;--muted:#475569;--subtle:#94a3b8;
+      --c-read:#047857;--c-read-2:#059669;
+      --c-input:#1d4ed8;--c-input-2:#2563eb;
+      --c-write:#b45309;--c-write-2:#d97706;
+      --c-output:#b91c1c;--c-output-2:#dc2626;
+      --slate:#475569;
+    }
+    *{margin:0;padding:0;box-sizing:border-box}
+    body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;padding:24px 28px 36px}
+    .svg-bg{fill:var(--bg)}
+    .node-bg{fill:var(--panel)}
+    .grid-line{stroke:var(--border)}
+    .node-title{fill:var(--text)}
+    .node-meta{fill:var(--muted)}
+    .vis-header{display:flex;align-items:center;gap:14px;margin-bottom:18px;flex-wrap:wrap}
+    .vis-dot{width:12px;height:12px;border-radius:50%;background:var(--c-input-2);animation:pulse 2s infinite}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
+    .vis-title{font-size:20px;font-weight:700;color:var(--text);letter-spacing:.02em}
+    .vis-sub{font-size:13px;color:var(--muted);margin-left:4px}
+    .svg-wrap{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:18px;margin-bottom:18px;overflow-x:auto}
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px}
+    .card-hd{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .card-dot{width:10px;height:10px;border-radius:50%}
+    .card-hd h3{font-size:12px;font-weight:700;color:var(--text)}
+    .card ul{list-style:none;font-size:12px;color:var(--muted);line-height:1.85}
+    .card ul strong{color:var(--text)}
+    .vis-footer{font-size:12px;color:var(--muted);text-align:center;border-top:1px solid var(--border);padding-top:12px}
+    .ctrl{position:fixed;top:18px;right:18px;display:flex;gap:8px;z-index:999}
+    .ctrl button{background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:12px;padding:7px 14px;border-radius:8px;cursor:pointer;font-weight:600}
+    .ctrl button:hover{border-color:var(--c-input-2);color:var(--c-input-2)}
+  </style>
+</head>
+<body>
+
+<div class="ctrl">
+  <button onclick="window.cycleTheme()">Theme</button>
+  <button onclick="window.toggleLang()">EN/中</button>
+</div>
+
+<div class="vis-header">
+  <div class="vis-dot"></div>
+  <div class="vis-title">
+    <span class="lz">Token 四种水价对比图</span>
+    <span class="le">Token Four-Tier Pricing Comparison</span>
+  </div>
+  <div class="vis-sub">VIS-2A-024 · <span class="lz">用水价类比理解缓存经济学 · Claude Opus 4.6 定价</span><span class="le">Cache economics via water-price analogy · Claude Opus 4.6 pricing</span></div>
+</div>
+
+<div class="svg-wrap">
+<svg viewBox="0 0 1080 580" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+<defs>
+  <pattern id="g24" width="40" height="40" patternUnits="userSpaceOnUse">
+    <path d="M 40 0 L 0 0 0 40" fill="none" class="grid-line" stroke-width="0.5"/>
+  </pattern>
+  <linearGradient id="grad-input" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="var(--c-input-2)"/>
+    <stop offset="100%" stop-color="var(--c-input)"/>
+  </linearGradient>
+  <linearGradient id="grad-output" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="var(--c-output-2)"/>
+    <stop offset="100%" stop-color="var(--c-output)"/>
+  </linearGradient>
+  <linearGradient id="grad-cache-read" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="var(--c-read-2)"/>
+    <stop offset="100%" stop-color="var(--c-read)"/>
+  </linearGradient>
+  <linearGradient id="grad-cache-write" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="var(--c-write-2)"/>
+    <stop offset="100%" stop-color="var(--c-write)"/>
+  </linearGradient>
+  <filter id="glow-bar" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur stdDeviation="3" result="blur"/>
+    <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <!-- 箭头标记：绿色（缓存）、红色（输出）-->
+  <marker id="arrow-green" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+    <path d="M 0 0 L 12 6 L 0 12 z" fill="var(--c-read)"/>
+  </marker>
+  <marker id="arrow-red" viewBox="0 0 12 12" refX="10" refY="6" markerWidth="10" markerHeight="10" orient="auto-start-reverse">
+    <path d="M 0 0 L 12 6 L 0 12 z" fill="var(--c-output)"/>
+  </marker>
+</defs>
+
+<!-- Background -->
+<rect width="1080" height="580" class="svg-bg"/>
+<rect width="1080" height="580" fill="url(#g24)" opacity="0.25"/>
+
+<!-- Chart area: x=110 - 660, y=70 (top, $75) - 410 (bottom, $0); height=340; bar width=110, gap=30 -->
+<!-- Scale: 340 / 75 = 4.5333 px per $ -->
+
+<!-- Grid horizontals (6 lines: $0, $15, $30, $45, $60, $75) -->
+<line x1="110" y1="410" x2="660" y2="410" class="grid-line" stroke-width="1.5"/>
+<line x1="110" y1="342" x2="660" y2="342" class="grid-line" stroke-width="0.6" stroke-dasharray="4,4"/>
+<line x1="110" y1="274" x2="660" y2="274" class="grid-line" stroke-width="0.6" stroke-dasharray="4,4"/>
+<line x1="110" y1="206" x2="660" y2="206" class="grid-line" stroke-width="0.6" stroke-dasharray="4,4"/>
+<line x1="110" y1="138" x2="660" y2="138" class="grid-line" stroke-width="0.6" stroke-dasharray="4,4"/>
+<line x1="110" y1="70"  x2="660" y2="70"  class="grid-line" stroke-width="0.6" stroke-dasharray="4,4"/>
+
+<!-- Y-axis labels -->
+<text x="98" y="414" class="node-meta" font-size="15" font-weight="600" text-anchor="end">$0</text>
+<text x="98" y="346" class="node-meta" font-size="15" font-weight="600" text-anchor="end">$15</text>
+<text x="98" y="278" class="node-meta" font-size="15" font-weight="600" text-anchor="end">$30</text>
+<text x="98" y="210" class="node-meta" font-size="15" font-weight="600" text-anchor="end">$45</text>
+<text x="98" y="142" class="node-meta" font-size="15" font-weight="600" text-anchor="end">$60</text>
+<text x="98" y="74"  class="node-meta" font-size="15" font-weight="600" text-anchor="end">$75</text>
+
+<!-- Y-axis title (rotated) -->
+<text x="34" y="240" class="node-meta" font-size="14" font-weight="600" text-anchor="middle" transform="rotate(-90,34,240)">
+  <tspan class="lz">价格 / 1M tokens (USD)</tspan><tspan class="le">PRICE / 1M TOKENS (USD)</tspan>
+</text>
+
+<!-- ============ BAR 1: Cache Read $1.5 ============ -->
+<!-- $1.5 → height = 1.5 * 4.5333 = 6.8 -->
+<rect x="125" y="403" width="110" height="7" rx="3" fill="url(#grad-cache-read)" filter="url(#glow-bar)" opacity="0.95"/>
+<text x="180" y="390" font-size="22" font-weight="700" text-anchor="middle" fill="var(--c-read-2)">$1.5</text>
+<text x="180" y="372" font-size="14" font-weight="600" text-anchor="middle" fill="var(--c-read-2)"><tspan class="lz">0.1× 基准</tspan><tspan class="le">0.1× baseline</tspan></text>
+<!-- Below x-axis labels -->
+<text x="180" y="438" font-size="17" font-weight="700" text-anchor="middle" class="node-title">
+  <tspan class="lz">缓存读取</tspan><tspan class="le">Cache Read</tspan>
+</text>
+<text x="180" y="458" font-size="15" text-anchor="middle" fill="var(--c-read-2)" font-weight="600">
+  <tspan class="lz">💧 回用水</tspan><tspan class="le">💧 Reclaimed</tspan>
+</text>
+<text x="180" y="478" font-size="13" text-anchor="middle" class="node-meta">cache_read_input</text>
+
+<!-- ============ BAR 2: Input $15 ============ -->
+<!-- $15 → height = 68, y = 410-68 = 342 -->
+<rect x="265" y="342" width="110" height="68" rx="4" fill="url(#grad-input)" filter="url(#glow-bar)" opacity="0.95"/>
+<text x="320" y="329" font-size="22" font-weight="700" text-anchor="middle" fill="var(--c-input-2)">$15</text>
+<text x="320" y="311" font-size="14" font-weight="600" text-anchor="middle" fill="var(--c-input-2)"><tspan class="lz">1× 基准</tspan><tspan class="le">1× baseline</tspan></text>
+<text x="320" y="438" font-size="17" font-weight="700" text-anchor="middle" class="node-title">
+  <tspan class="lz">普通输入</tspan><tspan class="le">Prompt Input</tspan>
+</text>
+<text x="320" y="458" font-size="15" text-anchor="middle" fill="var(--c-input-2)" font-weight="600">
+  <tspan class="lz">🚰 自来水</tspan><tspan class="le">🚰 Tap water</tspan>
+</text>
+<text x="320" y="478" font-size="13" text-anchor="middle" class="node-meta">input_tokens</text>
+
+<!-- ============ BAR 3: Cache Write $18.75 ============ -->
+<!-- $18.75 → height = 85, y = 325 -->
+<rect x="405" y="325" width="110" height="85" rx="4" fill="url(#grad-cache-write)" filter="url(#glow-bar)" opacity="0.95"/>
+<text x="460" y="312" font-size="22" font-weight="700" text-anchor="middle" fill="var(--c-write-2)">$18.75</text>
+<text x="460" y="294" font-size="14" font-weight="600" text-anchor="middle" fill="var(--c-write-2)"><tspan class="lz">1.25× 略贵</tspan><tspan class="le">1.25× pricier</tspan></text>
+<text x="460" y="438" font-size="17" font-weight="700" text-anchor="middle" class="node-title">
+  <tspan class="lz">缓存写入</tspan><tspan class="le">Cache Write</tspan>
+</text>
+<text x="460" y="458" font-size="15" text-anchor="middle" fill="var(--c-write-2)" font-weight="600">
+  <tspan class="lz">🪣 蓄水罐</tspan><tspan class="le">🪣 Tank invest</tspan>
+</text>
+<text x="460" y="478" font-size="13" text-anchor="middle" class="node-meta">cache_creation_input</text>
+
+<!-- ============ BAR 4: Output $75 ============ -->
+<!-- $75 → height = 340, y = 70 -->
+<rect x="545" y="70" width="110" height="340" rx="4" fill="url(#grad-output)" filter="url(#glow-bar)" opacity="0.95"/>
+<text x="600" y="57" font-size="22" font-weight="700" text-anchor="middle" fill="var(--c-output-2)">$75</text>
+<text x="600" y="39" font-size="14" font-weight="600" text-anchor="middle" fill="var(--c-output-2)"><tspan class="lz">5× 最贵</tspan><tspan class="le">5× most expensive</tspan></text>
+<text x="600" y="438" font-size="17" font-weight="700" text-anchor="middle" class="node-title">
+  <tspan class="lz">输出生成</tspan><tspan class="le">Output Tokens</tspan>
+</text>
+<text x="600" y="458" font-size="15" text-anchor="middle" fill="var(--c-output-2)" font-weight="600">
+  <tspan class="lz">💎 矿泉水</tspan><tspan class="le">💎 Mineral</tspan>
+</text>
+<text x="600" y="478" font-size="13" text-anchor="middle" class="node-meta">output_tokens</text>
+
+<!-- ============ ANNOTATION 1: Cache ROI (top-right) ============ -->
+<rect x="710" y="80" width="340" height="180" rx="12" fill="var(--panel)" stroke="var(--c-read)" stroke-width="2"/>
+<rect x="710" y="80" width="340" height="180" rx="12" fill="var(--c-read)" opacity="0.08"/>
+<rect x="710" y="80" width="340" height="36" rx="12" fill="var(--c-read)" opacity="0.18"/>
+<text x="880" y="104" font-size="17" font-weight="700" text-anchor="middle" fill="var(--c-read)">
+  <tspan class="lz">🎯 缓存 ROI 核心逻辑</tspan><tspan class="le">🎯 Cache ROI Logic</tspan>
+</text>
+<text x="730" y="144" font-size="15" class="node-title" font-weight="600">
+  <tspan class="lz">写入一次缓存</tspan><tspan class="le">Write cache once</tspan>
+</text>
+<text x="1030" y="144" font-size="15" font-weight="700" text-anchor="end" fill="var(--c-write-2)">$18.75</text>
+<text x="730" y="168" font-size="15" class="node-title" font-weight="600">
+  <tspan class="lz">每次命中节省</tspan><tspan class="le">Each hit saves</tspan>
+</text>
+<text x="1030" y="168" font-size="15" font-weight="700" text-anchor="end" fill="var(--c-read-2)">$13.5</text>
+<line x1="730" y1="186" x2="1030" y2="186" stroke="var(--c-read)" stroke-width="1" stroke-dasharray="3,3" opacity="0.6"/>
+<text x="880" y="212" font-size="17" font-weight="700" text-anchor="middle" fill="var(--c-read)">
+  <tspan class="lz">≥ 2 次命中即回本</tspan><tspan class="le">Break-even at ≥ 2 hits</tspan>
+</text>
+<text x="880" y="238" font-size="14" text-anchor="middle" class="node-meta">
+  <tspan class="lz">系统 prompt 命中率极高</tspan><tspan class="le">System prompt = very high hit rate</tspan>
+</text>
+
+<!-- 箭头：从 ROI 卡片左侧指向 缓存写入柱 顶部 -->
+<path d="M 710 200 Q 600 240 525 325" fill="none" stroke="var(--c-read)" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrow-green)" opacity="0.85"/>
+
+<!-- ============ ANNOTATION 2: Output 5x warning (bottom-right) ============ -->
+<rect x="710" y="290" width="340" height="120" rx="12" fill="var(--panel)" stroke="var(--c-output)" stroke-width="2"/>
+<rect x="710" y="290" width="340" height="120" rx="12" fill="var(--c-output)" opacity="0.08"/>
+<rect x="710" y="290" width="340" height="36" rx="12" fill="var(--c-output)" opacity="0.18"/>
+<text x="880" y="314" font-size="17" font-weight="700" text-anchor="middle" fill="var(--c-output)">
+  <tspan class="lz">⚠ 输出比输入贵 5 倍</tspan><tspan class="le">⚠ Output is 5× costlier than input</tspan>
+</text>
+<text x="880" y="352" font-size="15" font-weight="600" text-anchor="middle" class="node-title">
+  <tspan class="lz">控制输出长度 = 第一节约策略</tspan><tspan class="le">Control output length = #1 saving</tspan>
+</text>
+<text x="880" y="378" font-size="15" text-anchor="middle" class="node-meta">
+  $75 vs $15 / 1M tokens
+</text>
+<text x="880" y="398" font-size="14" text-anchor="middle" class="node-meta">
+  <tspan class="lz">少输出 100 tokens = 省 $0.0075</tspan><tspan class="le">Save 100 tokens = $0.0075 saved</tspan>
+</text>
+
+<!-- 箭头：从输出警告卡片左侧指向 输出柱 中部 -->
+<path d="M 710 350 Q 660 280 660 220" fill="none" stroke="var(--c-output)" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arrow-red)" opacity="0.85"/>
+
+<!-- ============ Water analogy legend (bottom band) ============ -->
+<rect x="110" y="500" width="940" height="56" rx="10" fill="var(--panel)" stroke="var(--border)" stroke-width="1"/>
+<text x="130" y="522" font-size="15" font-weight="700" class="node-title">
+  <tspan class="lz">💡 水价类比</tspan><tspan class="le">💡 Water Analogy</tspan>
+</text>
+<!-- 4 segments with separator arrows -->
+<g font-size="15" font-weight="600">
+  <circle cx="240" cy="540" r="6" fill="var(--c-read-2)"/>
+  <text x="254" y="544" fill="var(--c-read-2)">
+    <tspan class="lz">回用水 $1.5</tspan><tspan class="le">Reclaimed $1.5</tspan>
+  </text>
+  <text x="380" y="544" fill="var(--muted)">→</text>
+
+  <circle cx="406" cy="540" r="6" fill="var(--c-input-2)"/>
+  <text x="420" y="544" fill="var(--c-input-2)">
+    <tspan class="lz">自来水 $15</tspan><tspan class="le">Tap $15</tspan>
+  </text>
+  <text x="540" y="544" fill="var(--muted)">→</text>
+
+  <circle cx="566" cy="540" r="6" fill="var(--c-write-2)"/>
+  <text x="580" y="544" fill="var(--c-write-2)">
+    <tspan class="lz">蓄水罐 $18.75</tspan><tspan class="le">Tank $18.75</tspan>
+  </text>
+  <text x="740" y="544" fill="var(--muted)">→</text>
+
+  <circle cx="766" cy="540" r="6" fill="var(--c-output-2)"/>
+  <text x="780" y="544" fill="var(--c-output-2)">
+    <tspan class="lz">矿泉水 $75</tspan><tspan class="le">Mineral $75</tspan>
+  </text>
+</g>
+
+</svg>
+</div>
+
+<div class="cards">
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-dot" style="background:var(--c-read-2)"></div>
+      <h3><span class="lz">缓存读取最便宜</span><span class="le">Cache Read Cheapest</span></h3>
+    </div>
+    <ul>
+      <li>• <strong>$1.5</strong> / 1M tokens</li>
+      <li>• <span class="lz">仅为普通输入的 <strong style="color:var(--c-read-2)">10%</strong></span><span class="le">Only <strong style="color:var(--c-read-2)">10%</strong> of input cost</span></li>
+      <li>• <span class="lz">命中即 <strong>90% 节省</strong></span><span class="le">Hit = <strong>90% savings</strong></span></li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-dot" style="background:var(--c-output-2)"></div>
+      <h3><span class="lz">输出 Token 最贵</span><span class="le">Output Tokens Most Expensive</span></h3>
+    </div>
+    <ul>
+      <li>• <strong>$75</strong> / 1M tokens</li>
+      <li>• <span class="lz">是输入的 <strong style="color:var(--c-output-2)">5×</strong></span><span class="le"><strong style="color:var(--c-output-2)">5×</strong> the input cost</span></li>
+      <li>• <span class="lz">控制回复长度最关键</span><span class="le">Control response length</span></li>
+    </ul>
+  </div>
+  <div class="card">
+    <div class="card-hd">
+      <div class="card-dot" style="background:var(--c-write-2)"></div>
+      <h3><span class="lz">缓存 ROI 计算</span><span class="le">Cache ROI Calculation</span></h3>
+    </div>
+    <ul>
+      <li>• <span class="lz">写入成本 <strong>$18.75</strong> (1.25×)</span><span class="le">Write cost <strong>$18.75</strong> (1.25×)</span></li>
+      <li>• <span class="lz">每次命中节省 <strong>$13.5</strong></span><span class="le">Each hit saves <strong>$13.5</strong></span></li>
+      <li>• <span class="lz"><strong>≥ 2 次命中</strong>即回本</span><span class="le">Break-even at <strong>≥ 2 hits</strong></span></li>
+    </ul>
+  </div>
+</div>
+
+<div class="vis-footer">
+  VIS-2A-024 · Claude Code 2.1.88 · <span class="lz">数据来源：Claude API Opus 4.6 定价页 · 四种计费维度对比</span><span class="le">Source: Claude API Opus 4.6 pricing · Four billing dimension comparison</span>
+</div>
+
+<script>
+(function(){
+  var t=localStorage.getItem('vtheme')||'dark';
+  document.documentElement.setAttribute('data-theme',t);
+  window.cycleTheme=function(){
+    var themes=['dark','warm','light'];
+    var i=(themes.indexOf(document.documentElement.getAttribute('data-theme'))+1)%3;
+    t=themes[i];
+    document.documentElement.setAttribute('data-theme',t);
+    localStorage.setItem('vtheme',t);
+  };
+  window.toggleLang=function(){var cur=document.documentElement.getAttribute('data-lang')||'zh';var next=cur==='en'?'zh':'en';document.documentElement.setAttribute('data-lang',next);localStorage.setItem('vlang',next);};
+  var _sl=localStorage.getItem('vlang');if(_sl){document.documentElement.setAttribute('data-lang',_sl);}})();
+</script>
+<script>
+/* v4-embed-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

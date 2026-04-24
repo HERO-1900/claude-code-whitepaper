@@ -1,0 +1,449 @@
+<!DOCTYPE html>
+<!--
+  VIS-0-012 · Hook事件完整目录 · Hook Event Directory
+  CC 白皮书 v3 图表体系 · 全主题 + 双语
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · Hook事件完整目录</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    /* v3-fix-lang-priority · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    :root,[data-theme="dark"]{
+      --bg:#020617;--bg-card:rgba(15,23,42,0.5);--border:#1e293b;
+      --text:#f8fafc;--muted:#94a3b8;--subtle:#64748b;--footer-c:#475569;--pulse:#22d3ee;
+      --svg-bg:#020617;--svg-grid:#1e293b;--mask-fill:#0f172a;
+      --pre-f:rgba(8,51,68,0.45);    --pre-s:#22d3ee;  --pre-t:#67e8f9;
+      --post-f:rgba(6,78,59,0.45);   --post-s:#34d399; --post-t:#6ee7b7;
+      --notif-f:rgba(120,53,15,0.45);--notif-s:#fbbf24;--notif-t:#fcd34d;
+      --stop-f:rgba(136,19,55,0.45); --stop-s:#fb7185; --stop-t:#fda4af;
+      --svg-text:#f8fafc;--svg-sub:#94a3b8;--svg-tiny:#64748b;
+      --btn-bg:rgba(15,23,42,0.85);--btn-active:#22d3ee;
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3;--bg-card:rgba(255,255,255,0.85);--border:#e8e0d4;
+      --text:#1a1412;--muted:#6b5a4e;--subtle:#9c8878;--footer-c:#b5a99a;--pulse:#0891b2;
+      --svg-bg:#faf7f2;--svg-grid:#ddd4c4;--mask-fill:#faf7f2;
+      --pre-f:rgba(8,51,68,0.1);    --pre-s:#0891b2;  --pre-t:#0e7490;
+      --post-f:rgba(6,78,59,0.1);   --post-s:#059669; --post-t:#047857;
+      --notif-f:rgba(180,83,9,0.1); --notif-s:#d97706;--notif-t:#b45309;
+      --stop-f:rgba(136,19,55,0.1); --stop-s:#e11d48; --stop-t:#be123c;
+      --svg-text:#1a1412;--svg-sub:#6b5a4e;--svg-tiny:#9c8878;
+      --btn-bg:rgba(255,255,255,0.9);--btn-active:#0891b2;
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--bg-card:rgba(248,250,252,0.95);--border:#e2e8f0;
+      --text:#0f172a;--muted:#475569;--subtle:#94a3b8;--footer-c:#94a3b8;--pulse:#0ea5e9;
+      --svg-bg:#f8fafc;--svg-grid:#e2e8f0;--mask-fill:#f1f5f9;
+      --pre-f:rgba(6,182,212,0.08); --pre-s:#06b6d4;  --pre-t:#0891b2;
+      --post-f:rgba(16,185,129,0.08);--post-s:#10b981;--post-t:#059669;
+      --notif-f:rgba(245,158,11,0.08);--notif-s:#f59e0b;--notif-t:#d97706;
+      --stop-f:rgba(244,63,94,0.08);--stop-s:#f43f5e; --stop-t:#e11d48;
+      --svg-text:#0f172a;--svg-sub:#475569;--svg-tiny:#94a3b8;
+      --btn-bg:rgba(248,250,252,0.95);--btn-active:#0ea5e9;
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--text);min-height:100vh;padding:2rem;transition:background .25s,color .25s;}
+    .container{max-width:1100px;margin:0 auto;}
+
+    .controls{position:fixed;top:1rem;right:1rem;display:flex;gap:5px;z-index:100;
+      background:var(--btn-bg);border:1px solid var(--border);border-radius:10px;padding:5px 7px;backdrop-filter:blur(8px);}
+    .cb{font-family:'JetBrains Mono',monospace;font-size:11px;font-weight:500;padding:4px 9px;
+      border-radius:5px;border:1px solid transparent;background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;}
+    .cb:hover{color:var(--text);border-color:var(--border);}
+    .cb.active{border-color:var(--btn-active);color:var(--text);}
+    .cdiv{width:1px;background:var(--border);margin:2px;}
+
+    .header{margin-bottom:1.5rem;}
+    .header-row{display:flex;align-items:center;gap:.875rem;margin-bottom:.375rem;}
+    .pulse-dot{width:8px;height:8px;border-radius:50%;background:var(--pulse);animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
+    h1{font-size:1.5rem;font-weight:700;letter-spacing:-.02em;}
+    .subtitle{font-size:.75rem;color:var(--muted);letter-spacing:.06em;}
+    [lang="en"] .lz{display:none;}
+    .chart-wrap{background:var(--bg-card);border:1px solid var(--border);border-radius:12px;padding:1.25rem;margin-bottom:1.5rem;overflow-x:auto;}
+    .chart-wrap svg{display:block;width:100%;height:auto;min-width:720px;}
+
+    .info-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.875rem;margin-bottom:1.5rem;}
+    @media(max-width:800px){.info-grid{grid-template-columns:repeat(2,1fr);}}
+    .info-card{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;padding:.9rem 1rem;}
+    .ic-header{display:flex;align-items:center;gap:.5rem;margin-bottom:.6rem;}
+    .ic-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+    .ic-header h3{font-size:.72rem;font-weight:600;letter-spacing:.06em;color:var(--muted);text-transform:uppercase;}
+    .info-card ul{list-style:none;font-size:.72rem;color:var(--muted);line-height:1.8;}
+
+    footer{font-size:.72rem;color:var(--footer-c);text-align:center;padding-top:1rem;border-top:1px solid var(--border);}
+  </style>
+</head>
+<body>
+<div class="controls">
+  <button class="cb active" onclick="setTheme('dark')">Dark</button>
+  <button class="cb" onclick="setTheme('warm')">Warm</button>
+  <button class="cb" onclick="setTheme('light')">Light</button>
+  <div class="cdiv"></div>
+  <button class="cb active" onclick="toggleLang()"><span class="lz">中</span><span class="le">EN</span></button>
+</div>
+
+<div class="container">
+  <div class="header">
+    <div class="header-row">
+      <div class="pulse-dot"></div>
+      <h1><span class="lz">Hook 事件完整目录</span><span class="le">Hook Event Directory</span></h1>
+    </div>
+    <p class="subtitle">
+      <span class="lz">VIS-0-012 · Claude Code 2.1.88 · 6 种 Hook 事件 · 生命周期全景</span>
+      <span class="le">VIS-0-012 · Claude Code 2.1.88 · 6 Hook Events · Full Lifecycle</span>
+    </p>
+  </div>
+
+  <div class="chart-wrap">
+    <svg viewBox="0 0 960 680" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="grid12" width="32" height="32" patternUnits="userSpaceOnUse">
+          <path d="M 32 0 L 0 0 0 32" fill="none" style="stroke:var(--svg-grid)" stroke-width="0.5"/>
+        </pattern>
+        <marker id="arr12" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" style="fill:var(--subtle)"/>
+        </marker>
+        <marker id="arr12-down" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" style="fill:var(--stop-s)"/>
+        </marker>
+      </defs>
+
+      <rect width="960" height="680" style="fill:var(--svg-bg)"/>
+      <rect width="960" height="680" fill="url(#grid12)"/>
+
+      <!-- Timeline axis -->
+      <text x="480" y="24" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" style="fill:var(--muted)">
+        <tspan class="lz">← 执行时序 →</tspan><tspan class="le">← Execution Timeline →</tspan>
+      </text>
+      <line x1="60" y1="34" x2="900" y2="34" style="stroke:var(--border)" stroke-width="1" marker-end="url(#arr12)"/>
+
+      <!-- ── Tool Use Flow (center lane) ── -->
+      <!-- Claude (start) box · y=48-96 h=48 · text baselines 68, 84 -->
+      <rect x="20" y="48" width="110" height="48" rx="6" style="fill:var(--mask-fill);stroke:var(--border)" stroke-width="1"/>
+      <text x="75" y="68" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" style="fill:var(--svg-text)">Claude</text>
+      <text x="75" y="84" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">决定调用工具</tspan><tspan class="le">decides to call tool</tspan></text>
+
+      <!-- Flow arrow → PreToolUse -->
+      <line x1="130" y1="72" x2="178" y2="72" style="stroke:var(--pre-s)" stroke-width="1.5" marker-end="url(#arr12)"/>
+
+      <!-- PreToolUse box · x=180 y=44 w=160 h=56 -->
+      <rect x="180" y="44" width="160" height="56" rx="8" style="fill:var(--mask-fill)"/>
+      <rect x="180" y="44" width="160" height="56" rx="8" style="fill:var(--pre-f);stroke:var(--pre-s)" stroke-width="2"/>
+      <text x="260" y="68" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" style="fill:var(--pre-t)">PreToolUse</text>
+      <text x="260" y="86" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">工具调用前 · 可修改/阻断</tspan><tspan class="le">before call · modify/block</tspan></text>
+
+      <!-- Flow arrow PreToolUse → Tool Execution -->
+      <line x1="340" y1="72" x2="418" y2="72" style="stroke:var(--subtle)" stroke-width="1.5" marker-end="url(#arr12)"/>
+
+      <!-- Block path (down from PreToolUse to a concrete BLOCKED terminator box) -->
+      <line x1="260" y1="100" x2="260" y2="144" style="stroke:var(--stop-s)" stroke-width="1.5" stroke-dasharray="4,2" marker-end="url(#arr12-down)"/>
+      <!-- BLOCKED terminator box -->
+      <rect x="212" y="148" width="96" height="26" rx="5" style="fill:var(--stop-f);stroke:var(--stop-s)" stroke-width="1.2"/>
+      <text x="260" y="165" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="700" style="fill:var(--stop-t)"><tspan class="lz">阻断 / BLOCK</tspan><tspan class="le">BLOCKED</tspan></text>
+
+      <!-- Tool Execution box (center) · x=420 y=44 w=120 h=56 -->
+      <rect x="420" y="44" width="120" height="56" rx="8" style="fill:var(--mask-fill);stroke:var(--border)" stroke-width="1"/>
+      <text x="480" y="68" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--svg-text)"><tspan class="lz">工具执行</tspan><tspan class="le">Tool Exec</tspan></text>
+      <text x="480" y="86" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)">Bash / Read / Edit…</text>
+
+      <!-- Flow arrow Tool → PostToolUse -->
+      <line x1="540" y1="72" x2="618" y2="72" style="stroke:var(--post-s)" stroke-width="1.5" marker-end="url(#arr12)"/>
+
+      <!-- PostToolUse box · x=620 y=44 w=160 h=56 -->
+      <rect x="620" y="44" width="160" height="56" rx="8" style="fill:var(--mask-fill)"/>
+      <rect x="620" y="44" width="160" height="56" rx="8" style="fill:var(--post-f);stroke:var(--post-s)" stroke-width="2"/>
+      <text x="700" y="68" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="700" style="fill:var(--post-t)">PostToolUse</text>
+      <text x="700" y="86" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">返回后 · 可改输出</tspan><tspan class="le">after return · modify out</tspan></text>
+
+      <!-- Flow arrow PostToolUse → Claude -->
+      <line x1="780" y1="72" x2="838" y2="72" style="stroke:var(--subtle)" stroke-width="1.5" marker-end="url(#arr12)"/>
+
+      <!-- Claude (end) box · x=840 y=48 w=100 h=48 -->
+      <rect x="840" y="48" width="100" height="48" rx="6" style="fill:var(--mask-fill);stroke:var(--border)" stroke-width="1"/>
+      <text x="890" y="68" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" style="fill:var(--svg-text)">Claude</text>
+      <text x="890" y="84" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">继续处理</tspan><tspan class="le">continues</tspan></text>
+
+      <!-- ── Separator ── -->
+      <line x1="20" y1="194" x2="940" y2="194" style="stroke:var(--border)" stroke-width="1" stroke-dasharray="6,4"/>
+      <text x="480" y="212" text-anchor="middle" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--subtle)">
+        <tspan class="lz">其他 Hook 事件（在不同生命周期节点触发）</tspan>
+        <tspan class="le">Other Hook events (fired at different lifecycle points)</tspan>
+      </text>
+
+      <!-- ── 3 other event cards (Row 1) ──
+           Each card h=100 · text at y_top+28, +50, +70, +90 so each line has ≥ 8px top/bottom padding -->
+
+      <!-- Notification · x=20 y=224 w=300 h=100 -->
+      <rect x="20" y="224" width="300" height="100" rx="8" style="fill:var(--mask-fill)"/>
+      <rect x="20" y="224" width="300" height="100" rx="8" style="fill:var(--notif-f);stroke:var(--notif-s)" stroke-width="1.5"/>
+      <text x="38" y="250" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" style="fill:var(--notif-t)">Notification</text>
+      <text x="38" y="272" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">触发: Claude 发送通知时</tspan><tspan class="le">Trigger: on notification</tspan></text>
+      <text x="38" y="292" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">用途: 自定义路由 (Slack/托盘)</tspan><tspan class="le">Use: route (Slack/tray)</tspan></text>
+      <text x="38" y="312" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">返回值: 无（纯监听）</tspan><tspan class="le">Return: none (listener)</tspan></text>
+
+      <!-- Stop · x=330 y=224 w=300 h=100 -->
+      <rect x="330" y="224" width="300" height="100" rx="8" style="fill:var(--mask-fill)"/>
+      <rect x="330" y="224" width="300" height="100" rx="8" style="fill:var(--stop-f);stroke:var(--stop-s)" stroke-width="1.5"/>
+      <text x="348" y="250" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" style="fill:var(--stop-t)">Stop</text>
+      <text x="348" y="272" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">触发: Claude 想结束对话时</tspan><tspan class="le">Trigger: on end of turn</tspan></text>
+      <text x="348" y="292" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">用途: hook_stopped_continuation</tspan><tspan class="le">Use: stopped_continuation</tspan></text>
+      <text x="348" y="312" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--stop-t)"><tspan class="lz">★ 可阻止停止 · 继续执行</tspan><tspan class="le">★ Prevent stop · continue</tspan></text>
+
+      <!-- SubagentStop · x=640 y=224 w=300 h=100 -->
+      <rect x="640" y="224" width="300" height="100" rx="8" style="fill:var(--mask-fill)"/>
+      <rect x="640" y="224" width="300" height="100" rx="8" style="fill:var(--stop-f);stroke:var(--stop-s)" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <text x="658" y="250" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" style="fill:var(--stop-t)">SubagentStop</text>
+      <text x="658" y="272" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">触发: 子 Agent 完成时</tspan><tspan class="le">Trigger: on sub-agent done</tspan></text>
+      <text x="658" y="292" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">用途: 子任务后处理/通知</tspan><tspan class="le">Use: post-process/notify</tspan></text>
+      <text x="658" y="312" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">类似 Stop · 专用子 Agent</tspan><tspan class="le">Like Stop · for sub-agent</tspan></text>
+
+      <!-- ── Row 2 (PreCompact + Config example) · y=336 ── -->
+
+      <!-- PreCompact · x=20 y=336 w=300 h=100 -->
+      <rect x="20" y="336" width="300" height="100" rx="8" style="fill:var(--mask-fill)"/>
+      <rect x="20" y="336" width="300" height="100" rx="8" style="fill:var(--pre-f);stroke:var(--pre-s)" stroke-width="1.5" stroke-dasharray="4,2"/>
+      <text x="38" y="362" font-family="'JetBrains Mono',monospace" font-size="13" font-weight="700" style="fill:var(--pre-t)">PreCompact</text>
+      <text x="38" y="384" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">触发: 上下文压缩开始前</tspan><tspan class="le">Trigger: before compaction</tspan></text>
+      <text x="38" y="404" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">用途: 自定义压缩/保存状态</tspan><tspan class="le">Use: custom compact/save</tspan></text>
+      <text x="38" y="424" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">参数: triggerReason / memory</tspan><tspan class="le">Params: triggerReason / mem</tspan></text>
+
+      <!-- Hook Config example · x=330 y=336 w=610 h=100 -->
+      <rect x="330" y="336" width="610" height="100" rx="8" style="fill:var(--mask-fill);stroke:var(--border)" stroke-width="1"/>
+      <text x="348" y="362" font-family="'JetBrains Mono',monospace" font-size="12" font-weight="600" style="fill:var(--svg-text)">
+        <tspan class="lz">Hook 配置示例 (settings.json)</tspan><tspan class="le">Hook Config Example (settings.json)</tspan>
+      </text>
+      <text x="348" y="384" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--pre-t)">"hooks": {</text>
+      <text x="364" y="402" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--post-t)">"PreToolUse": [{"matcher":"Bash","hooks":[{"type":"command"]}],</text>
+      <text x="364" y="420" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--notif-t)">"Notification": [{"hooks":[{"type":"command","command":"..."]}]</text>
+      <text x="348" y="438" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--pre-t)">}</text>
+
+      <!-- ── Hook capabilities table ── -->
+      <line x1="20" y1="456" x2="940" y2="456" style="stroke:var(--border)" stroke-width="1"/>
+
+      <!-- Table header · x=20 y=464 w=920 h=28 -->
+      <rect x="20" y="464" width="920" height="28" rx="4" style="fill:var(--mask-fill);stroke:var(--border)" stroke-width="1"/>
+      <text x="60" y="483" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" style="fill:var(--muted)"><tspan class="lz">事件</tspan><tspan class="le">Event</tspan></text>
+      <text x="200" y="483" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" style="fill:var(--muted)"><tspan class="lz">可修改输入</tspan><tspan class="le">Modify Input</tspan></text>
+      <text x="340" y="483" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" style="fill:var(--muted)"><tspan class="lz">可阻断执行</tspan><tspan class="le">Block Exec</tspan></text>
+      <text x="480" y="483" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" style="fill:var(--muted)"><tspan class="lz">可修改输出</tspan><tspan class="le">Modify Output</tspan></text>
+      <text x="640" y="483" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" style="fill:var(--muted)"><tspan class="lz">matcher 支持</tspan><tspan class="le">Matcher</tspan></text>
+      <text x="820" y="483" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" style="fill:var(--muted)"><tspan class="lz">频率</tspan><tspan class="le">Frequency</tspan></text>
+
+      <!-- Rows · row height 24px -->
+      <line x1="20" y1="492" x2="940" y2="492" style="stroke:var(--border)" stroke-width="0.5"/>
+
+      <!-- Row 1: PreToolUse -->
+      <text x="60" y="510" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" style="fill:var(--pre-t)">PreToolUse</text>
+      <text x="200" y="510" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--post-s)">✓</text>
+      <text x="340" y="510" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--post-s)">✓</text>
+      <text x="480" y="510" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--stop-s)">✗</text>
+      <text x="640" y="510" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--post-s)"><tspan class="lz">工具名/正则</tspan><tspan class="le">tool name/regex</tspan></text>
+      <text x="820" y="510" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">每次工具调用</tspan><tspan class="le">per tool call</tspan></text>
+      <line x1="20" y1="518" x2="940" y2="518" style="stroke:var(--border)" stroke-width="0.5"/>
+
+      <!-- Row 2: PostToolUse -->
+      <text x="60" y="536" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" style="fill:var(--post-t)">PostToolUse</text>
+      <text x="200" y="536" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--stop-s)">✗</text>
+      <text x="340" y="536" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--stop-s)">✗</text>
+      <text x="480" y="536" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--post-s)">✓</text>
+      <text x="640" y="536" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--post-s)"><tspan class="lz">工具名/正则</tspan><tspan class="le">tool name/regex</tspan></text>
+      <text x="820" y="536" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">每次工具返回</tspan><tspan class="le">per tool return</tspan></text>
+      <line x1="20" y1="544" x2="940" y2="544" style="stroke:var(--border)" stroke-width="0.5"/>
+
+      <!-- Row 3: Notification -->
+      <text x="60" y="562" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" style="fill:var(--notif-t)">Notification</text>
+      <text x="200" y="562" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--stop-s)">✗</text>
+      <text x="340" y="562" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--stop-s)">✗</text>
+      <text x="480" y="562" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--stop-s)">✗</text>
+      <text x="640" y="562" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--stop-s)"><tspan class="lz">无（全匹配）</tspan><tspan class="le">none (catch-all)</tspan></text>
+      <text x="820" y="562" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">每次通知</tspan><tspan class="le">per notification</tspan></text>
+      <line x1="20" y1="570" x2="940" y2="570" style="stroke:var(--border)" stroke-width="0.5"/>
+
+      <!-- Row 4: Stop -->
+      <text x="60" y="588" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" style="fill:var(--stop-t)">Stop</text>
+      <text x="200" y="588" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--stop-s)">✗</text>
+      <text x="340" y="588" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--post-s)">✓ <tspan class="lz">(阻止停止)</tspan><tspan class="le">(prevent stop)</tspan></text>
+      <text x="480" y="588" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--stop-s)">✗</text>
+      <text x="640" y="588" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--stop-s)"><tspan class="lz">无</tspan><tspan class="le">none</tspan></text>
+      <text x="820" y="588" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">每轮结束</tspan><tspan class="le">per turn end</tspan></text>
+      <line x1="20" y1="596" x2="940" y2="596" style="stroke:var(--border)" stroke-width="0.5"/>
+
+      <!-- Row 5: SubagentStop -->
+      <text x="60" y="614" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" style="fill:var(--stop-t)">SubagentStop</text>
+      <text x="200" y="614" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--stop-s)">✗</text>
+      <text x="340" y="614" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--post-s)">✓ <tspan class="lz">(阻止停止)</tspan><tspan class="le">(prevent stop)</tspan></text>
+      <text x="480" y="614" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--stop-s)">✗</text>
+      <text x="640" y="614" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--stop-s)"><tspan class="lz">无</tspan><tspan class="le">none</tspan></text>
+      <text x="820" y="614" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">子 Agent 完成</tspan><tspan class="le">per sub-agent done</tspan></text>
+      <line x1="20" y1="622" x2="940" y2="622" style="stroke:var(--border)" stroke-width="0.5"/>
+
+      <!-- Row 6: PreCompact -->
+      <text x="60" y="638" font-family="'JetBrains Mono',monospace" font-size="11" font-weight="600" style="fill:var(--pre-t)">PreCompact</text>
+      <text x="200" y="638" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--post-s)">✓</text>
+      <text x="340" y="638" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--stop-s)">✗</text>
+      <text x="480" y="638" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--stop-s)">✗</text>
+      <text x="640" y="638" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--stop-s)"><tspan class="lz">无</tspan><tspan class="le">none</tspan></text>
+      <text x="820" y="638" font-family="'JetBrains Mono',monospace" font-size="11" style="fill:var(--svg-sub)"><tspan class="lz">压缩前触发</tspan><tspan class="le">before compaction</tspan></text>
+      <line x1="20" y1="646" x2="940" y2="646" style="stroke:var(--border)" stroke-width="0.5"/>
+    </svg>
+  </div>
+
+  <div class="info-grid">
+    <div class="info-card">
+      <div class="ic-header">
+        <div class="ic-dot" style="background:var(--pre-s)"></div>
+        <h3>Pre Hooks</h3>
+      </div>
+      <ul>
+        <li>• PreToolUse</li>
+        <li>• PreCompact</li>
+        <li>• <span class="lz">可修改输入/阻断</span><span class="le">Modify input / block</span></li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <div class="ic-header">
+        <div class="ic-dot" style="background:var(--post-s)"></div>
+        <h3>Post Hooks</h3>
+      </div>
+      <ul>
+        <li>• PostToolUse</li>
+        <li>• <span class="lz">可修改工具输出</span><span class="le">Modify tool output</span></li>
+        <li>• <span class="lz">不能阻断已完成</span><span class="le">Cannot block completed</span></li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <div class="ic-header">
+        <div class="ic-dot" style="background:var(--notif-s)"></div>
+        <h3><span class="lz">通知类</span><span class="le">Notification</span></h3>
+      </div>
+      <ul>
+        <li>• Notification</li>
+        <li>• <span class="lz">纯监听·无副作用</span><span class="le">Listen only · no side effects</span></li>
+        <li>• <span class="lz">可路由到外部系统</span><span class="le">Route to external system</span></li>
+      </ul>
+    </div>
+    <div class="info-card">
+      <div class="ic-header">
+        <div class="ic-dot" style="background:var(--stop-s)"></div>
+        <h3><span class="lz">停止类</span><span class="le">Stop Events</span></h3>
+      </div>
+      <ul>
+        <li>• Stop · SubagentStop</li>
+        <li>• <span class="lz">可通过 continuation 继续</span><span class="le">Resume via continuation</span></li>
+        <li>• <span class="lz">不会短路权限检查</span><span class="le">Do NOT bypass permissions</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <footer>
+    VIS-0-012 · Claude Code 2.1.88 · <span class="lz">6 Hook 事件 · hooks-engine.ts / hook-events.ts / hook-runner.ts</span><span class="le">6 Hook Events · hooks-engine.ts / hook-events.ts / hook-runner.ts</span> · CC 白皮书 v3
+  </footer>
+</div>
+
+<script>
+(function(){
+  function setTheme(t){try{localStorage.setItem('vtheme',t);}catch(e){}
+    document.documentElement.setAttribute('data-theme',t);
+    document.querySelectorAll('.cb').forEach(b=>b.classList.remove('active'));
+    const map={dark:0,warm:1,light:2};
+    document.querySelectorAll('.cb')[map[t]]?.classList.add('active');
+  }
+  function toggleLang(){
+    const h=document.documentElement;
+    h.lang=h.lang==='zh'?'en':'zh';
+  }
+  // cc-restore-on-load
+  try{
+    var _t=localStorage.getItem('vtheme');
+    if(_t==='dark'||_t==='warm'||_t==='light')setTheme(_t);
+    var _l=localStorage.getItem('vlang');
+    if(_l==='en'&&document.documentElement.lang!=='en')toggleLang();
+  }catch(e){}
+  window.setTheme=setTheme;
+  window.toggleLang=toggleLang;
+})();
+</script>
+<script>
+/* v3-embed-sync */
+/* Embed-mode sync v3: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v3-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,729 @@
+<!DOCTYPE html>
+<!--
+  VIS-2A-018 · Agent通信拓扑图 · Agent Communication Topology · v4
+  CC 白皮书 v4 图表体系 · 全主题 + 双语
+  三种通信机制：向下(SendMessage) / 向上(Task Notification XML) / 平行(Scratchpad)
+  v4 修复：箭头起终点精确对齐节点边缘 · 图例重排加大间距 · 字号整体上调
+-->
+<html lang="zh" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Claude Code · Agent 通信拓扑图</title>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+    :root,[data-theme="dark"]{
+      --bg:#020617;--bg-card:rgba(15,23,42,0.6);--border:#1e293b;
+      --text:#f8fafc;--muted:#cbd5e1;--subtle:#94a3b8;--footer-c:#64748b;--pulse:#22d3ee;
+      --svg-bg:#020617;--svg-grid:#1e293b;
+      --emerald-s:#34d399;--amber-s:#fbbf24;--cyan-s:#22d3ee;--violet-s:#a78bfa;
+      --svg-text:#f8fafc;--svg-sub:#cbd5e1;--svg-ann:#94a3b8;
+      --btn-bg:rgba(15,23,42,0.85);--btn-active:#22d3ee;
+      --card-title:#f8fafc;
+    }
+    [data-theme="warm"]{
+      --bg:#f8f6f3;--bg-card:rgba(255,255,255,0.85);--border:#d9cdb9;
+      --text:#1a1412;--muted:#4a3c30;--subtle:#6b5a4e;--footer-c:#8b7864;--pulse:#0891b2;
+      --svg-bg:#faf7f2;--svg-grid:#d9cdb9;
+      --emerald-s:#047857;--amber-s:#b45309;--cyan-s:#0e7490;--violet-s:#6d28d9;
+      --svg-text:#1a1412;--svg-sub:#4a3c30;--svg-ann:#6b5a4e;
+      --btn-bg:rgba(255,255,255,0.9);--btn-active:#0891b2;
+      --card-title:#1a1412;
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--bg-card:rgba(248,250,252,0.95);--border:#cbd5e1;
+      --text:#0f172a;--muted:#334155;--subtle:#475569;--footer-c:#64748b;--pulse:#0ea5e9;
+      --svg-bg:#f8fafc;--svg-grid:#cbd5e1;
+      --emerald-s:#047857;--amber-s:#b45309;--cyan-s:#0369a1;--violet-s:#6d28d9;
+      --svg-text:#0f172a;--svg-sub:#334155;--svg-ann:#475569;
+      --btn-bg:rgba(248,250,252,0.95);--btn-active:#0ea5e9;
+      --card-title:#0f172a;
+    }
+
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{
+      font-family:'JetBrains Mono',monospace;
+      background:var(--bg);color:var(--text);
+      min-height:100vh;padding:2rem;
+      transition:background .25s,color .25s;
+    }
+    .container{max-width:1180px;margin:0 auto;}
+
+    .controls{
+      position:fixed;top:1rem;right:1rem;display:flex;gap:5px;z-index:100;
+      background:var(--btn-bg);border:1px solid var(--border);border-radius:10px;
+      padding:5px 7px;backdrop-filter:blur(8px);
+    }
+    .cb{
+      font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:500;
+      padding:5px 10px;border-radius:5px;border:1px solid transparent;
+      background:transparent;color:var(--muted);cursor:pointer;transition:all .15s;
+    }
+    .cb:hover{color:var(--text);border-color:var(--border);}
+    .cb.active{border-color:var(--btn-active);color:var(--text);}
+    .cdiv{width:1px;background:var(--border);margin:2px;}
+
+    .header{margin-bottom:1.5rem;}
+    .header-row{display:flex;align-items:center;gap:.875rem;margin-bottom:.5rem;flex-wrap:wrap;}
+    .pulse-dot{width:9px;height:9px;border-radius:50%;background:var(--pulse);animation:pulse 2s infinite;}
+    @keyframes pulse{0%,100%{opacity:1;transform:scale(1);}50%{opacity:.5;transform:scale(.8);}}
+    h1{font-size:1.6rem;font-weight:700;letter-spacing:-.02em;}
+    .badge{
+      font-size:11px;font-weight:600;padding:3px 9px;border-radius:4px;letter-spacing:.04em;
+      background:rgba(34,211,238,0.12);border:1px solid rgba(34,211,238,0.3);color:var(--cyan-s);
+    }
+    .subtitle{font-size:.88rem;color:var(--muted);}
+
+    .svg-wrap{
+      background:var(--svg-bg);border:1px solid var(--border);border-radius:12px;
+      padding:0;overflow:hidden;margin-bottom:1.5rem;
+      box-shadow:0 4px 24px rgba(0,0,0,0.3);
+    }
+    .svg-wrap svg{display:block;width:100%;height:auto;}
+
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:1.5rem;}
+    @media(max-width:800px){.cards{grid-template-columns:1fr;}}
+    .card{
+      background:var(--bg-card);border:1px solid var(--border);border-radius:10px;
+      padding:1.1rem 1.2rem;transition:background .25s,border-color .25s;
+    }
+    .card-head{display:flex;align-items:center;gap:.55rem;margin-bottom:.7rem;}
+    .dot{width:9px;height:9px;border-radius:50%;flex-shrink:0;}
+    .dot-amber{background:var(--amber-s);}
+    .dot-cyan{background:var(--cyan-s);}
+    .dot-violet{background:var(--violet-s);}
+    .card-title{font-size:.92rem;font-weight:700;color:var(--card-title);}
+    .card ul{list-style:none;padding:0;}
+    .card ul li{
+      font-size:.82rem;color:var(--muted);line-height:1.65;padding:.35rem 0;
+      border-bottom:1px solid var(--border);
+    }
+    .card ul li:last-child{border-bottom:none;}
+
+    .footer{
+      text-align:center;font-size:.78rem;color:var(--footer-c);
+      padding-top:.9rem;border-top:1px solid var(--border);
+    }
+  </style>
+</head>
+<body>
+  <div class="controls">
+    <button class="cb active" id="btn-dark" onclick="window.cycleTheme('dark')">Dark</button>
+    <button class="cb" id="btn-warm" onclick="window.cycleTheme('warm')">Warm</button>
+    <button class="cb" id="btn-light" onclick="window.cycleTheme('light')">Light</button>
+    <div class="cdiv"></div>
+    <button class="cb active" id="btn-lang" onclick="window.toggleLang()"><span class="lz">中</span><span class="le">EN</span></button>
+  </div>
+
+  <div class="container">
+    <div class="header">
+      <div class="header-row">
+        <div class="pulse-dot"></div>
+        <h1 class="lz">Agent 通信拓扑图</h1>
+        <h1 class="le">Agent Communication Topology</h1>
+        <span class="badge">VIS-2A-018</span>
+      </div>
+      <p class="subtitle lz">三种通信机制 · 父子 Agent 协作模型 · Scratchpad 共享状态</p>
+      <p class="subtitle le">Three Communication Patterns · Parent-Child Agent Model · Scratchpad Shared State</p>
+    </div>
+
+    <div class="svg-wrap">
+      <svg viewBox="0 0 1000 620" xmlns="http://www.w3.org/2000/svg" role="img"
+           aria-label="Agent Communication Topology Diagram">
+        <defs>
+          <filter id="glow-amber" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="5" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="glow-cyan" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+          <filter id="glow-violet" x="-50%" y="-50%" width="200%" height="200%">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+          </filter>
+
+          <marker id="arr-e" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+            <polygon points="0 0,10 4,0 8" fill="#34d399"/>
+          </marker>
+          <marker id="arr-c" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+            <polygon points="0 0,10 4,0 8" fill="#22d3ee"/>
+          </marker>
+          <marker id="arr-v" markerWidth="10" markerHeight="8" refX="9" refY="4" orient="auto">
+            <polygon points="0 0,10 4,0 8" fill="#a78bfa"/>
+          </marker>
+          <marker id="arr-v-start" markerWidth="10" markerHeight="8" refX="1" refY="4" orient="auto-start-reverse">
+            <polygon points="0 0,10 4,0 8" fill="#a78bfa"/>
+          </marker>
+
+          <radialGradient id="bg-grad" cx="50%" cy="30%" r="70%">
+            <stop offset="0%" stop-color="#0f172a" stop-opacity="1"/>
+            <stop offset="100%" stop-color="#020617" stop-opacity="1"/>
+          </radialGradient>
+          <radialGradient id="amber-grad" cx="50%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="rgba(251,191,36,0.4)"/>
+            <stop offset="100%" stop-color="rgba(251,191,36,0.15)"/>
+          </radialGradient>
+          <radialGradient id="cyan-grad" cx="50%" cy="35%" r="65%">
+            <stop offset="0%" stop-color="rgba(34,211,238,0.3)"/>
+            <stop offset="100%" stop-color="rgba(34,211,238,0.1)"/>
+          </radialGradient>
+        </defs>
+
+        <rect width="1000" height="620" fill="url(#bg-grad)"/>
+
+        <g class="grid-lines" stroke="#1e293b" stroke-width="0.5" opacity="0.4">
+          <line x1="0" y1="120" x2="1000" y2="120"/>
+          <line x1="0" y1="240" x2="1000" y2="240"/>
+          <line x1="0" y1="360" x2="1000" y2="360"/>
+          <line x1="0" y1="480" x2="1000" y2="480"/>
+          <line x1="200" y1="0" x2="200" y2="620"/>
+          <line x1="400" y1="0" x2="400" y2="620"/>
+          <line x1="600" y1="0" x2="600" y2="620"/>
+          <line x1="800" y1="0" x2="800" y2="620"/>
+        </g>
+
+        <!-- ANNOTATION 1 — top left -->
+        <g transform="translate(24,22)">
+          <rect class="ann-box" width="232" height="88" rx="7" fill="rgba(15,23,42,0.9)" stroke="#334155" stroke-width="1"/>
+          <text x="14" y="22" class="svg-txt-main" font-family="JetBrains Mono,monospace" font-size="12" font-weight="700" fill="#f8fafc">⏱ Key Design</text>
+          <line class="ann-line" x1="14" y1="29" x2="218" y2="29" stroke="#334155" stroke-width="0.8"/>
+          <text x="14" y="46" class="svg-txt-sub" font-family="JetBrains Mono,monospace" font-size="11" fill="#cbd5e1">getAutoBackgroundMs()</text>
+          <text x="14" y="62" class="svg-amber" font-family="JetBrains Mono,monospace" font-size="12" font-weight="600" fill="#fbbf24">= 120,000 ms</text>
+          <text x="14" y="79" class="svg-txt-ann" font-family="JetBrains Mono,monospace" font-size="10.5" fill="#94a3b8"><tspan class="lz">长任务 &gt; 2分钟 → 自动后台化</tspan><tspan class="le">Long task &gt; 2 min → auto background</tspan></text>
+        </g>
+
+        <!-- ANNOTATION 2 — top right -->
+        <g transform="translate(720,22)">
+          <rect class="ann-box" width="256" height="88" rx="7" fill="rgba(15,23,42,0.9)" stroke="#a78bfa" stroke-width="1" stroke-dasharray="4,3"/>
+          <text x="14" y="22" class="svg-violet" font-family="JetBrains Mono,monospace" font-size="12" font-weight="700" fill="#a78bfa"><tspan class="lz">⚠ Scratchpad 风险</tspan><tspan class="le">⚠ Scratchpad Risk</tspan></text>
+          <line class="ann-line" x1="14" y1="29" x2="242" y2="29" stroke="#334155" stroke-width="0.8"/>
+          <text x="14" y="48" class="svg-txt-sub" font-family="JetBrains Mono,monospace" font-size="10.5" fill="#cbd5e1"><tspan class="lz">无锁机制 · 并发写入存在极低</tspan><tspan class="le">Lock-free · concurrent writes have</tspan></text>
+          <text x="14" y="64" class="svg-txt-sub" font-family="JetBrains Mono,monospace" font-size="10.5" fill="#cbd5e1"><tspan class="lz">概率数据丢失</tspan><tspan class="le">a low probability of data loss</tspan></text>
+          <text x="14" y="80" class="svg-txt-ann" font-family="JetBrains Mono,monospace" font-size="10.5" fill="#94a3b8">(tengu_scratch)</text>
+        </g>
+
+        <!-- ═══════════════════════════════════ -->
+        <!--  DOWNWARD: Parent → Sub (emerald)  -->
+        <!-- ═══════════════════════════════════ -->
+        <!-- Main (500,150) r=46 · Sub-A (170,340) r=34 · Sub-B (380,360) r=34 · Sub-C (620,360) r=34 · Sub-D (830,340) r=34 -->
+
+        <!-- Main → Sub-A : exits main bottom-left edge, enters A top-right edge -->
+        <path d="M 462 186 Q 330 230 196 319"
+              fill="none" stroke="#34d399" stroke-width="2" marker-end="url(#arr-e)"/>
+        <!-- Main → Sub-B -->
+        <path d="M 483 195 Q 420 260 397 328"
+              fill="none" stroke="#34d399" stroke-width="2" marker-end="url(#arr-e)"/>
+        <!-- Main → Sub-C -->
+        <path d="M 517 195 Q 580 260 603 328"
+              fill="none" stroke="#34d399" stroke-width="2" marker-end="url(#arr-e)"/>
+        <!-- Main → Sub-D -->
+        <path d="M 538 186 Q 670 230 804 319"
+              fill="none" stroke="#34d399" stroke-width="2" marker-end="url(#arr-e)"/>
+
+        <!-- SendMessage labels -->
+        <text x="310" y="235" class="svg-emerald" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" fill="#34d399"
+              transform="rotate(-24,310,235)">SendMessage</text>
+        <text x="690" y="235" class="svg-emerald" font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" fill="#34d399"
+              transform="rotate(24,690,235)">SendMessage</text>
+
+        <!-- ═══════════════════════════════════ -->
+        <!--  UPWARD: Sub → Parent (cyan dashed) -->
+        <!-- ═══════════════════════════════════ -->
+
+        <!-- Sub-A → Main : exits A top edge, enters main bottom-left edge (offset below the down-arrow) -->
+        <path d="M 186 312 Q 260 200 456 194"
+              fill="none" stroke="#22d3ee" stroke-width="1.6" stroke-dasharray="6,4"
+              marker-end="url(#arr-c)" opacity="0.95"/>
+        <!-- Sub-B → Main -->
+        <path d="M 371 327 Q 372 250 474 195"
+              fill="none" stroke="#22d3ee" stroke-width="1.6" stroke-dasharray="6,4"
+              marker-end="url(#arr-c)" opacity="0.95"/>
+        <!-- Sub-C → Main -->
+        <path d="M 629 327 Q 628 250 526 195"
+              fill="none" stroke="#22d3ee" stroke-width="1.6" stroke-dasharray="6,4"
+              marker-end="url(#arr-c)" opacity="0.95"/>
+        <!-- Sub-D → Main -->
+        <path d="M 814 312 Q 740 200 544 194"
+              fill="none" stroke="#22d3ee" stroke-width="1.6" stroke-dasharray="6,4"
+              marker-end="url(#arr-c)" opacity="0.95"/>
+
+        <!-- Task Notification XML labels -->
+        <text x="215" y="278" class="svg-cyan" font-family="JetBrains Mono,monospace" font-size="10.5" font-weight="600" fill="#22d3ee"
+              transform="rotate(-30,215,278)">Task Notif XML</text>
+        <text x="785" y="278" class="svg-cyan" font-family="JetBrains Mono,monospace" font-size="10.5" font-weight="600" fill="#22d3ee"
+              transform="rotate(30,785,278)">Task Notif XML</text>
+
+        <!-- ═══════════════════════════════════ -->
+        <!--  PEER: Sub → Scratchpad (violet)    -->
+        <!-- ═══════════════════════════════════ -->
+        <!-- Scratchpad at x=420 y=480 w=160 h=46 · center (500, 503) -->
+
+        <!-- Sub-A → Scratchpad (enters left edge) -->
+        <path d="M 195 369 Q 310 470 418 500"
+              fill="none" stroke="#a78bfa" stroke-width="1.5"
+              marker-end="url(#arr-v)" opacity="0.85"/>
+        <!-- Sub-B → Scratchpad (enters top-left) -->
+        <path d="M 392 387 Q 430 440 458 481"
+              fill="none" stroke="#a78bfa" stroke-width="1.5"
+              marker-end="url(#arr-v)" opacity="0.85"/>
+        <!-- Sub-C → Scratchpad (enters top-right) -->
+        <path d="M 608 387 Q 570 440 542 481"
+              fill="none" stroke="#a78bfa" stroke-width="1.5"
+              marker-end="url(#arr-v)" opacity="0.85"/>
+        <!-- Sub-D → Scratchpad (enters right edge) -->
+        <path d="M 805 369 Q 690 470 582 500"
+              fill="none" stroke="#a78bfa" stroke-width="1.5"
+              marker-end="url(#arr-v)" opacity="0.85"/>
+
+        <!-- PEER adjacency : A↔B · B↔C · C↔D -->
+        <line x1="204" y1="342" x2="346" y2="355"
+              stroke="#a78bfa" stroke-width="1.3" stroke-dasharray="5,3" opacity="0.55"
+              marker-end="url(#arr-v)" marker-start="url(#arr-v-start)"/>
+        <line x1="414" y1="360" x2="586" y2="360"
+              stroke="#a78bfa" stroke-width="1.3" stroke-dasharray="5,3" opacity="0.55"
+              marker-end="url(#arr-v)" marker-start="url(#arr-v-start)"/>
+        <line x1="654" y1="355" x2="796" y2="342"
+              stroke="#a78bfa" stroke-width="1.3" stroke-dasharray="5,3" opacity="0.55"
+              marker-end="url(#arr-v)" marker-start="url(#arr-v-start)"/>
+
+        <!-- ═══════════════════════════════════ -->
+        <!--  NODES                               -->
+        <!-- ═══════════════════════════════════ -->
+
+        <!-- Main Agent  cx=500 cy=150 r=46 -->
+        <g filter="url(#glow-amber)">
+          <circle class="node-main-stroke" cx="500" cy="150" r="46"
+                  fill="url(#amber-grad)" stroke="#fbbf24" stroke-width="2.5"/>
+        </g>
+        <circle class="node-main-ring" cx="500" cy="150" r="53" fill="none" stroke="#fbbf24" stroke-width="0.9" opacity="0.35" stroke-dasharray="6,4"/>
+        <text x="500" y="145" class="svg-amber" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="13" font-weight="700" fill="#fbbf24">MAIN</text>
+        <text x="500" y="162" class="svg-amber-light" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="11" fill="#fcd34d">AGENT</text>
+        <text x="500" y="60" class="svg-txt-main" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="12.5" font-weight="700" fill="#f8fafc"><tspan class="lz">主 Agent</tspan><tspan class="le">Main Agent</tspan></text>
+        <text x="500" y="77" class="svg-txt-sub" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="11" fill="#cbd5e1">Parent Orchestrator</text>
+
+        <!-- Sub-Agent A  cx=170 cy=340 r=34 -->
+        <g filter="url(#glow-cyan)">
+          <circle class="node-sub-stroke" cx="170" cy="340" r="34"
+                  fill="url(#cyan-grad)" stroke="#22d3ee" stroke-width="2"/>
+        </g>
+        <text x="170" y="336" class="svg-cyan" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="15" font-weight="700" fill="#22d3ee">A</text>
+        <text x="170" y="352" class="svg-cyan-light" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10.5" fill="#7dd3fc">SUB</text>
+        <text x="170" y="396" class="svg-txt-main" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="12" font-weight="700" fill="#f8fafc"><tspan class="lz">子 Agent A</tspan><tspan class="le">Sub-Agent A</tspan></text>
+        <text x="170" y="412" class="svg-txt-sub" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10.5" fill="#cbd5e1">Worker</text>
+
+        <!-- Sub-Agent B  cx=380 cy=360 r=34 -->
+        <g filter="url(#glow-cyan)">
+          <circle class="node-sub-stroke" cx="380" cy="360" r="34"
+                  fill="url(#cyan-grad)" stroke="#22d3ee" stroke-width="2"/>
+        </g>
+        <text x="380" y="356" class="svg-cyan" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="15" font-weight="700" fill="#22d3ee">B</text>
+        <text x="380" y="372" class="svg-cyan-light" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10.5" fill="#7dd3fc">SUB</text>
+        <text x="380" y="416" class="svg-txt-main" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="12" font-weight="700" fill="#f8fafc"><tspan class="lz">子 Agent B</tspan><tspan class="le">Sub-Agent B</tspan></text>
+        <text x="380" y="432" class="svg-txt-sub" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10.5" fill="#cbd5e1">Worker</text>
+
+        <!-- Sub-Agent C  cx=620 cy=360 r=34 -->
+        <g filter="url(#glow-cyan)">
+          <circle class="node-sub-stroke" cx="620" cy="360" r="34"
+                  fill="url(#cyan-grad)" stroke="#22d3ee" stroke-width="2"/>
+        </g>
+        <text x="620" y="356" class="svg-cyan" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="15" font-weight="700" fill="#22d3ee">C</text>
+        <text x="620" y="372" class="svg-cyan-light" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10.5" fill="#7dd3fc">SUB</text>
+        <text x="620" y="416" class="svg-txt-main" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="12" font-weight="700" fill="#f8fafc"><tspan class="lz">子 Agent C</tspan><tspan class="le">Sub-Agent C</tspan></text>
+        <text x="620" y="432" class="svg-txt-sub" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10.5" fill="#cbd5e1">Worker</text>
+
+        <!-- Sub-Agent D  cx=830 cy=340 r=34 -->
+        <g filter="url(#glow-cyan)">
+          <circle class="node-sub-stroke" cx="830" cy="340" r="34"
+                  fill="url(#cyan-grad)" stroke="#22d3ee" stroke-width="2"/>
+        </g>
+        <text x="830" y="336" class="svg-cyan" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="15" font-weight="700" fill="#22d3ee">D</text>
+        <text x="830" y="352" class="svg-cyan-light" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10.5" fill="#7dd3fc">SUB</text>
+        <text x="830" y="396" class="svg-txt-main" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="12" font-weight="700" fill="#f8fafc"><tspan class="lz">子 Agent D</tspan><tspan class="le">Sub-Agent D</tspan></text>
+        <text x="830" y="412" class="svg-txt-sub" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10.5" fill="#cbd5e1">Worker</text>
+
+        <!-- Scratchpad rect  x=420 y=480 w=160 h=46 -->
+        <g filter="url(#glow-violet)">
+          <rect class="node-scratchpad" x="420" y="480" width="160" height="46" rx="9"
+                fill="rgba(167,139,250,0.15)" stroke="#a78bfa" stroke-width="2"
+                stroke-dasharray="6,3"/>
+        </g>
+        <text x="500" y="500" class="svg-violet" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="12" font-weight="700" fill="#a78bfa">Scratchpad</text>
+        <text x="500" y="517" class="svg-violet-light" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="10.5" fill="#c4b5fd">tengu_scratch</text>
+        <text x="500" y="547" class="svg-txt-sub" text-anchor="middle"
+              font-family="JetBrains Mono,monospace" font-size="11" font-weight="600" fill="#cbd5e1"><tspan class="lz">共享状态 · Shared State</tspan><tspan class="le">Shared State File</tspan></text>
+
+        <!-- ═══════════════════════════════════ -->
+        <!--  LEGEND — grid layout, ample spacing -->
+        <!-- ═══════════════════════════════════ -->
+        <rect class="legend-bg" x="60" y="575" width="880" height="36" rx="9"
+              fill="rgba(15,23,42,0.75)" stroke="#1e293b" stroke-width="1"/>
+
+        <!-- Item 1 : Downward -->
+        <g transform="translate(80, 598)">
+          <line x1="0" y1="-4" x2="40" y2="-4"
+                stroke="#34d399" stroke-width="2.2" marker-end="url(#arr-e)"/>
+          <text x="52" y="0" font-family="JetBrains Mono,monospace" font-size="11.5" font-weight="600">
+            <tspan class="svg-txt-main lz" fill="#f8fafc">向下</tspan>
+            <tspan class="svg-txt-main le" fill="#f8fafc">Down</tspan>
+            <tspan class="svg-txt-sub" fill="#cbd5e1"> · </tspan>
+            <tspan class="svg-emerald lz" fill="#34d399">可靠</tspan>
+            <tspan class="svg-emerald le" fill="#34d399">Reliable</tspan>
+            <tspan class="svg-txt-ann lz" fill="#94a3b8"> (直接调用)</tspan>
+            <tspan class="svg-txt-ann le" fill="#94a3b8"> (direct call)</tspan>
+          </text>
+        </g>
+
+        <!-- Item 2 : Upward -->
+        <g transform="translate(370, 598)">
+          <line x1="0" y1="-4" x2="40" y2="-4"
+                stroke="#22d3ee" stroke-width="1.8" stroke-dasharray="5,3" marker-end="url(#arr-c)"/>
+          <text x="52" y="0" font-family="JetBrains Mono,monospace" font-size="11.5" font-weight="600">
+            <tspan class="svg-txt-main lz" fill="#f8fafc">向上</tspan>
+            <tspan class="svg-txt-main le" fill="#f8fafc">Up</tspan>
+            <tspan class="svg-txt-sub" fill="#cbd5e1"> · </tspan>
+            <tspan class="svg-cyan lz" fill="#22d3ee">可靠</tspan>
+            <tspan class="svg-cyan le" fill="#22d3ee">Reliable</tspan>
+            <tspan class="svg-txt-ann lz" fill="#94a3b8"> (XML 注入)</tspan>
+            <tspan class="svg-txt-ann le" fill="#94a3b8"> (XML inject)</tspan>
+          </text>
+        </g>
+
+        <!-- Item 3 : Peer -->
+        <g transform="translate(660, 598)">
+          <line x1="0" y1="-4" x2="40" y2="-4"
+                stroke="#a78bfa" stroke-width="1.8"
+                marker-end="url(#arr-v)" marker-start="url(#arr-v-start)"/>
+          <text x="52" y="0" font-family="JetBrains Mono,monospace" font-size="11.5" font-weight="600">
+            <tspan class="svg-txt-main lz" fill="#f8fafc">平行</tspan>
+            <tspan class="svg-txt-main le" fill="#f8fafc">Peer</tspan>
+            <tspan class="svg-txt-sub" fill="#cbd5e1"> · </tspan>
+            <tspan class="svg-violet lz" fill="#a78bfa">最终一致</tspan>
+            <tspan class="svg-violet le" fill="#a78bfa">Eventual</tspan>
+            <tspan class="svg-txt-ann lz" fill="#94a3b8"> (无锁)</tspan>
+            <tspan class="svg-txt-ann le" fill="#94a3b8"> (lock-free)</tspan>
+          </text>
+        </g>
+      </svg>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-head">
+          <div class="dot dot-amber"></div>
+          <span class="card-title lz">三种通信机制</span>
+          <span class="card-title le">Three Communication Patterns</span>
+        </div>
+        <ul>
+          <li>
+            <span class="lz">向下：父 Agent 通过 SendMessage 工具直接发送指令，同步可靠</span>
+            <span class="le">Downward: Parent sends instructions via SendMessage tool, synchronous &amp; reliable</span>
+          </li>
+          <li>
+            <span class="lz">向上：子 Agent 通过 Task Notification XML 注入消息历史，可靠</span>
+            <span class="le">Upward: Sub-agent injects Task Notification XML into message history, reliable</span>
+          </li>
+          <li>
+            <span class="lz">平行：子 Agent 间通过 Scratchpad 文件共享状态，最终一致</span>
+            <span class="le">Peer: Sub-agents share state via Scratchpad file, eventually consistent</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="dot dot-cyan"></div>
+          <span class="card-title lz">自动后台化机制</span>
+          <span class="card-title le">Auto-Background Mechanism</span>
+        </div>
+        <ul>
+          <li>
+            <span class="lz">单个子任务超过 120 秒自动转后台运行</span>
+            <span class="le">Sub-tasks exceeding 120 s automatically moved to background</span>
+          </li>
+          <li>
+            <span class="lz">父 Agent 继续处理其他任务，不阻塞</span>
+            <span class="le">Parent agent continues processing other tasks without blocking</span>
+          </li>
+          <li>
+            <span class="lz">子 Agent 完成后通过 Task Notification 通知父 Agent</span>
+            <span class="le">Sub-agent notifies parent via Task Notification upon completion</span>
+          </li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <div class="card-head">
+          <div class="dot dot-violet"></div>
+          <span class="card-title lz">Scratchpad 风险</span>
+          <span class="card-title le">Scratchpad Risks</span>
+        </div>
+        <ul>
+          <li>
+            <span class="lz">无锁并发写入，极低概率导致数据损坏</span>
+            <span class="le">Lock-free concurrent writes, low probability of data corruption</span>
+          </li>
+          <li>
+            <span class="lz">所有 Agent 均可读写（tengu_scratch）</span>
+            <span class="le">All agents have read/write access (tengu_scratch)</span>
+          </li>
+          <li>
+            <span class="lz">作为唯一共享状态，需谨慎设计写入逻辑</span>
+            <span class="le">As the sole shared state, write logic requires careful design</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="footer">
+      <span class="lz">Claude Code 2.1.88 源码白皮书 · 第二部分 · Multi-Agent 通信拓扑 · VIS-2A-018</span>
+      <span class="le">Claude Code 2.1.88 Source Whitepaper · Part II · Multi-Agent Communication Topology · VIS-2A-018</span>
+    </div>
+  </div>
+
+  <script>
+    (function(){
+      'use strict';
+
+      const THEMES = ['dark','warm','light'];
+      const THEME_KEY = 'cc-theme';
+      const LANG_KEY  = 'cc-lang';
+
+      function applyTheme(t){
+        document.documentElement.setAttribute('data-theme', t);
+        localStorage.setItem(THEME_KEY, t);
+        THEMES.forEach(th => {
+          const btn = document.getElementById('btn-' + th);
+          if(btn) btn.classList.toggle('active', th === t);
+        });
+        updateSvgColors(t);
+      }
+
+      function updateSvgColors(t){
+        const C = {
+          dark: {
+            txtMain:'#f8fafc', txtSub:'#cbd5e1', txtAnn:'#94a3b8',
+            emerald:'#34d399', amber:'#fbbf24', amberLight:'#fcd34d',
+            cyan:'#22d3ee', cyanLight:'#7dd3fc',
+            violet:'#a78bfa', violetLight:'#c4b5fd',
+            grid:'#1e293b', bg0:'#0f172a', bg1:'#020617',
+            legendBg:'rgba(15,23,42,0.75)', legendStroke:'#1e293b',
+            annBg:'rgba(15,23,42,0.9)', annStroke:'#334155', annStroke2:'#a78bfa',
+            scratchFill:'rgba(167,139,250,0.15)', scratchStroke:'#a78bfa',
+            mainStroke:'#fbbf24', subStroke:'#22d3ee',
+            amberGrad0:'rgba(251,191,36,0.4)', amberGrad1:'rgba(251,191,36,0.15)',
+            cyanGrad0:'rgba(34,211,238,0.3)', cyanGrad1:'rgba(34,211,238,0.1)'
+          },
+          warm: {
+            txtMain:'#1a1412', txtSub:'#4a3c30', txtAnn:'#6b5a4e',
+            emerald:'#047857', amber:'#b45309', amberLight:'#92400e',
+            cyan:'#0e7490', cyanLight:'#155e75',
+            violet:'#6d28d9', violetLight:'#5b21b6',
+            grid:'#d9cdb9', bg0:'#fdf8ee', bg1:'#faf7f2',
+            legendBg:'rgba(255,255,255,0.9)', legendStroke:'#d9cdb9',
+            annBg:'rgba(255,255,255,0.95)', annStroke:'#d9cdb9', annStroke2:'#6d28d9',
+            scratchFill:'rgba(109,40,217,0.1)', scratchStroke:'#6d28d9',
+            mainStroke:'#b45309', subStroke:'#0e7490',
+            amberGrad0:'rgba(180,83,9,0.28)', amberGrad1:'rgba(180,83,9,0.08)',
+            cyanGrad0:'rgba(14,116,144,0.22)', cyanGrad1:'rgba(14,116,144,0.06)'
+          },
+          light: {
+            txtMain:'#0f172a', txtSub:'#334155', txtAnn:'#475569',
+            emerald:'#047857', amber:'#b45309', amberLight:'#92400e',
+            cyan:'#0369a1', cyanLight:'#075985',
+            violet:'#6d28d9', violetLight:'#5b21b6',
+            grid:'#cbd5e1', bg0:'#f1f5f9', bg1:'#f8fafc',
+            legendBg:'rgba(248,250,252,0.92)', legendStroke:'#cbd5e1',
+            annBg:'rgba(248,250,252,0.95)', annStroke:'#cbd5e1', annStroke2:'#6d28d9',
+            scratchFill:'rgba(109,40,217,0.1)', scratchStroke:'#6d28d9',
+            mainStroke:'#b45309', subStroke:'#0369a1',
+            amberGrad0:'rgba(180,83,9,0.28)', amberGrad1:'rgba(180,83,9,0.08)',
+            cyanGrad0:'rgba(3,105,161,0.22)', cyanGrad1:'rgba(3,105,161,0.06)'
+          }
+        }[t];
+
+        document.querySelectorAll('.svg-txt-main').forEach(el => el.setAttribute('fill', C.txtMain));
+        document.querySelectorAll('.svg-txt-sub').forEach(el => el.setAttribute('fill', C.txtSub));
+        document.querySelectorAll('.svg-txt-ann').forEach(el => el.setAttribute('fill', C.txtAnn));
+        document.querySelectorAll('.svg-emerald').forEach(el => el.setAttribute('fill', C.emerald));
+        document.querySelectorAll('.svg-amber').forEach(el => el.setAttribute('fill', C.amber));
+        document.querySelectorAll('.svg-amber-light').forEach(el => el.setAttribute('fill', C.amberLight));
+        document.querySelectorAll('.svg-cyan').forEach(el => el.setAttribute('fill', C.cyan));
+        document.querySelectorAll('.svg-cyan-light').forEach(el => el.setAttribute('fill', C.cyanLight));
+        document.querySelectorAll('.svg-violet').forEach(el => el.setAttribute('fill', C.violet));
+        document.querySelectorAll('.svg-violet-light').forEach(el => el.setAttribute('fill', C.violetLight));
+
+        document.querySelectorAll('.grid-lines').forEach(el => el.setAttribute('stroke', C.grid));
+
+        document.querySelectorAll('.legend-bg').forEach(el => {
+          el.setAttribute('fill', C.legendBg);
+          el.setAttribute('stroke', C.legendStroke);
+        });
+
+        const annBoxes = document.querySelectorAll('.ann-box');
+        annBoxes.forEach((el, i) => {
+          el.setAttribute('fill', C.annBg);
+          el.setAttribute('stroke', i === 0 ? C.annStroke : C.annStroke2);
+        });
+        document.querySelectorAll('.ann-line').forEach(el => el.setAttribute('stroke', C.annStroke));
+
+        document.querySelectorAll('.node-scratchpad').forEach(el => {
+          el.setAttribute('fill', C.scratchFill);
+          el.setAttribute('stroke', C.scratchStroke);
+        });
+
+        document.querySelectorAll('.node-main-stroke').forEach(el => el.setAttribute('stroke', C.mainStroke));
+        document.querySelectorAll('.node-main-ring').forEach(el => el.setAttribute('stroke', C.mainStroke));
+        document.querySelectorAll('.node-sub-stroke').forEach(el => el.setAttribute('stroke', C.subStroke));
+
+        const bgStop0 = document.querySelector('#bg-grad stop:first-child');
+        const bgStop1 = document.querySelector('#bg-grad stop:last-child');
+        if(bgStop0) bgStop0.setAttribute('stop-color', C.bg0);
+        if(bgStop1) bgStop1.setAttribute('stop-color', C.bg1);
+
+        const aStop0 = document.querySelector('#amber-grad stop:first-child');
+        const aStop1 = document.querySelector('#amber-grad stop:last-child');
+        if(aStop0) aStop0.setAttribute('stop-color', C.amberGrad0);
+        if(aStop1) aStop1.setAttribute('stop-color', C.amberGrad1);
+
+        const cStop0 = document.querySelector('#cyan-grad stop:first-child');
+        const cStop1 = document.querySelector('#cyan-grad stop:last-child');
+        if(cStop0) cStop0.setAttribute('stop-color', C.cyanGrad0);
+        if(cStop1) cStop1.setAttribute('stop-color', C.cyanGrad1);
+
+        const mE = document.getElementById('arr-e');
+        if(mE){ const p = mE.querySelector('polygon'); if(p) p.setAttribute('fill', C.emerald); }
+        const mC = document.getElementById('arr-c');
+        if(mC){ const p = mC.querySelector('polygon'); if(p) p.setAttribute('fill', C.cyan); }
+        ['arr-v','arr-v-start'].forEach(id => {
+          const m = document.getElementById(id);
+          if(m){ const p = m.querySelector('polygon'); if(p) p.setAttribute('fill', C.violet); }
+        });
+      }
+
+      window.cycleTheme = function(t){ applyTheme(t); };
+
+      let isEn = false;
+
+      function applyLang(en){
+        isEn = en;
+        localStorage.setItem(LANG_KEY, en ? 'en' : 'zh');
+        document.documentElement.setAttribute('lang', en ? 'en' : 'zh');
+        const lzEls = document.querySelectorAll('.lz');
+        const leEls = document.querySelectorAll('.le');
+        lzEls.forEach(el => el.style.display = en ? 'none' : '');
+        leEls.forEach(el => el.style.display = en ? '' : 'none');
+        const langBtn = document.getElementById('btn-lang');
+        if(langBtn) langBtn.classList.toggle('active', true);
+      }
+
+      window.toggleLang = function(){
+        applyLang(!isEn);
+      };
+
+      const savedTheme = localStorage.getItem(THEME_KEY) || 'dark';
+      const savedLang  = localStorage.getItem(LANG_KEY)  || 'zh';
+      applyTheme(savedTheme);
+      applyLang(savedLang === 'en');
+    })();
+  </script>
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

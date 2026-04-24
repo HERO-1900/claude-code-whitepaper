@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="dark" data-lang="zh">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-2A-033 | 脏区域追踪四层过滤</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v3-fixes · light-theme solid layers · alignment · dead-code removal */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{
+  --bg:#020617;--panel:#0f172a;--card:#1e293b;--border:#334155;
+  --text:#f1f5f9;--muted:#94a3b8;--subtle:#475569;
+  --amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;
+  --rose:#fb7185;--slate:#94a3b8;--orange:#fb923c;
+  --blue:#3b82f6;--purple:#8b5cf6;--green:#22c55e;
+}
+[data-theme="warm"]{
+  --bg:#1c1410;--panel:#2a1f16;--card:#3d2d20;--border:#5c4a3a;
+  --text:#f5e6d3;--muted:#c4a882;--subtle:#8b7355;
+  --amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;
+  --rose:#fb7185;--slate:#94a3b8;--orange:#fb923c;
+  --blue:#3b82f6;--purple:#8b5cf6;--green:#22c55e;
+}
+[data-theme="light"]{
+  --bg:#f8fafc;--panel:#f1f5f9;--card:#e2e8f0;--border:#cbd5e1;
+  --text:#0f172a;--muted:#475569;--subtle:#94a3b8;
+  --amber:#d97706;--cyan:#0891b2;--violet:#7c3aed;--emerald:#059669;
+  --rose:#e11d48;--slate:#475569;--orange:#ea580c;
+  --blue:#2563eb;--purple:#7c3aed;--green:#16a34a;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+body{
+  font-family:'JetBrains Mono',monospace;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding:24px 16px 48px;
+}
+
+/* ── Controls ── */
+.ctrl{
+  position:fixed;top:16px;right:16px;
+  display:flex;gap:8px;z-index:100;
+}
+.ctrl button{
+  font-family:'JetBrains Mono',monospace;
+  font-size:11px;padding:6px 12px;
+  background:var(--card);color:var(--text);
+  border:1px solid var(--border);border-radius:6px;cursor:pointer;
+  transition:background .15s;
+}
+.ctrl button:hover{background:var(--border)}
+
+[data-lang="en"] .lz{display:none}
+[data-lang="en"] .le{display:inline}
+
+/* ── Header ── */
+.header{
+  max-width:960px;margin:0 auto 36px;
+  padding-bottom:20px;
+  border-bottom:1px solid var(--border);
+}
+.header-meta{
+  font-size:11px;color:var(--subtle);
+  letter-spacing:.08em;margin-bottom:10px;
+}
+.header-title{
+  font-size:22px;font-weight:700;
+  color:var(--text);line-height:1.3;
+  margin-bottom:8px;
+}
+.header-sub{
+  font-size:13px;color:var(--muted);line-height:1.6;
+}
+
+/* ── Main layout ── */
+.main-wrap{
+  max-width:960px;margin:0 auto;
+}
+
+/* ── Highlight stat ── */
+.compression-badge{
+  display:flex;align-items:center;justify-content:center;
+  gap:16px;
+  background:linear-gradient(135deg,rgba(251,191,36,.12),rgba(251,191,36,.04));
+  border:1px solid rgba(251,191,36,.4);
+  border-radius:12px;
+  padding:16px 24px;
+  margin-bottom:32px;
+}
+.compression-number{
+  font-size:40px;font-weight:700;
+  color:var(--amber);
+  text-shadow:0 0 24px rgba(251,191,36,.5);
+  line-height:1;
+}
+.compression-text{
+  text-align:left;
+}
+.compression-label{
+  font-size:15px;font-weight:600;color:var(--amber);
+  margin-bottom:4px;
+}
+.compression-desc{
+  font-size:12px;color:var(--muted);
+}
+
+/* ── Funnel container ── */
+.funnel-area{
+  display:grid;
+  grid-template-columns:64px 1fr 300px;
+  gap:0 16px;
+  align-items:start;
+  margin-bottom:32px;
+}
+
+/* ── Funnel column ── */
+.funnel-col{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:0;
+}
+
+/* ── Input label ── */
+.input-label{
+  font-size:11px;color:var(--muted);
+  margin-bottom:8px;
+  text-align:center;
+}
+
+/* ── Layer wrapper ── */
+.layer-wrap{
+  width:100%;
+  position:relative;
+  /* 4 layers, each 72px tall, 3 connector circles = 4*72 + 3*16 = 336px */
+}
+
+/* ── Individual layer trapezoid ── */
+.layer-shape{
+  width:100%;
+  height:72px;
+  position:relative;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  transition:filter .2s;
+}
+.layer-shape:hover{
+  filter:brightness(1.15);
+}
+
+/* Layer 1 - Blue */
+.layer-1 .layer-shape{
+  background:rgba(59,130,246,.85);
+  clip-path:polygon(0% 0%, 100% 0%, 93% 100%, 7% 100%);
+}
+/* Layer 2 - Purple */
+.layer-2 .layer-shape{
+  background:rgba(139,92,246,.85);
+  clip-path:polygon(7% 0%, 93% 0%, 87% 100%, 13% 100%);
+}
+/* Layer 3 - Orange */
+.layer-3 .layer-shape{
+  background:rgba(249,115,22,.85);
+  clip-path:polygon(13% 0%, 87% 0%, 79% 100%, 21% 100%);
+}
+/* Layer 4 - Green */
+.layer-4 .layer-shape{
+  background:rgba(34,197,94,.85);
+  clip-path:polygon(21% 0%, 79% 0%, 71% 100%, 29% 100%);
+}
+
+/* Light theme solid color override for contrast */
+[data-theme="light"] .layer-1 .layer-shape{ background:#2563eb; }
+[data-theme="light"] .layer-2 .layer-shape{ background:#7c3aed; }
+[data-theme="light"] .layer-3 .layer-shape{ background:#ea580c; }
+[data-theme="light"] .layer-4 .layer-shape{ background:#16a34a; }
+
+.layer-inner{
+  text-align:center;
+  pointer-events:none;
+  padding:0 12%;
+}
+.layer-name-zh{
+  font-size:13px;font-weight:600;
+  color:#fff;
+  text-shadow:0 1px 4px rgba(0,0,0,.6);
+  display:block;
+  line-height:1.3;
+}
+.layer-name-en{
+  font-size:11px;
+  color:rgba(255,255,255,.8);
+  text-shadow:0 1px 4px rgba(0,0,0,.6);
+  display:block;
+  margin-top:2px;
+}
+.layer-count{
+  font-size:11px;font-weight:700;
+  color:rgba(255,255,255,.9);
+  text-shadow:0 1px 4px rgba(0,0,0,.8);
+  display:block;
+  margin-top:2px;
+}
+
+/* ── Connector (filter circle between layers) ── */
+.connector{
+  width:100%;
+  height:16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+}
+/* Vertical line */
+.connector::before{
+  content:'';
+  position:absolute;
+  left:50%;top:0;
+  width:1px;height:100%;
+  background:var(--border);
+  transform:translateX(-50%);
+}
+/* Circle */
+.connector-circle{
+  width:16px;height:16px;
+  border-radius:50%;
+  border:1.5px solid var(--muted);
+  background:var(--card);
+  display:flex;align-items:center;justify-content:center;
+  position:relative;z-index:2;
+}
+.connector-circle svg{
+  width:8px;height:8px;
+  opacity:.7;
+}
+
+/* ── Output box ── */
+.output-connector{
+  width:100%;height:12px;
+  position:relative;display:flex;
+  align-items:center;justify-content:center;
+}
+.output-connector::before{
+  content:'';
+  position:absolute;left:50%;top:0;
+  width:1px;height:100%;
+  background:var(--border);
+  transform:translateX(-50%);
+}
+.output-box{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:6px;
+  width:100%;
+}
+.output-inner{
+  background:var(--card);
+  border:1.5px solid var(--text);
+  border-radius:8px;
+  padding:10px 20px;
+  text-align:center;
+  box-shadow:0 0 20px rgba(241,245,249,.1);
+}
+.output-value{
+  font-size:18px;font-weight:700;
+  color:var(--text);
+  display:block;
+}
+.output-label{
+  font-size:11px;color:var(--muted);
+  margin-top:4px;
+  display:block;
+}
+
+/* ── Right side mechanism labels ── */
+.mechanism-col{
+  display:flex;
+  flex-direction:column;
+  padding-top:66px; /* aligns with first layer center (44 + 22px input-label) */
+  gap:0;
+}
+.mech-item{
+  display:flex;
+  align-items:flex-start;
+  gap:8px;
+  position:relative;
+}
+.mech-dot{
+  width:8px;height:8px;
+  border-radius:50%;
+  flex-shrink:0;
+  margin-top:4px;
+}
+.mech-content{
+  flex:1;
+}
+.mech-label{
+  font-size:11px;font-weight:600;
+  color:var(--text);
+  line-height:1.4;
+  display:block;
+}
+.mech-desc{
+  font-size:10px;
+  color:var(--muted);
+  display:block;
+  margin-top:2px;
+  line-height:1.4;
+}
+
+/* ── Scale tick positioning ── */
+.scale-col{
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:0;
+  padding-top:66px; /* aligns with top of layer 1 (44 + 22px input-label) */
+}
+.scale-item{
+  display:flex;
+  align-items:flex-start;
+  gap:6px;
+  height:72px; /* same as layer height */
+}
+
+.scale-number{
+  font-size:10px;
+  color:var(--muted);
+  white-space:nowrap;
+  line-height:1;
+  margin-top:0;
+}
+.scale-dash{
+  width:12px;height:1px;
+  background:var(--subtle);
+  margin-top:5px;
+}
+
+/* ── Summary cards ── */
+.cards{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:12px;
+  margin-bottom:32px;
+}
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:10px;
+  padding:16px;
+  position:relative;
+  overflow:hidden;
+}
+.card::before{
+  content:'';
+  position:absolute;
+  top:0;left:0;right:0;height:3px;
+}
+.card-cyan::before{background:var(--cyan)}
+.card-amber::before{background:var(--amber)}
+.card-emerald::before{background:var(--emerald)}
+
+.card-value{
+  font-size:22px;font-weight:700;
+  display:block;margin-bottom:4px;
+}
+.card-cyan .card-value{color:var(--cyan)}
+.card-amber .card-value{color:var(--amber)}
+.card-emerald .card-value{color:var(--emerald)}
+
+.card-desc{
+  font-size:11px;color:var(--muted);
+  line-height:1.5;
+}
+
+/* ── Source note ── */
+.source-note{
+  font-size:10px;color:var(--subtle);
+  text-align:center;
+  margin-top:16px;
+  padding-top:16px;
+  border-top:1px solid var(--border);
+}
+
+/* ── Responsive ── */
+@media(max-width:700px){
+  .funnel-area{
+    grid-template-columns:48px 1fr;
+  }
+  .mechanism-col{display:none}
+  .cards{grid-template-columns:1fr}
+  .compression-number{font-size:32px}
+}
+</style>
+</head>
+<body>
+
+<!-- Controls -->
+<div class="ctrl">
+  <button onclick="cycleTheme()">Theme</button>
+  <button id="langBtn" onclick="toggleLang()">EN</button>
+</div>
+
+<!-- Header -->
+<header class="header">
+  <div class="header-meta">VIS-2A-033 · Chapter 2A · Terminal Rendering</div>
+  <h1 class="header-title">
+    <span class="lz">脏区域追踪四层过滤漏斗</span>
+    <span class="le">Dirty Region 4-Layer Filtering Funnel</span>
+  </h1>
+  <p class="header-sub">
+    <span class="lz">Claude Code 终端渲染器通过四个递进过滤层，将每帧约 10,000 个 cell 压缩至最终 ~50 个 cell 写入 stdout，实现 200× 渲染效率提升。</span>
+    <span class="le">Claude Code's terminal renderer compresses ~10,000 cells/frame down to ~50 cells written to stdout through four progressive filtering layers — a 200× efficiency gain.</span>
+  </p>
+</header>
+
+<!-- Main -->
+<main class="main-wrap">
+
+  <!-- Compression highlight -->
+  <div class="compression-badge">
+    <div class="compression-number">200×</div>
+    <div class="compression-text">
+      <div class="compression-label">
+        <span class="lz">压缩率</span>
+        <span class="le">Compression Ratio</span>
+      </div>
+      <div class="compression-desc">
+        <span class="lz">10,000 cells/帧 → ~50 cells/帧 · 四层递进过滤</span>
+        <span class="le">10,000 cells/frame → ~50 cells/frame · 4-layer progressive filtering</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Funnel + Scale + Mechanisms -->
+  <div class="funnel-area">
+
+    <!-- Left: Scale column -->
+    <div class="scale-col">
+      <!-- Layer 1 row: 10,000 -->
+      <div class="scale-item">
+        <div class="scale-number" style="padding-top:2px">10K</div>
+        <div class="scale-dash" style="margin-top:7px"></div>
+      </div>
+      <!-- Spacer for connector -->
+      <div style="height:16px"></div>
+      <!-- Layer 2 row: 2,000 -->
+      <div class="scale-item">
+        <div class="scale-number" style="padding-top:2px">2K</div>
+        <div class="scale-dash" style="margin-top:7px"></div>
+      </div>
+      <!-- Spacer for connector -->
+      <div style="height:16px"></div>
+      <!-- Layer 3 row: 400 -->
+      <div class="scale-item">
+        <div class="scale-number" style="padding-top:2px">400</div>
+        <div class="scale-dash" style="margin-top:7px"></div>
+      </div>
+      <!-- Spacer for connector -->
+      <div style="height:16px"></div>
+      <!-- Layer 4 row: 50 -->
+      <div class="scale-item">
+        <div class="scale-number" style="padding-top:2px">50</div>
+        <div class="scale-dash" style="margin-top:7px"></div>
+      </div>
+    </div>
+
+    <!-- Center: Funnel -->
+    <div class="funnel-col">
+
+      <!-- Input label -->
+      <div class="input-label">
+        <span class="lz">↓ 每帧输入 ~10,000 cells</span>
+        <span class="le">↓ ~10,000 cells per frame input</span>
+      </div>
+
+      <!-- Layer 1 -->
+      <div class="layer-wrap layer-1">
+        <div class="layer-shape">
+          <div class="layer-inner">
+            <span class="layer-name-zh lz">shouldComponentUpdate</span>
+            <span class="layer-name-en le">shouldComponentUpdate</span>
+            <span class="layer-count">~10,000 → ~2,000 cells</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connector 1→2 -->
+      <div class="connector">
+        <div class="connector-circle">
+          <svg viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 2h6M1 4h5M2 6h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Layer 2 -->
+      <div class="layer-wrap layer-2">
+        <div class="layer-shape">
+          <div class="layer-inner">
+            <span class="layer-name-zh lz">Ink diff 引擎</span>
+            <span class="layer-name-en le">Ink diff engine</span>
+            <span class="layer-count">~2,000 → ~400 cells</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connector 2→3 -->
+      <div class="connector">
+        <div class="connector-circle">
+          <svg viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 2h6M1 4h5M2 6h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Layer 3 -->
+      <div class="layer-wrap layer-3">
+        <div class="layer-shape">
+          <div class="layer-inner">
+            <span class="layer-name-zh lz">Screen Buffer diff</span>
+            <span class="layer-name-en le">Screen Buffer diff</span>
+            <span class="layer-count">~400 → ~50 cells</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Connector 3→4 -->
+      <div class="connector">
+        <div class="connector-circle">
+          <svg viewBox="0 0 8 8" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <path d="M1 2h6M1 4h5M2 6h4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+          </svg>
+        </div>
+      </div>
+
+      <!-- Layer 4 -->
+      <div class="layer-wrap layer-4">
+        <div class="layer-shape">
+          <div class="layer-inner">
+            <span class="layer-name-zh lz">ANSI 优化器</span>
+            <span class="layer-name-en le">ANSI optimizer</span>
+            <span class="layer-count"><span class="lz">~50 cells 输出</span><span class="le">~50 cells output</span></span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Output connector line -->
+      <div class="output-connector"></div>
+
+      <!-- Output box -->
+      <div class="output-box">
+        <div class="output-inner">
+          <span class="output-value">~50 cells</span>
+          <span class="output-label">
+            <span class="lz">最终 stdout 写入</span>
+            <span class="le">Final stdout write</span>
+          </span>
+        </div>
+      </div>
+
+    </div><!-- /funnel-col -->
+
+    <!-- Right: Mechanism labels -->
+    <div class="mechanism-col">
+
+      <!-- L1 mechanism -->
+      <div class="mech-item" style="height:72px;align-items:center">
+        <div class="mech-dot" style="background:#3b82f6;box-shadow:0 0 6px rgba(59,130,246,.6)"></div>
+        <div class="mech-content">
+          <span class="mech-label">
+            <span class="lz">React shouldComponentUpdate</span>
+            <span class="le">React shouldComponentUpdate</span>
+          </span>
+          <span class="mech-desc">
+            <span class="lz">跳过未变化的子组件子树，仅对脏组件触发重渲染</span>
+            <span class="le">Skip unchanged subtrees → only re-render dirty components</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Spacer (connector height) -->
+      <div style="height:16px"></div>
+
+      <!-- L2 mechanism -->
+      <div class="mech-item" style="height:72px;align-items:center">
+        <div class="mech-dot" style="background:#8b5cf6;box-shadow:0 0 6px rgba(139,92,246,.6)"></div>
+        <div class="mech-content">
+          <span class="mech-label">
+            <span class="lz">Ink 虚拟 DOM diff</span>
+            <span class="le">Ink vDOM diff</span>
+          </span>
+          <span class="mech-desc">
+            <span class="lz">追踪 props/state 变化，仅保留实际有更新的节点</span>
+            <span class="le">Track prop/state changes → retain only updated nodes</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Spacer -->
+      <div style="height:16px"></div>
+
+      <!-- L3 mechanism -->
+      <div class="mech-item" style="height:72px;align-items:center">
+        <div class="mech-dot" style="background:#f97316;box-shadow:0 0 6px rgba(249,115,22,.6)"></div>
+        <div class="mech-content">
+          <span class="mech-label">
+            <span class="lz">Screen Buffer 差异计算</span>
+            <span class="le">Buffer diff · pixel-level delta</span>
+          </span>
+          <span class="mech-desc">
+            <span class="lz">逐字符对比前后帧 buffer，找出像素级实际差异</span>
+            <span class="le">Compare prev/next frame buffers char-by-char</span>
+          </span>
+        </div>
+      </div>
+
+      <!-- Spacer -->
+      <div style="height:16px"></div>
+
+      <!-- L4 mechanism -->
+      <div class="mech-item" style="height:72px;align-items:center">
+        <div class="mech-dot" style="background:#22c55e;box-shadow:0 0 6px rgba(34,197,94,.6)"></div>
+        <div class="mech-content">
+          <span class="mech-label">
+            <span class="lz">ANSI 转义序列优化</span>
+            <span class="le">ANSI escape sequence merge</span>
+          </span>
+          <span class="mech-desc">
+            <span class="lz">合并相邻同色区域，最小化控制序列字节数</span>
+            <span class="le">Combine adjacent same-color cells → minimize control bytes</span>
+          </span>
+        </div>
+      </div>
+
+    </div><!-- /mechanism-col -->
+
+  </div><!-- /funnel-area -->
+
+  <!-- Scale title below -->
+  <div style="display:flex;gap:0;max-width:960px;margin:0 auto 24px;">
+    <div style="width:64px;text-align:right;padding-right:6px;">
+      <span style="font-size:10px;color:var(--subtle);">
+        <span class="lz">处理量<br>cells/帧</span>
+        <span class="le">cells<br>/frame</span>
+      </span>
+    </div>
+  </div>
+
+  <!-- Summary cards -->
+  <div class="cards">
+    <div class="card card-cyan">
+      <span class="card-value">200×</span>
+      <div class="card-desc">
+        <span class="lz">压缩率：从 10,000 cells 降至 ~50 cells，每帧节省 99.5% 的 stdout 写入</span>
+        <span class="le">Compression: from 10,000 to ~50 cells/frame — saves 99.5% of stdout writes</span>
+      </div>
+    </div>
+    <div class="card card-amber">
+      <span class="card-value"><span class="lz">4 <span style="font-size:14px;font-weight:400">层</span></span><span class="le">4 <span style="font-size:14px;font-weight:400">Layers</span></span></span>
+      <div class="card-desc">
+        <span class="lz">独立过滤策略逐层递减：React组件 → vDOM → Buffer → ANSI 四道闸门</span>
+        <span class="le">4 independent filtering gates: React → vDOM → Buffer → ANSI sequence</span>
+      </div>
+    </div>
+    <div class="card card-emerald">
+      <span class="card-value">~50 bytes</span>
+      <div class="card-desc">
+        <span class="lz">稳态输出：界面稳定时几乎不触发重绘，终端 stdout 近乎静默</span>
+        <span class="le">Steady-state: near-zero redraws when UI is stable — stdout nearly silent</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Source note -->
+  <div class="source-note">
+    VIS-2A-033 · <span class="lz">数据来源：Claude Code 源码 Ink/renderer 模块分析 · 数值为估算</span>
+    <span class="le">Data source: Claude Code source — Ink/renderer module analysis · values estimated</span>
+  </div>
+
+</main>
+
+<script>
+(function(){
+  var t = localStorage.getItem('vtheme') || 'dark';
+  var l = localStorage.getItem('vlang') || 'zh';
+  document.documentElement.setAttribute('data-theme', t);
+  document.documentElement.setAttribute('data-lang', l);
+  var btn = document.getElementById('langBtn');
+  if (btn) btn.textContent = l === 'zh' ? 'EN' : '中';
+
+  window.cycleTheme = function(){
+    var themes = ['dark', 'warm', 'light'];
+    var cur = document.documentElement.getAttribute('data-theme') || 'dark';
+    var next = themes[(themes.indexOf(cur) + 1) % themes.length];
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('vtheme', next);
+  };
+
+  window.toggleLang = function(){
+    var cur = document.documentElement.getAttribute('data-lang') || 'zh';
+    var next = cur === 'zh' ? 'en' : 'zh';
+    document.documentElement.setAttribute('data-lang', next);
+    localStorage.setItem('vlang', next);
+    var btn = document.getElementById('langBtn');
+    if (btn) btn.textContent = next === 'zh' ? 'EN' : '中';
+  };
+})();
+</script>
+
+<script>
+/* v2-embed-sync */
+/* Embed-mode sync v2: 当图表作为 iframe 嵌入时，隐藏自带控件，跟父页面总开关联动。
+   监听 3 种父页面 message 格式：cc-theme / cc-lang / v2-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>

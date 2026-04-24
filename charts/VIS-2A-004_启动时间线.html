@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="zh" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>VIS-2A-004 启动时间线 — Claude Code 白皮书</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+    /* v3-fix-theme-colors · data-lang 优先 · lang fallback */
+    html[data-lang="en"] .lz { display: none !important; }
+    html[data-lang="zh"] .le { display: none !important; }
+    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
+    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
+:root,[data-theme="dark"]{--bg:#020617;--bg2:#0f172a;--bg3:#1e293b;--txt:#f1f5f9;--txt2:#94a3b8;--txt3:#475569;--brd:rgba(148,163,184,0.15);--card-bg:rgba(15,23,42,0.85);--ctrl-bg:rgba(30,41,59,0.9);--node-bg:#020617;--grid-stroke:#1e293b;--tick-major:#f1f5f9;--tick-minor:#94a3b8;--lane-label:#94a3b8;--sep-line:rgba(148,163,184,0.25);--milestone-bg:rgba(6,78,59,0.6);--milestone-stroke:#10b981;--legend-bg:rgba(30,41,59,0.5);--legend-stroke:rgba(148,163,184,0.15);}
+[data-theme="warm"]{--bg:#f8f6f3;--bg2:#f1ede8;--bg3:#e8e2d9;--txt:#1e293b;--txt2:#475569;--txt3:#94a3b8;--brd:rgba(100,116,139,0.2);--card-bg:rgba(241,237,232,0.9);--ctrl-bg:rgba(241,237,232,0.95);--node-bg:#f8f6f3;--grid-stroke:#e0d8cc;--tick-major:#1e293b;--tick-minor:#64748b;--lane-label:#64748b;--sep-line:rgba(100,116,139,0.3);--milestone-bg:rgba(16,185,129,0.15);--milestone-stroke:#10b981;--legend-bg:rgba(241,237,232,0.9);--legend-stroke:rgba(100,116,139,0.2);}
+[data-theme="light"]{--bg:#ffffff;--bg2:#f8fafc;--bg3:#f1f5f9;--txt:#0f172a;--txt2:#64748b;--txt3:#94a3b8;--brd:rgba(100,116,139,0.15);--card-bg:rgba(248,250,252,0.95);--ctrl-bg:rgba(248,250,252,0.95);--node-bg:#ffffff;--grid-stroke:#e2e8f0;--tick-major:#0f172a;--tick-minor:#64748b;--lane-label:#64748b;--sep-line:rgba(100,116,139,0.3);--milestone-bg:rgba(16,185,129,0.12);--milestone-stroke:#10b981;--legend-bg:rgba(248,250,252,0.95);--legend-stroke:rgba(100,116,139,0.15);}
+[lang="en"] .lz{display:none}
+.tick-major{fill:var(--tick-major)}.tick-minor{fill:var(--tick-minor)}.lane-label{fill:var(--lane-label)}.sep-line{stroke:var(--sep-line)}.axis-tick-major{stroke:var(--tick-major)}.axis-tick-minor{stroke:var(--tick-minor)}.milestone-bg{fill:var(--milestone-bg);stroke:var(--milestone-stroke)}.legend-bg{fill:var(--legend-bg);stroke:var(--legend-stroke)}
+[data-theme="dark"] .hatch-line{stroke:rgba(255,255,255,0.25)}
+[data-theme="warm"] .hatch-line{stroke:rgba(0,0,0,0.2)}
+[data-theme="light"] .hatch-line{stroke:rgba(0,0,0,0.15)}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'JetBrains Mono',monospace;background:var(--bg);color:var(--txt);min-height:100vh;transition:background .3s,color .3s}
+.page{max-width:1020px;margin:0 auto;padding:32px 20px}
+.hdr{display:flex;align-items:flex-start;gap:12px;margin-bottom:24px}
+.pulse{width:10px;height:10px;border-radius:50%;background:#34d399;animation:pulse 2s infinite;flex-shrink:0;margin-top:5px}
+@keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.85)}}
+h1{font-size:20px;font-weight:700;color:var(--txt)}
+.subtitle{font-size:11px;color:var(--txt2);margin-top:4px}
+.diagram-card{background:var(--card-bg);border:1px solid var(--brd);border-radius:14px;padding:20px 16px;margin-bottom:16px;overflow:hidden}
+.svg-bg{fill:var(--bg)}.grid-line{stroke:var(--grid-stroke)}.node-bg{fill:var(--node-bg)}.node-title{fill:var(--txt)}.node-meta{fill:var(--txt2)}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card{background:var(--card-bg);border:1px solid var(--brd);border-radius:10px;padding:14px}
+.card-hdr{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.card h3{font-size:11px;font-weight:600;color:var(--txt)}
+.card ul{list-style:none;font-size:10px;color:var(--txt2);line-height:1.9}
+footer{margin-top:16px;text-align:center;font-size:10px;color:var(--txt3)}
+.controls{position:fixed;top:14px;right:14px;display:flex;flex-direction:column;gap:6px;z-index:100}
+.ctrl{background:var(--ctrl-bg);border:1px solid var(--brd);border-radius:6px;padding:5px 10px;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--txt);cursor:pointer;transition:all .2s}
+.ctrl:hover{border-color:#34d399;color:#34d399}
+@media(max-width:680px){.cards{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="controls">
+  <button class="ctrl" onclick="window.cycleTheme()">Theme</button>
+  <button class="ctrl" onclick="window.toggleLang()">EN/中</button>
+</div>
+<div class="page">
+  <div class="hdr">
+    <div class="pulse"></div>
+    <div>
+      <h1><span class="lz">启动时间线</span><span class="le">Startup Timeline</span></h1>
+      <p class="subtitle"><span class="lz">Claude Code 冷启动三阶段 · PRE-IMPORT → INIT → READY · 总计约500ms</span><span class="le">Claude Code cold-start 3 phases · PRE-IMPORT → INIT → READY · ~500ms total</span></p>
+    </div>
+  </div>
+  <div class="diagram-card">
+    <svg viewBox="0 0 960 460" width="100%" style="display:block" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <pattern id="g2a4" width="40" height="40" patternUnits="userSpaceOnUse">
+          <path d="M 40 0 L 0 0 0 40" fill="none" class="grid-line" stroke-width="0.5"/>
+        </pattern>
+        <marker id="arr4" markerWidth="8" markerHeight="6" refX="7" refY="3" orient="auto">
+          <polygon points="0 0,8 3,0 6" fill="#64748b"/>
+        </marker>
+        <pattern id="hatch4" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+          <line class="hatch-line" x1="0" y1="0" x2="0" y2="8" stroke-width="2"/>
+        </pattern>
+      </defs>
+      <rect width="960" height="460" class="svg-bg"/>
+      <rect width="960" height="460" fill="url(#g2a4)"/>
+
+      <!-- Phase regions background -->
+      <rect x="148" y="20" width="240" height="360" rx="4" fill="rgba(59,130,246,0.06)" stroke="rgba(59,130,246,0.25)" stroke-width="1"/>
+      <rect x="388" y="20" width="240" height="360" rx="4" fill="rgba(139,92,246,0.06)" stroke="rgba(139,92,246,0.25)" stroke-width="1"/>
+      <rect x="628" y="20" width="312" height="360" rx="4" fill="rgba(16,185,129,0.06)" stroke="rgba(16,185,129,0.25)" stroke-width="1"/>
+
+      <!-- Phase labels -->
+      <text x="268" y="42" fill="#3b82f6" font-size="14" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">PRE-IMPORT</text>
+      <text x="268" y="56" fill="#3b82f6" font-size="12" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">模块加载 · 0–100ms</tspan><tspan class="le">Module loading · 0–100ms</tspan></text>
+      <text x="508" y="42" fill="#8b5cf6" font-size="14" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">INIT</text>
+      <text x="508" y="56" fill="#8b5cf6" font-size="12" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">系统初始化 · 100–200ms</tspan><tspan class="le">System init · 100–200ms</tspan></text>
+      <text x="784" y="42" fill="#10b981" font-size="14" font-weight="600" text-anchor="middle" font-family="JetBrains Mono,monospace">READY</text>
+      <text x="784" y="56" fill="#10b981" font-size="12" text-anchor="middle" font-family="JetBrains Mono,monospace"><tspan class="lz">就绪 · 200ms+</tspan><tspan class="le">User-ready · 200ms+</tspan></text>
+
+      <!-- Time axis -->
+      <line x1="148" y1="390" x2="940" y2="390" stroke="#475569" stroke-width="1" marker-end="url(#arr4)"/>
+      <line x1="148" y1="386" x2="148" y2="394" class="axis-tick-minor" stroke-width="1"/>
+      <text x="148" y="408" class="tick-major" font-size="12" text-anchor="middle" font-family="JetBrains Mono,monospace">0ms</text>
+      <line x1="388" y1="386" x2="388" y2="394" class="axis-tick-major" stroke-width="1.5"/>
+      <text x="388" y="408" class="tick-major" font-size="12" text-anchor="middle" font-family="JetBrains Mono,monospace">100ms</text>
+      <line x1="628" y1="386" x2="628" y2="394" class="axis-tick-major" stroke-width="1.5"/>
+      <text x="628" y="408" class="tick-major" font-size="12" text-anchor="middle" font-family="JetBrains Mono,monospace">200ms</text>
+      <line x1="724" y1="386" x2="724" y2="394" class="axis-tick-minor" stroke-width="1"/>
+      <text x="724" y="408" class="tick-minor" font-size="12" text-anchor="middle" font-family="JetBrains Mono,monospace">300ms</text>
+      <line x1="916" y1="386" x2="916" y2="394" class="axis-tick-minor" stroke-width="1"/>
+      <text x="916" y="408" class="tick-minor" font-size="12" text-anchor="middle" font-family="JetBrains Mono,monospace">500ms</text>
+
+      <!-- LANE 1: Module Loading -->
+      <text x="8" y="98" class="lane-label" font-size="12" font-family="JetBrains Mono,monospace"><tspan class="lz">模块加载</tspan><tspan class="le">Module Load</tspan></text>
+      <rect x="148" y="74" width="240" height="28" rx="4" class="node-bg"/>
+      <rect x="148" y="74" width="240" height="28" rx="4" fill="rgba(59,130,246,0.8)" stroke="#3b82f6" stroke-width="1"/>
+      <text x="158" y="93" fill="#ffffff" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">main.tsx → 1,884 <tspan class="lz">模块</tspan><tspan class="le">modules</tspan></text>
+
+      <!-- LANE 2: MDM Read (async) -->
+      <text x="8" y="132" class="lane-label" font-size="12" font-family="JetBrains Mono,monospace">MDM Read</text>
+      <rect x="148" y="112" width="192" height="22" rx="4" fill="rgba(59,130,246,0.2)" stroke="#3b82f6" stroke-width="1"/>
+      <rect x="148" y="112" width="192" height="22" rx="4" fill="url(#hatch4)" opacity="0.4"/>
+      <text x="158" y="127" fill="#93c5fd" font-size="12" font-family="JetBrains Mono,monospace">startMdmRawRead() <tspan class="lz">异步并行</tspan><tspan class="le">async parallel</tspan></text>
+
+      <!-- LANE 3: Keychain prefetch (async) -->
+      <text x="8" y="158" class="lane-label" font-size="12" font-family="JetBrains Mono,monospace">Keychain</text>
+      <rect x="148" y="140" width="173" height="22" rx="4" class="node-bg"/>
+      <rect x="148" y="140" width="173" height="22" rx="4" fill="rgba(59,130,246,0.25)" stroke="#3b82f6" stroke-width="1"/>
+      <text x="158" y="155" fill="#93c5fd" font-size="12" font-family="JetBrains Mono,monospace">startKeychainPrefetch() <tspan class="lz">后台</tspan><tspan class="le">bg</tspan></text>
+
+      <line x1="148" y1="172" x2="940" y2="172" class="sep-line" stroke-width="1" stroke-dasharray="3,3"/>
+
+      <!-- LANE 4: Main Execution -->
+      <text x="8" y="208" class="lane-label" font-size="12" font-family="JetBrains Mono,monospace"><tspan class="lz">主执行</tspan><tspan class="le">Main Exec</tspan></text>
+      <rect x="388" y="182" width="77" height="28" rx="4" class="node-bg"/>
+      <rect x="388" y="182" width="77" height="28" rx="4" fill="rgba(139,92,246,0.8)" stroke="#8b5cf6" stroke-width="1"/>
+      <text x="398" y="201" fill="#ffffff" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">main()</text>
+      <rect x="465" y="182" width="50" height="28" rx="4" class="node-bg"/>
+      <rect x="465" y="182" width="50" height="28" rx="4" fill="rgba(139,92,246,0.65)" stroke="#8b5cf6" stroke-width="1"/>
+      <text x="472" y="201" fill="#ddd6fe" font-size="12" font-family="JetBrains Mono,monospace">migrate</text>
+      <rect x="515" y="182" width="113" height="28" rx="4" class="node-bg"/>
+      <rect x="515" y="182" width="113" height="28" rx="4" fill="rgba(139,92,246,0.8)" stroke="#8b5cf6" stroke-width="1"/>
+      <text x="525" y="201" fill="#ffffff" font-size="13" font-weight="600" font-family="JetBrains Mono,monospace">init() <tspan class="lz">子系统</tspan><tspan class="le">subsystems</tspan></text>
+
+      <!-- LANE 5: Init Tasks (7 bg) -->
+      <text x="8" y="242" class="lane-label" font-size="12" font-family="JetBrains Mono,monospace"><tspan class="lz">初始化任务</tspan><tspan class="le">Init Tasks</tspan></text>
+      <rect x="530" y="220" width="96" height="22" rx="4" class="node-bg"/>
+      <rect x="530" y="220" width="96" height="22" rx="4" fill="rgba(139,92,246,0.4)" stroke="#8b5cf6" stroke-width="1"/>
+      <text x="540" y="235" fill="#ddd6fe" font-size="12" font-family="JetBrains Mono,monospace">7 bg <tspan class="lz">任务并行</tspan><tspan class="le">tasks parallel</tspan></text>
+
+      <!-- LANE 6: API Preconnect -->
+      <text x="8" y="272" class="lane-label" font-size="12" font-family="JetBrains Mono,monospace">API Pre</text>
+      <rect x="528" y="250" width="100" height="22" rx="4" class="node-bg"/>
+      <rect x="528" y="250" width="100" height="22" rx="4" fill="rgba(139,92,246,0.55)" stroke="#8b5cf6" stroke-width="1"/>
+      <text x="538" y="265" fill="#ddd6fe" font-size="12" font-family="JetBrains Mono,monospace">TCP+TLS <tspan class="lz">预连</tspan><tspan class="le">preconn</tspan></text>
+
+      <line x1="148" y1="282" x2="940" y2="282" class="sep-line" stroke-width="1" stroke-dasharray="3,3"/>
+
+      <!-- LANE 7: UI Render -->
+      <text x="8" y="318" class="lane-label" font-size="12" font-family="JetBrains Mono,monospace">UI Render</text>
+      <rect x="628" y="295" width="20" height="28" rx="4" class="node-bg"/>
+      <rect x="628" y="295" width="20" height="28" rx="4" fill="rgba(16,185,129,0.9)" stroke="#10b981" stroke-width="1.5"/>
+      <polygon points="638,287 642,295 634,295" fill="#10b981"/>
+      <text x="652" y="313" fill="#6ee7b7" font-size="12" font-family="JetBrains Mono,monospace">launchRepl() — <tspan class="lz">首屏渲染完成</tspan><tspan class="le">first render complete</tspan></text>
+
+      <!-- LANE 8: Deferred Prefetches -->
+      <text x="8" y="355" class="lane-label" font-size="12" font-family="JetBrains Mono,monospace">Deferred</text>
+      <rect x="648" y="332" width="278" height="28" rx="4" class="node-bg"/>
+      <rect x="648" y="332" width="278" height="28" rx="4" fill="rgba(16,185,129,0.35)" stroke="#10b981" stroke-width="1"/>
+      <text x="658" y="351" fill="#6ee7b7" font-size="13" font-family="JetBrains Mono,monospace">startDeferredPrefetches() — 5 <tspan class="lz">并行任务</tspan><tspan class="le">parallel tasks</tspan></text>
+      <line x1="926" y1="346" x2="940" y2="346" stroke="#10b981" stroke-width="1.5" stroke-dasharray="4,3"/>
+
+      <!-- Milestone: READY -->
+      <line x1="628" y1="68" x2="628" y2="380" stroke="#10b981" stroke-width="1.5" stroke-dasharray="5,3"/>
+      <rect x="632" y="360" width="110" height="18" rx="3" class="milestone-bg" stroke-width="1"/>
+      <text x="687" y="373" fill="#34d399" font-size="12" text-anchor="middle" font-family="JetBrains Mono,monospace">★ <tspan class="lz">用户可用</tspan><tspan class="le">User-Ready</tspan></text>
+
+      <!-- Legend -->
+      <rect x="148" y="422" width="520" height="28" rx="6" class="legend-bg" stroke-width="1"/>
+      <rect x="162" y="430" width="40" height="12" rx="2" fill="rgba(59,130,246,0.8)"/>
+      <text x="208" y="440" class="lane-label" font-size="12" font-family="JetBrains Mono,monospace">PRE-IMPORT</text>
+      <rect x="292" y="430" width="40" height="12" rx="2" fill="rgba(139,92,246,0.8)"/>
+      <text x="338" y="440" class="lane-label" font-size="12" font-family="JetBrains Mono,monospace">INIT</text>
+      <rect x="390" y="430" width="40" height="12" rx="2" fill="rgba(16,185,129,0.8)"/>
+      <text x="436" y="440" class="lane-label" font-size="12" font-family="JetBrains Mono,monospace">READY</text>
+      <rect x="520" y="430" width="40" height="12" rx="2" fill="rgba(59,130,246,0.35)" stroke="#3b82f6" stroke-width="1"/>
+      <text x="566" y="440" class="lane-label" font-size="12" font-family="JetBrains Mono,monospace"><tspan class="lz">异步并行</tspan><tspan class="le">Async parallel</tspan></text>
+    </svg>
+  </div>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-hdr"><div class="dot" style="background:#3b82f6"></div><h3>PRE-IMPORT 0–100ms</h3></div>
+      <ul>
+        <li>• <span class="lz">同步加载 1,884 个 ES 模块（main.tsx 触发）</span><span class="le">Synchronously loads 1,884 ES modules via main.tsx</span></li>
+        <li>• <span class="lz">同时异步启动 MDM raw read 和 Keychain prefetch</span><span class="le">Concurrently starts MDM raw read + Keychain prefetch</span></li>
+        <li>• <span class="lz">两个异步任务后台运行，不阻塞主线程</span><span class="le">Both async tasks run in background, non-blocking</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="dot" style="background:#8b5cf6"></div><h3>INIT 100–200ms</h3></div>
+      <ul>
+        <li>• <span class="lz">main() 执行：迁移检查 → init() 子系统初始化</span><span class="le">main() runs: migration check → init() subsystems</span></li>
+        <li>• <span class="lz">init() 内部启动 7 个异步后台任务并行执行</span><span class="le">init() spawns 7 async background tasks in parallel</span></li>
+        <li>• <span class="lz">preconnectAnthropicApi(): 提前完成 TCP+TLS 握手</span><span class="le">preconnectAnthropicApi(): pre-warms TCP+TLS connection</span></li>
+      </ul>
+    </div>
+    <div class="card">
+      <div class="card-hdr"><div class="dot" style="background:#10b981"></div><h3>READY 200ms+</h3></div>
+      <ul>
+        <li>• <span class="lz">launchRepl() 首屏渲染完成，用户可见 UI 出现</span><span class="le">launchRepl() completes first render, UI appears</span></li>
+        <li>• <span class="lz">后台继续5个并行延迟预取：git状态/用户信息/文件计数等</span><span class="le">5 deferred prefetches: git status, user info, file counts…</span></li>
+        <li>• <span class="lz">延迟任务结束（~500ms）系统完全就绪</span><span class="le">Deferred tasks complete ~500ms, fully ready</span></li>
+      </ul>
+    </div>
+  </div>
+  <footer><span class="lz">VIS-2A-004 · Claude Code 2.1.88 白皮书 · 启动时间线 · v6.0</span><span class="le">VIS-2A-004 · Claude Code 2.1.88 Whitepaper · Startup Timeline · v6.0</span></footer>
+</div>
+<script>
+(function(){
+  var themes=['dark','warm','light'],i=0;
+  var stored=localStorage.getItem('vtheme');
+  if(stored){i=themes.indexOf(stored);if(i<0)i=0;}
+  document.documentElement.setAttribute('data-theme',themes[i]);
+  window.cycleTheme=function(){i=(i+1)%3;var t=themes[i];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  var lang=localStorage.getItem('vlang')||'zh';
+  document.documentElement.setAttribute('lang',lang);
+  window.toggleLang=function(){lang=lang==='zh'?'en':'zh';document.documentElement.setAttribute('lang',lang);localStorage.setItem('vlang',lang);};
+})();
+</script>
+<script>
+/* v2-embed-sync */
+(function(){
+  try {
+    var params = new URLSearchParams(window.location.search);
+    var isEmbed = params.get('embed') === '1';
+    var theme = params.get('theme');
+    var lang = params.get('lang');
+    function forceLang(l) {
+      var en = l === 'en';
+      document.querySelectorAll('.lz').forEach(function(e){
+        e.style.display = en ? 'none' : '';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.setAttribute('display', 'none'); else e.removeAttribute('display');
+        }
+      });
+      document.querySelectorAll('.le').forEach(function(e){
+        e.style.display = en ? '' : 'none';
+        if (e.tagName && (e.tagName.toLowerCase() === 'text' || e.tagName === 'tspan' || e.closest('svg'))) {
+          if (en) e.removeAttribute('display'); else e.setAttribute('display', 'none');
+        }
+      });
+    }
+    function applyState(t, l) {
+      if (t) {
+        document.documentElement.setAttribute('data-theme', t);
+        try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
+      }
+      if (l) {
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l);
+        try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
+        forceLang(l);
+      }
+    }
+    if (isEmbed) {
+      applyState(theme, lang);
+      setTimeout(function(){ applyState(theme, lang); }, 100);
+      setTimeout(function(){ applyState(theme, lang); }, 500);
+      var hideCSS = document.createElement('style');
+      hideCSS.textContent = [
+        '[onclick*="toggleLang"],',
+        '[onclick*="setTheme"],',
+        '[onclick*="toggleTheme"],',
+        '[onclick*="cycleTheme"],',
+        '.controls,',
+        '.theme-controls,',
+        '.topbar-controls,',
+        '.chart-controls,',
+        '.viz-controls,',
+        '.ctrl-row,',
+        '.ctrls,',
+        '.toolbar .btn {',
+        '  display: none !important;',
+        '}'
+      ].join('');
+      hideCSS.id = 'v2-embed-sync-hide';
+      (document.head || document.documentElement).appendChild(hideCSS);
+    }
+    window.addEventListener('message', function(e){
+      if (!e.data || typeof e.data !== 'object') return;
+      var d = e.data;
+      if (d.type === 'v2-sync') { applyState(d.theme, d.lang); }
+      else if (d.type === 'cc-theme') { applyState(d.theme, null); }
+      else if (d.type === 'cc-lang') { applyState(null, d.lang); }
+    });
+  } catch(err) { /* ignore */ }
+})();
+</script>
+</body>
+</html>
