@@ -1,0 +1,1402 @@
+[
+  {
+    "id": "BLP-001",
+    "title": "MCP生态基础设施（注册中心+安全审计+协议适配）",
+    "title_en": "MCP Ecosystem Infrastructure: Registry, Security Audit, and Protocol Adapter",
+    "description": "MCP协议正在成为AI的USB标准，但发现/验证/安装/安全的基础设施严重缺失。先做静态目录+安全扫描，再做协议适配层。",
+    "description_en": "MCP is becoming the USB standard for AI, but the infrastructure for discovery, validation, installation, and security is badly missing. Start with a static directory plus security scanning, then layer on a protocol adapter.",
+    "evidence": [
+      "E05 MCPHub",
+      "E10 MCPBridge",
+      "P04 MCPHub质量评测",
+      "F13 MCP神经网络"
+    ],
+    "evidence_en": [
+      "E05 MCPHub",
+      "E10 MCPBridge",
+      "P04 MCPHub Quality Evaluation",
+      "F13 MCP as Neural Network"
+    ],
+    "from_sparks": [
+      "SPK-005",
+      "SPK-114",
+      "SPK-115"
+    ],
+    "feasibility": "high",
+    "value": "high",
+    "first_step": "**做什么**：从GitHub上收集所有公开的MCP服务器仓库，按功能类别（文件操作、数据库、网络服务、代码工具等）整理成一份结构化的JSON注册表，同时做一个可搜索的Web界面，让开发者能按关键词和类别找到工具，并显示每个工具的基本信息（维护状态、Stars数、最后更新时间）。\n\n**为什么做**：用最低成本验证“开发者愿不愿意用MCP目录”这个核心假设。如果一个月内能积累500个日活访问，说明需求真实，值得继续投入安全扫描功能。\n\n**谁来做/怎么做**：1名前端+1名后端，2-3周完成。用GitHub API自动爬取，Algolia或自建搜索，Next.js静态站部署到Vercel。第一版不需要登录注册，纯浏览即可。",
+    "first_step_en": "**What**: Crawl every public MCP server repo on GitHub, categorize them by capability (filesystem, database, network, code tooling, etc.), and publish a structured JSON registry plus a searchable web UI where developers can filter by keyword and category and see basic metadata (maintenance status, stars, last commit).\n\n**Why**: This is the cheapest possible test of the core hypothesis — that developers actually want an MCP directory. If we hit 500 DAU within a month, demand is real and it's worth investing in security scanning next.\n\n**Who/How**: 1 frontend + 1 backend engineer, 2-3 weeks. Use the GitHub API for scraping, Algolia or a homegrown index for search, and a Next.js static site on Vercel. No login in v1 — pure browsing.",
+    "cc_anchor": "03_MCP平台完全解析.md — config.ts MCP配置体系 + channelPermissions.ts 安全模型",
+    "cc_anchor_en": "03_MCP_Platform_Deep_Dive.md — MCP config system in config.ts + security model in channelPermissions.ts",
+    "status": "proposed",
+    "plain_explanation": "想象一下USB设备的世界没有亚马逊、没有驱动下载站、没有防毒软件认证。你想买个鼠标，只能去GitHub翻代码、自己编译驱动、祈祷不会中毒。MCP协议现在就是这个状态——它是AI工具的“插头标准”，任何人写的AI工具只要符合这个标准，理论上都能插入任何AI助手里工作。但现在没有像应用商店那样的地方搜索和发现工具，没有类似电气认证的机构检查安全性，没有通用转换器让不同版本的插头互通。BLP-001要做这三件基础设施的事情：建一个MCP工具的“黄页目录”、做一个自动安全扫描系统、再做一个让新旧版本互通的适配层。",
+    "plain_explanation_en": "Imagine a world of USB devices with no Amazon, no driver download sites, and no antivirus certification. To buy a mouse you'd have to dig through GitHub, compile your own driver, and pray you don't get infected. That's the state of MCP today — it's the 'plug standard' for AI tools, meaning any MCP-compliant tool can theoretically connect to any AI assistant. But there's no app-store-like place to search and discover tools, no UL-style authority checking for safety, and no universal adapter bridging protocol versions. BLP-001 builds those three pieces of infrastructure: a yellow-pages directory of MCP tools, an automated security scanner, and an adapter layer that keeps old and new versions interoperable.",
+    "why_it_matters": "**市场需求**：MCP协议在2025年获得OpenAI、Google、微软等主要AI厂商支持，生态爆发已经开始。但基础设施缺口正在阻碍开发者进入——“我怎么找到好的MCP服务器”和“这个服务器安全吗”是论坛上出现频率最高的两类问题。\n\n**竞争空白**：现有玩家（Smithery、MCP.so等）只做了静态目录，没有安全扫描、没有协议版本管理、没有质量评级。先入者只是占了一个简单位置，真正的护城河还没有人建。\n\n**时机窗口**：协议标准化初期是建立生态位的黄金期——就像npm在Node.js生态形成期奠定地位。等到MCP生态成熟、大厂推出官方目录，独立方的机会就会大幅收窄。目前窗口预计还有12-18个月。",
+    "why_it_matters_en": "**Market Need**: MCP picked up backing from OpenAI, Google, and Microsoft in 2025, and the ecosystem explosion has already started. But the infrastructure gap is throttling adoption — 'how do I find a good MCP server' and 'is this server safe' are the two most-asked questions on forums.\n\n**Competitive Gap**: Incumbents like Smithery and MCP.so have built static directories only — no security scanning, no protocol version management, no quality grading. They've grabbed the easy position, but the real moat hasn't been built yet.\n\n**Timing Window**: The early standardization phase is the golden era for establishing ecosystem position — the same way npm cemented itself as Node.js took off. Once MCP matures and big players launch official registries, the window for independents closes fast. We estimate 12-18 months of runway.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "静态目录两周能出，验证成本极低。但我担心护城河：Anthropic官方随时可能推出自己的“MCP商店”，到时候靠什么留住用户？必须在官方入场之前把安全审计和质量评级做成事实标准，让开发者习惯提交到我们这里来。纯目录站很容易被复制。",
+        "comment_en": "A static directory can ship in two weeks — validation cost is near zero. What worries me is the moat: Anthropic could launch their own 'MCP Store' any day. What keeps users then? We need to make security auditing and quality grading the de facto standard before the official store arrives, so developers are already in the habit of submitting here. A pure directory site is trivial to copy."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "标准的生态基础设施机会，历史上npm、RubyGems、PyPI都说明了这类资产一旦建立极难被替代。但关注两件事：团队能否在Anthropic官方行动前建立足够深的网络效应；安全审计能否形成付费壁垒。如果能做成“AI领域的Snyk”，投资逻辑就成立了。",
+        "comment_en": "Textbook ecosystem infrastructure play — npm, RubyGems, and PyPI all show that once these assets are entrenched, they're nearly impossible to displace. Two things I'm watching: can the team build deep network effects before Anthropic moves, and can security auditing become a paywall moat. If this becomes 'the Snyk of AI,' the investment thesis works."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "作为每周都在找MCP工具的开发者，最大痛点不是发现而是信任。找到了一个GitHub仓库，但完全不知道它会不会偷API密钥、会不会在文件系统乱写东西。如果有平台告诉我这个工具“通过了什么安全检测”，我愿意为高级版本付费。",
+        "comment_en": "I hunt for MCP tools every week. The real pain isn't discovery — it's trust. I find a GitHub repo and have no idea whether it'll exfiltrate my API keys or scribble over my filesystem. If a platform told me 'this tool passed these specific security checks,' I'd pay for a premium tier."
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "安全扫描需要想清楚边界：静态代码分析能发现明显漏洞，但真正的恶意行为往往在运行时。如果只做静态扫描给了安全背书却没有安全保障，反而是法律风险。建议分层：明确标注“静态扫描通过”和“沙箱运行验证”的区别。协议适配层的维护成本也会随MCP版本迭代持续增长。",
+        "comment_en": "Think carefully about scanning scope. Static analysis catches obvious vulnerabilities, but real malicious behavior usually shows up at runtime. Issuing a 'security approved' badge based on static scanning alone creates legal exposure without real protection. Layer it: clearly distinguish 'passed static scan' from 'validated in sandbox.' Also, the adapter layer's maintenance cost grows with every MCP protocol revision."
+      }
+    ],
+    "confidence": "strong_signal"
+  },
+  {
+    "id": "BLP-002",
+    "title": "AI三层记忆SDK（Tulving框架产品化）",
+    "title_en": "Tulving Memory SDK: Three-Layer Memory for AI Agents",
+    "description": "Episodic(会话)/Semantic(知识)/Procedural(正负反馈双轨道)三层记忆标准化库。核心差异：正向反馈记录防止Agent过于保守。",
+    "description_en": "A standardized three-layer memory library — Episodic (conversations), Semantic (knowledge), Procedural (dual positive/negative feedback tracks). Core differentiator: recording positive feedback keeps agents from becoming overly cautious.",
+    "evidence": [
+      "E03 Tulving SDK",
+      "E08 DreamConsolidator",
+      "P07 MemLayer",
+      "P15 SecretaryAI",
+      "F02 Dream认知"
+    ],
+    "evidence_en": [
+      "E03 Tulving SDK",
+      "E08 DreamConsolidator",
+      "P07 MemLayer",
+      "P15 SecretaryAI",
+      "F02 Dream-Based Cognition"
+    ],
+    "from_sparks": [
+      "SPK-001",
+      "SPK-008",
+      "SPK-014",
+      "SPK-104",
+      "SPK-207"
+    ],
+    "feasibility": "medium",
+    "value": "high",
+    "first_step": "**做什么**：做一个最小可用的三层记忆存储库：用轻量数据库存情节记忆（对话摘要）、语义记忆（用户偏好和知识点）、以及一个简单的正负轨道（记录哪类操作被用户接受了、哪类被撤销了）。重点做一个可以跑的Demo，展示同一个AI助手在“有记忆”和“无记忆”两种状态下的差距。\n\n**为什么做**：记忆系统的价值需要对比才能感受到，Demo是最有说服力的验证方式，也是开源社区关注的起点。\n\n**谁来做/怎么做**：1名后端开发者，2-3周。用SQLite+sqlite-vec向量扩展实现，不依赖云服务，本地可运行。先做Python SDK，再考虑TypeScript版本。Demo场景选“个人代码助手记住我的编程风格”。",
+    "first_step_en": "**What**: Ship a minimum-viable three-layer memory store: a lightweight database for episodic memory (conversation summaries), semantic memory (user preferences and facts), and a simple dual track (which operation types got accepted versus reverted by the user). The centerpiece is a runnable demo showing the same AI assistant with memory versus without memory.\n\n**Why**: The value of a memory system only lands through contrast. A live demo is the most persuasive form of validation, and it's also the opening move for open-source community traction.\n\n**Who/How**: 1 backend developer, 2-3 weeks. Built on SQLite with the sqlite-vec vector extension — no cloud dependencies, runs entirely locally. Python SDK first, then a TypeScript version. Demo scenario: 'a personal code assistant that remembers my programming style.'",
+    "cc_anchor": "记忆系统完全解析.md §2.3 — memoryTypes.ts 四种记忆类型 + extractMemories.ts 提取逻辑 + autoDream.ts 整合调度",
+    "cc_anchor_en": "Memory_System_Deep_Dive.md §2.3 — four memory types in memoryTypes.ts + extraction logic in extractMemories.ts + consolidation scheduling in autoDream.ts",
+    "status": "proposed",
+    "plain_explanation": "人类有三种记忆：你记得昨天吃了什么（情节记忆）、你记得“烹饪要先热锅”这种常识（语义记忆）、你骑自行车不用思考手怎么放（程序记忆）。现在的AI助手只有“工作桌”——你把文件从桌上拿走，它就忘了。BLP-002想给AI配一套完整的“人类级记忆系统”：每次对话的细节存到情节记忆，学到的知识和偏好沉淀到语义记忆，成功的操作模式和失败的教训分别存到程序记忆的“做对了”和“不要再做了”两个抽屉。最关键的创新是“双轨道”：不只记错误，也记成功——这样AI才不会因为害怕出错而变得畏手畏脚。",
+    "plain_explanation_en": "Humans have three kinds of memory: you remember what you ate yesterday (episodic), you know that 'heat the pan first' when cooking (semantic), and you ride a bike without thinking about hand position (procedural). Today's AI assistants only have a 'desk' — take the files off it and they forget everything. BLP-002 gives AI a full human-grade memory system: each conversation's details go into episodic memory, learned facts and preferences settle into semantic memory, and successful patterns plus hard lessons get filed into two separate drawers of procedural memory — 'did it right' and 'don't do that again.' The key innovation is the dual track: not just logging errors, but logging successes too — otherwise AI becomes so afraid of mistakes it stops taking useful action.",
+    "why_it_matters": "**市场需求**：每个重度AI用户都遇到过“每次都要重新解释背景”的挫败感。40%的AI Agent项目失败直接归因于记忆管理缺失。企业部署AI的最大抱怨之一是“AI不记得我们的流程和偏好”。\n\n**竞争空白**：LangChain的Memory模块、Mem0等已有尝试，但几乎全部只做了情节记忆，缺少程序记忆的正向轨道设计——大多数系统只能记“别做什么”，无法积累“这样做效果很好”的正向经验。\n\n**时机窗口**：Agent应用正在从“聊天机器人”升级为“长期工作助手”，记忆系统是这个升级的必要组件。现在做SDK会随着Agent平台的增长自然获得采用量。",
+    "why_it_matters_en": "**Market Need**: Every heavy AI user has hit the wall of 're-explaining the context again.' 40% of failed AI agent projects trace directly back to missing memory management. One of the top enterprise complaints about AI deployment is 'the AI doesn't remember our workflow or preferences.'\n\n**Competitive Gap**: LangChain's Memory module, Mem0, and others have taken a shot, but almost all of them implement only episodic memory — they lack a positive-track design for procedural memory. Most systems only capture 'don't do this,' never accumulating 'this worked great' as positive experience.\n\n**Timing Window**: Agent applications are graduating from 'chatbots' to 'long-term work assistants,' and a memory system is a required component of that upgrade. An SDK built now rides the growth of agent platforms naturally.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "SDK商业化难度高——开发者会用但付费转化低。考虑先用SDK建立影响力，再做“一键为任何AI应用加记忆”的托管服务。注意：OpenAI、Anthropic都有动力在模型层面自己解决记忆问题，留给独立SDK的窗口可能只有2-3年。",
+        "comment_en": "SDKs are notoriously hard to monetize — developers use them but rarely convert to paid. The playbook is probably: use the SDK to build mindshare, then layer a managed 'add memory to any AI app with one click' service on top. Warning: OpenAI and Anthropic both have strong incentives to solve memory at the model layer themselves, so the independent-SDK window may be only 2-3 years."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "Tulving框架提供了理论可信度，有学术依据的产品在ToB销售中更容易获得技术决策者信任。但正向轨道反馈机制在实际产品中是否真的能显著改善Agent行为，需要A/B测试数据来证明。没有数据的理论创新很难支撑高估值。",
+        "comment_en": "The Tulving framing gives theoretical credibility — academically grounded products earn trust faster from technical B2B buyers. But the claim that the positive-track feedback mechanism meaningfully improves agent behavior in real products needs A/B test data to back it up. Theoretical innovation without data won't support a high valuation."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "每周用AI处理10个项目，最烦的是“AI记得技术细节但不记得我的偏好风格”。如果有个库能让AI工具记住“我不喜欢用注释解释代码，要改成文档字符串”这类习惯，立刻会用。但担心隐私——工作偏好存在哪里？能删吗？谁能访问？",
+        "comment_en": "I run 10 projects a week through AI, and the most annoying thing is that it remembers technical details but not my stylistic preferences. If a library let the AI remember 'I don't like inline comments — convert them to docstrings,' I'd use it immediately. But I'd worry about privacy: where are my work preferences stored? Can I delete them? Who can access them?"
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "双轨道反馈有个工程难题：怎么判断一次操作是“成功”的？代码编译通过算成功？用户没抱怨算成功？成功信号的定义极其模糊。另外向量数据库冷启动问题——新用户没有历史数据时记忆系统完全没用，这段时期的体验怎么处理？",
+        "comment_en": "The dual-track feedback has a hard engineering problem: how do you define 'successful'? Code compiled? User didn't complain? The success signal is extremely fuzzy. Also, the vector DB cold-start problem — new users with no history get zero value from the memory system. How do you handle that onboarding window?"
+      }
+    ],
+    "confidence": "has_signal"
+  },
+  {
+    "id": "BLP-003",
+    "title": "AI安全审计与权限治理平台",
+    "title_en": "AI Agent Permission Auditing and Governance Platform",
+    "description": "基于Claude Code四层防御模型，为企业提供AI Agent权限安全审计、bypass-immune层设计参考、MCP供应链风险评估。",
+    "description_en": "Built on Claude Code's four-layer defense model, this platform gives enterprises AI agent permission auditing, a reference architecture for bypass-immune layers, and MCP supply-chain risk assessment.",
+    "evidence": [
+      "E07 PermissionGuard",
+      "P03 PermGuard",
+      "F14 bypass-immune伦理",
+      "F17 注入防线"
+    ],
+    "evidence_en": [
+      "E07 PermissionGuard",
+      "P03 PermGuard",
+      "F14 Bypass-Immune Ethics",
+      "F17 Injection Defense"
+    ],
+    "from_sparks": [
+      "SPK-003",
+      "SPK-005",
+      "SPK-010",
+      "SPK-203",
+      "SPK-210",
+      "SPK-211"
+    ],
+    "feasibility": "high",
+    "value": "high",
+    "first_step": "**做什么**：撰写并发布一份《AI Agent权限安全审计清单》白皮书，列出企业在部署AI Agent时应该检查的20个安全控制点，每个控制点配有“检查方法”和“常见问题案例”。同步开发一个命令行工具，能读取Claude Code的配置文件，自动对照清单生成一份初步评估报告。\n\n**为什么做**：白皮书建立技术权威性，免费CLI工具产生实际使用数据——两者结合能快速验证企业安全团队是否有付费意愿。\n\n**谁来做/怎么做**：1名安全/AI领域写手+1名工程师，3-4周完成白皮书+CLI v0.1。白皮书在LinkedIn/掘金/安全社区同步发布，CLI开源发布到GitHub。",
+    "first_step_en": "**What**: Publish a white paper, *The AI Agent Permission Auditing Checklist*, listing 20 security controls enterprises should verify when deploying AI agents — each with an 'inspection method' and a 'common-issue case study.' In parallel, ship a CLI that reads Claude Code configuration files and auto-generates an initial assessment report against the checklist.\n\n**Why**: The white paper establishes technical authority; the free CLI generates real usage data. Together they're the fastest way to test whether enterprise security teams have budget willingness.\n\n**Who/How**: 1 security/AI writer + 1 engineer, 3-4 weeks for the white paper and CLI v0.1. Distribute the white paper via LinkedIn, security communities, and technical publications; open-source the CLI on GitHub.",
+    "cc_anchor": "01_权限系统完全解析.md — bypass-immune机制 + canUseTool十步检查链 + bypassPermissionsKillswitch.ts",
+    "cc_anchor_en": "01_Permission_System_Deep_Dive.md — the bypass-immune mechanism + canUseTool's 10-step check chain + bypassPermissionsKillswitch.ts",
+    "status": "proposed",
+    "plain_explanation": "假设你雇了一个助理，给了他办公室的钥匙、银行账户密码、客户联系方式。你怎么确保他不会乱用这些权限？现实中你会签合同、设权限分级、留审计日志、定期检查。企业现在把AI当助理使用，却几乎没有这些防护机制。AI有没有在不该执行操作的时候执行了？某个第三方AI工具会不会悄悄把数据发到外面？BLP-003要做的类似于企业IT审计员：系统性地检查AI被给了哪些权限、这些权限有没有被滥用的可能、第三方AI工具的供应链里有没有安全隐患，并且产出一份可操作的安全报告。",
+    "plain_explanation_en": "Imagine hiring an assistant and handing over the office keys, bank passwords, and your client list. How do you make sure they don't misuse those privileges? In real life you'd sign a contract, set up tiered permissions, keep audit logs, and run periodic reviews. Companies are using AI as an assistant today — but almost none of those safeguards exist. Did the AI run an operation it shouldn't have? Is a third-party AI tool quietly exfiltrating data? BLP-003 is essentially an enterprise IT auditor for AI: it systematically checks what permissions the AI was granted, whether those permissions could be abused, whether there are supply-chain risks in third-party AI tools, and produces an actionable security report.",
+    "why_it_matters": "**市场需求**：企业AI部署正在从试点进入规模化，但安全合规跟不上速度。CISO群体普遍面临“知道要管AI权限但不知道怎么管”的困境。ISO 42001、EU AI Act、SOC2对AI系统的审计要求正在落地，合规驱动会制造明确的付费需求。\n\n**竞争空白**：市场上有通用安全扫描工具（Snyk、Semgrep），有AI伦理咨询公司，但没有专门针对AI Agent权限体系的技术审计工具。细分领域的专业壁垒高。\n\n**时机窗口**：AI安全事故正在增加（提示词注入、MCP供应链污染等），每一次高知名度事故都会推动更多企业主动寻求审计。现在是在“事故推动市场”的阶段建立品牌的最好时机。",
+    "why_it_matters_en": "**Market Need**: Enterprise AI deployment is scaling from pilots to production, but security and compliance haven't kept up. CISOs widely share the same dilemma: 'I know I need to govern AI permissions, but I don't know how.' ISO 42001, the EU AI Act, and SOC 2 are all rolling out AI audit requirements — compliance will drive clear paid demand.\n\n**Competitive Gap**: The market has general-purpose security scanners (Snyk, Semgrep) and AI ethics consultancies, but no technical auditing tool specifically targeting AI agent permission systems. The specialization barrier in this niche is high.\n\n**Timing Window**: AI security incidents are climbing (prompt injection, MCP supply-chain compromise, etc.), and every high-profile incident drives more enterprises to seek audits proactively. Right now we're in the 'incidents create the market' phase — the best possible time to establish a brand.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "白皮书是好起点，但B2B销售路径要想清楚：从白皮书下载到付费合同中间要走多少步？建议同时做“自助版”产品——企业自己上传配置文件就能生成初步审计报告，这样能把销售漏斗顶部做宽。",
+        "comment_en": "The white paper is a great opener, but map out the B2B sales path carefully: how many steps between 'downloaded the paper' and 'signed a contract'? I'd ship a self-serve version alongside it — let enterprises upload their own config and get an initial audit report. That widens the top of the funnel significantly."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "安全赛道逻辑清晰：合规驱动付费，粘性强，可按年订阅。但关注团队有没有已签约的第一批客户？安全产品的信任建立很慢，没有标志性客户案例很难说服企业CTO。AI安全是快速演化的领域，产品更新速度能否跟上是关键风险。",
+        "comment_en": "Security is a clean category: compliance drives purchase, retention is strong, annual subscriptions work. What I watch for is signed design partners on day one. Trust takes forever to build in security — without lighthouse customer stories, it's hard to convince enterprise CTOs. AI security also evolves fast, and keeping product velocity matched to threat velocity is a real risk."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "合规部门正在要我们提交AI工具使用的风险评估报告，但完全不知道从哪里开始写。如果有工具能自动生成一份“我们在用哪些AI工具、每个工具有哪些权限、潜在风险是什么”的报告，下周就会用。最重要的是输出格式能直接交给审计师。",
+        "comment_en": "Our compliance team is asking us to submit AI tool risk assessments, and we genuinely don't know where to start writing. If a tool could auto-generate 'here are the AI tools we use, here's the permission each one has, here are the potential risks,' I'd use it next week. The critical thing is the output format has to be something I can hand directly to an auditor."
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "bypass-immune机制的分析价值确实很高。但注意：基于一个工具的设计模式推出的审计标准，审计其他AI工具时未必适用——Claude Code的架构和GPT工具调用的架构差别很大。审计框架需要从第一原则出发设计，而不是从CC具体实现外推。",
+        "comment_en": "The bypass-immune analysis is genuinely valuable. One caveat: audit standards derived from a single tool's design pattern may not generalize — Claude Code's architecture is very different from OpenAI's tool-call architecture. The audit framework needs to be designed from first principles, not extrapolated from a single CC implementation."
+      }
+    ],
+    "confidence": "strong_signal"
+  },
+  {
+    "id": "BLP-004",
+    "title": "Agent编排可视化工具链（设计+运行+测试）",
+    "title_en": "Agent Orchestration Visualization Toolchain — Design-Time, Runtime, and Test-Time",
+    "description": "覆盖Agent系统全生命周期：AgentFlow(设计时拖拽编辑)→Agent拓扑可视化(运行时调试)→AgentSwarmSimulator(测试时仿真)。",
+    "description_en": "Covers the full lifecycle of agent systems: AgentFlow for design-time drag-and-drop editing, agent topology visualization for runtime debugging, and AgentSwarmSimulator for test-time simulation.",
+    "evidence": [
+      "E04 AgentFlow",
+      "E13 AgentSwarmSimulator",
+      "P17 HarnessKit",
+      "F05 Agent拓扑可视化"
+    ],
+    "evidence_en": [
+      "E04 AgentFlow",
+      "E13 AgentSwarmSimulator",
+      "P17 HarnessKit",
+      "F05 Agent Topology Visualization"
+    ],
+    "from_sparks": [
+      "SPK-020",
+      "SPK-218",
+      "SPK-226"
+    ],
+    "feasibility": "medium",
+    "value": "high",
+    "first_step": "**做什么**：基于Perfetto的Chrome Trace格式，做一个可以在浏览器中直接打开的Agent运行时可视化工具：Agent日志输入进去，输出一个交互式时间轴+节点拓扑图，能看到每个Agent在什么时间做了什么、消耗了多少时间、和哪些Agent发生了通信。\n\n**为什么做**：这是三个模块中“即时有用”性最高的，用户不需要改变工作流就能获得价值——只需要把现有日志文件拖进来就能用。也是最容易在开源社区产生传播的形式（单HTML文件，fork就能用）。\n\n**谁来做/怎么做**：1名前端工程师（需要D3.js经验），2-3周完成可运行版本。先支持AutoGen的日志格式，产出单HTML文件+GitHub仓库。",
+    "first_step_en": "**What**: Based on Perfetto's Chrome Trace format, build an agent runtime visualizer you can open directly in a browser: feed in agent logs, get back an interactive timeline plus a node topology graph showing what each agent did when, how long it took, and which agents it communicated with.\n\n**Why**: Of the three modules, this has the highest 'instantly useful' factor — users get value without changing any workflow. They just drag in an existing log file. It's also the easiest shape for open-source distribution (a single HTML file, fork it and it works).\n\n**Who/How**: 1 frontend engineer (D3.js experience required), 2-3 weeks to a working version. Start with AutoGen's log format. Ship as a single HTML file plus a GitHub repo.",
+    "cc_anchor": "05_可观测性是产品功能不是运维工具.md — Perfetto Chrome Trace 1120行Agent可视化 + 鲸鱼会话分析方法",
+    "cc_anchor_en": "05_Observability_Is_a_Product_Feature.md — 1120-line Perfetto Chrome Trace agent visualization + whale-session analysis method",
+    "status": "proposed",
+    "plain_explanation": "想象你要指挥一个20人施工队完成一栋楼。你需要三种工具：施工前规划“谁负责哪层、什么顺序施工”的蓝图软件；施工中实时查看“3楼水电工现在在哪、进度几成”的工地监控大屏；以及开工前用沙盘模拟“如果2号工人请假，整个进度会怎样”的仿真系统。AI Agent系统和施工队一样复杂，但现在开发者调试多个Agent协作基本靠猜和看日志文件。BLP-004要做这三个阶段的可视化工具：设计时拖拽画协作流程、运行时看实时任务分配和状态、测试时模拟各种故障场景。",
+    "plain_explanation_en": "Imagine managing a 20-person construction crew on a building project. You need three tools: blueprint software to plan 'who's on which floor, in what order' before work starts; a real-time site monitor showing 'where is the 3rd-floor plumber right now, how far along are they'; and a sandbox simulator to run 'if worker #2 calls in sick, what happens to the schedule?' before breaking ground. Multi-agent AI systems are just as complex, but developers today debug multi-agent collaboration mostly by guessing and scrolling through log files. BLP-004 builds visualization tools for all three phases: drag-and-drop collaboration flows at design time, live task assignment and status at runtime, and failure-mode simulation at test time.",
+    "why_it_matters": "**市场需求**：多Agent系统的复杂性已超过人类用纯文本日志能理解的范围。LangChain报告显示Agent调试是开发者最耗时的环节，平均占总开发时间的35%以上。\n\n**竞争空白**：LangSmith、Langfuse做了LLM调用链追踪，但都是文本列表而非拓扑可视化。没有工具覆盖“设计时”的拖拽编排，也没有工具做“测试时”的故障仿真。\n\n**时机窗口**：多Agent框架（AutoGen、CrewAI、LangGraph）正在快速成熟，下游工具链繁荣通常滞后6-12个月。现在做可视化工具正好卡在这个时间差里。",
+    "why_it_matters_en": "**Market Need**: Multi-agent system complexity has outgrown what humans can parse from plain-text logs. LangChain's reports show agent debugging is the most time-consuming task for developers, averaging 35%+ of total development time.\n\n**Competitive Gap**: LangSmith and Langfuse track LLM call chains, but as text lists rather than topology visualizations. No tool covers design-time drag-and-drop orchestration, and no tool covers test-time failure simulation.\n\n**Timing Window**: Multi-agent frameworks (AutoGen, CrewAI, LangGraph) are maturing fast, and downstream tooling typically lags by 6-12 months. Building visualization tools now hits exactly the right slot in that gap.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "三个模块一起做风险太高，严格聚焦运行时拓扑可视化这一个点。设计时工具竞争多（n8n、Dify等），测试仿真开发周期长，而运行时可视化是开发者每天痛苦最明显的场景。分阶段比全面开花成功率高很多。",
+        "comment_en": "Shipping all three modules at once is too risky. Focus ruthlessly on runtime topology visualization. Design-time tools have heavy competition (n8n, Dify, etc.), test-time simulation has a long dev cycle, but runtime visualization is the pain developers feel every single day. Phased rollout beats broadside shipping for success rate, by a wide margin."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "开发者工具赛道核心问题是付费意愿：很多开发者用免费工具但不付费。关注目标客户是个人开发者还是企业团队——企业有预算。如果能帮企业省下35%的调试时间，对应价值可量化，年费定价10万人民币以内应该可以。",
+        "comment_en": "The recurring problem with developer tools is willingness-to-pay: developers use free tools without converting. Watch whether you're targeting individual developers or enterprise teams — enterprises have budget. If you can quantifiably save a team 35% of debugging time, an annual contract in the low five figures USD is well within reach."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "上周花了整整一天调试一个三Agent系统，最后发现是Agent B在边界条件下进入了死循环。如果有工具实时显示三个Agent的状态和消息流，半小时就能解决。唯一要求是不要让我改现有代码来接入——必须是无侵入式的。",
+        "comment_en": "Last week I spent a full day debugging a three-agent system. Turned out Agent B was hitting an infinite loop under an edge condition. If a tool had shown me all three agents' states and message flows live, I'd have found it in 30 minutes. One hard requirement: don't make me modify existing code to integrate — it has to be non-invasive."
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "Perfetto格式是好选择，Chrome原生支持不需要额外安装。但各Agent框架的日志格式差异极大——LangGraph、AutoGen、CrewAI各有一套，适配层工作量会是主体功能的3倍。建议先深度支持1-2个框架，做出精品再扩展。",
+        "comment_en": "Perfetto is a solid format pick — Chrome supports it natively, nothing to install. But log formats vary enormously across agent frameworks. LangGraph, AutoGen, and CrewAI each have their own, and the adapter layer will be 3x the work of the core feature. Go deep on 1-2 frameworks first, make it a polished product, then expand."
+      }
+    ],
+    "confidence": "has_signal"
+  },
+  {
+    "id": "BLP-005",
+    "title": "Token经济学工具套件（成本归因+压缩+优化咨询）",
+    "title_en": "Token Economics Toolkit: Cost Attribution, Compression, and Optimization Consulting",
+    "description": "AgentCostTracker(1周)+ContextCompressor(1月)+TokenWatch咨询服务，让'Token是一等公民'从口号变成可操作的数据。",
+    "description_en": "AgentCostTracker (1 week) + ContextCompressor (1 month) + TokenWatch consulting service — turning 'tokens are a first-class citizen' from a slogan into actionable data.",
+    "evidence": [
+      "E06 ContextCompressor",
+      "E11 AgentCostTracker",
+      "P08 TokenWatch",
+      "F16 记忆经济学"
+    ],
+    "evidence_en": [
+      "E06 ContextCompressor",
+      "E11 AgentCostTracker",
+      "P08 TokenWatch",
+      "F16 Memory Economics"
+    ],
+    "from_sparks": [
+      "SPK-017",
+      "SPK-109",
+      "SPK-127",
+      "SPK-236",
+      "SPK-249"
+    ],
+    "feasibility": "high",
+    "value": "high",
+    "first_step": "**做什么**：做一个轻量的AI成本追踪工具，在现有AI SDK调用链上加一层拦截，把每次API调用的Token用量、花费、调用方（哪个函数/任务/用户）记录到本地SQLite数据库，并用Datasette启动一个本地Web界面，让开发者能按任务、按时间、按模型看成本分布图表。\n\n**为什么做**：成本归因是最直接的痛点，一旦开发者第一次看到“原来这个功能花了总成本的60%”，工具的价值就立刻成立了。\n\n**谁来做/怎么做**：1名后端工程师，1-2周完成。支持Anthropic SDK和OpenAI SDK两个最主流的接入点，Node.js实现，npm一条命令安装。Datasette提供零配置的数据可视化。",
+    "first_step_en": "**What**: Build a lightweight AI cost tracker that sits as an interceptor on the existing AI SDK call chain, logging per-call token usage, cost, and caller context (which function/task/user) to a local SQLite database. Use Datasette to spin up a local web UI where developers can chart cost distribution by task, time, or model.\n\n**Why**: Cost attribution is the most immediate pain point. The moment a developer sees 'oh, this one feature is 60% of my total spend,' the tool's value is instantly obvious.\n\n**Who/How**: 1 backend engineer, 1-2 weeks. Support the two most common integration points (Anthropic SDK and OpenAI SDK), Node.js implementation, one-command npm install. Datasette provides zero-config data visualization.",
+    "cc_anchor": "10_Token经济学.md — promptCacheBreakDetection.ts 700行 + CacheSafeParams 类型约束 + 五层上下文压缩机制",
+    "cc_anchor_en": "10_Token_Economics.md — 700-line promptCacheBreakDetection.ts + CacheSafeParams type constraints + five-layer context compression mechanism",
+    "status": "proposed",
+    "plain_explanation": "想象你开了一家餐厅，每个月收到账单时才发现食材成本超支了30%，但你不知道是哪道菜最贵、哪个厨师最浪费。只能一刀切削减所有食材质量，结果口碑下降。用AI写代码的团队现在就是这个处境：每月API账单来了，不知道是哪个任务最烧钱、能不能用更便宜的模型完成同样效果。BLP-005要做一套“餐厅成本管理系统”：第一个工具像收银台精确记录每次AI调用花费归属到具体任务；第二个工具像食材压缩器在不影响效果前提下减少发给AI的内容量；第三个服务像餐厅顾问帮你分析数据给出定制化省钱建议。",
+    "plain_explanation_en": "Imagine running a restaurant where every month's bill reveals ingredient costs are 30% over budget — but you don't know which dish is the most expensive, or which chef is the most wasteful. Your only option is to cut ingredient quality across the board, and your reputation tanks. Teams using AI to ship code are in this exact situation: the API bill arrives, and no one knows which task is burning the money or whether a cheaper model could do the same job. BLP-005 builds the restaurant-cost-management equivalent for AI: the first tool is a POS system that precisely attributes each AI call's cost to a specific task; the second is an ingredient compressor that reduces what you send to the AI without hurting the outcome; the third is a restaurant-consultant service that analyzes your data and gives tailored cost-cutting advice.",
+    "why_it_matters": "**市场需求**：随着AI应用从实验走向生产，Token成本已成为企业CTO关注的实际支出项。一个中型团队（50人）的AI工具月度API成本可达数万元，且随使用规模呈指数增长。\n\n**竞争空白**：现有AI监控工具（Helicone、Portkey）只做API调用日志，没有成本归因到业务任务的功能。Anthropic的提示缓存机制本身就能降低30-40%成本，但绝大多数团队不知道如何正确配置。这个知识差就是可收费的服务。\n\n**时机窗口**：AI支出正在从“研发预算”移入“运营预算”，财务部门开始介入管控，催生了对“可审计、可归因的AI成本报告”的刚性需求。",
+    "why_it_matters_en": "**Market Need**: As AI applications move from experiment to production, token cost has become a real expense line that CTOs track. A mid-sized team (50 people) can easily hit tens of thousands of dollars per month in API costs, and that scales exponentially with usage.\n\n**Competitive Gap**: Existing AI observability tools (Helicone, Portkey) log API calls but don't attribute cost back to business tasks. Anthropic's prompt caching alone can cut costs by 30-40%, but the vast majority of teams don't know how to configure it correctly. That knowledge gap is a billable service.\n\n**Timing Window**: AI spending is migrating from 'R&D budget' to 'operating budget,' and finance departments are starting to demand controls — creating hard demand for auditable, attributable AI cost reports.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "一周能出AgentCostTracker是真的——但留存才是关键。没有持续价值交付用户会流失。建议MVP阶段就想好“钩子”：成本超阈值推送告警、每月自动生成成本报告邮件，把工具从“看一次的好奇心”变成“每天开着的仪表盘”。",
+        "comment_en": "One-week shipping for AgentCostTracker is realistic — but retention is what matters. Without continuous value delivery, users churn out. Design the hooks at MVP: cost-threshold alerts pushed to Slack, monthly auto-generated cost report emails. Turn the tool from a 'one-time curiosity' into a dashboard people keep open all day."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "工具+咨询的组合是经典成熟SaaS路径：工具免费获客，咨询付费变现，数据积累形成壁垒。但ContextCompressor的效果必须有真实客户案例背书。咨询服务毛利率高但规模化依赖于标准化，这两者之间有张力。",
+        "comment_en": "The tool-plus-consulting combo is a classic, proven SaaS path: free tool for acquisition, paid consulting for monetization, accumulated data builds the moat. But ContextCompressor's efficacy needs real customer case studies to sell. Consulting has high margins but scales only through standardization — there's natural tension between those two."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "最需要的不是压缩而是归因：上个月花了两万块API费，到底是哪个功能、哪个用户、哪个任务花的？如果能给我一张“成本热力图”——哪类请求最贵、哪类调用最频繁但价值最低——就知道该优化哪里了。归因功能优先于压缩功能。",
+        "comment_en": "What I actually need isn't compression — it's attribution. I spent $3k on API last month, but which feature, which user, which task caused it? A cost heatmap showing 'this request type is most expensive, this one is most frequent but lowest value' would tell me exactly where to optimize. Attribution matters more than compression."
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "SDK拦截器原理正确，但兼容性风险：不同AI框架（LangChain、llamaindex、直接调用SDK）的拦截点差异大。ContextCompressor的核心挑战是判断哪些内容可压缩而不损失质量——通用压缩很容易降低效果。建议先聚焦1-2个具体场景做深度优化。",
+        "comment_en": "The SDK interceptor approach is right in principle, but compatibility is a risk: different AI frameworks (LangChain, LlamaIndex, raw SDK calls) expose very different interception points. The hard problem for ContextCompressor is deciding what's compressible without quality loss — generic compression usually hurts outcomes. Focus deeply on 1-2 specific scenarios first."
+      }
+    ],
+    "confidence": "strong_signal"
+  },
+  {
+    "id": "BLP-006",
+    "title": "多模型协作写作流水线",
+    "title_en": "Multi-Model Writing Pipeline: Agent Army for Long-Form Content",
+    "description": "将本书的Agent军团写作模式产品化：Opus做架构/Sonnet做执行/Kimi做图表/MiniMax做评审/文科生做可读性。",
+    "description_en": "Productizes the agent-army writing pattern used to produce this book: Opus handles architecture, Sonnet handles execution, Kimi produces diagrams, MiniMax runs review, and a humanities writer handles readability polish.",
+    "evidence": [
+      "E16 AIBookWriter",
+      "P02 Agent Ink",
+      "F09 人机协作范式"
+    ],
+    "evidence_en": [
+      "E16 AIBookWriter",
+      "P02 Agent Ink",
+      "F09 Human-AI Collaboration Paradigm"
+    ],
+    "from_sparks": [
+      "SPK-013",
+      "SPK-019",
+      "SPK-126"
+    ],
+    "feasibility": "medium",
+    "value": "high",
+    "first_step": "**做什么**：把本书的生产流程整理成一份结构化的SOP文档，详细描述每个阶段的输入输出格式、使用的模型和Prompt模板、各模型之间的交接协议、以及质量评审的标准清单。同步制作一个“最小可运行版本”：用这套SOP从零生产一篇2000字技术文章，全程记录每一步操作和时间。\n\n**为什么做**：SOP的价值在于“可复现性”，不能被他人复现的SOP没有商业价值。用实际生产过程验证SOP的完整性，同时产生可传播的内容。\n\n**谁来做/怎么做**：1-2人，3-4周完成初版SOP+教程视频。SOP用Markdown写，托管在GitHub，CC许可证开放。教程视频发布到YouTube和B站。通过阅读量和Fork数判断市场兴趣。",
+    "first_step_en": "**What**: Convert this book's production process into a structured SOP document — per-phase input/output formats, models and prompt templates used, handoff protocols between models, and a quality-review checklist. In parallel, produce a 'minimum viable run': use the SOP to produce a 2,000-word technical article from scratch, logging every step and timing.\n\n**Why**: An SOP's value comes from reproducibility. An SOP no one else can reproduce has no commercial value. Running real production validates SOP completeness and generates shareable content at the same time.\n\n**Who/How**: 1-2 people, 3-4 weeks for SOP v1 + tutorial video. Write the SOP in Markdown, host on GitHub under a CC license. Publish the tutorial video to YouTube and Bilibili. Gauge market interest via view count and fork count.",
+    "cc_anchor": "coordinatorMode.ts — Research→Synthesis→Implementation→Verification 四阶段工作流映射到多模型协作",
+    "cc_anchor_en": "coordinatorMode.ts — four-phase workflow (Research → Synthesis → Implementation → Verification) mapped to multi-model collaboration",
+    "status": "proposed",
+    "plain_explanation": "做一部高质量纪录片需要一个团队：导演负责整体故事架构，摄影师负责拍摄，剪辑师处理后期，配乐师处理音频，最后还有一个观众代表提意见。每个人只负责自己最擅长的部分，合力产出个人做不到的作品。现在写一篇深度技术报告，大多数人是“全能选手”——从研究到排版全部自己来，效率低且每个环节达不到专业水准。BLP-006要把这本书的生产方式（不同AI模型分别负责架构、写作、图表、评审、可读性优化）变成一套任何人都能复用的工作流程和工具。就像把导演工作坊的方法论打包成电影制作SOP手册。",
+    "plain_explanation_en": "Making a high-quality documentary takes a team: a director owns the story architecture, a cinematographer shoots, an editor handles post, a composer scores it, and an audience representative gives feedback. Each person handles what they're best at, and together they produce what no individual could. Writing a deep technical report today, most people play every role themselves — research to layout — which is inefficient and hits professional quality in none of the stages. BLP-006 takes this book's production method (different AI models owning architecture, writing, diagrams, review, and readability polish) and turns it into a reusable workflow and toolkit. It's like packaging the director's-workshop methodology into a film-production SOP manual.",
+    "why_it_matters": "**市场需求**：内容生产正在经历分工专业化的压力——读者要求越来越高的信息密度和可视化质量，但单个写作者的产能有上限。多模型协作流水线能将深度报告生产时间从数月压缩到数周。\n\n**竞争空白**：AutoGen、CrewAI等多Agent框架面向开发者，需要写代码。面向内容创作者的多模型工作流工具几乎为零。Jasper、Copy.ai只做单次生成，不做多轮协作流程。\n\n**时机窗口**：多模型协作的可行性刚刚在2025年被验证（本书即是证明），但方法论尚未被产品化。这是典型的“方法论产品化”窗口，通常持续12-24个月。",
+    "why_it_matters_en": "**Market Need**: Content production is under pressure to specialize — readers want ever-higher information density and visualization quality, but an individual writer has a capacity ceiling. A multi-model collaboration pipeline can compress deep-report production from months to weeks.\n\n**Competitive Gap**: Multi-agent frameworks like AutoGen and CrewAI are aimed at developers and require writing code. Multi-model workflow tools for content creators barely exist. Jasper and Copy.ai do single-shot generation, not multi-round collaboration.\n\n**Timing Window**: Multi-model collaboration feasibility was just validated in 2025 (this book is the proof), but the methodology hasn't been productized yet. This is a classic 'methodology-to-product' window, typically 12-24 months long.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "SOP文档本身很难直接卖钱，更可能的模式是：用SOP建立品牌→卖配套工具或模板包→提供一对一流程实施咨询。关注这套流程对用户技术要求有多高——需要懂API和Prompt工程的话目标市场很窄。",
+        "comment_en": "An SOP document is hard to sell directly. The more likely model is: build brand with the SOP → sell companion tools or template packs → offer 1:1 implementation consulting. Watch the technical bar — if users need to understand APIs and prompt engineering, the addressable market gets narrow fast."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "内容工具赛道竞争激烈，差异化必须清晰。建议先聚焦一个垂直场景做深——比如“技术白皮书生产”或“市场研究报告”——做出标杆案例再横向扩展。通用内容工具很难出头。",
+        "comment_en": "The content-tools space is brutal. Differentiation has to be razor-sharp. Go deep on one vertical first — 'technical white paper production' or 'market research reports' — build a flagship case study, then expand laterally. Generic content tools struggle to break out."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "在咨询公司负责内容生产，每季度要产出4-6份深度报告。如果有工具能让我把研究成果“喂进去”，自动完成结构化、图表生成、可读性优化，愿意每月付500-1000元。但最担心“风格一致性”——AI生成的不同部分风格经常不统一。",
+        "comment_en": "I run content production at a consultancy, 4-6 deep reports per quarter. If a tool let me feed in research and get structured output, generated charts, and readability polish, I'd happily pay $80-150/month. My biggest worry is style consistency — different sections generated by AI tend to clash tonally."
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "多模型协作最大工程挑战不是单个模型输出质量，而是跨模型的上下文传递——每一次交接都是信息损耗点。SOP需要非常精确地描述交接点的格式规范，否则复现者很难跑通完整流程。建议把交接格式标准化放在SOP的第一优先级。",
+        "comment_en": "The hardest engineering problem in multi-model collaboration isn't any single model's output quality — it's context transfer across models. Every handoff is an information-loss point. The SOP needs to specify handoff-point format precisely, or reproducers can't run the pipeline end-to-end. I'd make handoff-format standardization the top priority in the SOP."
+      }
+    ],
+    "confidence": "has_signal"
+  },
+  {
+    "id": "BLP-007",
+    "title": "套控工程教育体系（课程+社区+通讯）",
+    "title_en": "Harness Engineering Academy: Courses, Community, and Newsletter",
+    "description": "以Claude Code为核心案例的AI系统工程设计课程+中文AI工程社区+双周刊深度通讯。",
+    "description_en": "An AI systems engineering curriculum built around Claude Code as the core case study, plus a Chinese-language AI engineering community and a biweekly deep-dive newsletter.",
+    "evidence": [
+      "P06 套控工程实战营",
+      "P10 社区",
+      "P12 Harness Letter",
+      "P14 企业培训"
+    ],
+    "evidence_en": [
+      "P06 Harness Engineering Bootcamp",
+      "P10 Community",
+      "P12 Harness Letter",
+      "P14 Enterprise Training"
+    ],
+    "from_sparks": [
+      "SPK-018",
+      "SPK-150",
+      "SPK-113"
+    ],
+    "feasibility": "high",
+    "value": "high",
+    "first_step": "**做什么**：把白皮书中“配置治理”这一章整理成一份20页的免费PDF入门手册《AI工具配置这件事，你可能从来没搞懂过》，用日常比喻解释为什么AI工具需要多层配置、冲突时谁说了算，在掘金和V2EX发布。\n\n**为什么做**：在花大力气建课程和社区之前，需要验证“中文开发者是否真的愿意消费这个深度的AI系统工程内容”——一份PDF的反馈比任何市场调研都直接。\n\n**谁来做/怎么做**：白皮书作者团队，3-5天。将配置治理章节核心洞察提炼成通俗叙述，设计3个真实场景案例，配手绘风格示意图，发布后追踪72小时内互动数据。",
+    "first_step_en": "**What**: Repackage the 'Configuration Governance' chapter of the white paper as a 20-page free PDF primer — *The Thing About AI Tool Configuration You Probably Never Understood* — using everyday metaphors to explain why AI tools need layered configuration and who wins when layers conflict. Distribute via Chinese technical communities.\n\n**Why**: Before investing heavily in courses and community, we need to validate whether Chinese-speaking developers will actually consume AI systems-engineering content at this depth. A PDF gives more direct feedback than any market research.\n\n**Who/How**: The white paper author team, 3-5 days. Distill the core insights from the configuration governance chapter into accessible narrative, design 3 real-world scenario case studies, add hand-drawn-style diagrams, and track engagement metrics for 72 hours post-launch.",
+    "cc_anchor": "06_CLAUDE_md加载系统完全解析.md + 11_配置治理.md — 九层配置系统作为教学核心案例",
+    "cc_anchor_en": "06_CLAUDE_md_Loading_System_Deep_Dive.md + 11_Configuration_Governance.md — the nine-layer configuration system as the central teaching case",
+    "status": "proposed",
+    "plain_explanation": "想象你要学开一辆最新款的自动驾驶汽车，但只有英文说明书、没有中文教练、也没有同学群。“套控工程教育体系”就是专门为这种情况而生的：它把这辆车拆开来，用中文一零件一零件讲清楚，然后组成一个课程、一个同学群、一份定期更新的内参。你从此不只会开这辆车，还理解了为什么设计成这样，下次换一辆新车也能快速上手。课程是地图，社区是同行者，双周通讯是导航更新——三者合一，让一个原本门槛极高的技术领域变成中文开发者也能系统掌握的实战技能。",
+    "plain_explanation_en": "Imagine learning to drive a cutting-edge self-driving car, but the manual is only in English, there's no local instructor, and no classmates to study with. The Harness Engineering Academy exists for exactly this situation: it takes the car apart, explains each component in your language, and assembles a course, a classmate community, and a regularly updated field bulletin. You don't just learn to drive this car — you understand why it's designed this way, and you can pick up the next car faster. The course is the map, the community is the people walking alongside you, the biweekly newsletter is the live navigation update — together they turn a steep technical domain into a skill that Chinese-speaking developers can master systematically.",
+    "why_it_matters": "**市场需求**：中国拥有数百万软件开发者，但AI系统工程教育几乎全部是英文材料，且停留在使用层面。随着AI编程工具在企业中加速普及，团队负责人迫切需要能讲清“为什么这么设计”的培训来源。\n\n**竞争空白**：国内技术社区在AI原理课上已饱和，但在AI工具系统工程设计方向几乎为零。以Claude Code源码为案例讲配置治理/权限系统/多Agent编排的系统工程课从未出现。\n\n**时机窗口**：2024-2025年是AI编程工具从尝鲜走向企业落地的关键期，工程团队正在建立AI使用规范，对“怎么治理AI工具”的知识需求处于历史峰值。",
+    "why_it_matters_en": "**Market Need**: China has millions of software developers, but AI systems-engineering education is almost entirely in English and stays at the 'how to use it' layer. As AI coding tools accelerate into enterprises, team leads urgently need training sources that can explain *why the design is the way it is*.\n\n**Competitive Gap**: Domestic technical communities are saturated with 'AI fundamentals' courses, but AI-tools systems engineering has essentially zero coverage. A systems engineering course using Claude Code source as the case study for configuration governance, permission systems, and multi-agent orchestration has never existed.\n\n**Timing Window**: 2024-2025 is the critical transition period when AI coding tools move from novelty to enterprise deployment. Engineering teams are actively building AI usage norms, and demand for 'how do we govern AI tools' knowledge is at an all-time peak.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "教育产品有冷启动问题：第一批付费学员从哪里来？如果先从免费社区积累信任再转化付费，周期长现金流压力大。建议直接从企业培训切入，B端比C端更容易在早期拿到收入，同时用企业案例反哺课程内容。",
+        "comment_en": "Education products have a cold-start problem: where do the first paying students come from? If you build free-community trust first and convert later, the cycle is long and the cash-flow pressure is heavy. I'd jump straight to enterprise training — B2B is far easier to monetize early, and enterprise cases feed back into course content."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "教育+社区+通讯三合一模式在海外有成功先例（Lenny's Newsletter），但在中国变现路径和规模天花板都不如SaaS清晰。如果三个产品能共同产生强护城河——比如形成中国AI工程师的认证标准——投资价值会大幅提升，否则更像优秀的个人品牌项目。",
+        "comment_en": "The education-community-newsletter trifecta has precedent abroad (Lenny's Newsletter), but in China the monetization path and ceiling are less defined than SaaS. If all three products together build a real moat — say, becoming the certification standard for Chinese AI engineers — investment value jumps. Otherwise it looks more like an excellent personal-brand project than a venture case."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "在中型互联网公司做技术选型，最需要的不是从零开始学，而是有人帮我快速判断某个设计决策的利弊。如果双周通讯能做到“每期深度拆解一个工程决策案例，附带源码证据”，愿意付费订阅。但课程如果是录播视频大概率买了不看——希望是可随时查的参考文档格式。",
+        "comment_en": "I do technology selection at a mid-sized internet company. I don't need to learn from zero — I need someone to help me quickly judge the trade-offs of a design decision. If the biweekly newsletter delivers 'one engineering-decision case study per issue, with source-code evidence,' I'd subscribe. But if the course is pre-recorded video, I'll buy it and never watch it — I want a searchable reference-document format."
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "以Claude Code源码作为教学案例的核心挑战是：源码会持续迭代，分析内容可能很快过时，维护成本容易被低估。九层配置系统是极好的案例，但需要设计好入门到高级的学习路径，否则第一课就把学员吓跑了。",
+        "comment_en": "The core challenge of using Claude Code source as the teaching case: the source keeps evolving, analysis goes stale fast, and the maintenance cost gets systematically underestimated. The nine-layer config system is a superb case study, but the beginner-to-advanced learning path has to be carefully staged — or students get scared off in lesson one."
+      }
+    ],
+    "confidence": "strong_signal"
+  },
+  {
+    "id": "BLP-008",
+    "title": "AI Agent 宪法框架——从自然语言建议到机器可验证合约",
+    "title_en": "AI Agent Constitution: From Natural-Language Suggestions to Machine-Verifiable Contracts",
+    "description": "把CLAUDE.md从'求求你遵守'升级为'不遵守就执行不了'。用一种介于自然语言和形式化规范之间的DSL，让AI的行为约束在执行前被机器验证，而不是靠LLM的'良心'。类比智能合约vs口头承诺。",
+    "description_en": "Upgrades CLAUDE.md from 'please follow these rules' to 'you literally can't act unless you follow them.' A DSL that sits between natural language and formal specs lets AI behavior constraints be machine-verified *before execution*, rather than depending on the LLM's conscience. Think smart contracts versus verbal agreements.",
+    "feasibility": "medium",
+    "value": "high",
+    "evidence": [
+      "CC源码中bypass-immune层是唯一真正'硬约束'，其他全靠LLM自觉",
+      "EU AI Act正在寻找技术合规方案",
+      "SPK-004指出CLAUDE.md只是prompt注入无验证层",
+      "SPK-248 CC团队承认安全只能'减慢'不能'阻止'",
+      "多Agent场景下纯提示词约束的可靠性更低"
+    ],
+    "evidence_en": [
+      "In the CC source, the bypass-immune layer is the only true hard constraint — everything else relies on the LLM's self-restraint",
+      "The EU AI Act is actively looking for technical compliance solutions",
+      "SPK-004 points out that CLAUDE.md is just prompt injection with no verification layer",
+      "SPK-248 — the CC team admits safety can only 'slow down,' not 'prevent'",
+      "Pure prompt-based constraints become less reliable in multi-agent scenarios"
+    ],
+    "from_sparks": [
+      "SPK-004",
+      "SPK-010",
+      "SPK-203",
+      "SPK-211",
+      "SPK-248"
+    ],
+    "first_step": "**做什么**：定义一个最小的约束语言子集，只包含10条最常见的企业安全规则（例如“禁止删除生产环境文件”“禁止访问以下域名列表”），实现一个能在AI调用工具前运行的验证器——规则用接近人类可读的格式写，验证器用300行代码实现。\n\n**为什么做**：在设计完整DSL之前，必须先验证“机器可验证的AI行为规则”这个概念能被真实用户接受，一个可运行的PoC比任何规范文档都有说服力。\n\n**谁来做/怎么做**：一名有编程语言设计经验的工程师，2-3周。参考bypass-immune层实现思路，先用YAML格式定义约束，实现Node.js验证器，配一个接入LangChain的示例适配器，在GitHub开源后征集真实企业场景反馈。",
+    "first_step_en": "**What**: Define a minimal constraint-language subset covering only the 10 most common enterprise security rules (e.g., 'no deleting production files,' 'no access to this domain allow/deny list'). Implement a verifier that runs before the AI invokes tools — rules written in a near-human-readable format, verifier implemented in ~300 lines of code.\n\n**Why**: Before designing the full DSL, we have to validate that real users accept the concept of 'machine-verifiable AI behavior rules.' A runnable PoC is more persuasive than any spec document.\n\n**Who/How**: One engineer with programming-language design experience, 2-3 weeks. Model the implementation on the bypass-immune layer, start with YAML-formatted constraints, implement a Node.js verifier, ship a sample LangChain adapter, open-source on GitHub and solicit real enterprise scenario feedback.",
+    "cc_anchor": "06_CLAUDE_md加载系统完全解析.md — claudemd.ts 的四层加载 + getClaudeMds() 的强制前缀注入；权限系统完全解析 bypass-immune硬编码保护",
+    "cc_anchor_en": "06_CLAUDE_md_Loading_System_Deep_Dive.md — four-layer loading in claudemd.ts + forced-prefix injection in getClaudeMds(); Permission System Deep Dive — bypass-immune hard-coded protection",
+    "status": "proposed",
+    "plain_explanation": "现在给AI的行为规则，就像你对新员工说“上班不要迟到”——说了，但他如果迟到了你也没办法提前阻止。“AI Agent宪法框架”要做的是：把口头约定变成打卡机——门卡没刷就进不了公司，不存在“我忘了”的余地。具体来说，给AI的行为规范写一套特殊的“规则语言”，计算机能在AI真正执行操作之前自动检查它有没有违反规定——就像机场安检在登机之前检查行李，而不是落地以后才追责。这个规则语言处于“普通说明文字”和“严格法律合同”之间的中间地带，普通人能看懂，机器也能自动执行。",
+    "plain_explanation_en": "Today's AI behavior rules are like telling a new hire 'don't be late' — you said it, but if they're late, you can't actually prevent it in advance. The AI Agent Constitution turns that verbal agreement into a badge-in system — no badge, no entry, no 'I forgot' loophole. Concretely, you write AI behavior rules in a special rule language, and a computer automatically checks whether they've been violated *before* the AI actually acts — like airport security screening bags before boarding, not prosecuting after landing. The rule language sits between 'plain instructions' and 'strict legal contract' — readable by humans, executable by machines.",
+    "why_it_matters": "**市场需求**：随着AI Agent开始自动执行删除文件、发送邮件、提交代码等真实操作，企业合规和法律风险急剧上升。欧盟AI法案已正式生效，要求高风险AI系统具备可审计、可验证的行为约束，但目前业界没有成熟的技术工具满足这一要求。\n\n**竞争空白**：LangChain/CrewAI聚焦功能实现，安全约束交给用户处理；安全公司做的是事后检测而非执行前拦截。“预防型机器验证合约”这个定位几乎无竞争对手。\n\n**时机窗口**：2025年企业AI项目进入生产部署阶段，安全事故开始出现，合规需求从理论变成真实痛点。",
+    "why_it_matters_en": "**Market Need**: As AI agents start autonomously deleting files, sending emails, and committing code, enterprise compliance and legal exposure are rising sharply. The EU AI Act is now in force, requiring high-risk AI systems to have auditable, verifiable behavioral constraints — and no mature technical tool in the industry yet meets that requirement.\n\n**Competitive Gap**: LangChain/CrewAI focus on functionality and offload safety to the user. Security vendors do post-hoc detection, not pre-execution interception. 'Preventive machine-verifiable contract' is a nearly uncontested position.\n\n**Timing Window**: In 2025 enterprise AI projects are entering production deployment, security incidents are starting to appear, and compliance demand is shifting from theoretical to real pain.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "最大挑战是销售：安全合规工具通常要说服企业安全团队，而安全团队最习惯审计报告而非引入新技术框架。如果定位成“生成合规报告的自动化工具”而不是“改变AI运行方式的基础框架”，落地阻力会小很多。早期可瞄准有AI合规压力但缺技术能力的中型金融科技公司。",
+        "comment_en": "The biggest challenge is sales. Security compliance tools require convincing enterprise security teams, who are most comfortable with audit reports, not adopting new technical frameworks. Position this as 'an automation tool that generates compliance reports' rather than 'a foundational framework that changes how AI runs,' and the resistance drops dramatically. Early-stage, target mid-sized fintechs with AI compliance pressure but limited internal technical capacity."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "这是“太早或者刚好”的典型判断题。AI治理合规市场2025年确实在爆发，但技术标准未定，谁的DSL成为事实标准谁就赢。风险在于：如果Anthropic或OpenAI推出类似功能，独立产品空间会急剧收窄。护城河必须建在“开放标准+生态”而非“专有技术”上。",
+        "comment_en": "Classic 'too early or just right' judgment call. AI governance and compliance is genuinely exploding in 2025, but technical standards aren't set — whoever's DSL becomes the de facto standard wins. The risk: if Anthropic or OpenAI ships similar functionality, the independent-product space collapses. The moat has to be 'open standard + ecosystem,' not proprietary technology."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "在银行做AI落地的架构师，非常需要这个东西，但需要无缝集成进现有CI/CD流程而非重写Agent代码。DSL太复杂学习成本会让团队拒绝采用；太简单覆盖不了真实场景。最理想：10条规则解决80%问题，超出部分可代码扩展。",
+        "comment_en": "I'm an architect deploying AI at a bank — I badly need this, but it has to drop into our existing CI/CD pipeline without rewriting agent code. Too complex a DSL and the team rejects it; too simple and it can't cover real scenarios. Ideal: 10 rules solve 80% of the problem, edge cases fall back to programmatic extension."
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "最难的不是写验证器而是定义“违反”的语义。比如“不要删除重要文件”，什么叫重要？如果DSL只能表达简单黑白名单，覆盖面有限；如果引入语义推理就又依赖LLM，形成循环依赖。建议先把DSL表达力边界想清楚，找10个真实场景验证覆盖率。",
+        "comment_en": "The hard part isn't writing the verifier — it's defining the semantics of 'violation.' 'Don't delete important files' — what's important? If the DSL can only express simple allow/deny lists, coverage is narrow. If you bring in semantic reasoning, you're back to depending on an LLM and the dependency becomes circular. Nail down the DSL's expressiveness boundary first, then validate coverage against 10 real scenarios."
+      }
+    ],
+    "confidence": "has_signal"
+  },
+  {
+    "id": "BLP-009",
+    "title": "投机执行/Overlay 通用沙箱库",
+    "title_en": "Speculation Overlay: A Universal Sandbox npm Package",
+    "description": "把CC的Copy-on-Write overlay机制提炼成一个300行的通用npm包。任何AI应用都能获得'先在沙箱里演练，用户满意了再合并到真实环境'的能力，不需要Docker、不需要虚拟机，纯用户空间实现。",
+    "description_en": "Distills CC's copy-on-write overlay mechanism into a 300-line general-purpose npm package. Any AI application can get 'rehearse in a sandbox, then merge into the real environment once the user approves' — no Docker, no VMs, pure userspace.",
+    "feasibility": "high",
+    "value": "high",
+    "evidence": [
+      "CC源码证明用户空间COW overlay是可行的且只需300行",
+      "SPK-003指出投机执行有安全问题需要标准化方案",
+      "SPK-009验证了这个模式比Docker轻量100倍",
+      "SPK-243揭示内存隔离≠I/O隔离的区分被忽视"
+    ],
+    "evidence_en": [
+      "CC source proves userspace COW overlay is feasible and needs only 300 lines",
+      "SPK-003 notes speculative execution has security issues needing a standardized solution",
+      "SPK-009 validates this pattern is 100x lighter than Docker",
+      "SPK-243 surfaces that the distinction between memory isolation and I/O isolation is widely overlooked"
+    ],
+    "from_sparks": [
+      "SPK-003",
+      "SPK-009",
+      "SPK-241",
+      "SPK-243"
+    ],
+    "first_step": "**做什么**：从Claude Code的speculation.ts中提取路径重写和overlay管理核心逻辑，封装为npm包@ai-sandbox/overlay，配三个可运行示例（文件编辑预览、配置变更演练、数据迁移演习），发布到npm。\n\n**为什么做**：把Claude Code内部使用的沙箱模式开放给整个AI开发生态，验证是否有足够的开发者愿意用这种模式替代Docker沙箱。\n\n**谁来做/怎么做**：一名熟悉Node.js文件系统API的工程师，1-2周。精读speculation.ts的copyOverlayToMain()和路径重写实现，提炼出通用逻辑，编写详细的边界说明文档，在AI工程师社群发布beta版。",
+    "first_step_en": "**What**: Extract the path-rewriting and overlay-management core logic from Claude Code's speculation.ts, wrap it as an npm package `@ai-sandbox/overlay`, ship three runnable examples (file-edit preview, config-change rehearsal, data-migration dry-run), and publish to npm.\n\n**Why**: Opens up the sandbox pattern used internally by Claude Code to the broader AI dev ecosystem, validating whether enough developers will replace Docker sandboxes with this approach.\n\n**Who/How**: One engineer familiar with Node.js filesystem APIs, 1-2 weeks. Carefully read speculation.ts's copyOverlayToMain() and path-rewriting implementation, distill the generic logic, write thorough boundary documentation, and release a beta in AI engineering communities.",
+    "cc_anchor": "02_投机执行子系统完全解析.md §3.2 — speculation.ts的overlay路径重写 + copyOverlayToMain() + safeRemoveOverlay()",
+    "cc_anchor_en": "02_Speculation_Execution_Subsystem_Deep_Dive.md §3.2 — speculation.ts's overlay path rewriting + copyOverlayToMain() + safeRemoveOverlay()",
+    "status": "proposed",
+    "plain_explanation": "想象你要重新装修厨房，但怕改坏了后悔。有一种方法是：先搭一套临时的“假厨房”在旁边，你在假厨房里试验新布局，满意了再真的动手装修，不满意就拆掉假厨房，真厨房一点没动。“投机执行沙箱库”就是这个意思：AI要修改你的代码或文件之前，先在一个“影子空间”里演练——所有改动都发生在影子里，你看了觉得OK才真正写进原始文件。最厉害的是不需要虚拟机或Docker这种重型设备，用一个轻量小包就能实现，就像用便利贴模拟装修效果而不是真的拆墙。",
+    "plain_explanation_en": "Imagine remodeling your kitchen but worried about regret. One approach: build a temporary 'fake kitchen' next door, try the new layout there, then commit to the real remodel once you're happy — or just tear the fake one down if you aren't. The real kitchen never got touched. That's the speculation sandbox library: before AI modifies your code or files, it rehearses in a 'shadow space' — every change lives in the shadow, and only gets written to the real files once you approve. The best part: no VMs, no Docker, just a tiny package. Like mocking up the remodel with sticky notes instead of actually knocking down a wall.",
+    "why_it_matters": "**市场需求**：所有AI Agent一旦开始操作真实文件、数据库、配置，“如何撤回”就成为首要问题。开发者要么接受“不可逆”风险，要么用Docker搭沙箱付出巨大配置成本。\n\n**竞争空白**：Docker/VM方案笨重，E2B等云沙箱需要网络依赖，没有一个轻量级、纯本地、npm一行安装的方案。\n\n**时机窗口**：随着AI Agent工具调用能力快速普及，“Agent误操作”事故频率上升，开发者社区正在形成“沙箱先演练”的意识共识，但还没有标准工具。",
+    "why_it_matters_en": "**Market Need**: The moment any AI agent starts operating on real files, databases, or configs, 'how do I undo this' becomes the top question. Today developers either accept the irreversible risk or pay massive configuration cost to stand up Docker sandboxes.\n\n**Competitive Gap**: Docker/VM solutions are heavyweight. Cloud sandboxes like E2B require network dependencies. There's no lightweight, purely local, one-line npm install option.\n\n**Timing Window**: As AI agent tool-calling spreads rapidly, 'agent misoperation' incidents are climbing, and the developer community is converging on 'rehearse in a sandbox first' as consensus — but no standard tool exists yet.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "npm包的商业模式是经典难题：开源了有用户没收入，闭源了有收入没用户。作为开源项目建立知名度是对的，但需要提前想好收入层——企业支持合同、云端版本、集成到AI平台的授权费？建议定位成某个更大产品的基础组件。",
+        "comment_en": "Monetizing an npm package is a classic trap: open source gets users but no revenue; closed source gets revenue but no users. Open-sourcing for mindshare is right, but you need the revenue layer planned from day one — enterprise support contracts, cloud edition, AI-platform integration licensing fees? I'd position this as a foundational component of some larger product."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "300行开源npm包本身几乎没有投资价值，但如果它成为AI Agent开发的基础设施标准，价值就完全不同。关键指标：6个月内GitHub star数和npm周下载量，以及是否有主流AI框架主动集成。如果这两个信号出现，项目就从“工具”升级为“平台入口”。",
+        "comment_en": "A 300-line open-source npm package has essentially no standalone investment value. But if it becomes the infrastructure standard for AI agent development, the picture changes completely. Key metrics: GitHub stars and weekly npm downloads in the first 6 months, plus whether major AI frameworks integrate it voluntarily. If both signals fire, the project graduates from 'tool' to 'platform entry point.'"
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "现在给AI的工具调用加了很多手动确认步骤，就是怕做错了难回滚。如果有能自动创建操作快照、失败一键回滚的轻量库立刻会用。但担心两件事：Windows上可不可用（团队混用Mac和Windows），大文件或二进制文件的处理会不会有性能问题。",
+        "comment_en": "I've added tons of manual confirmation steps to AI tool calls specifically because rollback is painful. A lightweight library that auto-creates operation snapshots with one-click rollback on failure — I'd install it today. Two worries: does it work on Windows (our team mixes Mac and Windows), and how does it perform with large or binary files?"
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "从speculation.ts提取封装为通用包技术路径合理，但注意边界场景：网络操作无法被文件系统overlay拦截，数据库写操作需要单独处理，进程创建和环境变量修改也在覆盖范围之外。300行实现文件系统COW可行，但“通用沙箱”的声称范围如果超出文件系统就需要显著更多工作量。",
+        "comment_en": "Extracting speculation.ts into a generic package is a sound path, but watch the edges: network ops can't be intercepted by a filesystem overlay, database writes need separate handling, process creation and env-var modification are also outside the scope. 300 lines of filesystem COW is doable, but if 'universal sandbox' has to extend beyond the filesystem, the effort grows significantly."
+      }
+    ],
+    "confidence": "has_signal"
+  },
+  {
+    "id": "BLP-010",
+    "title": "AI Agent 可观测性平台——从printf到Chrome DevTools级调试",
+    "title_en": "Agent Observability Platform: From printf Debugging to Chrome DevTools for AI",
+    "description": "当5个Agent同时工作时，你看不到谁在做什么、为什么做、做得对不对。做一个AI Agent的Chrome DevTools：实时拓扑图+时间轴+决策标注+成本归因+鲸鱼会话检测，让多Agent系统从'黑箱猜'变成'透明看'。",
+    "description_en": "When 5 agents are running concurrently, you can't see who's doing what, why they're doing it, or whether they're doing it right. Build a Chrome DevTools for AI agents: live topology map + timeline + decision annotations + cost attribution + whale-session detection — turning multi-agent systems from 'black box guessing' into 'transparent observation.'",
+    "feasibility": "medium",
+    "value": "high",
+    "evidence": [
+      "CC的Perfetto 1120行可视化系统是ant-only，外部用户完全没有",
+      "LangSmith/Langfuse只追踪单Agent的LLM调用链",
+      "鲸鱼会话方法论(SPK-226)证明极端用户分析的价值",
+      "SPK-139指出审查多Agent输出才是人类瓶颈"
+    ],
+    "evidence_en": [
+      "CC's 1120-line Perfetto visualization system is Anthropic-internal only — external users have nothing",
+      "LangSmith and Langfuse only track single-agent LLM call chains",
+      "The whale-session methodology (SPK-226) proves the value of extreme-user analysis",
+      "SPK-139 points out that reviewing multi-agent output is the human bottleneck"
+    ],
+    "from_sparks": [
+      "SPK-020",
+      "SPK-218",
+      "SPK-226",
+      "SPK-139",
+      "SPK-147"
+    ],
+    "first_step": "**做什么**：基于Perfetto的trace JSON格式，构建一个开源的Agent Trace Viewer——接收结构化Agent操作日志，渲染为时间轴+拓扑图，打包为单HTML文件，在浏览器中无需服务端直接运行。\n\n**为什么做**：优先验证“可视化形式是否真的帮助工程师更快定位多Agent问题”，单HTML文件消除部署障碍，可以在AI工程师社群直接分发。\n\n**谁来做/怎么做**：一名有D3.js经验的前端工程师，2-3周。参考Perfetto官方trace格式设计输入schema，准备3个示例trace文件（单Agent/3Agent/5Agent并行），在X和掘金同步发布。",
+    "first_step_en": "**What**: Build an open-source Agent Trace Viewer on top of Perfetto's trace JSON format — consume structured agent operation logs, render them as a timeline plus topology map, package as a single HTML file that runs in the browser with no server-side component.\n\n**Why**: First priority is validating whether the visualization format actually helps engineers locate multi-agent problems faster. A single HTML file eliminates deployment friction and can be distributed directly in AI engineering communities.\n\n**Who/How**: One frontend engineer with D3.js experience, 2-3 weeks. Design the input schema based on Perfetto's official trace format, prepare 3 example trace files (single-agent / 3-agent / 5-agent parallel), release on X and technical blogs simultaneously.",
+    "cc_anchor": "08_遥测与可观测性完全解析.md — 五条遥测通道 + Perfetto Chrome Trace 1120行系统 + 鲸鱼会话BQ分析",
+    "cc_anchor_en": "08_Telemetry_and_Observability_Deep_Dive.md — five telemetry channels + 1120-line Perfetto Chrome Trace system + BigQuery-based whale-session analysis",
+    "status": "proposed",
+    "plain_explanation": "想象一个急诊室里同时来了5个病人，5个医生分头救治——但护士站的大屏幕坏了，没人知道3号床的医生在做什么、5号床的检查结果出来了没有、谁在等药房的药。每个医生只能靠自己的记忆和偶尔喊一嗓子来协调。如果有一块实时大屏，显示每个医生正在做什么、每个病人的状态、每项检查花了多少时间——整个急诊室的效率和安全性都会完全不同。现在的AI多Agent系统就是那个“大屏幕坏了的急诊室”。这个项目要给多Agent系统装上“急诊室监控大屏”：实时看到每个Agent的工作状态，时间轴回放谁在什么时候做了什么决定，还能看到每个决定花了多少钱。",
+    "plain_explanation_en": "Imagine an ER with 5 patients arriving at once, 5 doctors splitting up to treat them — but the nursing station's overview screen is broken. Nobody knows what the doctor at bed 3 is doing, whether the test results for bed 5 are back, or who's waiting for pharmacy. Each doctor coordinates only through memory and the occasional shout across the room. If a live screen showed what each doctor was doing, every patient's status, and how long each test took, the ER's efficiency and safety would transform. Today's multi-agent AI systems are that ER with a broken screen. This project installs the live monitoring screen: see every agent's state in real time, replay who made which decision when on a timeline, and see what each decision cost.",
+    "why_it_matters": "**市场需求**：LangSmith、Langfuse等现有工具只追踪单个Agent的LLM调用序列，在5个以上Agent并行协作时完全失效。随着多Agent系统从实验走向生产，“出了问题怎么找到原因”成为最大痛点。\n\n**竞争空白**：没有任何工具提供多Agent层级的拓扑可视化+跨Agent时间轴+决策归因+成本追踪四合一能力。Grafana做指标但不理解Agent语义；LangSmith理解语义但不支持跨Agent拓扑。\n\n**时机窗口**：企业部署多Agent系统后第一个重大事故就会引发对可观测性工具的集中采购需求，这个时间点大约在2025-2026年间。",
+    "why_it_matters_en": "**Market Need**: Tools like LangSmith and Langfuse only track single-agent LLM call sequences and break down completely once 5+ agents are collaborating in parallel. As multi-agent systems move from experiment to production, 'how do I find out what went wrong' becomes the number-one pain point.\n\n**Competitive Gap**: No tool offers the four-in-one combination of multi-agent topology visualization, cross-agent timeline, decision attribution, and cost tracking. Grafana has metrics but no agent semantics; LangSmith has semantics but no cross-agent topology.\n\n**Timing Window**: The first major incident after enterprises deploy multi-agent systems will trigger concentrated procurement demand for observability tooling. That inflection point is roughly 2025-2026.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "可观测性工具有经典陷阱：用户觉得有用但不愿单独付钱，因为它是“配件”。建议考虑内嵌进某个主流Agent框架作为官方调试器，或开源工具+企业版支持合同的双轨模式，而不是独立SaaS。",
+        "comment_en": "Observability tools have a classic trap: users find them useful but won't pay for them standalone because they feel like 'accessories.' Consider embedding this into a major agent framework as its official debugger, or run an open-source-plus-enterprise-support dual model, rather than going standalone SaaS."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "可观测性是基础设施核心组件，DataDog市值曾超400亿美元，AI时代有类似规模的机会。关键问题是：这个工具是否会被AI平台官方内置。护城河必须建立在框架无关、云无关的多平台整合能力上。",
+        "comment_en": "Observability is core infrastructure. Datadog peaked above $40B market cap, and the AI era has a similarly sized opportunity. The key question: will AI platforms build this in natively? The moat has to be built on framework-agnostic, cloud-agnostic, multi-platform integration capability."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "现在调试多Agent问题靠print语句+肉眼对时间戳。如果有工具能给时间轴视图显示每个Agent的输入输出和耗时，愿意付费。一个单HTML文件本地工具比需要注册账号的SaaS更有吸引力，特别是涉及公司代码。",
+        "comment_en": "Right now I debug multi-agent problems with print statements and manually eyeballing timestamps. If a tool showed me a timeline view of each agent's inputs, outputs, and latency, I'd pay. A single-HTML-file local tool is much more appealing than a SaaS requiring account signup — especially when company code is involved."
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "基于Perfetto格式是好主意，Chrome DevTools已是工程师熟悉的工具。但挑战在于各Agent框架的日志格式差异极大，适配器工程量会远超Trace Viewer本身。建议先做格式标准（JSON schema），再做渲染器，再做各框架适配器——按优先级递减。",
+        "comment_en": "Using Perfetto's format is a smart move — Chrome DevTools is already in every engineer's muscle memory. The challenge is the huge variance in agent framework log formats; the adapter work dwarfs the Trace Viewer itself. Build the format standard (JSON schema) first, then the renderer, then the per-framework adapters — descending priority order."
+      }
+    ],
+    "confidence": "has_signal"
+  },
+  {
+    "id": "BLP-011",
+    "title": "提示词即插件生态——Markdown Plugin Hub",
+    "title_en": "Prompt-as-Plugin Ecosystem: Markdown Plugin Hub",
+    "description": "CC的Skill系统让一个Markdown文件+YAML头就是一个完整插件，不需要写代码、不需要打包发布。把这个模式做成一个公共生态：任何人写一份Markdown就能贡献AI能力，像npm但门槛低100倍。",
+    "description_en": "CC's Skill system makes a Markdown file with a YAML header a complete plugin — no code, no packaging, no release process. Build that pattern into a public ecosystem: anyone who writes a Markdown file can contribute an AI capability. Like npm, with 100x lower barrier to entry.",
+    "feasibility": "high",
+    "value": "high",
+    "evidence": [
+      "CC的Skill系统已验证Markdown插件模式可行",
+      "SPK-222指出250行prompt已承担代码职责但缺工具支持",
+      "SPK-227预判SaaS扩展生态会被Markdown Plugin重塑",
+      "WordPress的无代码插件生态验证了低门槛扩展的市场需求"
+    ],
+    "evidence_en": [
+      "CC's Skill system has already validated the Markdown plugin pattern",
+      "SPK-222 notes that 250-line prompts already carry code-level responsibility but lack tooling support",
+      "SPK-227 predicts SaaS extension ecosystems will be reshaped by Markdown Plugins",
+      "WordPress's no-code plugin ecosystem validates demand for low-barrier extensibility"
+    ],
+    "from_sparks": [
+      "SPK-237",
+      "SPK-227",
+      "SPK-222",
+      "SPK-004"
+    ],
+    "first_step": "**做什么**：搭建Prompt Plugin Hub的v0.1——一个静态网站，托管50个从Claude Code社区和白皮书案例中整理的Skill Markdown文件，支持按类别浏览、关键词搜索和一键复制安装命令。\n\n**为什么做**：验证两个关键假设：用户是否愿意通过中心化平台发现和安装Skill插件，以及创作者是否愿意贡献高质量Skill——这两个假设决定了双边平台是否成立。\n\n**谁来做/怎么做**：一名前端工程师+一名内容编辑，1周。用GitHub Pages托管，JSON文件存储插件元数据，在Claude Code中文社区发布并呼吁贡献，追踪30天内贡献数量和安装命令复制次数。",
+    "first_step_en": "**What**: Build Prompt Plugin Hub v0.1 — a static site hosting 50 Skill Markdown files curated from the Claude Code community and white paper case studies, with category browsing, keyword search, and one-click-copy install commands.\n\n**Why**: Validate two critical hypotheses: will users discover and install Skill plugins through a centralized platform, and will creators contribute high-quality Skills? Both must be true for the two-sided platform to work.\n\n**Who/How**: 1 frontend engineer + 1 content editor, 1 week. Host on GitHub Pages, store plugin metadata in JSON, launch in the Claude Code community with a contribution call, track contribution count and install-command copy rate over 30 days.",
+    "cc_anchor": "15_Skill加载基础设施完全解析.md — Markdown+YAML frontmatter格式 + 六种来源按需加载",
+    "cc_anchor_en": "15_Skill_Loading_Infrastructure_Deep_Dive.md — Markdown + YAML frontmatter format + on-demand loading from six sources",
+    "status": "proposed",
+    "plain_explanation": "想象一个图书馆，以前要捐书需要出版一本真正的书——排版、印刷、ISBN号，门槛极高。现在改规则了：你只需要写一份格式正确的文档，上传就算捐书成功，别人可以直接借阅。“提示词即插件生态”就是这个意思：过去给AI添加新能力需要写代码、打包、发布；现在只需要写一份带标题信息的Markdown文档，AI就自动获得了这个新能力。这个项目要做一个公共图书馆——任何人贡献文档，所有人可以搜索、下载、使用，像借书一样简单，但所有“书”都是可以直接给AI用的技能插件。",
+    "plain_explanation_en": "Imagine a library where donating a book used to mean publishing an actual book — typesetting, printing, ISBN. Extremely high barrier. Now the rules change: you just write a correctly-formatted document, upload it, and it's a donation. Others can borrow it directly. That's the prompt-as-plugin ecosystem: adding a new capability to AI used to require writing code, packaging, and releasing. Now you just write a Markdown file with a header, and the AI gets the new capability automatically. This project builds the public library — anyone can contribute a document, everyone can search, download, and use, as simple as borrowing a book. Except every 'book' is a skill plugin the AI can use directly.",
+    "why_it_matters": "**市场需求**：普通用户有大量使用AI的特定场景需求，但无法通过代码实现插件。Markdown Plugin模式把创作门槛降低到“会写文档就行”，这个需求群体比会写代码的开发者大10倍以上。\n\n**竞争空白**：npm面向开发者，GPT Store需要OpenAI账号且质量参差，Hugging Face专注模型。没有专门聚焦“Markdown格式AI能力插件”的发现和分发平台。\n\n**时机窗口**：Claude Code的Skill系统是刚出现的新范式，生态建设有先发优势。WordPress插件生态证明了“低门槛创作+中心化发现”模式的网络效应。",
+    "why_it_matters_en": "**Market Need**: Non-technical users have enormous demand for AI customization but can't build plugins in code. The Markdown Plugin pattern drops the creation barrier to 'can you write a document,' and that audience is 10x+ larger than developers who can code.\n\n**Competitive Gap**: npm targets developers, GPT Store requires an OpenAI account and has uneven quality, Hugging Face focuses on models. There's no platform specifically focused on discovering and distributing Markdown-formatted AI capability plugins.\n\n**Timing Window**: Claude Code's Skill system is a brand-new paradigm, and ecosystem-building has strong first-mover advantage. WordPress's plugin ecosystem proved the network effects of 'low-barrier creation + centralized discovery.'",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "核心风险是质量控制。npm靠下载量和star做隐性质量过滤，WordPress靠评分和安装数。如果没有质量机制平台会被垃圾内容淹没。需要在早期就设计好策划机制：人工审核、AI质量评分还是社区投票？另外如果Anthropic官方推出类似功能，差异化在哪？",
+        "comment_en": "The core risk is quality control. npm uses downloads and stars as implicit quality filters; WordPress uses ratings and install counts. Without quality mechanisms, the platform drowns in garbage. Design the curation system on day one: human review, AI quality scoring, community voting? Also: if Anthropic ships this officially, what's the differentiation?"
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "典型的双边平台模型。变现路径相对清晰（付费精选/企业插件认证/企业内网部署版），平台效应一旦形成护城河很强。风险是与Claude Code生态的绑定：如果Anthropic改变Skill系统格式，平台可能需要大量迁移工作。建议评估是否做成框架无关的提示词插件标准。",
+        "comment_en": "Textbook two-sided platform. Monetization path is reasonably clear (paid premium picks, enterprise plugin certification, on-prem enterprise edition), and once platform effects kick in the moat is deep. The risk is tight coupling to the Claude Code ecosystem — if Anthropic changes the Skill format, the platform faces massive migration work. Worth evaluating whether to position as a framework-agnostic prompt-plugin standard."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "每天用Claude做不同类型的工作，每次都要重新解释偏好和格式要求非常麻烦。如果有地方搜索“帮我写周报的提示词插件”下载就能用，这个需求太真实了。但担心：插件会不会在模型更新后失效？有没有版本管理？使用插件时会不会有安全风险？",
+        "comment_en": "I use Claude for a dozen different tasks every day, and re-explaining my preferences and format requirements every time is exhausting. If I could search 'weekly-report writing prompt plugin' and just install it, that's a hyper-real need. My worries: will the plugin break when the model updates? Is there version management? Are there security risks from installing someone else's plugin?"
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "技术上最容易启动的蓝图之一，静态网站+GitHub仓库就能跑起来。真正挑战在内容运营：50个高质量种子Skill文件从哪里来？另外Skill文件安全审查需要在第一天就想清楚——Markdown里可以包含任意指令，恶意Skill会被用户安装执行。",
+        "comment_en": "Technically one of the easiest blueprints to launch — static site plus GitHub repo and you're running. The real challenge is content operations: where do 50 high-quality seed Skill files come from? Also, Skill file security review has to be solved on day one — Markdown can contain arbitrary instructions, and malicious Skills get installed and executed by users."
+      }
+    ],
+    "confidence": "has_signal"
+  },
+  {
+    "id": "BLP-012",
+    "title": "多模型协作编排框架——分歧信号驱动的不确定性引擎",
+    "title_en": "Disagreement-Driven Uncertainty Engine for Multi-Model Orchestration",
+    "description": "当两个AI对同一个问题给出不同答案，这个分歧本身比任何一个AI的'我不确定'更可靠。但目前所有多Agent框架都在做投票或best-of-N，没人利用分歧信号。做一个专门把'AI之间吵架'变成'可量化不确定性'的编排框架。",
+    "description_en": "When two AIs give different answers to the same question, that disagreement itself is more reliable than either AI's self-reported 'I'm not sure.' But every multi-agent framework today either votes or does best-of-N — nobody actually uses the disagreement signal. Build an orchestration framework that turns 'AIs arguing with each other' into quantifiable uncertainty.",
+    "feasibility": "medium",
+    "value": "high",
+    "evidence": [
+      "CC的Scratchpad用LWW丢弃分歧信号而非利用",
+      "SPK-126 Cursor从平等架构失败转向分层架构的教训",
+      "SPK-213 LWW策略暗示AI协作不需要强一致性",
+      "多Agent校准比单模型校准更可靠的理论基础"
+    ],
+    "evidence_en": [
+      "CC's Scratchpad uses last-write-wins, discarding disagreement signal instead of using it",
+      "SPK-126 — Cursor's failure pivoting from peer-equal architecture to hierarchical architecture",
+      "SPK-213 — the LWW strategy implies AI collaboration doesn't need strong consistency",
+      "Theoretical basis: multi-agent calibration is more reliable than single-model calibration"
+    ],
+    "from_sparks": [
+      "SPK-002",
+      "SPK-126",
+      "SPK-213",
+      "SPK-234",
+      "SPK-016"
+    ],
+    "first_step": "**做什么**：实现DivergeDetector模块——输入N个Agent对同一问题（优先支持分类型和评分型问题）的回答，计算分歧度评分（0-1区间），标注分歧维度，输出推荐处理策略（自动采用/加权投票/人工介入），打包为Python库并附3个真实案例demo。\n\n**为什么做**：在少量资源投入下验证核心假设：“分歧信号是否比单模型置信度分数更准确地预测答案可靠性”——这个假设如果成立，就有了坚实技术基础。\n\n**谁来做/怎么做**：一名有NLP和统计背景的工程师，2-3周。先在分类问题上实现基于答案分布的基础分歧分数（熵值），在3个真实场景上手动标注50个样本验证相关性，在Hugging Face Spaces发布可交互demo。",
+    "first_step_en": "**What**: Implement a DivergeDetector module: take N agents' answers to the same question (start with classification and scoring tasks), compute a 0-1 disagreement score, annotate the dimensions of disagreement, and output a recommended strategy (auto-accept / weighted vote / human-in-the-loop). Package as a Python library with three real-world demo cases.\n\n**Why**: Validate the core hypothesis with minimal resources: does disagreement signal predict answer reliability more accurately than single-model confidence scores? If yes, we have a solid technical foundation.\n\n**Who/How**: One engineer with NLP and statistics background, 2-3 weeks. Start with basic entropy-based disagreement scoring on classification tasks, manually label 50 samples across 3 real scenarios to validate correlation, publish an interactive demo on Hugging Face Spaces.",
+    "cc_anchor": "06_Agent编排.md §3.1 — coordinatorMode.ts Synthesis阶段 + Scratchpad LWW共享状态",
+    "cc_anchor_en": "06_Agent_Orchestration.md §3.1 — coordinatorMode.ts Synthesis phase + Scratchpad last-write-wins shared state",
+    "status": "proposed",
+    "plain_explanation": "想象一个法庭，两个律师对同一份证据产生激烈争论——一个说“证明有罪”，另一个说“恰恰说明无辜”。这个争论本身就告诉你：这份证据关键，结论不能轻易下。现在的多AI系统做的是投票——10个AI回答同一问题，用多数人答案。但这丢弃了最有价值的信息：谁和谁在哪里产生了分歧，以及为什么。这个项目要做的是：当AI们意见不一致时，把这种不一致量化出来，告诉你“这个问题AI们有70%把握”还是“AI们自己都不确定，你最好人工确认”。",
+    "plain_explanation_en": "Imagine a courtroom where two lawyers argue fiercely over the same piece of evidence — one says 'this proves guilt,' the other says 'this proves innocence.' The argument itself tells you something: this evidence is pivotal, and no conclusion should be rushed. Today's multi-AI systems run a vote — ask 10 AIs the same question, take the majority answer. But that discards the most valuable information: who disagreed with whom, where, and why. This project quantifies disagreement when AIs don't line up, telling you 'the AIs are 70% confident' or 'the AIs themselves aren't sure — you should verify this manually.'",
+    "why_it_matters": "**市场需求**：随着AI被用于高风险决策（代码安全审查、医疗辅助诊断、法律合同分析），“AI给出答案，但不知道该不该信”成为核心痛点。目前没有工具量化多模型间的分歧并转化为可操作的不确定性信号。\n\n**竞争空白**：LangChain/AutoGen提供多Agent协作框架，但聚焦任务分工而非分歧利用；ensemble方法主动丢弃分歧信息。没有任何工具把“分歧度”作为一等输出指标。\n\n**时机窗口**：AI系统校准是学术界热门方向，但缺乏工程实现；2025年AI安全和可靠性领域吸引了大量资本。",
+    "why_it_matters_en": "**Market Need**: As AI gets used for high-stakes decisions (code security review, medical diagnostics, legal contract analysis), 'AI gave an answer but I don't know whether to trust it' becomes the core pain point. No tool today quantifies cross-model disagreement and converts it into actionable uncertainty signal.\n\n**Competitive Gap**: LangChain and AutoGen offer multi-agent collaboration frameworks, but focus on task division rather than disagreement utilization. Ensemble methods actively discard disagreement information. No tool treats 'disagreement' as a first-class output metric.\n\n**Timing Window**: AI system calibration is a hot academic topic but lacks engineering implementation. In 2025, AI safety and reliability attracted substantial capital.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "市场教育成本比较高——需要客户先接受“用多个AI问同一问题”的前提。这个前提在专业场景（安全审计、医疗辅助）更容易成立。建议从高价值垂直场景切入，在那里“多模型交叉验证”已经是最佳实践，再向外扩展。",
+        "comment_en": "Market education cost is high — customers first have to accept the premise of 'ask multiple AIs the same question.' That premise is easier to establish in specialized verticals (security auditing, medical decision support). I'd enter through a high-value vertical where 'multi-model cross-validation' is already best practice, then expand outward."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "高度技术性方向，商业化路径需认真设计。比较有投资吸引力的叙事是：在AI被用于关键决策的行业，“AI置信度量化”可能成为监管要求，先建立技术标准的公司有机会成为认证机构。这个叙事能拉大市场想象空间。",
+        "comment_en": "Highly technical direction — the commercialization path needs deliberate design. The more investable narrative: in industries using AI for critical decisions, 'AI confidence quantification' could become a regulatory requirement, and the company that sets the technical standard first has a shot at becoming the certification body. That narrative expands the TAM story significantly."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "做代码安全审查时确实遇到过：一个AI说有SQL注入风险，另一个说没问题。如果有工具能告诉我“两个AI在这一点上有显著分歧，建议人工复核”，这非常有价值。但需要输出足够直接——不是给我一个数字，而是“这里需要你亲自确认”的明确指令。",
+        "comment_en": "I've hit this in code security review: one AI says there's a SQL injection risk, the other says it's fine. A tool that tells me 'these two AIs significantly disagree here, recommend human review' would be extremely valuable. But the output has to be direct — not a number, but a clear instruction: 'you need to verify this yourself.'"
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "分歧检测比看起来复杂得多：两个AI措辞不同但语义一致，或措辞相似但关键细节不同。需要语义级比较的分歧检测器。分歧阈值的校准需要大量标注数据。建议第一版专注可量化场景（分类/数值问题），避免在语义分歧上过早过度设计。",
+        "comment_en": "Disagreement detection is far more complex than it looks: two AIs may phrase things differently but mean the same thing, or phrase things similarly but differ on key details. You need semantic-level comparison. Calibrating the threshold requires large labeled datasets. Restrict v1 to quantifiable scenarios (classification and numerical tasks) — don't over-design for semantic disagreement too early."
+      }
+    ],
+    "confidence": "has_signal"
+  },
+  {
+    "id": "BLP-013",
+    "title": "上下文健康仪表盘——让用户看到AI正在忘什么",
+    "title_en": "Context Health Dashboard: Show Users What the AI Is Forgetting",
+    "description": "AI对话到后面'变笨'了，你不知道是模型问题还是关键信息被压缩丢了。做一个实时仪表盘，显示当前对话的'记忆健康度'：还记着什么、忘了什么、压缩了几次、系统prompt有效性几分——让用户做知情决策。",
+    "description_en": "Later in a long AI conversation, things get 'dumber' — but you don't know if it's the model or whether key information got compressed away. Build a live dashboard showing the conversation's memory health: what's still remembered, what's forgotten, how many compression passes happened, how effective the system prompt still is — so users can make informed decisions.",
+    "feasibility": "high",
+    "value": "high",
+    "evidence": [
+      "SPK-108 有效容量只有标称的60-70%但用户不知道",
+      "SPK-135 prompt衰减——越跑越久越不听话",
+      "SPK-228 六层压缩都是有损的但用户无感",
+      "SPK-104 MEMORY.md一周溢出用户不知道原因"
+    ],
+    "evidence_en": [
+      "SPK-108 — effective capacity is only 60-70% of nominal, and users have no idea",
+      "SPK-135 — prompt decay: the longer it runs, the less it listens",
+      "SPK-228 — all six compression layers are lossy but users can't perceive it",
+      "SPK-104 — MEMORY.md overflows within a week and users don't know why"
+    ],
+    "from_sparks": [
+      "SPK-108",
+      "SPK-135",
+      "SPK-147",
+      "SPK-228",
+      "SPK-104"
+    ],
+    "first_step": "**做什么**：构建一个浏览器书签脚本（Bookmarklet），在Claude.ai或ChatGPT网页端运行，实时统计当前对话已用字数、系统指令占比，并用简单颜色（绿/黄/红）显示“记忆健康度”。\n\n**为什么做**：验证用户是否真正需要这个信息——如果健康度变红时用户会主动调整对话策略，说明指标有实际价值；如果视而不见，说明展示形式需要重新设计。\n\n**谁来做/怎么做**：一名前端开发者，3-5天。注入页面JS监听DOM变化，统计消息字符总量，对照模型标称上下文窗口计算使用率，无需拦截API请求即可实现MVP验证。",
+    "first_step_en": "**What**: Build a browser bookmarklet that runs on Claude.ai or ChatGPT's web UI, tracking current conversation token usage and system-instruction share in real time, and displaying memory health as a simple green/yellow/red indicator.\n\n**Why**: Validate whether users actually want this information — if they proactively adjust their conversation strategy when it turns red, the metric has real value; if they ignore it, the display needs redesign.\n\n**Who/How**: One frontend developer, 3-5 days. Inject page JS to watch DOM changes, sum total message characters, compute usage rate against the model's nominal context window. No API-level interception needed for MVP validation.",
+    "cc_anchor": "04_查询循环.md — 五层压缩机制(裁剪→剪裁→去冗余→折叠→全文压缩) + tokenBudget概念",
+    "cc_anchor_en": "04_Query_Loop.md — five-layer compression mechanism (trim → prune → dedupe → collapse → full compression) + tokenBudget concept",
+    "status": "proposed",
+    "plain_explanation": "想象你在和一个助手长时间合作，但这个助手有个奇怪毛病——对话越久，越容易“选择性遗忘”你之前交代的事。你不知道他是真的忘了，还是记事本太小只能塞最新的内容。现在有人想做一个“助手状态监视器”，挂在旁边实时显示：这位助手目前还记着你交代的哪些事、哪些重要指令已经被悄悄“挤掉”、他的记事本还剩多少空白页、你一开始给他的工作守则现在还有多少在发挥作用。就好比你雇了一个记忆力越来越差的秘书，终于有了一个“记忆健康体检报告”。",
+    "plain_explanation_en": "Imagine working with an assistant for a long time, and the assistant has a strange quirk — the longer the conversation, the more 'selectively' they forget things you told them. You can't tell if they really forgot or if their notebook is too small and only the latest content fits. Someone wants to build an 'assistant status monitor' that shows in real time: which instructions the assistant still remembers, which important ones got silently 'pushed out,' how many blank pages are left in their notebook, and how much of your original work policy is still in effect. Like hiring a secretary with worsening memory and finally getting a health report on how their memory is doing.",
+    "why_it_matters": "**市场需求**：AI对话工具的重度用户——开发者、研究员、顾问——每天都在经历“上下文衰减”问题，却没有任何工具量化这个现象。用户只能靠直觉感受AI“变笨了”，无法做出理性决策。\n\n**竞争空白**：OpenAI、Anthropic的官方界面都不提供任何上下文健康指标，第三方工具也几乎空白。Cherry Tree、PromptLayer等工具关注成本统计而非记忆健康。\n\n**时机窗口**：2025-2026年是AI工具从“试用期”进入“职业依赖期”的关键拐点——用户开始审视AI工具可靠性边界。随着上下文窗口越来越大，用户反而更难感知“已用多少”。",
+    "why_it_matters_en": "**Market Need**: Heavy AI users — developers, researchers, consultants — hit 'context decay' every day, but no tool quantifies the phenomenon. Users can only intuitively feel the AI 'got dumber' without any basis for rational decisions.\n\n**Competitive Gap**: Neither OpenAI's nor Anthropic's official interfaces offer any context-health metric. Third-party tools are essentially absent. Cherry Tree, PromptLayer, and similar tools focus on cost tracking rather than memory health.\n\n**Timing Window**: 2025-2026 is the inflection point where AI tools move from 'trial period' to 'professional dependency' — users are starting to examine the reliability boundaries. Counterintuitively, as context windows get bigger, users find it even harder to perceive 'how much have I used.'",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "切入点好，但商业模式需想清楚。免费浏览器扩展容易积累用户但很难变现；如果走API层代理路线，延迟和隐私问题会成为企业客户顾虑。建议先验证付费意愿——究竟有多少用户愿意为“看清AI状态”付出哪怕1美元？",
+        "comment_en": "Great wedge, but the business model needs careful thought. Free browser extensions accumulate users easily but are hard to monetize. The API-proxy route creates latency and privacy concerns for enterprise customers. Validate willingness-to-pay first — how many users will pay even $1 for 'visibility into what the AI is doing'?"
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "上下文健康仪表盘本质上是单点功能，防御壁垒不高——大模型厂商随时可以原生集成这个功能。投资价值更多在于它能不能成为更大平台（AI可观测性平台）的入口，而非独立产品长期存活。",
+        "comment_en": "A context-health dashboard is fundamentally a single feature — weak defensibility. Model vendors can build this natively at any time. The investment value is more about whether this becomes the wedge into a larger platform (AI observability), not whether it survives long-term as a standalone product."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "每天用Claude写长文档的研究员，对这个工具有真实需求。但最关心的不是“技术指标”而是行动建议——系统应该告诉我“现在你需要重申核心要求了”，而不只展示百分比数字。如果只是数字仪表盘，可能看两次就不看了。",
+        "comment_en": "I'm a researcher writing long documents with Claude daily, and I genuinely need this. But what I actually care about isn't the technical metric — it's the action recommendation. The system should tell me 'now you need to restate the core requirements,' not just show a percentage. If it's just a number dashboard, I'll check it twice and then ignore it."
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "浏览器扩展拦截API请求方案可行但维护成本高——每次平台更新接口结构就可能失效。核心算法——什么叫“有效记忆”——也需要认真定义，否则指标会失去可信度。",
+        "comment_en": "The browser-extension API-interception approach works but has high maintenance cost — every platform UI update can break it. The core algorithm — what counts as 'effective memory' — also needs rigorous definition, or the metric loses credibility."
+      }
+    ],
+    "confidence": "has_signal"
+  },
+  {
+    "id": "BLP-014",
+    "title": "AI编程生产力真实度量工具——打破'感觉更快'的幻觉",
+    "title_en": "Real AI Coding Productivity Metrics — Break the 'It Feels Faster' Illusion",
+    "description": "资深开发者用AI实际慢了19%但自以为快了20%，AI生成的67%的PR被拒绝。整个行业在用主观感受评估AI工具效果。做一个客观的、数据驱动的AI编程生产力度量工具，终结'感觉论'。",
+    "description_en": "Senior developers using AI are actually 19% slower but believe they're 20% faster. 67% of AI-generated PRs are rejected. The entire industry is evaluating AI tool effectiveness on gut feel. Build an objective, data-driven AI coding productivity measurement tool and end the 'vibes-based' era.",
+    "feasibility": "medium",
+    "value": "high",
+    "evidence": [
+      "METR研究：资深开发者用AI实际慢19%",
+      "Anthropic报告：67.3% AI PR被拒绝",
+      "DORA报告：90%采纳增长=9%bug增长+91%审查时间增长",
+      "GitClear：AI代码4倍重复率"
+    ],
+    "evidence_en": [
+      "METR study: senior developers are 19% slower with AI assistance",
+      "Anthropic report: 67.3% of AI-generated PRs are rejected",
+      "DORA report: 90% increase in AI adoption correlates with 9% more bugs and 91% more review time",
+      "GitClear: AI-generated code has 4x the duplication rate"
+    ],
+    "from_sparks": [
+      "SPK-102",
+      "SPK-103",
+      "SPK-132",
+      "SPK-136",
+      "SPK-112"
+    ],
+    "first_step": "**做什么**：开发一个命令行工具，输入任意Git仓库路径，自动分析过去90天的提交记录，生成一份报告：哪些提交的代码风格高度匹配AI生成模式，以及这些提交的PR通过率和存活天数对比。\n\n**为什么做**：用真实历史数据验证“AI辅助提交的质量是否系统性不同于人工提交”——如果分析结果和METR研究吻合就证明了检测能力有效；如果结论不同本身就是有价值的发现。\n\n**谁来做/怎么做**：一名熟悉Git和Python的后端开发者，1-2周。使用PyDriller解析Git历史，构建启发式规则识别AI生成代码特征，结合GitHub/GitLab API拉取PR状态数据，输出Markdown格式报告。以5-10个开源项目的历史数据做初步验证。",
+    "first_step_en": "**What**: Build a CLI that takes any Git repo path, auto-analyzes the last 90 days of commits, and produces a report: which commits' code style closely matches AI-generation patterns, plus PR acceptance rate and survival-in-days comparison between those and manual commits.\n\n**Why**: Use real historical data to validate whether 'AI-assisted commits systematically differ in quality from manual ones.' If findings match METR's study, detection is working. If they differ, that itself is a valuable finding.\n\n**Who/How**: One backend developer experienced with Git and Python, 1-2 weeks. Use PyDriller to parse Git history, build heuristics to identify AI-generated code signatures, pull PR state data via GitHub/GitLab APIs, output a Markdown report. Run initial validation against 5-10 open-source projects.",
+    "cc_anchor": "10_Token经济学.md — CC自身的token成本追踪方法 + 可观测性章节的数据驱动决策",
+    "cc_anchor_en": "10_Token_Economics.md — CC's own token cost tracking methodology + data-driven decisions from the observability chapter",
+    "status": "proposed",
+    "plain_explanation": "有个研究发现让很多人惊讶：一批经验丰富的程序员用了AI辅助工具后，实际完成任务的速度比不用AI慢了近两成——但他们自己觉得快了两成。就像你买了号称“省油”的新车，感觉每次加油都更放心了，但因为开车变得更随意了总油耗反而涨了。现在想做的是给每个用AI工具的程序员配一个“真实行车记录仪”：客观记录每天写了多少代码、多少通过了审查、多少被退回重写、真正节省了多少时间。用真实数据代替感觉。",
+    "plain_explanation_en": "A surprising research finding: a group of experienced programmers using AI assistance were actually nearly 20% slower at completing tasks — but they themselves believed they were 20% faster. Like buying a new car advertised as 'fuel-efficient' — you feel better at every fill-up, but because you drive more casually, your total fuel consumption actually went up. The idea here is to give every developer using AI tools a 'real drive recorder' — objectively logging how much code was written, how much passed review, how much got sent back for rewrites, and how much time was actually saved. Replace gut feel with real data.",
+    "why_it_matters": "**市场需求**：企业软件工程团队正面临AI工具采购决策压力——CTO需要向董事会证明AI工具订阅预算值得，但目前市场上根本没有客观度量工具，只有厂商自己的宣传数据。\n\n**竞争空白**：现有工程效能工具（DORA指标、LinearB、Jellyfish）不区分“AI辅助”和“人工完成”的提交。这个细分维度目前几乎空白。\n\n**时机窗口**：2025-2026年正是企业AI工具采购从“探索期”进入“续费决策期”的节点——第一批客户用了一两年Copilot/Cursor，现在需要决定是否续费。",
+    "why_it_matters_en": "**Market Need**: Enterprise engineering teams are under AI-tool procurement pressure — CTOs need to show their board that the AI tool subscription was worth it, and the market currently offers no objective measurement, only vendor marketing data.\n\n**Competitive Gap**: Existing engineering-efficiency tools (DORA metrics, LinearB, Jellyfish) don't distinguish 'AI-assisted' from 'manually written' commits. This dimension is essentially empty.\n\n**Timing Window**: 2025-2026 is exactly the transition point where enterprise AI tool purchases move from 'exploration' to 'renewal decision' — the first wave of customers has used Copilot/Cursor for a year or two and now has to decide whether to renew.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "方向对但切入点要谨慎。面向个人开发者很难变现；面向企业必须解决数据权限问题——在员工代码提交上打标签会遇到工会和隐私阻力。建议从自愿参与的个人社区开始积累数据，形成行业基准报告，再以“基准对标服务”向企业收费。",
+        "comment_en": "Right direction, but be careful about the wedge. Individual developers are hard to monetize; enterprise requires solving the data-rights problem — labeling employee commits runs into union and privacy resistance. Start by aggregating data from a voluntary individual community, publish it as an industry benchmark report, then sell 'benchmark comparison as a service' to enterprises."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "METR研究和Anthropic数据是强信号，说明市场存在真实的“信息不对称”商业价值。但要警惕：一旦GitHub Copilot、Cursor等厂商开始提供官方效能报告，第三方工具差异化就很难维持。护城河必须建在“独立性”和“跨工具横向比较”上。",
+        "comment_en": "The METR study and Anthropic data are strong signals — there's real 'information asymmetry' value in this market. But beware: once GitHub Copilot, Cursor, and others start publishing official effectiveness reports, third-party differentiation becomes hard to sustain. The moat has to be built on independence and cross-tool horizontal comparison."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "有点担心这个工具会变成管理层监控手段。如果公司强制接入会本能抵触。但如果自己选择用、数据只有自己看，反而很想知道自己用Cursor到底快了多少。工具的隐私设计和所有权归属比功能本身更重要。",
+        "comment_en": "I worry this tool becomes a management surveillance weapon. If my company mandates it, I'd instinctively resist. But if I opt in myself and only I see the data, I'd genuinely like to know how much faster I actually am with Cursor. The privacy design and data ownership matter more than the feature set itself."
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "最大挑战是“AI辅助”的定义——一行代码如果是AI生成但被人大幅修改，算AI的还是人的？Git历史只能区分谁提交了，无法区分谁写了。需要IDE插件层面埋点才能准确追踪，数据采集链路比看起来复杂得多。",
+        "comment_en": "The hardest question is defining 'AI-assisted' — if a line was generated by AI and then heavily modified by a human, whose is it? Git history only tells you who committed, not who wrote. Accurate tracking requires instrumentation at the IDE plugin level, and the data-collection pipeline is much more complex than it looks."
+      }
+    ],
+    "confidence": "strong_signal"
+  },
+  {
+    "id": "BLP-015",
+    "title": "人机协作UX范式——从'审批疲劳'到'智能信任阶梯'",
+    "title_en": "Human-AI Collaboration UX: From Approval Fatigue to a Smart Trust Ladder",
+    "description": "93%的权限提示被无脑批准，76%的开发者不信任AI重构但76%也拒绝让AI碰生产环境。问题不是'要不要给AI权限'，而是'怎么让信任随经验增长'。做一个渐进式信任系统，新操作严格审批，成功10次后自动放宽。",
+    "description_en": "93% of permission prompts are blindly approved. 76% of developers don't trust AI refactoring, and 76% also refuse to let AI touch production. The real question isn't 'should AI have permission' — it's 'how does trust grow with experience.' Build a progressive trust system: strict approval for new operations, automatic relaxation after 10 successes.",
+    "feasibility": "high",
+    "value": "high",
+    "evidence": [
+      "SPK-101 93%权限被无脑批准说明二元审批失败",
+      "SPK-143 76%拒绝AI碰生产环境说明信任有边界",
+      "CC的Iron Gate连续拒绝降级机制是反向案例",
+      "SPK-206的5字母微确认协议是轻量级人在环的最佳实践"
+    ],
+    "evidence_en": [
+      "SPK-101 — 93% of permissions are blindly approved, proving binary approval has failed",
+      "SPK-143 — 76% refuse to let AI touch production, proving trust has boundaries",
+      "CC's Iron Gate consecutive-denial demotion is a negative-example case",
+      "SPK-206's 5-letter micro-confirmation protocol is the best practice for lightweight human-in-the-loop"
+    ],
+    "from_sparks": [
+      "SPK-101",
+      "SPK-143",
+      "SPK-206",
+      "SPK-214",
+      "SPK-246",
+      "SPK-107"
+    ],
+    "first_step": "**做什么**：为Claude Code的Hook系统开发一个“信任记录器”插件——在每次工具调用前后记录操作类型、用户是否批准、操作是否成功，经过30天积累后生成一份“哪些操作类型值得自动授权”的推荐报告。\n\n**为什么做**：先收集真实的人类-AI协作数据，验证“重复操作确实存在规律性”这个核心前提——如果数据显示某类操作被100%批准从未出错，就为动态信任算法提供了实证基础。\n\n**谁来做/怎么做**：一名熟悉Claude Code Hook机制的开发者，1周完成数据收集版本。利用PreToolUse和PostToolUse Hook事件，将操作记录写入本地SQLite数据库，用Python脚本定期生成操作模式分析报告，暂不实现自动授权只做数据积累和可视化。",
+    "first_step_en": "**What**: Build a 'trust logger' plugin for Claude Code's Hook system — before and after every tool call, record operation type, whether the user approved, and whether it succeeded. After 30 days of data, generate a report recommending which operation types deserve auto-authorization.\n\n**Why**: Collect real human-AI collaboration data first to validate the core premise that 'repeat operations exhibit regular patterns.' If data shows a class of operation is 100% approved with zero errors, we have empirical grounding for a dynamic-trust algorithm.\n\n**Who/How**: One developer familiar with Claude Code's Hook mechanism, 1 week for the data-collection version. Use PreToolUse and PostToolUse hook events, write operation records to a local SQLite database, use a Python script to periodically generate operation-pattern reports. No auto-authorization yet — just data accumulation and visualization.",
+    "cc_anchor": "04_多层防线.md — denialTracking.ts连续拒绝降级 + channelPermissions.ts 5字母微确认 + autoAllowBashIfSandboxed技术信任替代",
+    "cc_anchor_en": "04_Multi-Layer_Defense.md — denialTracking.ts consecutive-denial demotion + channelPermissions.ts 5-letter micro-confirmation + autoAllowBashIfSandboxed technical-trust substitute",
+    "status": "proposed",
+    "plain_explanation": "你刚雇了一个新助手，第一天当然要手把手盯着每一步——帮你发邮件前要先看一遍，帮你订会议室前要先确认。但如果每次发邮件他都停下来问你，三个月后你会抓狂。聪明的管理方式是：做了十次都对的事就不再过问；第一次做新事情或高风险操作才重新严格审查。现在的AI工具不是这样——不管合作多久每次动文件都弹确认框，结果大家养成了“反正就点确认”的坏习惯。这个蓝图要做一套“你可以逐渐信任我”的系统，让AI权限随着良好记录自动进化。",
+    "plain_explanation_en": "When you hire a new assistant, of course you watch every step on day one — review each email before it goes, confirm each meeting room before it's booked. But if they stop and ask you every time after three months, you'll lose your mind. The smart management approach is: once something's been done right ten times, stop asking; only re-scrutinize for new tasks or high-risk operations. Today's AI tools do the opposite — every file touch triggers a confirmation dialog regardless of how long you've been working together. The result: everyone has trained themselves to just click 'confirm' without thinking. This blueprint builds a 'you can trust me gradually' system, where AI permissions auto-evolve based on a track record.",
+    "why_it_matters": "**市场需求**：93%的AI权限提示被无脑批准说明当前二元式权限设计已经失效——制造了虚假安全感同时制造了真实工作流摩擦。这是系统性UX失败。\n\n**竞争空白**：当前所有主流AI编程工具（Cursor、Copilot、Claude Code）的权限系统都是简单开关或一次性授权，没有任何工具实现基于使用历史的动态信任模型。\n\n**时机窗口**：随着AI Agent开始执行高风险操作（部署代码、修改数据库），“如何合理授权”成为企业采购AI工具的核心顾虑。谁先提供既安全又不繁琐的信任框架，就占领企业用户心智。",
+    "why_it_matters_en": "**Market Need**: 93% blind approval of AI permission prompts proves the current binary permission model has failed — it creates false security while generating real workflow friction. This is systematic UX failure.\n\n**Competitive Gap**: Every mainstream AI coding tool today (Cursor, Copilot, Claude Code) uses simple toggles or one-time authorization. Not one implements a dynamic trust model based on usage history.\n\n**Timing Window**: As AI agents start performing high-stakes operations (code deployment, database modification), 'how do we authorize this reasonably' becomes the core concern in enterprise AI tool procurement. Whoever ships a trust framework that's both safe and non-burdensome captures enterprise mindshare.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "商业路径相对清晰——作为SDK卖给企业AI工具开发商或中间件插入现有平台。但核心挑战是标准化：不同企业对“安全操作”定义差异极大，很难做通用信任评分模型。早期可能需要深度绑定一两个垂直行业做定制再泛化。",
+        "comment_en": "The commercial path is reasonably clear — sell as an SDK to enterprise AI tool vendors, or insert as middleware into existing platforms. The core challenge is standardization: different enterprises define 'safe operation' very differently, and a universal trust-scoring model is hard to build. Early on, you may need to deeply partner with one or two vertical industries for custom implementations, then generalize."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "最有可能成为“隐形基础层”的机会之一。一旦信任框架成为行业默认标准，切换成本极高护城河很深。但要警惕研究论文化风险——容易停在学术讨论层面。必须有一个“强制落地”的场景。",
+        "comment_en": "One of the most likely 'invisible foundation layer' opportunities. Once a trust framework becomes industry default, switching costs are enormous and the moat is deep. But watch the 'research-paper trap' — ideas like this easily stall in academic-discussion mode. You need a forcing-function scenario that compels real-world deployment."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "最担心的是：如果系统自动“升级”AI权限出了问题谁负责？作为工程团队负责人，需要能随时说清楚“为什么AI有权限动这个文件”。信任阶梯的每一步都需要清晰审计日志，不然合规部门不会放行。",
+        "comment_en": "My biggest concern: if the system auto-escalates AI permissions and something goes wrong, who's responsible? As an engineering team lead, I need to be able to explain on demand 'why does the AI have permission to touch this file.' Every rung of the trust ladder needs a clear audit log, or compliance will never sign off."
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "CC的denialTracking.ts实现其实很简单——只是计数连续拒绝次数。真正的信任阶梯需要更复杂的状态机：操作类型分级、成功率加权、时间衰减、异常操作触发降级。如何在不同企业环境中校准参数是真正的工程挑战。",
+        "comment_en": "CC's denialTracking.ts implementation is actually very simple — it just counts consecutive denials. A real trust ladder needs a much more complex state machine: operation-type tiers, success-rate weighting, time decay, anomalous-operation demotion triggers. Calibrating parameters across different enterprise environments is the real engineering challenge."
+      }
+    ],
+    "confidence": "strong_signal"
+  },
+  {
+    "id": "BLP-016",
+    "title": "AI源码解剖即服务——企业级AI工具独立评测",
+    "title_en": "AI Source Autopsy as a Service: Independent Enterprise AI Tool Evaluation",
+    "description": "我们证明了从1884个文件到30万字深度分析的方法是可复现的。把这套方法论变成一个服务：企业CTO想评估一个AI工具，我们提供源码行号级精度的独立第三方深度报告。Gartner靠猜，我们靠源码。",
+    "description_en": "We've proven that a methodology scaling from 1,884 files to 300,000 words of deep analysis is reproducible. Turn that methodology into a service: when enterprise CTOs want to evaluate an AI tool, we deliver an independent third-party deep report with line-number-level source precision. Gartner guesses. We read source.",
+    "feasibility": "high",
+    "value": "high",
+    "evidence": [
+      "本项目自身就是存在证明：30万字+120个洞察",
+      "SPK-012 内部版vs公开版差异分析有巨大信息价值",
+      "SPK-128 反蒸馏标志等不透明行为需要独立审计",
+      "企业CTO缺乏评估AI工具技术成熟度的独立信源"
+    ],
+    "evidence_en": [
+      "This project itself is the existence proof: 300,000 words + 120 insights",
+      "SPK-012 — the internal-versus-public version diff analysis has enormous informational value",
+      "SPK-128 — opaque behaviors like anti-distillation markers require independent auditing",
+      "Enterprise CTOs lack independent sources for evaluating AI tool technical maturity"
+    ],
+    "from_sparks": [
+      "SPK-019",
+      "SPK-013",
+      "SPK-012",
+      "SPK-128"
+    ],
+    "first_step": "**做什么**：以本Claude Code分析项目为素材，整理一份公开的“AI工具源码评测方法论白皮书”，包含评测维度框架、分析流程SOP、报告模板，并发布为免费内容，同时附上付费报告的服务说明。\n\n**为什么做**：免费白皮书是最高效的获客漏斗——有需求的CTO会主动搜到它，看完后对付费报告产生兴趣；同时写作过程本身会迫使方法论结构化。\n\n**谁来做/怎么做**：本项目核心作者直接操刀，2周。输出：1份2万字方法论白皮书（含评测维度定义、Claude Code实战案例片段、报告结构模板）+ 1页服务介绍落地页。通过Hacker News、独立开发者社群发布。",
+    "first_step_en": "**What**: Using this Claude Code analysis project as the source material, package a public 'Methodology for Evaluating AI Tool Source Code' white paper covering the evaluation-dimension framework, analysis-flow SOP, and report templates. Publish for free, with a service description attached for paid reports.\n\n**Why**: A free white paper is the highest-efficiency acquisition funnel — CTOs with real need will find it organically, read it, and warm up to the paid report. The writing process itself forces the methodology into structured form.\n\n**Who/How**: Core authors of this project, 2 weeks. Deliverables: a 20,000-word methodology white paper (evaluation-dimension definitions, Claude Code case-study excerpts, report structure templates) plus a one-page service landing page. Distribute via Hacker News and independent developer communities.",
+    "cc_anchor": "meta层面 — 本项目的方法论本身：逐文件逐函数级分析 + 源码行号精度(如memdir.ts第57-103行) + 多Agent协作生产",
+    "cc_anchor_en": "Meta-level — the methodology of this project itself: file-by-file, function-by-function analysis + source-line precision (e.g., memdir.ts lines 57-103) + multi-agent collaborative production",
+    "status": "proposed",
+    "plain_explanation": "想象你要买一台昂贵的医疗设备，厂商说它有多好多好，但你作为医院院长不可能完全相信厂商的自我评价。你需要一份独立的、权威的第三方检测报告，说清楚这台机器的实际性能边界、已知缺陷、适用和不适用场景。现在AI工具市场缺的正是这种独立评测——每个厂商都说自己最好，没有人用“打开机器盖子看里面怎么转”的方式做客观报告。我们做Claude Code源码分析等于证明了“拆机评测法”可行：从原始代码出发写出行号级精准的深度分析。现在要把这套方法论包装成服务。",
+    "plain_explanation_en": "Imagine buying an expensive piece of medical equipment. The manufacturer tells you how great it is, but as the hospital director you can't fully trust a self-assessment. You need an independent, authoritative third-party report spelling out the machine's real performance boundaries, known defects, and suitable versus unsuitable scenarios. What the AI tool market lacks today is exactly this kind of independent evaluation — every vendor claims to be the best, and no one does the 'open the machine and see how it actually works' style of objective reporting. Our Claude Code source analysis proved the 'teardown evaluation method' is viable: starting from raw code, we produced line-number-precise deep analysis. Now we package that methodology as a service.",
+    "why_it_matters": "**市场需求**：企业AI工具采购正从“试点”进入“规模化部署”，决策金额从万元跳升到百万千万级。在这个量级CTO需要独立信源，而目前不存在这样的服务。\n\n**竞争空白**：独立安全审计（SOC2、渗透测试）是成熟市场，但“AI工具技术架构深度评测”几乎空白。没有公认机构、没有标准方法论——先入者可以定义标准。\n\n**时机窗口**：AI工具的“源码可获得性”正在成为企业采购隐性要求——越来越多安全部门要求审查AI工具实现细节。同时AI工具市场正处于快速整合期（2025-2026年），企业CTO面临“选Copilot还是Cursor还是Claude Code”的重大决策，迫切需要独立第三方深度对比报告。本项目恰好在这个时机点证明了方法论的可行性。",
+    "why_it_matters_en": "**Market Need**: Enterprise AI tool procurement is moving from 'pilots' to 'scaled deployment,' and decision amounts are jumping from thousands to millions of dollars. At this scale CTOs need independent sources — and no such service exists today.\n\n**Competitive Gap**: Independent security auditing (SOC 2, penetration testing) is a mature market, but 'AI tool technical architecture deep evaluation' is nearly empty. No recognized authority, no standard methodology — first movers get to define the standard.\n\n**Timing Window**: AI tool 'source code availability' is becoming an implicit enterprise procurement requirement — more security departments are demanding to review implementation details. Meanwhile, the AI tool market is in a rapid consolidation phase (2025-2026), with enterprise CTOs facing 'Copilot or Cursor or Claude Code' decisions and urgently needing independent third-party deep comparison reports. This project has proven methodological feasibility at exactly this inflection point.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "少数几个“现金流可以很快出现”的方向——服务型业务不需要等产品打磨期。但人力密集是硬伤：每份深度报告可能需要数周投入，难以规模化。要做成公司而非个人顾问，必须解决方法论的可复制性问题。",
+        "comment_en": "One of the few directions where cash flow can appear quickly — services don't require a product-polishing period. But the labor intensity is brutal: each deep report takes weeks to produce and doesn't scale. To build a company rather than a solo consultancy, you have to solve the methodology-reproducibility problem."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "高利润低规模业务——每个客户付费高但数量天花板明显。如果定位成精品顾问每年10-20个大客户完全可以支撑小团队，但不太适合VC逻辑。更有价值的形态是把方法论做成自动化平台，人工只负责最终审查。",
+        "comment_en": "High-margin, low-volume business — each customer pays a lot but the count ceiling is low. Positioned as a boutique consultancy with 10-20 large clients per year, it can easily support a small team, but it doesn't fit VC math. The more investable form is productizing the methodology as an automated platform where humans only do final review."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "作为金融公司CTO确实需要这种报告，但有核心顾虑：能评测的前提是源码可获得，但大多数AI工具（包括OpenAI、Anthropic的API）是完全黑盒的。如果报告只能覆盖开源或泄露源码的工具，实际能帮到决策的场景就有限了。",
+        "comment_en": "As a CTO at a financial firm, I genuinely need this kind of report, but I have a core concern: the evaluation presupposes source availability, yet most AI tools (including OpenAI's and Anthropic's APIs) are complete black boxes. If the report only covers open-source or leaked-source tools, the decision-relevant coverage is narrow."
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "本项目方法论是真实可用的，但需要标准化才能成为服务产品。目前分析流程依赖特定人的判断——哪些代码值得深入、哪些设计有问题——这些是经验依赖的。要做成SOP需要把分析框架拆解成可量化检查清单。",
+        "comment_en": "The project's methodology genuinely works, but it needs to be standardized to become a productized service. The current analysis flow relies on specific individuals' judgment — which code is worth deep-diving, which designs are suspect — all experience-dependent. Turning this into an SOP means decomposing the analysis framework into quantifiable checklists."
+      }
+    ],
+    "confidence": "has_signal"
+  },
+  {
+    "id": "BLP-017",
+    "title": "Dream记忆整合通用引擎——知识工作者的'夜间自动整理'",
+    "title_en": "Dream Consolidation Engine: Overnight Auto-Organization for Knowledge Workers",
+    "description": "CC的Dream机制在空闲时自动整理跨会话的记忆碎片。人类知识工作者同样需要但永远不做这件事。做一个通用引擎，接入Obsidian/Notion/日历/邮件，每天夜间自动整合产出'今日洞察'和'跨项目关联'。",
+    "description_en": "CC's Dream mechanism automatically consolidates cross-session memory fragments during idle time. Human knowledge workers need the same thing but never actually do it. Build a general-purpose engine that plugs into Obsidian, Notion, calendar, and email, consolidating every night to produce 'today's insights' and 'cross-project connections.'",
+    "feasibility": "medium",
+    "value": "high",
+    "evidence": [
+      "CC的autoDream.ts验证了时间门控+信息密度门控+后台执行的模式",
+      "SPK-201教育场景验证了Dream机制跨领域迁移的可行性",
+      "40%的Agent项目失败根因是记忆管理(SPK-149)",
+      "知识工作者有'整理笔记'的刚需但执行率极低"
+    ],
+    "evidence_en": [
+      "CC's autoDream.ts validated the pattern of time gating + information-density gating + background execution",
+      "SPK-201 — education scenario validates the cross-domain transfer of the Dream mechanism",
+      "40% of agent project failures root-cause to memory management (SPK-149)",
+      "Knowledge workers have strong demand for 'organizing notes' but extremely low execution rate"
+    ],
+    "from_sparks": [
+      "SPK-001",
+      "SPK-008",
+      "SPK-201",
+      "SPK-220",
+      "SPK-149",
+      "SPK-014"
+    ],
+    "first_step": "**做什么**：开发一个Obsidian插件，每天早上启动Obsidian时（而非夜间后台运行），自动扫描过去24小时新建或修改的笔记，调用本地Ollama或Claude API生成一段200字以内的“昨日要点与关联提示”，显示在侧边栏。\n\n**为什么做**：用“早晨启动时触发”替代“夜间后台常驻”，绕开进程守护和设备休眠的技术难点，快速验证最核心的价值假设——AI自动生成的跨笔记关联是否对用户有实际价值。\n\n**谁来做/怎么做**：一名熟悉TypeScript和Obsidian插件开发的开发者，2周完成可用版本。Obsidian插件API读取最近修改文件列表，构建整合提示词，调用LLM API生成摘要，以自己的Obsidian库作为第一个测试环境。",
+    "first_step_en": "**What**: Build an Obsidian plugin that, on morning Obsidian startup (not as a nighttime background process), auto-scans notes created or modified in the last 24 hours, calls local Ollama or the Claude API to generate a ≤200-word 'yesterday's key points and connection prompts,' and displays it in the sidebar.\n\n**Why**: Using 'trigger at morning startup' instead of 'resident nighttime background process' sidesteps the technical pain of process persistence and device sleep, letting us quickly validate the core value hypothesis — whether AI-generated cross-note connections actually matter to users.\n\n**Who/How**: One developer familiar with TypeScript and Obsidian plugin development, 2 weeks to a usable version. Use the Obsidian plugin API to read the recently-modified-file list, construct the consolidation prompt, call the LLM API to generate summaries. Dogfood on your own Obsidian vault as the first test environment.",
+    "cc_anchor": "autoDream.ts — 三道门槛触发(≥24h + ≥5 sessions + 无并发锁) + runForkedAgent()隔离执行 + 四阶段(orient→gather→consolidate→prune)",
+    "cc_anchor_en": "autoDream.ts — three-threshold trigger (≥24h + ≥5 sessions + no concurrency lock) + runForkedAgent() isolated execution + four phases (orient → gather → consolidate → prune)",
+    "status": "proposed",
+    "plain_explanation": "你每天工作结束后，桌上堆着一堆便利贴、一个打了一半的文档、三个没发出去的草稿邮件、还有十几个没读完的文章链接。这些东西单独看都不完整，但如果有人帮你在晚上整理一遍，告诉你“今天这三件事其实是同一个问题的不同侧面”“你昨天写的思路和上周看的文章可以结合起来”——第二天早上你看到的不是乱摊子而是一份精炼的“今日洞察”。Claude Code有一个叫Dream的机制在用户不用电脑时自动做这个整理。现在想做的就是把这个“夜间大脑整理员”做成通用工具，接入你平时用的笔记软件、日历、邮件。",
+    "plain_explanation_en": "At the end of a workday, your desk has a pile of sticky notes, a half-finished document, three unsent draft emails, and a dozen unread article links. None of them feel complete on their own, but if someone organized them overnight and told you 'these three things are actually different facets of the same problem' or 'the idea you wrote yesterday combines with the article you read last week' — the next morning you'd see a crisp summary instead of a mess. Claude Code has a mechanism called Dream that does this automatically when the user isn't at the computer. The goal here is to turn that 'overnight brain organizer' into a general-purpose tool connected to your note-taking app, calendar, and email.",
+    "why_it_matters": "**市场需求**：知识工作者面临“信息摄入过载、整合能力不足”的普遍困境。现有工具（Notion、Obsidian、Roam）解决“存储和检索”问题，但没有工具解决“自动整合与关联”问题。\n\n**竞争空白**：Mem.ai聚焦搜索，Reflect聚焦双链笔记，Rewind专注记录回放——没有产品以“跨应用夜间整合”为核心价值主张。\n\n**时机窗口**：Obsidian插件生态和Notion API的成熟度在2024-2025年达到支撑“夜间Agent”类应用的临界点；同时本地大模型（Ollama）解决了私密笔记数据上传云端的隐私顾虑。",
+    "why_it_matters_en": "**Market Need**: Knowledge workers universally face 'information overload plus consolidation deficit.' Existing tools (Notion, Obsidian, Roam) solve storage and retrieval, but no tool solves auto-consolidation and connection-finding.\n\n**Competitive Gap**: Mem.ai focuses on search, Reflect on bidirectional-link notes, Rewind on recording replay. No product's core value proposition is 'cross-application overnight consolidation.'\n\n**Timing Window**: Obsidian's plugin ecosystem and Notion's API matured enough in 2024-2025 to support nighttime-agent applications. Simultaneously, local LLMs (Ollama) resolved the privacy concern around uploading private note data to the cloud.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "变现路径不清晰是最大风险。知识管理工具历史上很难收费——用户觉得这是“应该免费的”基础功能。Readwise是少数成功案例但它靠精准的卡片复习功能。夜间整合的价值主张——“帮你发现关联”——需要更大力气让用户相信值得付费。",
+        "comment_en": "Unclear monetization is the biggest risk. Knowledge-management tools have historically been hard to charge for — users feel this should be a free baseline feature. Readwise is one of the rare successes, but it earned that by nailing precise flashcard review. The 'help you find connections' value proposition of overnight consolidation will take significant effort to convince users is worth paying for."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "知识管理工具赛道在2022-2023年被过度投资了，很多产品死在“用户粘性不足”上。用户刚开始觉得神奇，但一两个月后整合出的“洞察”质量不稳定就放弃了。更适合作为大产品的功能模块而非早期创业切入点。",
+        "comment_en": "The knowledge-management space was over-funded in 2022-2023, and many products died on 'insufficient user retention.' Users find it magical at first, but within a month or two, when the 'insights' quality becomes uneven, they quit. This is better positioned as a feature module of a larger product than as an early-stage startup wedge."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "用Obsidian两年了，每次试新整合工具的体验都是前两周觉得太酷了，第三周发现“整合”出的关联大多数是我早就知道的废话，第四周关掉。最大挑战是“洞察质量”——如果AI只是把相似主题笔记凑在一起而不是发现反直觉的关联，宁愿自己整理。",
+        "comment_en": "I've used Obsidian for two years, and every time I try a new consolidation tool the pattern is the same: weeks 1-2 feel magical, week 3 I realize most of the 'connections' are obvious stuff I already knew, week 4 I turn it off. The core challenge is insight quality — if AI just groups similar-topic notes together rather than surfacing counterintuitive connections, I'd rather organize them myself."
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "autoDream.ts是有启发性的参考，但它的触发条件在个人设备上实现比服务器端复杂——需要处理设备睡眠、网络中断、进程守护等问题。Obsidian插件API限制也比较多，后台常驻进程在移动端几乎不可用。纯桌面端场景可行但覆盖范围窄。",
+        "comment_en": "autoDream.ts is a useful reference, but implementing its trigger conditions on personal devices is harder than on the server side — you have to handle device sleep, network interruption, process persistence, etc. Obsidian's plugin API is also relatively limited, and background-resident processes are essentially unavailable on mobile. Desktop-only is feasible but the coverage is narrow."
+      }
+    ],
+    "confidence": "has_signal"
+  },
+  {
+    "id": "BLP-018",
+    "title": "企业AI治理分层策略平台——AI Policy Hub",
+    "title_en": "AI Policy Hub: Enterprise AI Governance with Layered Policy Management",
+    "description": "企业部署AI最头疼的事：IT想管住底线但不想妨碍开发者灵活性。CC的四层CLAUDE.md加载机制精确解决了这个矛盾。把它产品化成SaaS——IT管理员在控制台写'不准在代码中硬编码密码'，这条策略自动注入所有开发者的AI工具。",
+    "description_en": "The biggest headache in enterprise AI deployment: IT wants to lock down the bottom line without hampering developer flexibility. CC's four-layer CLAUDE.md loading mechanism solves exactly this tension. Productize it as SaaS — an IT admin writes 'no hard-coded passwords in code' in the console, and that policy auto-injects into every developer's AI tooling.",
+    "feasibility": "medium",
+    "value": "high",
+    "evidence": [
+      "CC的Managed→User→Project→Local四层机制已在生产环境验证",
+      "SPK-234的追加vs替换语义解决了配置合并难题",
+      "SPK-225的声明式优先级解决了配置冲突调试问题",
+      "企业AI治理目前靠政策文档+人工审查效率极低"
+    ],
+    "evidence_en": [
+      "CC's Managed → User → Project → Local four-layer mechanism has been validated in production",
+      "SPK-234's append-versus-replace semantics solves the config-merge problem",
+      "SPK-225's declarative priority solves the config-conflict debugging problem",
+      "Enterprise AI governance today relies on policy documents plus manual review — extremely inefficient"
+    ],
+    "from_sparks": [
+      "SPK-211",
+      "SPK-234",
+      "SPK-225",
+      "SPK-232",
+      "SPK-004"
+    ],
+    "first_step": "**做什么**：构建一个命令行工具ai-policy-lint，输入三层配置文件（企业策略YAML+项目级CLAUDE.md+个人配置），合并后输出“最终生效策略”全览+冲突报告+覆盖链追踪，让管理员一眼看清“为什么这条规则没生效”。\n\n**为什么做**：企业AI治理的第一痛点不是“制定策略”而是“确认策略生效了”。一个能可视化策略合并结果的工具，立刻能帮安全团队回答审计时最常被问的问题：“你怎么确保每个开发者的AI工具都遵守了公司策略？”\n\n**谁来做/怎么做**：一名Node.js工程师，2周完成CLI v0.1。参考CLAUDE.md四层加载优先级逻辑，实现配置合并引擎+冲突检测+覆盖链追踪，输出彩色终端报告。以3个模拟企业场景做demo，在企业架构师社群发布收集反馈。",
+    "first_step_en": "**What**: Build a CLI called `ai-policy-lint` that takes three layers of config (enterprise policy YAML + project-level CLAUDE.md + personal config), merges them, and outputs a 'final effective policy' overview, conflict report, and override-chain trace — so admins can see at a glance 'why did this rule not take effect.'\n\n**Why**: The top pain point in enterprise AI governance isn't 'defining policy' — it's 'confirming policy actually took effect.' A tool that visualizes merged policy results instantly lets security teams answer the most common audit question: 'How do you ensure every developer's AI tool complies with company policy?'\n\n**Who/How**: One Node.js engineer, 2 weeks to CLI v0.1. Model on CLAUDE.md's four-layer loading priority logic; implement the config-merge engine, conflict detection, and override-chain tracing; produce colored terminal reports. Demo with 3 simulated enterprise scenarios, release in enterprise-architect communities for feedback.",
+    "cc_anchor": "06_CLAUDE_md加载系统完全解析.md — 四层加载优先级 + isClaudeMdExcluded()不可排除机制 + 11_配置治理.md 九层设置系统",
+    "cc_anchor_en": "06_CLAUDE_md_Loading_System_Deep_Dive.md — four-layer loading priority + isClaudeMdExcluded() non-excludable mechanism + 11_Configuration_Governance.md nine-layer settings system",
+    "status": "proposed",
+    "plain_explanation": "想象一个连锁学校系统：教育局规定“所有学校不能体罚学生”——这是铁律，任何校长都不能推翻。但每个区可以根据本地情况加自己的规则（“本区学校每天至少一小时户外活动”），每个学校还可以制定自己的特色课程安排。层层叠加，但底线不可动摇。企业管理AI工具的需求一模一样：IT部门要守住安全底线（“不准在代码里写密码”），但又不想限制每个开发者按自己的习惯配置AI助手。Claude Code有一套精巧的四层规则系统完美解决了这个矛盾。BLP-018要做的就是把这套规则系统做成一个管理平台，让企业IT像教育局管理学校一样——守住底线的同时给每一层足够的自主空间。",
+    "plain_explanation_en": "Imagine a district school system: the board of education rules that 'no school may use corporal punishment' — that's an iron rule, no principal can override it. But each district can add its own rules based on local conditions ('schools in this district need at least one hour outdoors daily'), and each school can design its own specialty curriculum. Layers stack, but the bottom line doesn't move. Enterprise AI tool management has the identical shape: IT needs to hold the security floor ('no passwords in code') without constraining how each developer configures their AI assistant. Claude Code has an elegant four-layer rule system that solves this tension. BLP-018 turns that system into a management platform — letting enterprise IT manage like a school board: hold the floor while giving every layer room to breathe.",
+    "why_it_matters": "**市场需求**：企业AI采用率飙升但治理工具严重滞后。IT安全团队面临的典型困境是：知道需要规范AI工具使用，但找不到技术手段强制执行。目前唯一的办法是发政策邮件+定期人工抽查——效率极低且漏洞百出。\n\n**竞争空白**：MDM（移动设备管理）是成熟市场，但“AI工具策略管理”这个类目几乎不存在。没有产品能做到“IT写一条规则，自动注入所有员工的AI工具”。Claude Code的四层加载机制证明了技术可行性，但还没有人把它产品化。\n\n**时机窗口**：2025-2026年企业AI部署从试点进入全面推广，CTO/CISO同时面临“加速采用”和“保障合规”的双重压力。能同时满足两个需求的治理工具将成为必选项。",
+    "why_it_matters_en": "**Market Need**: Enterprise AI adoption is surging, but governance tooling is badly lagging. The typical IT security dilemma: they know they need to standardize AI tool usage but can't find a technical way to enforce it. The only current approach is policy emails plus periodic manual spot-checks — extremely inefficient and full of holes.\n\n**Competitive Gap**: MDM (mobile device management) is a mature market, but 'AI tool policy management' barely exists as a category. No product today can deliver 'IT writes one rule, it auto-injects into every employee's AI tools.' Claude Code's four-layer loading proves technical feasibility, but no one has productized it.\n\n**Timing Window**: In 2025-2026, enterprise AI deployment moves from pilot to full rollout, and CTOs/CISOs face simultaneous pressure to 'accelerate adoption' and 'ensure compliance.' Governance tools that satisfy both needs become must-haves.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "ToB安全合规赛道客单价高、粘性强，但销售周期长，从接触到签约可能6-12个月。CLI工具是好的敲门砖但转化路径需要设计：免费CLI积累用户→识别企业用户→提供Web控制台+团队管理的付费版。早期建议瞄准100-500人的科技公司，它们有合规压力但还没有专职安全团队。",
+        "comment_en": "B2B security-compliance has high ACV and strong retention, but long sales cycles — 6 to 12 months from first contact to signed contract. The CLI tool is a good icebreaker, but the conversion path needs design: free CLI accumulates users → identify enterprise users → upsell to a paid Web console with team management. Early-stage, target 100-500 person tech companies — they have compliance pressure but no dedicated security team yet."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "AI治理是2025-2026年确定性最高的企业软件细分之一，Gartner预测AI治理工具市场年增长超60%。核心评估点是：团队能否快速适配主流AI工具（不只Claude Code还要支持Cursor、Copilot等），以及能否在Anthropic/OpenAI自己推出企业策略管理功能之前建立足够大的客户基础。",
+        "comment_en": "AI governance is one of the most certain enterprise software subcategories for 2025-2026. Gartner forecasts the AI governance tools market growing 60%+ annually. The core evaluation question: can the team move fast enough to support mainstream AI tools (not just Claude Code but Cursor, Copilot, etc.), and can they build a large enough customer base before Anthropic or OpenAI ship their own enterprise policy management."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "作为200人团队的IT负责人，我最想要的是：在一个地方写下“禁止在AI对话中粘贴客户PII数据”，然后这条规则能自动生效到所有人的Claude Code和Cursor上。如果只支持Claude Code一个工具，对我来说用处有限——我们团队用了4种不同的AI工具，需要统一管理。",
+        "comment_en": "As IT lead for a 200-person team, what I want most: I write 'never paste customer PII into AI chat' in one place, and it auto-takes-effect on everyone's Claude Code *and* Cursor. If it only supports Claude Code, the value to me is limited — our team uses 4 different AI tools and I need to manage them together."
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "CC的四层加载逻辑是极好的设计参考，但产品化时最大的工程挑战是“注入”环节——如何把企业策略可靠地注入到每个员工本地安装的AI工具中？CLAUDE.md是本地文件，企业没有远程推送能力。可能需要一个轻量级Agent常驻在员工机器上同步策略，这涉及到企业软件分发和权限管理的复杂问题。",
+        "comment_en": "CC's four-layer loading logic is a great design reference, but the hardest engineering problem in productization is the injection step — how do you reliably inject enterprise policy into every employee's locally-installed AI tools? CLAUDE.md is a local file; enterprises don't have remote-push capability. You may need a lightweight agent resident on employee machines to sync policy, which opens the full can of worms around enterprise software distribution and permission management."
+      }
+    ],
+    "confidence": "has_signal"
+  },
+  {
+    "id": "BLP-019",
+    "title": "AI代码质量防线——跨文件一致性守卫Agent",
+    "title_en": "AI Code Quality Guard: Cross-File Consistency Agent",
+    "description": "AI改了1个文件但忘了另外19个相关文件。AI代码的重复率是人类的4倍。65%的开发者说AI重构会遗漏上下文。做一个专门的'一致性守卫Agent'——每次AI修改后自动扫描全局不变量、类型一致性、API契约，在PR提交前拦截问题。",
+    "description_en": "AI modified one file but forgot the other 19 related ones. AI code has 4x the duplication rate of human code. 65% of developers say AI refactoring misses context. Build a dedicated consistency-guard agent — after every AI modification, auto-scan for global invariants, type consistency, and API contracts, and block problems before the PR is submitted.",
+    "feasibility": "high",
+    "value": "high",
+    "evidence": [
+      "SPK-120 跨文件一致性是AI最容易出错的地方",
+      "SPK-136 AI代码4倍重复率",
+      "SPK-146 65%开发者报告重构遗漏上下文",
+      "SPK-142 '生产噪音'——AI堆砌无用代码"
+    ],
+    "evidence_en": [
+      "SPK-120 — cross-file consistency is where AI most commonly fails",
+      "SPK-136 — AI code has 4x the duplication rate",
+      "SPK-146 — 65% of developers report refactoring context misses",
+      "SPK-142 — 'production noise': AI piling up useless code"
+    ],
+    "from_sparks": [
+      "SPK-120",
+      "SPK-136",
+      "SPK-146",
+      "SPK-142",
+      "SPK-124"
+    ],
+    "first_step": "**做什么**：构建一个Git pre-commit hook脚本，对每次提交涉及的文件用代码分析器提取修改了哪些公共接口（函数签名、类型定义、导出常量），然后扫描整个仓库找到所有调用方，检查是否有未同步更新的引用，如有则阻止提交并给出具体提示。\n\n**为什么做**：pre-commit hook是零侵入式的切入点——开发者安装后不需要改变任何工作习惯，每次提交自动检查。这也是最容易在团队中推广的形式，一个人装了觉得有用就会推荐给全团队。\n\n**谁来做/怎么做**：一名熟悉AST解析的工程师，2-3周。先支持TypeScript/JavaScript（用ts-morph解析），后续扩展Python和Go。用Git的diff信息缩小扫描范围提升速度，输出友好的修复建议（“你修改了utils.ts第45行的函数签名，但api/routes.ts第12行还在用旧签名”）。",
+    "first_step_en": "**What**: Build a Git pre-commit hook that, for files touched by each commit, uses a code analyzer to extract which public interfaces changed (function signatures, type definitions, exported constants), then scans the entire repo to find all callers and checks for out-of-sync references. If any exist, block the commit with specific guidance.\n\n**Why**: Pre-commit hook is a zero-intrusion wedge — once installed, developers change nothing in their workflow and every commit gets checked automatically. It's also the easiest form to spread within a team — one person installs it, finds it useful, and recommends it to the whole team.\n\n**Who/How**: One engineer familiar with AST parsing, 2-3 weeks. Support TypeScript/JavaScript first (via ts-morph), extend to Python and Go later. Use Git's diff info to narrow scan scope and improve speed. Output friendly fix suggestions ('you modified the function signature at utils.ts:45, but api/routes.ts:12 still uses the old signature').",
+    "cc_anchor": "05_工具运行时.md — StreamingToolExecutor的isConcurrencySafe分类思路 + 文件历史系统的对话轮次级快照",
+    "cc_anchor_en": "05_Tool_Runtime.md — StreamingToolExecutor's isConcurrencySafe classification approach + file-history system's per-turn snapshots",
+    "status": "proposed",
+    "plain_explanation": "想象你在一栋大楼里换了大门的锁，但忘了给保安、物业、停车场管理员都更新新钥匙。结果第二天保安进不了门、快递员无法送货、停车场闸机打不开——一个地方改了，连锁反应导致到处出问题。AI写代码经常犯的就是这个错误：修改了一个文件里的接口定义，但忘了同步更新其他19个引用这个接口的文件。而且AI生成的代码重复率是人类的4倍——同一段逻辑被复制到多个地方，改了一处忘了其他。BLP-019要做的就是一个“换锁提醒员”：每次有人（AI或人）修改代码时，自动检查所有关联的地方是否也更新了。",
+    "plain_explanation_en": "Imagine changing the main-entrance lock in a building but forgetting to give new keys to security, the property manager, and the parking attendant. Next morning security can't get in, deliveries can't enter, the parking gate won't open — you changed one thing, and the chain reaction broke a dozen others. AI writing code makes this exact mistake: it modifies an interface definition in one file but forgets to sync the other 19 files that use it. And AI-generated code has 4x the duplication rate of human code — the same logic copied into multiple places, with modifications to one forgetting the others. BLP-019 is the 'lock-change reminder': every time someone (AI or human) modifies code, it auto-checks whether all connected places were also updated.",
+    "why_it_matters": "**市场需求**：AI辅助编程的普及速度远超AI代码质量工具的发展。65%的开发者报告AI重构会遗漏上下文，但目前的解决方案只是“让AI重新跑一遍”或“人工逐文件检查”——前者不可靠，后者耗时。\n\n**竞争空白**：ESLint/TypeScript编译器能检查单文件内的错误，但跨文件一致性（“你改了接口但调用方没更新”）不在它们的能力范围内。现有CI/CD流程中没有专门针对这个问题的工具。\n\n**时机窗口**：AI代码的比例在快速增长（Anthropic报告AI代码已占部分项目新增代码的30%+），跨文件不一致问题只会越来越严重。现在做这个工具，正好踩在问题变成产业级痛点的前夜。",
+    "why_it_matters_en": "**Market Need**: AI-assisted coding is spreading far faster than AI code-quality tooling. 65% of developers report AI refactoring misses context, but the only current solutions are 'run AI again' or 'check every file by hand' — the first is unreliable, the second is expensive.\n\n**Competitive Gap**: ESLint and the TypeScript compiler check single-file errors, but cross-file consistency ('you changed the interface, callers didn't update') is outside their scope. Today's CI/CD pipelines have no dedicated tool for this problem.\n\n**Timing Window**: AI-generated code share is growing fast (Anthropic reports AI code is already 30%+ of new code in some projects). Cross-file inconsistency will only get worse. Building this tool now lands right before the problem becomes industry-wide acute pain.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "pre-commit hook是极好的分发方式——零服务器成本、零注册门槛，用户安装就能用。变现路径可以是：开源基础版+企业版（支持自定义规则、团队统一配置、违规报告仪表盘）。核心挑战是性能——大型monorepo扫描全仓库可能需要数十秒，这会严重影响开发者体验。",
+        "comment_en": "Pre-commit hook is a great distribution mechanism — zero server cost, zero signup friction, install and go. Monetization path: open-source free tier plus an enterprise version (custom rules, team-unified config, violation-report dashboard). The core challenge is performance — scanning a large monorepo may take tens of seconds, and that seriously degrades developer experience."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "代码质量工具是被验证的商业模式（SonarQube、Snyk都是10亿美元级公司），AI代码质量是这个赛道的自然延伸。关键问题是能否做成平台而非单点工具——如果只做“跨文件一致性”，市场太窄；如果能扩展成“AI代码质量全套检测”，就有平台潜力。",
+        "comment_en": "Code-quality tools are a validated business model (SonarQube, Snyk are both billion-dollar companies), and AI code quality is the natural extension. The key question is whether this becomes a platform or a point tool — 'cross-file consistency' alone is too narrow a market; extend to 'full-stack AI code-quality detection' and there's real platform potential."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "上周刚被这个问题坑了：Cursor帮我重构了一个工具函数的参数顺序，但只改了定义处和2个调用方，遗漏了另外8个调用方。CI全绿是因为类型没变只是参数位置变了。如果有工具能在提交前抓住这种问题，我立刻安装。但hook不能太慢——超过5秒我就会想办法绕过去。",
+        "comment_en": "I just got burned by this last week: Cursor refactored the parameter order of a utility function but only updated the definition and 2 callers — missed the other 8. CI was all green because types didn't change, only parameter positions did. If a tool caught this pre-commit, I'd install it immediately. But the hook can't be slow — if it takes more than 5 seconds I'll find a way around it."
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "AST解析的准确性直接决定工具的可信度。TypeScript有ts-morph这种成熟库，但Python和Go的AST工具生态差异很大，跨语言支持是大量工作。另外动态语言（Python/JavaScript）中很多引用关系在静态分析阶段无法确定——函数作为参数传递、动态导入等场景都会是误报来源。需要在误报率和漏报率之间做平衡。",
+        "comment_en": "AST parser accuracy directly determines tool credibility. TypeScript has mature libraries like ts-morph, but Python and Go have very different AST-tool ecosystems — cross-language support is a lot of work. Also, in dynamic languages (Python/JavaScript), many reference relationships can't be determined at static-analysis time — functions-as-parameters, dynamic imports, etc. will all be false-positive sources. You have to balance false-positive rate against false-negative rate carefully."
+      }
+    ],
+    "confidence": "strong_signal"
+  },
+  {
+    "id": "BLP-020",
+    "title": "离线AI Agent安全策略引擎",
+    "title_en": "Offline AI Agent Safety Policy Engine",
+    "description": "AI Agent正在从云端走向边缘（手机、汽车、工厂），这些环境经常离线。CC的killswitch在离线时fail-open——远程安全控制完全失效。做一个三层安全策略引擎：L0硬编码本地规则+L1带TTL的缓存策略+L2实时远程策略，离线时自动降级而不是全部失效。",
+    "description_en": "AI agents are migrating from cloud to edge (phones, cars, factories), and edge environments are frequently offline. CC's killswitch fails open when offline — remote safety controls fully disappear. Build a three-tier policy engine: L0 hard-coded local rules, L1 cached policy with TTL, L2 live remote policy — degrading gracefully when offline instead of losing all controls.",
+    "feasibility": "medium",
+    "value": "high",
+    "evidence": [
+      "CC的bypassPermissionsKillswitch离线时返回false=fail-open",
+      "SPK-215沙箱的failIfUnavailable默认false是同类问题",
+      "边缘AI部署(手机/汽车/工厂)正在快速增长",
+      "军事/医疗场景对离线安全有刚需"
+    ],
+    "evidence_en": [
+      "CC's bypassPermissionsKillswitch returns false offline = fails open",
+      "SPK-215 — the sandbox's failIfUnavailable defaults to false, same class of problem",
+      "Edge AI deployment (phones, cars, factories) is growing rapidly",
+      "Military and medical scenarios have hard requirements for offline safety"
+    ],
+    "from_sparks": [
+      "SPK-210",
+      "SPK-215",
+      "SPK-203",
+      "SPK-121"
+    ],
+    "first_step": "**做什么**：设计并实现一个策略引擎SDK，支持三层策略存储——本地硬编码的绝对底线规则、带有效期的缓存策略、实时远程策略——当网络不可用时自动降级到缓存层甚至本地层，而不是完全放开所有权限。配三个场景Demo展示降级行为。\n\n**为什么做**：边缘AI部署的安全模型和云端AI完全不同——云端可以依赖实时远程控制，边缘必须在断网时也能保证最低安全标准。这个需求在IoT、车载AI、工业控制场景中是刚需，且目前没有标准方案。\n\n**谁来做/怎么做**：一名有Rust经验的系统工程师，6-8周。核心策略引擎用Rust实现（性能+跨平台编译需求），初版先提供一种语言绑定（推荐Node.js），配一个Demo场景（IoT设备断网权限降级）验证概念。在嵌入式开发社群和AI安全论坛发布，根据反馈再决定是否扩展Python绑定和更多场景。",
+    "first_step_en": "**What**: Design and implement a policy engine SDK supporting three storage tiers — locally hard-coded absolute baseline rules, cached policy with TTL, live remote policy — that automatically degrades to the cached tier or even the local tier when the network is unavailable, rather than opening up all permissions. Ship three scenario demos showing degradation behavior.\n\n**Why**: The security model for edge AI deployment is fundamentally different from cloud AI. Cloud can depend on real-time remote controls; edge must maintain a minimum safety standard even when offline. This is a hard requirement in IoT, in-vehicle AI, and industrial-control scenarios, and no standard solution exists today.\n\n**Who/How**: One systems engineer with Rust experience, 6-8 weeks. Implement the core policy engine in Rust (for performance and cross-platform compilation). Ship the first version with one language binding (recommend Node.js) and a single demo scenario (IoT device permission degradation when offline) to prove the concept. Release in embedded-dev communities and AI security forums, expand Python bindings and more scenarios based on feedback.",
+    "cc_anchor": "01_权限系统完全解析.md — bypassPermissionsKillswitch.ts fail-open设计 + GrowthBook远程开关 + 07_Sandbox系统 failIfUnavailable默认false",
+    "cc_anchor_en": "01_Permission_System_Deep_Dive.md — bypassPermissionsKillswitch.ts fail-open design + GrowthBook remote toggle + 07_Sandbox_System failIfUnavailable defaults to false",
+    "status": "proposed",
+    "plain_explanation": "想象你家的智能门锁平时通过手机App远程控制——你可以随时改密码、给客人临时授权、查看开门记录。但有一天家里断网了。现在的大多数智能锁在断网时有两种做法：要么完全锁死（谁都进不了），要么完全放开（谁都进得了）。两种都不好。理想的方案是：断网时自动切到一套预存的基本规则——主人指纹照常开门、临时客人密码如果没过期也能用、但远程新授权就暂时不行了。AI安全系统现在就面临同样的问题：联网时有各种远程安全控制，断网时这些控制全部失效。BLP-020要做一个三层的安全策略引擎，断网时不是“全关”或“全开”而是智能降级。",
+    "plain_explanation_en": "Imagine your home's smart lock is normally controlled remotely via a phone app — you can change passwords anytime, grant temporary guest access, review entry logs. Then one day your home internet goes down. Most smart locks do one of two things when offline: fully lock down (nobody in) or fully open up (anyone in). Both are bad. The ideal: when offline, automatically fall back to a pre-stored set of basic rules — owner fingerprint still works, unexpired guest codes still work, but new remote grants are temporarily suspended. AI safety systems face the identical problem today: when connected, various remote safety controls are in place; when disconnected, all of them fail. BLP-020 is a three-tier safety policy engine that, when offline, doesn't do 'fully closed' or 'fully open' but intelligent degradation.",
+    "why_it_matters": "**市场需求**：AI正在从云端扩展到边缘设备——车载AI、手机助手、工厂自动化、医疗设备。这些场景的共同特点是网络不稳定甚至完全离线。所有依赖“远程实时控制”的安全方案在这些场景中都会失效，这是一个结构性缺陷，不是边缘情况。\n\n**竞争空白**：云端AI安全工具众多（Invariant Labs、Protect AI等），但专门解决“离线/弱网环境下的AI安全策略”的产品为零。军事和医疗场景对离线安全有强制性合规要求但找不到现成方案。\n\n**时机窗口**：2025-2026年是边缘AI部署的爆发期（Apple Intelligence、高通AI引擎等都在推动端侧AI），离线安全会从“理论问题”变成“工程必须解决的问题”。现在做的人能成为这个细分方向的事实标准制定者。",
+    "why_it_matters_en": "**Market Need**: AI is expanding from cloud to edge devices — in-vehicle AI, phone assistants, factory automation, medical devices. The common trait of these scenarios is unstable or completely absent network connectivity. Every safety scheme that depends on 'live remote control' fails in these scenarios. This is a structural defect, not an edge case.\n\n**Competitive Gap**: Cloud AI safety tools are abundant (Invariant Labs, Protect AI, etc.), but products specifically solving 'AI safety policy in offline/weak-network environments' are nonexistent. Military and medical scenarios have mandatory compliance requirements for offline safety and can't find off-the-shelf solutions.\n\n**Timing Window**: 2025-2026 is the breakout period for edge AI deployment (Apple Intelligence, Qualcomm AI Engine, etc. are pushing on-device AI). Offline safety will shift from 'theoretical problem' to 'engineering must-solve.' Whoever builds this now can become the de facto standard-setter for this sub-direction.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "边缘AI安全是一个高度垂直的市场，客户画像清晰（IoT厂商、车企、医疗设备公司），但销售周期长、集成复杂度高。建议不要一开始就做通用SDK，先深度绑定一个垂直场景（推荐IoT——设备量大、集成相对简单）做出参考实现，再横向复制到其他场景。",
+        "comment_en": "Edge AI safety is a highly vertical market with clear customer profiles (IoT vendors, automakers, medical device companies), but sales cycles are long and integration complexity is high. Don't start with a generic SDK — deeply partner with one vertical (IoT is the pick — high device volume, relatively simple integration), produce a reference implementation, then replicate horizontally."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "方向正确但市场时机可能偏早——2025年边缘AI的实际部署量还没有大到催生安全工具的规模化需求。如果是Seed/Pre-A阶段可以投赌方向，但需要团队能撑到市场成熟。Rust实现是加分项——嵌入式领域对性能和跨平台编译有刚需，这是技术壁垒。",
+        "comment_en": "Direction is right but timing may be early — in 2025, edge AI's actual deployment volume isn't large enough yet to drive scaled safety-tool demand. At Seed or Pre-A, it's fine to bet on the direction, but the team needs to survive long enough for the market to mature. Rust implementation is a plus — embedded has hard requirements on performance and cross-platform compilation, and that's a technical moat."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "我们正在做一个工厂巡检AI机器人，厂区WiFi覆盖不完整，机器人经常断网。目前的解决方案是“断网时回到固定巡检路线”，完全不智能。如果有一个安全策略引擎能让机器人在断网时自动降级到“只执行低风险操作”而不是完全停止工作，我们非常愿意集成。",
+        "comment_en": "We're building a factory-inspection AI robot. WiFi coverage is incomplete and the robot frequently loses connectivity. Our current fix is 'fall back to a fixed patrol route when offline,' which isn't intelligent at all. If a safety policy engine let the robot auto-degrade to 'only execute low-risk operations' instead of stopping entirely, we'd happily integrate it."
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "三层策略的降级逻辑看似简单，实际工程细节很多：TTL过期后是fail-open还是fail-close？缓存层的策略如何防篡改？L0硬编码层的规则更新需要固件升级吗？每一个设计决策都会影响安全模型的可信度。建议在技术白皮书中先定义清晰的安全模型，再开始写代码。",
+        "comment_en": "The three-tier degradation logic looks simple but has many engineering subtleties: after TTL expiry, fail-open or fail-close? How do you anti-tamper the cached-policy layer? Does an L0 hard-coded rule update require a firmware upgrade? Each design decision affects the credibility of the safety model. Define a clear threat model in a technical white paper before writing code."
+      }
+    ],
+    "confidence": "has_signal"
+  },
+  {
+    "id": "BLP-021",
+    "title": "AI苏格拉底式编程教练——学会而不是依赖",
+    "title_en": "Socratic AI Programming Coach: Learn, Don't Depend",
+    "description": "Anthropic自己的研究说AI辅助降低学习效果17%。CC的Learning模式用TODO(human)让AI搭脚手架而不是给答案。把这个模式做成一个完整的编程教育产品：根据学生水平动态调节'帮多少'，让人真正学会而不是永远依赖AI。",
+    "description_en": "Anthropic's own research shows AI assistance reduces learning outcomes by 17%. CC's Learning mode uses TODO(human) to have the AI scaffold rather than give answers. Turn this pattern into a complete programming education product: dynamically adjust how much help to give based on the student's level, so people actually learn instead of becoming permanently dependent on AI.",
+    "feasibility": "high",
+    "value": "medium",
+    "evidence": [
+      "Anthropic研究：AI辅助降低学习测试得分17%",
+      "CC的Learning模式+TODO(human)协议已有技术实现",
+      "SPK-141描述了'学习模式'的产品设想",
+      "Vygotsky ZPD理论提供了教育学理论基础"
+    ],
+    "evidence_en": [
+      "Anthropic research: AI assistance reduces learning test scores by 17%",
+      "CC's Learning mode + TODO(human) protocol already has a technical implementation",
+      "SPK-141 describes the 'learning mode' product concept",
+      "Vygotsky's Zone of Proximal Development provides the pedagogical theoretical foundation"
+    ],
+    "from_sparks": [
+      "SPK-113",
+      "SPK-238",
+      "SPK-141",
+      "SPK-233"
+    ],
+    "first_step": "**做什么**：做一个VS Code扩展的概念验证版：用户开启“学习模式”后，AI生成的代码自动在关键位置插入TODO注释标记，提示用户“这里需要你自己完成”，同时在侧边栏提供分层提示（先给方向→再给伪代码→最后给答案）。\n\n**为什么做**：验证两个核心假设：（1）学生是否愿意使用一个“故意不给完整答案”的AI工具，（2）分层提示的设计是否真的比直接给代码更有助于学习。一个简单的扩展就能开始收集真实用户行为数据。\n\n**谁来做/怎么做**：一名熟悉VS Code Extension API的开发者，2周完成MVP。核心是一个提示词模板（让AI生成带TODO标记的代码）+ 侧边栏的分层提示UI。先在编程教学社区（FreeCodeCamp中文社区、编程学习群）发布beta版，观察3周内的安装留存率。",
+    "first_step_en": "**What**: Build a VS Code extension proof-of-concept: when the user enables Learning Mode, AI-generated code auto-inserts TODO comments at key positions marking 'you need to complete this yourself,' while the sidebar provides tiered hints (direction first → pseudo-code → full answer).\n\n**Why**: Validate two core hypotheses: (1) will students actually use an AI tool that deliberately withholds complete answers? (2) does tiered-hint design actually help learning more than just giving code? A simple extension is enough to start collecting real user behavior data.\n\n**Who/How**: One developer familiar with the VS Code Extension API, 2 weeks to MVP. The core is a prompt template (make the AI generate code with TODO markers) plus a sidebar tiered-hint UI. Release the beta in coding-education communities (FreeCodeCamp community, programming-learning groups) and track 3-week installation retention.",
+    "cc_anchor": "16_输出样式系统完全解析.md — Learning模式 + TODO(human)协议 + Default/Explanatory/Learning三种样式切换",
+    "cc_anchor_en": "16_Output_Style_System_Deep_Dive.md — Learning mode + TODO(human) protocol + Default/Explanatory/Learning three-style switching",
+    "status": "proposed",
+    "plain_explanation": "学骑自行车最好的方式不是永远有人在后面扶着你——那样你永远学不会平衡。好的教练会先扶着你，然后悄悄放手，让你自己骑几米，摔了再扶起来教你调整。现在的AI编程工具就像一个永远扶着你的人：你说“帮我写个排序算法”，它直接给你完整代码。结果呢？Anthropic自己的研究发现用AI辅助学习的学生考试成绩反而低了17%——因为他们只是在“复制粘贴”而不是“真正理解”。BLP-021要做的是一个“苏格拉底式教练”：不直接给答案，而是给提示、给方向、给脚手架，根据你的水平调节“帮多少”，让你从“用AI的拐杖”变成“真正掌握技能”。",
+    "plain_explanation_en": "The best way to learn to ride a bike isn't having someone hold you up forever — you'd never learn balance. A good coach holds on at first, then quietly lets go, lets you ride a few meters yourself, helps you up when you fall, teaches you to adjust. Today's AI coding tools are like someone who never lets go. You say 'write me a sorting algorithm,' and it hands you the complete code. The result? Anthropic's own research found students using AI assistance scored 17% *lower* on learning tests — because they were copy-pasting, not actually understanding. BLP-021 builds a Socratic coach: instead of giving answers, it gives hints, directions, and scaffolds, adjusting how much help to provide based on your skill level — so you move from 'AI crutch user' to 'actually mastered the skill.'",
+    "why_it_matters": "**市场需求**：编程教育是千亿级市场，AI辅助编程工具的普及使得“如何避免AI让学生变笨”成为教育界的紧迫议题。大学教授、编程训练营、企业培训部门都在寻找“既用AI提高效率又不损害学习效果”的解决方案。\n\n**竞争空白**：Copilot、Cursor等工具都是“效率优先”设计，没有任何产品从“学习效果优先”角度设计AI编程辅助。这意味着整个“AI教育辅助”细分可以被重新定义。\n\n**时机窗口**：Anthropic的17%研究在教育界引发了强烈反响，“AI影响学习”的话题正在成为主流讨论。现在做出一个有数据支撑的“学习优先”AI工具，既有商业价值也有社会影响力。",
+    "why_it_matters_en": "**Market Need**: Coding education is a multi-hundred-billion-dollar market, and the spread of AI coding tools has made 'how do we keep AI from making students dumber' an urgent issue in education. University professors, coding bootcamps, and enterprise training departments are all searching for 'use AI for efficiency without hurting learning outcomes' solutions.\n\n**Competitive Gap**: Copilot, Cursor, and others are all designed efficiency-first. No product designs AI coding assistance learning-outcomes-first. This means the entire 'AI education assistance' subcategory is open for redefinition.\n\n**Timing Window**: Anthropic's 17% finding has reverberated strongly in education. 'AI's impact on learning' is becoming mainstream discussion. Building a data-backed learning-first AI tool right now has both commercial value and social impact.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "教育产品的变现逻辑清晰但天花板有限。个人用户付费意愿低，但B端（大学、培训营、企业培训）可以谈年费。核心问题是：用户会不会嫌“学习模式”太慢而直接去用Copilot？如果答案是“会”，这个产品只能作为教育场景的专用工具而非通用编程助手。",
+        "comment_en": "Education products have clear monetization logic but a limited ceiling. Individual willingness-to-pay is low, but B2B (universities, bootcamps, enterprise training) can do annual contracts. The core question: will users find 'Learning Mode' too slow and just switch to Copilot? If the answer is yes, this is an education-scenario specialty tool, not a general coding assistant."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "教育科技在2022-2023年经历了泡沫破裂，投资人对这个赛道普遍谨慎。但“AI + 教育”是一个新的故事——如果能用数据证明“我们的工具让学生学得更快更好”，可以重新打开投资人的兴趣。关键是必须有对照实验数据，光有产品概念不够。",
+        "comment_en": "Edtech went through a bubble burst in 2022-2023 and investors are broadly cautious on the space. But 'AI + education' is a new story — if you can prove with data that your tool helps students learn faster and better, you can reopen investor interest. The key: controlled-experiment data. Product concept alone isn't enough."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "作为编程新手，说实话我更想要的是“快速把项目跑起来”而不是“慢慢学习每一步”。但如果这个工具能让我在用AI的同时真正理解代码而不只是复制粘贴，长远来看是有价值的。关键是“学习模式”的节奏不能太慢——如果一个简单功能需要我填20个TODO，我会放弃。",
+        "comment_en": "As a coding newbie, honestly I want 'get my project running fast' more than 'slowly learn every step.' But if this tool helps me actually understand the code while using AI instead of just copy-pasting, that's valuable long-term. The key: Learning Mode's pacing can't be too slow — if a simple feature requires filling in 20 TODOs, I'll quit."
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "TODO(human)协议的核心挑战是“在哪里插TODO”的智能度——插在太简单的地方用户觉得被侮辱，插在太难的地方用户卡住放弃。这需要一个水平评估模型，根据用户历史完成情况动态调整难度。初版可以用简单规则（所有函数体留空），但长期需要个性化适应。",
+        "comment_en": "The core challenge with TODO(human) is the intelligence of 'where to insert TODOs.' Too-easy spots feel insulting to the user, too-hard spots get them stuck and they quit. You need a skill-assessment model that dynamically adjusts difficulty based on the user's completion history. V1 can use simple rules (leave all function bodies empty), but long-term, personalized adaptation is required."
+      }
+    ],
+    "confidence": "has_signal"
+  },
+  {
+    "id": "BLP-022",
+    "title": "中国AI编程开发者工具链——填补地理封锁造成的服务空白",
+    "title_en": "AI Coding Toolchain for Chinese Developers — Filling the Gap Left by Geo-Blocking",
+    "description": "中国开发者用Claude Code的第一道门槛是科学上网而不是技术能力。模型被暗降、路由不透明、社区资源全是英文。做一个专门服务中文开发者的AI编程工具链：本地化配置指南+模型透明度监控+中文社区+成本优化。",
+    "description_en": "For Chinese developers, the first barrier to using Claude Code is VPN access, not technical skill. Models get silently downgraded, routing is opaque, and community resources are English-only. Build an AI coding toolchain specifically serving Chinese developers: localized configuration guides, model transparency monitoring, a Chinese-language community, and cost optimization.",
+    "feasibility": "high",
+    "value": "high",
+    "evidence": [
+      "SPK-105 中国用户基础设施障碍被英文社区完全忽视",
+      "SPK-106 Cursor暗降模型损害用户信任",
+      "SPK-145 CC用户被错误路由到不同后端模型",
+      "字节Trae正在填这个空白说明市场真实存在"
+    ],
+    "evidence_en": [
+      "SPK-105 — infrastructure barriers for Chinese users are completely ignored by the English-speaking community",
+      "SPK-106 — Cursor's silent model downgrading erodes user trust",
+      "SPK-145 — CC users get incorrectly routed to different backend models",
+      "ByteDance's Trae filling this gap proves the market is real"
+    ],
+    "from_sparks": [
+      "SPK-105",
+      "SPK-106",
+      "SPK-145",
+      "SPK-119",
+      "SPK-138"
+    ],
+    "first_step": "**做什么**：建一个中文知识库站点，收集50个最常见的Claude Code和Cursor配置问题的中文解决方案（如代理设置、API Key获取、模型选择、成本控制），配一个模型调用审计脚本——记录每次API调用的实际模型名和响应时间，让用户自己验证“我用的真的是GPT-4o/Opus还是被暗降了”。\n\n**为什么做**：中文开发者的第一需求不是“更好的AI工具”而是“现有AI工具在中国环境下能正常工作”。解决这个基础问题就能建立巨大的社区信任和用户粘性。模型审计脚本是独特的差异化——没有任何英文社区关注这个问题。\n\n**谁来做/怎么做**：1名内容编辑+1名工程师，2周完成站点v0.1+审计脚本。站点用VitePress或Docusaurus部署到Vercel/Cloudflare Pages（确保中国可访问），FAQ内容从中文社区（V2EX、掘金、知乎）的高赞回答整理。审计脚本用Python编写，拦截AI SDK的HTTP请求记录实际模型名。",
+    "first_step_en": "**What**: Build a Chinese-language knowledge base collecting the 50 most common Claude Code and Cursor configuration issues and their Chinese-language solutions (proxy setup, API key acquisition, model selection, cost control). Ship a model-call audit script that logs the actual model name and response time for each API call, letting users verify 'am I actually getting GPT-4o / Opus, or was I silently downgraded?'\n\n**Why**: The first need of Chinese developers isn't a 'better AI tool' — it's 'existing AI tools working normally in the Chinese network environment.' Solving this foundational problem builds massive community trust and stickiness. The model-audit script is unique differentiation — no English-speaking community is paying attention to this problem.\n\n**Who/How**: 1 content editor + 1 engineer, 2 weeks to site v0.1 and audit script. Use VitePress or Docusaurus deployed to Vercel/Cloudflare Pages (so the site loads reliably from within China); curate FAQ content from top-voted answers on Chinese communities. Write the audit script in Python, intercepting AI SDK HTTP requests to log the actual model name.",
+    "cc_anchor": "横切关注点章节 — USER_TYPE/feature gate机制揭示内外版差异 + 遥测系统揭示模型路由不透明",
+    "cc_anchor_en": "Cross-cutting Concerns chapter — USER_TYPE/feature-gate mechanism reveals internal-vs-public version differences + telemetry system reveals opaque model routing",
+    "status": "proposed",
+    "plain_explanation": "想象你搬到了一个新城市，但发现这里的公共交通系统所有站牌都是外语、公交卡只能用外国银行卡充值、而且高峰期某些线路会偷偷用没有空调的旧车替换——但官方从来不告诉你。你最需要的不是“更好的交通系统”，而是一份你看得懂的乘车指南、一个能用本地银行卡充值的渠道、和一个能告诉你“今天这趟车是不是换了旧车”的信息工具。中国开发者用AI编程工具面临的就是这个处境：工具本身很好，但配置说明全是英文、付费渠道不支持中国银行卡、而且你不知道自己实际用到的是最新模型还是被悄悄降级了。BLP-022要做的就是：中文指南+本地支付方案+模型透明度监控。",
+    "plain_explanation_en": "Imagine moving to a new city and finding that all the public transit signs are in a foreign language, the transit card only accepts foreign bank cards for top-up, and during peak hours some lines quietly swap in older buses without air conditioning — but the transit authority never tells you. What you actually need isn't 'a better transit system' — it's a transit guide you can read, a top-up channel that accepts local bank cards, and a tool that tells you 'is today's bus the old one again?' Chinese developers using AI coding tools face exactly this situation: the tools themselves are good, but the configuration docs are all in English, payment channels don't accept Chinese bank cards, and you don't know whether you're getting the latest model or a silent downgrade. BLP-022 delivers: Chinese-language guides + local payment solutions + model transparency monitoring.",
+    "why_it_matters": "**市场需求**：中国有数百万活跃的软件开发者，AI编程工具的渗透率正在快速上升，但几乎所有主流工具（Copilot、Cursor、Claude Code）的文档、社区、技术支持都以英文为主。这不是“小众需求”——这是数百万用户被系统性忽视的巨大缺口。\n\n**竞争空白**：字节Trae在做中国市场的AI编程工具，但它是一个完整的IDE产品——没有人在做“帮中国开发者更好地使用现有AI工具”的辅助层。FAQ站+审计脚本+社区的组合在国内完全没有竞争者。\n\n**时机窗口**：Claude Code在中国开发者社区的热度正在爆发式增长（本白皮书项目本身就是证据），但官方完全没有中文本地化的计划。这个服务空白在未来6-12个月只会越来越大。",
+    "why_it_matters_en": "**Market Need**: China has millions of active software developers, and AI coding tool penetration is rising fast, but nearly every mainstream tool (Copilot, Cursor, Claude Code) has English-first documentation, community, and support. This isn't a 'niche need' — it's millions of systematically ignored users.\n\n**Competitive Gap**: ByteDance's Trae is building an AI coding tool for the China market, but it's a complete IDE product. No one is building a 'helping Chinese developers use existing AI tools better' layer. The FAQ-plus-audit-script-plus-community combination has zero domestic competition.\n\n**Timing Window**: Claude Code's heat in Chinese developer communities is growing explosively (this white paper itself is evidence), but Anthropic has no Chinese localization plans. The service gap will only widen over the next 6-12 months.",
+    "user_feedback": [
+      {
+        "persona": "创业者",
+        "persona_en": "Founder",
+        "comment": "这个方向的商业化路径不太明确——FAQ站和审计脚本很难直接收费。可能的模式是：用免费内容建立社区影响力→推出付费的“中国开发者AI工具配置一对一咨询”→后续做企业级的AI工具采购顾问。另一条路是做一个“中国AI工具导航站”，通过推荐链接佣金变现。需要想清楚做社区还是做产品。",
+        "comment_en": "Monetization path isn't clear — FAQ sites and audit scripts are hard to charge for directly. Possible model: use free content to build community influence → launch paid '1:1 AI tool configuration consulting for Chinese developers' → evolve into enterprise AI tool procurement advisory. Alternative path: build a 'Chinese AI tool navigation site' monetized through referral-link commissions. Decide whether you're building a community or a product."
+      },
+      {
+        "persona": "投资人",
+        "persona_en": "Investor",
+        "comment": "这更像是一个社区项目而非VC投资标的——天花板有限且商业模式不清晰。但如果能演变成“中国AI开发者的一站式入口”（类似少数派之于Mac用户），就有平台价值。我会关注的指标是：月活用户数和用户的付费转化意愿。做成了可以是很好的Bootstrap生意，但不是典型的风险投资方向。",
+        "comment_en": "This looks more like a community project than a VC investment target — limited ceiling and unclear business model. But if it can evolve into 'the one-stop entry point for Chinese AI developers' (similar to Sspai for Mac users), there's platform value. The metrics I'd watch: MAU and paid-conversion willingness. Built well it could be a great bootstrap business, but not a typical venture-capital direction."
+      },
+      {
+        "persona": "目标用户",
+        "persona_en": "Target User",
+        "comment": "太需要了。我上周花了整整半天才搞清楚怎么在国内网络环境下配置Claude Code的代理。如果有一个中文站点能直接告诉我“第一步做什么、第二步做什么”，能省掉80%的折腾时间。模型审计脚本更是刚需——我一直怀疑Cursor给我用的不是最新模型但没办法验证。",
+        "comment_en": "So needed. Last week I spent a full half-day figuring out how to configure Claude Code's proxy in China's network environment. If a Chinese-language site just told me 'step 1, step 2,' I'd save 80% of the tinkering time. The model-audit script is even more of a hard need — I've always suspected Cursor isn't giving me the latest model but had no way to verify."
+      },
+      {
+        "persona": "技术负责人",
+        "persona_en": "Engineering Lead",
+        "comment": "FAQ站和审计脚本技术上都不难做，但维护成本容易被低估。AI工具更新频繁，配置方案可能每个月都要更新；审计脚本需要适配每个工具的API结构变化。如果维护跟不上，内容很快就过时了，反而损害信誉。建议从一开始就建立社区贡献机制而不是全靠核心团队维护。",
+        "comment_en": "FAQ site and audit script are technically easy to build, but the maintenance cost gets systematically underestimated. AI tools update frequently, configuration guides may need monthly updates, and the audit script has to adapt to every tool's API structure changes. If maintenance falls behind, content goes stale fast and actively damages credibility. Build a community-contribution mechanism from day one — don't rely on the core team to maintain everything."
+      }
+    ],
+    "confidence": "strong_signal"
+  }
+]

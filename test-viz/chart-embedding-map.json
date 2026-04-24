@@ -1,0 +1,1462 @@
+{
+  "metadata": {
+    "generated": "2026-04-04",
+    "last_updated": "2026-04-14",
+    "description": "占位符 -> 图表文件的映射关系，用于图表嵌入系统",
+    "total_placeholders_in_book": 120,
+    "unique_placeholder_ids": 112,
+    "duplicate_placeholder_ids": 8,
+    "total_briefs": 136,
+    "total_chart_files": 136,
+    "matched_count": 119,
+    "unmatched_placeholder_count": 0,
+    "unmatched_chart_count": 17,
+    "drift_audit_2026_04_06": "Sonnet 子 Agent 归位 7 张 part3_new 游离图表 (VIS-3-018A/B, 3-019A/B, 3-020A/B, 3-022A)。序章图表占位符插入任务 (2026-04-06 续): 在 book/part0_序章/00_序章.md 追加 15 个 [图表预留 0.X-Y] 占位符，归位 VIS-0-001/002B/003~015 共 15 张游离图表 (VIS-0-002 旧版源码仪表盘作为 002B 的历史副本保留游离)。剩余 17 张游离图表 (VIS-0-002、VIS-1-011、part4 VIS-4-001~010、part5 VIS-5-001~005) 因对应章节无 [图表预留] 占位符待后续处理。",
+    "v2_integrated_at": "2026-04-15",
+    "v2_mappings_updated": 119,
+    "v2_total_files": 136,
+    "plan_d_archive_date": "2026-04-15",
+    "plan_d_archived_count": 5,
+    "cleanup_2026_04_20": "删除 [图表预留 2.5-D] 的 stale 条目 —— 该占位符早已从 book/part2/05_工具运行时.md 移除。同轮删除 [图表预留 5-A] 孤儿（commit 988e31a）。"
+  },
+  "mappings": [
+    {
+      "placeholder": "[图表预留 1.3-A]",
+      "placeholder_id": "1.3-A",
+      "book_file": "book/part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "book_line": 82,
+      "chart_id": "VIS-1-001",
+      "chart_file": "charts/VIS-1-001_Tool调用循环图.html",
+      "brief_file": "briefs/part1/VIS-1-001_Tool调用循环图.txt",
+      "chart_file_v2": "charts/VIS-1-001_Tool调用循环图.html",
+      "chart_file_v2_size": 27056
+    },
+    {
+      "placeholder": "[图表预留 1.3-B]",
+      "placeholder_id": "1.3-B",
+      "book_file": "book/part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "book_line": 148,
+      "chart_id": "VIS-1-002",
+      "chart_file": "charts/VIS-1-002_Agent层级树状图.html",
+      "brief_file": "briefs/part1/VIS-1-002_Agent层级树状图.txt",
+      "chart_file_v2": "charts/VIS-1-002_Agent层级树状图.html",
+      "chart_file_v2_size": 21679
+    },
+    {
+      "placeholder": "[图表预留 1.3-C]",
+      "placeholder_id": "1.3-C",
+      "book_file": "book/part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "book_line": 378,
+      "chart_id": "VIS-1-003",
+      "chart_file": "charts/VIS-1-003_完整系统调用栈图.html",
+      "brief_file": "briefs/part1/VIS-1-003_完整系统调用栈图.txt",
+      "chart_file_v2": "charts/VIS-1-003_完整系统调用栈图.html",
+      "chart_file_v2_size": 19181
+    },
+    {
+      "placeholder": "[图表预留 1.4-A：系统全景架构图（八个子系统的位置和连接关系）]",
+      "placeholder_id": "1.4-A",
+      "book_file": "book/part1_认识这个系统/04_八个子系统的全景地图.md",
+      "book_line": 17,
+      "chart_id": "VIS-1-004",
+      "chart_file": "charts/VIS-1-004_系统全景架构图.html",
+      "brief_file": "briefs/part1/VIS-1-004_系统全景架构图.txt",
+      "chart_file_v2": "charts/VIS-1-004_系统全景架构图.html",
+      "chart_file_v2_size": 22360
+    },
+    {
+      "placeholder": "[图表预留 1.4-B：工具并发执行时序图（StreamingToolExecutor 的工作方式）]",
+      "placeholder_id": "1.4-B",
+      "book_file": "book/part1_认识这个系统/04_八个子系统的全景地图.md",
+      "book_line": 70,
+      "chart_id": "VIS-1-005",
+      "chart_file": "charts/VIS-1-005_工具并发执行时序图.html",
+      "brief_file": "briefs/part1/VIS-1-005_工具并发执行时序图.txt",
+      "chart_file_v2": "charts/VIS-1-005_工具并发执行时序图.html",
+      "chart_file_v2_size": 21754
+    },
+    {
+      "placeholder": "[图表预留 1.4-C：权限十步状态机流程图]",
+      "placeholder_id": "1.4-C",
+      "book_file": "book/part1_认识这个系统/04_八个子系统的全景地图.md",
+      "book_line": 96,
+      "chart_id": "VIS-1-006",
+      "chart_file": "charts/VIS-1-006_权限九步状态机流程图.html",
+      "brief_file": "briefs/part1/VIS-1-006_权限九步状态机流程图.txt",
+      "chart_file_v2": "charts/VIS-1-006_权限九步状态机流程图.html",
+      "chart_file_v2_size": 21066
+    },
+    {
+      "placeholder": "[图表预留 1.4-D：System Prompt 组装示意图（各来源的叠加关系）]",
+      "placeholder_id": "1.4-D",
+      "book_file": "book/part1_认识这个系统/04_八个子系统的全景地图.md",
+      "book_line": 135,
+      "chart_id": "VIS-1-007",
+      "chart_file": "charts/VIS-1-007_SystemPrompt组装示意图.html",
+      "brief_file": "briefs/part1/VIS-1-007_SystemPrompt组装示意图.txt",
+      "chart_file_v2": "charts/VIS-1-007_SystemPrompt组装示意图.html",
+      "chart_file_v2_size": 28318
+    },
+    {
+      "placeholder": "[图表预留 1.4-E：后台任务触发时序图（与主循环的关系）]",
+      "placeholder_id": "1.4-E",
+      "book_file": "book/part1_认识这个系统/04_八个子系统的全景地图.md",
+      "book_line": 183,
+      "chart_id": "VIS-1-008",
+      "chart_file": "charts/VIS-1-008_后台任务触发时序图.html",
+      "brief_file": "briefs/part1/VIS-1-008_后台任务触发时序图.txt",
+      "chart_file_v2": "charts/VIS-1-008_后台任务触发时序图.html",
+      "chart_file_v2_size": 18622
+    },
+    {
+      "placeholder": "[图表预留 1.4-F：扩展系统的三层结构图（MCP/Hooks/Plugins 的关系）]",
+      "placeholder_id": "1.4-F",
+      "book_file": "book/part1_认识这个系统/04_八个子系统的全景地图.md",
+      "book_line": 235,
+      "chart_id": "VIS-1-009",
+      "chart_file": "charts/VIS-1-009_扩展系统三层结构图.html",
+      "brief_file": "briefs/part1/VIS-1-009_扩展系统三层结构图.txt",
+      "chart_file_v2": "charts/VIS-1-009_扩展系统三层结构图.html",
+      "chart_file_v2_size": 24830
+    },
+    {
+      "placeholder": "[图表预留 1.4-G：子系统依赖关系矩阵（哪些子系统调用哪些子系统）]",
+      "placeholder_id": "1.4-G",
+      "book_file": "book/part1_认识这个系统/04_八个子系统的全景地图.md",
+      "book_line": 258,
+      "chart_id": "VIS-1-010",
+      "chart_file": "charts/VIS-1-010_子系统依赖关系矩阵.html",
+      "brief_file": "briefs/part1/VIS-1-010_子系统依赖关系矩阵.txt",
+      "chart_file_v2": "charts/VIS-1-010_子系统依赖关系矩阵.html",
+      "chart_file_v2_size": 18798
+    },
+    {
+      "placeholder": "[图表预留 3.9-A]",
+      "placeholder_id": "3.9-A",
+      "book_file": "book/part3_子系统完全解析/09_设置系统完全解析.md",
+      "book_line": 42,
+      "chart_id": "VIS-3-013",
+      "chart_file": "charts/VIS-3-013_设置合并优先级全景图.html",
+      "brief_file": "briefs/part3/VIS-3-013_设置合并优先级全景图.txt",
+      "chart_file_v2": "charts/VIS-3-013_设置合并优先级全景图.html",
+      "chart_file_v2_size": 36066
+    },
+    {
+      "placeholder": "[图表预留 3.9-B]",
+      "placeholder_id": "3.9-B",
+      "book_file": "book/part3_子系统完全解析/09_设置系统完全解析.md",
+      "book_line": 44,
+      "chart_id": "VIS-3-014",
+      "chart_file": "charts/VIS-3-014_企业锁定矩阵.html",
+      "brief_file": "briefs/part3/VIS-3-014_企业锁定矩阵.txt",
+      "chart_file_v2": "charts/VIS-3-014_企业锁定矩阵.html",
+      "chart_file_v2_size": 33769
+    },
+    {
+      "placeholder": "[图表预留 3.2-A]",
+      "placeholder_id": "3.2-A",
+      "book_file": "book/part3_子系统完全解析/02_投机执行子系统完全解析.md",
+      "book_line": 21,
+      "chart_id": "VIS-3-001",
+      "chart_file": "charts/VIS-3-001_投机执行时序图.html",
+      "brief_file": "briefs/part3/VIS-3-001_投机执行时序图.txt",
+      "chart_file_v2": "charts/VIS-3-001_投机执行时序图.html",
+      "chart_file_v2_size": 29350
+    },
+    {
+      "placeholder": "[图表预留 3.2-B]",
+      "placeholder_id": "3.2-B",
+      "book_file": "book/part3_子系统完全解析/02_投机执行子系统完全解析.md",
+      "book_line": 23,
+      "chart_id": "VIS-3-002",
+      "chart_file": "charts/VIS-3-002_CopyOnWrite_overlay架构图.html",
+      "brief_file": "briefs/part3/VIS-3-002_CopyOnWrite_overlay架构图.txt",
+      "chart_file_v2": "charts/VIS-3-002_CopyOnWrite_Overlay架构图.html",
+      "chart_file_v2_size": 28928
+    },
+    {
+      "placeholder": "[图表预留 3.6-A]",
+      "placeholder_id": "3.6-A",
+      "book_file": "book/part3_子系统完全解析/06_CLAUDE_md加载系统完全解析.md",
+      "book_line": 25,
+      "chart_id": "VIS-3-008",
+      "chart_file": "charts/VIS-3-008_CLAUDEmd多层级搜索链路图.html",
+      "brief_file": "briefs/part3/VIS-3-008_CLAUDEmd多层级搜索链路图.txt",
+      "chart_file_v2": "charts/VIS-3-008_CLAUDEmd多层级搜索链路图.html",
+      "chart_file_v2_size": 35294
+    },
+    {
+      "placeholder": "[图表预留 3.4-A]",
+      "placeholder_id": "3.4-A",
+      "book_file": "book/part3_子系统完全解析/04_Hooks子系统完全解析.md",
+      "book_line": 19,
+      "chart_id": "VIS-3-005",
+      "chart_file": "charts/VIS-3-005_27个事件生命周期定位图.html",
+      "brief_file": "briefs/part3/VIS-3-005_27个事件生命周期定位图.txt",
+      "chart_file_v2": "charts/VIS-3-005_27个事件生命周期定位图.html",
+      "chart_file_v2_size": 32414
+    },
+    {
+      "placeholder": "[图表预留 3.4-B]",
+      "placeholder_id": "3.4-B",
+      "book_file": "book/part3_子系统完全解析/04_Hooks子系统完全解析.md",
+      "book_line": 21,
+      "chart_id": "VIS-3-006",
+      "chart_file": "charts/VIS-3-006_退出码决策表.html",
+      "brief_file": "briefs/part3/VIS-3-006_退出码决策表.txt",
+      "chart_file_v2": "charts/VIS-3-006_退出码决策矩阵.html",
+      "chart_file_v2_size": 34248
+    },
+    {
+      "placeholder": "[图表预留 3.5-A]",
+      "placeholder_id": "3.5-A",
+      "book_file": "book/part3_子系统完全解析/05_插件系统完全解析.md",
+      "book_line": 54,
+      "chart_id": "VIS-3-007",
+      "chart_file": "charts/VIS-3-007_插件信任链安全架构图.html",
+      "brief_file": "briefs/part3/VIS-3-007_插件信任链安全架构图.txt",
+      "chart_file_v2": "charts/VIS-3-007_插件信任链安全架构图.html",
+      "chart_file_v2_size": 28892
+    },
+    {
+      "placeholder": "[图表预留 3.8-A]",
+      "placeholder_id": "3.8-A",
+      "book_file": "book/part3_子系统完全解析/08_遥测与可观测性完全解析.md",
+      "book_line": 38,
+      "chart_id": "VIS-3-011",
+      "chart_file": "charts/VIS-3-011_三条导出路径并行架构图.html",
+      "brief_file": "briefs/part3/VIS-3-011_三条导出路径并行架构图.txt",
+      "chart_file_v2": "charts/VIS-3-011_三条导出路径并行架构图.html",
+      "chart_file_v2_size": 26395
+    },
+    {
+      "placeholder": "[图表预留 3.8-B]",
+      "placeholder_id": "3.8-B",
+      "book_file": "book/part3_子系统完全解析/08_遥测与可观测性完全解析.md",
+      "book_line": 40,
+      "chart_id": "VIS-3-012",
+      "chart_file": "charts/VIS-3-012_Span层级关系图.html",
+      "brief_file": "briefs/part3/VIS-3-012_Span层级关系图.txt",
+      "chart_file_v2": "charts/VIS-3-012_Span层级关系图.html",
+      "chart_file_v2_size": 27132
+    },
+    {
+      "placeholder": "[图表预留 3.3-A]",
+      "placeholder_id": "3.3-A",
+      "book_file": "book/part3_子系统完全解析/03_MCP平台完全解析.md",
+      "book_line": 21,
+      "chart_id": "VIS-3-003",
+      "chart_file": "charts/VIS-3-003_八种传输类型选择逻辑图.html",
+      "brief_file": "briefs/part3/VIS-3-003_八种传输类型选择逻辑图.txt",
+      "chart_file_v2": "charts/VIS-3-003_MCP八种传输类型选择逻辑图.html",
+      "chart_file_v2_size": 32975
+    },
+    {
+      "placeholder": "[图表预留 3.3-B]",
+      "placeholder_id": "3.3-B",
+      "book_file": "book/part3_子系统完全解析/03_MCP平台完全解析.md",
+      "book_line": 23,
+      "chart_id": "VIS-3-004",
+      "chart_file": "charts/VIS-3-004_Channel_Permission_Relay数据流图.html",
+      "brief_file": "briefs/part3/VIS-3-004_Channel_Permission_Relay数据流图.txt",
+      "chart_file_v2": "charts/VIS-3-004_Channel_Permission_Relay数据流图.html",
+      "chart_file_v2_size": 20906
+    },
+    {
+      "placeholder": "[图表预留 3.11-A]",
+      "placeholder_id": "3.11-A",
+      "book_file": "book/part3_子系统完全解析/11_文件历史系统完全解析.md",
+      "book_line": 36,
+      "chart_id": "VIS-3-017",
+      "chart_file": "charts/VIS-3-017_快照生命周期图.html",
+      "brief_file": "briefs/part3/VIS-3-017_快照生命周期图.txt",
+      "chart_file_v2": "charts/VIS-3-017_快照生命周期图.html",
+      "chart_file_v2_size": 35256
+    },
+    {
+      "placeholder": "[图表预留 3.7-A]",
+      "placeholder_id": "3.7-A",
+      "book_file": "book/part3_子系统完全解析/07_Sandbox沙箱系统完全解析.md",
+      "book_line": 38,
+      "chart_id": "VIS-3-009",
+      "chart_file": "charts/VIS-3-009_沙箱三层架构图.html",
+      "brief_file": "briefs/part3/VIS-3-009_沙箱三层架构图.txt",
+      "chart_file_v2": "charts/VIS-3-009_沙箱三层架构图.html",
+      "chart_file_v2_size": 32843
+    },
+    {
+      "placeholder": "[图表预留 3.7-B]",
+      "placeholder_id": "3.7-B",
+      "book_file": "book/part3_子系统完全解析/07_Sandbox沙箱系统完全解析.md",
+      "book_line": 40,
+      "chart_id": "VIS-3-010",
+      "chart_file": "charts/VIS-3-010_Bare_git_repo攻击流程图.html",
+      "brief_file": "briefs/part3/VIS-3-010_Bare_git_repo攻击流程图.txt",
+      "chart_file_v2": "charts/VIS-3-010_Bare_git_repo攻击流程图.html",
+      "chart_file_v2_size": 34589
+    },
+    {
+      "placeholder": "[图表预留 3.10-A]",
+      "placeholder_id": "3.10-A",
+      "book_file": "book/part3_子系统完全解析/10_Agent与任务系统完全解析.md",
+      "book_line": 32,
+      "chart_id": "VIS-3-015",
+      "chart_file": "charts/VIS-3-015_Agent生命周期图.html",
+      "brief_file": "briefs/part3/VIS-3-015_Agent生命周期图.txt",
+      "chart_file_v2": "charts/VIS-3-015_Agent生命周期图.html",
+      "chart_file_v2_size": 25664
+    },
+    {
+      "placeholder": "[图表预留 3.10-B]",
+      "placeholder_id": "3.10-B",
+      "book_file": "book/part3_子系统完全解析/10_Agent与任务系统完全解析.md",
+      "book_line": 34,
+      "chart_id": "VIS-3-016",
+      "chart_file": "charts/VIS-3-016_Coordinator四阶段工作流.html",
+      "brief_file": "briefs/part3/VIS-3-016_Coordinator四阶段工作流.txt",
+      "chart_file_v2": "charts/VIS-3-016_Coordinator四阶段工作流.html",
+      "chart_file_v2_size": 38401
+    },
+    {
+      "placeholder": "[图表预留 2.1-A]",
+      "placeholder_id": "2.1-A",
+      "book_file": "book/part2_代码架构完全解构/01_代码地图.md",
+      "book_line": 462,
+      "chart_id": "VIS-2A-001",
+      "chart_file": "charts/VIS-2A-001.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-001.txt",
+      "chart_file_v2": "charts/VIS-2A-001_代码库五区域分布图.html",
+      "chart_file_v2_size": 20496
+    },
+    {
+      "placeholder": "[图表预留 2.1-B]",
+      "placeholder_id": "2.1-B",
+      "book_file": "book/part2_代码架构完全解构/01_代码地图.md",
+      "book_line": 463,
+      "chart_id": "VIS-2A-002",
+      "chart_file": "charts/VIS-2A-002.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-002.txt",
+      "chart_file_v2": "charts/VIS-2A-002_数据流高速公路.html",
+      "chart_file_v2_size": 21842
+    },
+    {
+      "placeholder": "[图表预留 2.1-C]",
+      "placeholder_id": "2.1-C",
+      "book_file": "book/part2_代码架构完全解构/01_代码地图.md",
+      "book_line": 464,
+      "chart_id": "VIS-2A-003",
+      "chart_file": "charts/VIS-2A-003.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-003.txt",
+      "chart_file_v2": "charts/VIS-2A-003_依赖热力图.html",
+      "chart_file_v2_size": 29624
+    },
+    {
+      "placeholder": "[图表预留 2.5-A]",
+      "placeholder_id": "2.5-A",
+      "book_file": "book/part2_代码架构完全解构/05_工具运行时.md",
+      "book_line": 343,
+      "chart_id": "VIS-2A-013",
+      "chart_file": "charts/VIS-2A-013.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-013.txt",
+      "chart_file_v2": "charts/VIS-2A-013_工具执行管线全景图.html",
+      "chart_file_v2_size": 30134
+    },
+    {
+      "placeholder": "[图表预留 2.5-B]",
+      "placeholder_id": "2.5-B",
+      "book_file": "book/part2_代码架构完全解构/05_工具运行时.md",
+      "book_line": 344,
+      "chart_id": "VIS-2A-014",
+      "chart_file": "charts/VIS-2A-014.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-014.txt",
+      "chart_file_v2": "charts/VIS-2A-014_43个工具四大类分布图.html",
+      "chart_file_v2_size": 14430
+    },
+    {
+      "placeholder": "[图表预留 2.5-C]",
+      "placeholder_id": "2.5-C",
+      "book_file": "book/part2_代码架构完全解构/05_工具运行时.md",
+      "book_line": 345,
+      "chart_id": "VIS-2A-015",
+      "chart_file": "charts/VIS-2A-015.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-015.txt",
+      "chart_file_v2": "charts/VIS-2A-015_并发安全矩阵.html",
+      "chart_file_v2_size": 16365
+    },
+    {
+      "placeholder": "[图表预留 2.11-A]",
+      "placeholder_id": "2.11-A",
+      "book_file": "book/part2_代码架构完全解构/11_配置治理.md",
+      "book_line": 227,
+      "chart_id": "VIS-2A-027",
+      "chart_file": "charts/VIS-2A-027.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-027.txt",
+      "chart_file_v2": "charts/VIS-2A-027_配置系统九层套娃图.html",
+      "chart_file_v2_size": 29671
+    },
+    {
+      "placeholder": "[图表预留 2.11-B]",
+      "placeholder_id": "2.11-B",
+      "book_file": "book/part2_代码架构完全解构/11_配置治理.md",
+      "book_line": 228,
+      "chart_id": "VIS-2A-028",
+      "chart_file": "charts/VIS-2A-028.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-028.txt",
+      "chart_file_v2": "charts/VIS-2A-028_两套合并规则对比.html",
+      "chart_file_v2_size": 24160
+    },
+    {
+      "placeholder": "[图表预留 2.11-C]",
+      "placeholder_id": "2.11-C",
+      "book_file": "book/part2_代码架构完全解构/11_配置治理.md",
+      "book_line": 229,
+      "chart_id": "VIS-2A-029",
+      "chart_file": "charts/VIS-2A-029.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-029.txt",
+      "chart_file_v2": "charts/VIS-2A-029_配置生效诊断流程.html",
+      "chart_file_v2_size": 37826
+    },
+    {
+      "placeholder": "[图表预留 2.12-A]",
+      "placeholder_id": "2.12-A",
+      "book_file": "book/part2_代码架构完全解构/12_终端UI.md",
+      "book_line": 743,
+      "chart_id": "VIS-2A-030",
+      "chart_file": "charts/VIS-2A-030.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-030.txt",
+      "chart_file_v2": "charts/VIS-2A-030_终端UI完整渲染管线.html",
+      "chart_file_v2_size": 22857
+    },
+    {
+      "placeholder": "[图表预留 2.12-B]",
+      "placeholder_id": "2.12-B",
+      "book_file": "book/part2_代码架构完全解构/12_终端UI.md",
+      "book_line": 744,
+      "chart_id": "VIS-2A-031",
+      "chart_file": "charts/VIS-2A-031.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-031.txt",
+      "chart_file_v2": "charts/VIS-2A-031_REPL组件树结构图.html",
+      "chart_file_v2_size": 30728
+    },
+    {
+      "placeholder": "[图表预留 2.12-C]",
+      "placeholder_id": "2.12-C",
+      "book_file": "book/part2_代码架构完全解构/12_终端UI.md",
+      "book_line": 745,
+      "chart_id": "VIS-2A-032",
+      "chart_file": "charts/VIS-2A-032.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-032.txt",
+      "chart_file_v2": "charts/VIS-2A-032_流式渲染时序图.html",
+      "chart_file_v2_size": 28291
+    },
+    {
+      "placeholder": "[图表预留 2.12-D]",
+      "placeholder_id": "2.12-D",
+      "book_file": "book/part2_代码架构完全解构/12_终端UI.md",
+      "book_line": 746,
+      "chart_id": "VIS-2A-033",
+      "chart_file": "charts/VIS-2A-033.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-033.txt",
+      "chart_file_v2": "charts/VIS-2A-033_脏区域追踪四层过滤.html",
+      "chart_file_v2_size": 21899
+    },
+    {
+      "placeholder": "[图表预留 2.12-E]",
+      "placeholder_id": "2.12-E",
+      "book_file": "book/part2_代码架构完全解构/12_终端UI.md",
+      "book_line": 747,
+      "chart_id": "VIS-2A-034",
+      "chart_file": "charts/VIS-2A-034.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-034.txt",
+      "chart_file_v2": "charts/VIS-2A-034_DA1_Sentinel协议时序图.html",
+      "chart_file_v2_size": 27844
+    },
+    {
+      "placeholder": "[图表预留 2.6-A]",
+      "placeholder_id": "2.6-A",
+      "book_file": "book/part2_代码架构完全解构/06_Agent编排.md",
+      "book_line": 325,
+      "chart_id": "VIS-2A-016",
+      "chart_file": "charts/VIS-2A-016.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-016.txt",
+      "chart_file_v2": "charts/VIS-2A-016_七种任务类型隔离级别谱系图.html",
+      "chart_file_v2_size": 35548
+    },
+    {
+      "placeholder": "[图表预留 2.6-B]",
+      "placeholder_id": "2.6-B",
+      "book_file": "book/part2_代码架构完全解构/06_Agent编排.md",
+      "book_line": 326,
+      "chart_id": "VIS-2A-017",
+      "chart_file": "charts/VIS-2A-017.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-017.txt",
+      "chart_file_v2": "charts/VIS-2A-017_Coordinator四阶段工作流时序图.html",
+      "chart_file_v2_size": 27883
+    },
+    {
+      "placeholder": "[图表预留 2.6-C]",
+      "placeholder_id": "2.6-C",
+      "book_file": "book/part2_代码架构完全解构/06_Agent编排.md",
+      "book_line": 327,
+      "chart_id": "VIS-2A-018",
+      "chart_file": "charts/VIS-2A-018.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-018.txt",
+      "chart_file_v2": "charts/VIS-2A-018_Agent通信拓扑图.html",
+      "chart_file_v2_size": 33631
+    },
+    {
+      "placeholder": "[图表预留 2.6-D]",
+      "placeholder_id": "2.6-D",
+      "book_file": "book/part2_代码架构完全解构/06_Agent编排.md",
+      "book_line": 328,
+      "chart_id": "VIS-2A-019",
+      "chart_file": "charts/VIS-2A-019.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-019.txt",
+      "chart_file_v2": "charts/VIS-2A-019_Agent专业化工具集矩阵.html",
+      "chart_file_v2_size": 17308
+    },
+    {
+      "placeholder": "[图表预留 2.2-A]",
+      "placeholder_id": "2.2-A",
+      "book_file": "book/part2_代码架构完全解构/02_启动序列.md",
+      "book_line": 330,
+      "chart_id": "VIS-2A-004",
+      "chart_file": "charts/VIS-2A-004.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-004.txt",
+      "chart_file_v2": "charts/VIS-2A-004_启动时间线.html",
+      "chart_file_v2_size": 18174
+    },
+    {
+      "placeholder": "[图表预留 2.2-B]",
+      "placeholder_id": "2.2-B",
+      "book_file": "book/part2_代码架构完全解构/02_启动序列.md",
+      "book_line": 331,
+      "chart_id": "VIS-2A-005",
+      "chart_file": "charts/VIS-2A-005.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-005.txt",
+      "chart_file_v2": "charts/VIS-2A-005_模式路由决策树.html",
+      "chart_file_v2_size": 26719
+    },
+    {
+      "placeholder": "[图表预留 2.2-C]",
+      "placeholder_id": "2.2-C",
+      "book_file": "book/part2_代码架构完全解构/02_启动序列.md",
+      "book_line": 332,
+      "chart_id": "VIS-2A-006",
+      "chart_file": "charts/VIS-2A-006.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-006.txt",
+      "chart_file_v2": "charts/VIS-2A-006_IO并行甘特图.html",
+      "chart_file_v2_size": 19252
+    },
+    {
+      "placeholder": "[图表预留 2.4-A]",
+      "placeholder_id": "2.4-A",
+      "book_file": "book/part2_代码架构完全解构/04_查询循环.md",
+      "book_line": 442,
+      "chart_id": "VIS-2A-010",
+      "chart_file": "charts/VIS-2A-010.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-010.txt",
+      "chart_file_v2": "charts/VIS-2A-010_queryLoop心跳序列图.html",
+      "chart_file_v2_size": 19726
+    },
+    {
+      "placeholder": "[图表预留 2.4-B]",
+      "placeholder_id": "2.4-B",
+      "book_file": "book/part2_代码架构完全解构/04_查询循环.md",
+      "book_line": 443,
+      "chart_id": "VIS-2A-011",
+      "chart_file": "charts/VIS-2A-011.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-011.txt",
+      "chart_file_v2": "charts/VIS-2A-011_StreamingToolExecutor并行时序.html",
+      "chart_file_v2_size": 16332
+    },
+    {
+      "placeholder": "[图表预留 2.4-C]",
+      "placeholder_id": "2.4-C",
+      "book_file": "book/part2_代码架构完全解构/04_查询循环.md",
+      "book_line": 444,
+      "chart_id": "VIS-2A-012",
+      "chart_file": "charts/VIS-2A-012.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-012.txt",
+      "chart_file_v2": "charts/VIS-2A-012_五层压缩瀑布图.html",
+      "chart_file_v2_size": 27025
+    },
+    {
+      "placeholder": "[图表预留 2.10-A]",
+      "placeholder_id": "2.10-A",
+      "book_file": "book/part2_代码架构完全解构/10_Token经济学.md",
+      "book_line": 293,
+      "chart_id": "VIS-2A-024",
+      "chart_file": "charts/VIS-2A-024.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-024.txt",
+      "chart_file_v2": "charts/VIS-2A-024_Token四种水价对比图.html",
+      "chart_file_v2_size": 16475
+    },
+    {
+      "placeholder": "[图表预留 2.10-B]",
+      "placeholder_id": "2.10-B",
+      "book_file": "book/part2_代码架构完全解构/10_Token经济学.md",
+      "book_line": 294,
+      "chart_id": "VIS-2A-025",
+      "chart_file": "charts/VIS-2A-025.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-025.txt",
+      "chart_file_v2": "charts/VIS-2A-025_Prompt Cache命中区域图.html",
+      "chart_file_v2_size": 23037
+    },
+    {
+      "placeholder": "[图表预留 2.10-C]",
+      "placeholder_id": "2.10-C",
+      "book_file": "book/part2_代码架构完全解构/10_Token经济学.md",
+      "book_line": 295,
+      "chart_id": "VIS-2A-026",
+      "chart_file": "charts/VIS-2A-026.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-026.txt",
+      "chart_file_v2": "charts/VIS-2A-026_压缩vs缓存决策树.html",
+      "chart_file_v2_size": 28999
+    },
+    {
+      "placeholder": "[图表预留 2.3-A]",
+      "placeholder_id": "2.3-A",
+      "book_file": "book/part2_代码架构完全解构/03_提示词工厂.md",
+      "book_line": 371,
+      "chart_id": "VIS-2A-007",
+      "chart_file": "charts/VIS-2A-007.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-007.txt",
+      "chart_file_v2": "charts/VIS-2A-007_系统提示词三明治分层图.html",
+      "chart_file_v2_size": 21498
+    },
+    {
+      "placeholder": "[图表预留 2.3-B]",
+      "placeholder_id": "2.3-B",
+      "book_file": "book/part2_代码架构完全解构/03_提示词工厂.md",
+      "book_line": 372,
+      "chart_id": "VIS-2A-008",
+      "chart_file": "charts/VIS-2A-008.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-008.txt",
+      "chart_file_v2": "charts/VIS-2A-008_CLAUDE.md向上遍历发现图.html",
+      "chart_file_v2_size": 24533
+    },
+    {
+      "placeholder": "[图表预留 2.3-C]",
+      "placeholder_id": "2.3-C",
+      "book_file": "book/part2_代码架构完全解构/03_提示词工厂.md",
+      "book_line": 373,
+      "chart_id": "VIS-2A-009",
+      "chart_file": "charts/VIS-2A-009.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-009.txt",
+      "chart_file_v2": "charts/VIS-2A-009_Token成本计算图.html",
+      "chart_file_v2_size": 18868
+    },
+    {
+      "placeholder": "[图表预留 2.7-A]",
+      "placeholder_id": "2.7-A",
+      "book_file": "book/part2_代码架构完全解构/07_安全架构.md",
+      "book_line": 414,
+      "chart_id": "VIS-2A-020",
+      "chart_file": "charts/VIS-2A-020.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-020.txt",
+      "chart_file_v2": "charts/VIS-2A-020_四层防御纵深嵌套图.html",
+      "chart_file_v2_size": 34975
+    },
+    {
+      "placeholder": "[图表预留 2.7-B]",
+      "placeholder_id": "2.7-B",
+      "book_file": "book/part2_代码架构完全解构/07_安全架构.md",
+      "book_line": 415,
+      "chart_id": "VIS-2A-021",
+      "chart_file": "charts/VIS-2A-021.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-021.txt",
+      "chart_file_v2": "charts/VIS-2A-021_九步权限检查流程图.html",
+      "chart_file_v2_size": 46730
+    },
+    {
+      "placeholder": "[图表预留 2.7-C]",
+      "placeholder_id": "2.7-C",
+      "book_file": "book/part2_代码架构完全解构/07_安全架构.md",
+      "book_line": 416,
+      "chart_id": "VIS-2A-022",
+      "chart_file": "charts/VIS-2A-022.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-022.txt",
+      "chart_file_v2": "charts/VIS-2A-022_Claude Code信任边界图.html",
+      "chart_file_v2_size": 24234
+    },
+    {
+      "placeholder": "[图表预留 2.7-D]",
+      "placeholder_id": "2.7-D",
+      "book_file": "book/part2_代码架构完全解构/07_安全架构.md",
+      "book_line": 417,
+      "chart_id": "VIS-2A-023",
+      "chart_file": "charts/VIS-2A-023.html",
+      "brief_file": "briefs/part2_architecture/VIS-2A-023.txt",
+      "chart_file_v2": "charts/VIS-2A-023_攻击面矩阵.html",
+      "chart_file_v2_size": 34573
+    },
+    {
+      "placeholder": "[图表预留 2.6-A]",
+      "placeholder_id": "2.6-A",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q06_Claude在你打字的时候偷偷在做什么.md",
+      "book_line": 37,
+      "chart_id": "VIS-2Q-004",
+      "chart_file": "charts/VIS-2Q-004_投机执行时间轴对比.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-004_投机执行时间轴对比.txt",
+      "chart_file_v2": "charts/VIS-2Q-004_投机执行时间轴对比.html",
+      "chart_file_v2_size": 20752
+    },
+    {
+      "placeholder": "[图表预留 2.19-A]",
+      "placeholder_id": "2.19-A",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q21_MagicDocs是怎么自动维护文档的.md",
+      "book_line": 17,
+      "chart_id": "VIS-2Q-015",
+      "chart_file": "charts/VIS-2Q-015_MagicDocs架构图.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-015_MagicDocs架构图.txt",
+      "chart_file_v2": "charts/VIS-2Q-015_MagicDocs架构图.html",
+      "chart_file_v2_size": 31015
+    },
+    {
+      "placeholder": "[图表预留 2.19-B]",
+      "placeholder_id": "2.19-B",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q21_MagicDocs是怎么自动维护文档的.md",
+      "book_line": 19,
+      "chart_id": "VIS-2Q-016",
+      "chart_file": "charts/VIS-2Q-016_MagicDocs时序图.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-016_MagicDocs时序图.txt",
+      "chart_file_v2": "charts/VIS-2Q-016_MagicDocs时序图.html",
+      "chart_file_v2_size": 25383
+    },
+    {
+      "placeholder": "[图表预留 2.19-A]",
+      "placeholder_id": "2.19-A",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q19_Claude是怎么决定该想多深的.md",
+      "book_line": 17,
+      "chart_id": "VIS-2Q-013",
+      "chart_file": "charts/VIS-2Q-013_思考深度控制层级图.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-013_思考深度控制层级图.txt",
+      "chart_file_v2": "charts/VIS-2Q-013_思考深度控制层级图.html",
+      "chart_file_v2_size": 28209
+    },
+    {
+      "placeholder": "[图表预留 2.17-A]",
+      "placeholder_id": "2.17-A",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q17_你的声音是怎么变成代码指令的.md",
+      "book_line": 15,
+      "chart_id": "VIS-2Q-010",
+      "chart_file": "charts/VIS-2Q-010_语音识别时序图.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-010_语音识别时序图.txt",
+      "chart_file_v2": "charts/VIS-2Q-010_语音识别时序图.html",
+      "chart_file_v2_size": 23737
+    },
+    {
+      "placeholder": "[图表预留 2.15-A]",
+      "placeholder_id": "2.15-A",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q15_终端里那只小动物是怎么活起来的.md",
+      "book_line": 23,
+      "chart_id": "VIS-2Q-008",
+      "chart_file": "charts/VIS-2Q-008_Companion状态机图.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-008_Companion状态机图.txt",
+      "chart_file_v2": "charts/VIS-2Q-008_Companion状态机图.html",
+      "chart_file_v2_size": 22906
+    },
+    {
+      "placeholder": "[图表预留 2.21-A]",
+      "placeholder_id": "2.21-A",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q23_Deep_Link和Teleport是怎么跨设备连接的.md",
+      "book_line": 17,
+      "chart_id": "VIS-2Q-019",
+      "chart_file": "charts/VIS-2Q-019_Deep_Link调用链图.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-019_Deep_Link调用链图.txt",
+      "chart_file_v2": "charts/VIS-2Q-019_Deep_Link调用链图.html",
+      "chart_file_v2_size": 21585
+    },
+    {
+      "placeholder": "[图表预留 2.21-B]",
+      "placeholder_id": "2.21-B",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q23_Deep_Link和Teleport是怎么跨设备连接的.md",
+      "book_line": 19,
+      "chart_id": "VIS-2Q-020",
+      "chart_file": "charts/VIS-2Q-020_Teleport_Git_Bundle流程图.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-020_Teleport_Git_Bundle流程图.txt",
+      "chart_file_v2": "charts/VIS-2Q-020_Teleport_Git_Bundle流程图.html",
+      "chart_file_v2_size": 32534
+    },
+    {
+      "placeholder": "[图表预留 2.16-A]",
+      "placeholder_id": "2.16-A",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q16_如何从浏览器远程驾驶你的终端AI.md",
+      "book_line": 17,
+      "chart_id": "VIS-2Q-009",
+      "chart_file": "charts/VIS-2Q-009_Bridge时序图.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-009_Bridge时序图.txt",
+      "chart_file_v2": "charts/VIS-2Q-009_Bridge时序图.html",
+      "chart_file_v2_size": 24415
+    },
+    {
+      "placeholder": "[图表预留 2.4-A]",
+      "placeholder_id": "2.4-A",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q04_工具为什么能在模型还没停止说话时就开始执行.md",
+      "book_line": 66,
+      "chart_id": "VIS-2Q-001",
+      "chart_file": "charts/VIS-2Q-001_串行vs并行对比时序图.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-001_串行vs并行对比时序图.txt",
+      "chart_file_v2": "charts/VIS-2Q-001_串行vs并行对比时序图.html",
+      "chart_file_v2_size": 22173
+    },
+    {
+      "placeholder": "[图表预留 2.20-A]",
+      "placeholder_id": "2.20-A",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q22_Computer_Use是怎么让AI操控你的屏幕的.md",
+      "book_line": 17,
+      "chart_id": "VIS-2Q-017",
+      "chart_file": "charts/VIS-2Q-017_Computer_Use四层架构图.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-017_Computer_Use四层架构图.txt",
+      "chart_file_v2": "charts/VIS-2Q-017_Computer_Use四层架构图.html",
+      "chart_file_v2_size": 27182
+    },
+    {
+      "placeholder": "[图表预留 2.20-B]",
+      "placeholder_id": "2.20-B",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q22_Computer_Use是怎么让AI操控你的屏幕的.md",
+      "book_line": 19,
+      "chart_id": "VIS-2Q-018",
+      "chart_file": "charts/VIS-2Q-018_Computer_Use操作时序图.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-018_Computer_Use操作时序图.txt",
+      "chart_file_v2": "charts/VIS-2Q-018_Computer_Use操作时序图.html",
+      "chart_file_v2_size": 23970
+    },
+    {
+      "placeholder": "[图表预留 2.14-A]",
+      "placeholder_id": "2.14-A",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q14_多个Claude实例是怎么协同工作的.md",
+      "book_line": 23,
+      "chart_id": "VIS-2Q-007",
+      "chart_file": "charts/VIS-2Q-007_Swarm拓扑图.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-007_Swarm拓扑图.txt",
+      "chart_file_v2": "charts/VIS-2Q-007_Swarm拓扑图.html",
+      "chart_file_v2_size": 31603
+    },
+    {
+      "placeholder": "[图表预留 2.5-A]",
+      "placeholder_id": "2.5-A",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q05_权限系统是怎么在灵活性和安全性之间走钢丝的.md",
+      "book_line": 40,
+      "chart_id": "VIS-2Q-002",
+      "chart_file": "charts/VIS-2Q-002_权限九步状态机流程图.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-002_权限九步状态机流程图.txt",
+      "chart_file_v2": "charts/VIS-2Q-002_权限九步状态机流程图.html",
+      "chart_file_v2_size": 28735
+    },
+    {
+      "placeholder": "[图表预留 2.5-B]",
+      "placeholder_id": "2.5-B",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q05_权限系统是怎么在灵活性和安全性之间走钢丝的.md",
+      "book_line": 73,
+      "chart_id": "VIS-2Q-003",
+      "chart_file": "charts/VIS-2Q-003_六种权限模式金字塔图.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-003_六种权限模式金字塔图.txt",
+      "chart_file_v2": "charts/VIS-2Q-003_六种权限模式金字塔图.html",
+      "chart_file_v2_size": 25873
+    },
+    {
+      "placeholder": "[图表预留 2.18-A]",
+      "placeholder_id": "2.18-A",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q18_AI的记忆是怎么跨越对话存活的.md",
+      "book_line": 15,
+      "chart_id": "VIS-2Q-011",
+      "chart_file": "charts/VIS-2Q-011_Memory系统架构图.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-011_Memory系统架构图.txt",
+      "chart_file_v2": "charts/VIS-2Q-011_Memory系统架构图.html",
+      "chart_file_v2_size": 35102
+    },
+    {
+      "placeholder": "[图表预留 2.18-B]",
+      "placeholder_id": "2.18-B",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q18_AI的记忆是怎么跨越对话存活的.md",
+      "book_line": 17,
+      "chart_id": "VIS-2Q-012",
+      "chart_file": "charts/VIS-2Q-012_记忆生命周期流程图.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-012_记忆生命周期流程图.txt",
+      "chart_file_v2": "charts/VIS-2Q-012_记忆生命周期流程图.html",
+      "chart_file_v2_size": 23362
+    },
+    {
+      "placeholder": "[图表预留 2.10-A]",
+      "placeholder_id": "2.10-A",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q10_用户能在Claude的生命周期里插多少个钩子.md",
+      "book_line": 30,
+      "chart_id": "VIS-2Q-005",
+      "chart_file": "charts/VIS-2Q-005_Claude生命周期图.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-005_Claude生命周期图.txt",
+      "chart_file_v2": "charts/VIS-2Q-005_Claude生命周期图.html",
+      "chart_file_v2_size": 30034
+    },
+    {
+      "placeholder": "[图表预留 2.10-B]",
+      "placeholder_id": "2.10-B",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q10_用户能在Claude的生命周期里插多少个钩子.md",
+      "book_line": 102,
+      "chart_id": "VIS-2Q-006",
+      "chart_file": "charts/VIS-2Q-006_退出码语义对照表.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-006_退出码语义对照表.txt",
+      "chart_file_v2": "charts/VIS-2Q-006_退出码语义对照表.html",
+      "chart_file_v2_size": 27206
+    },
+    {
+      "placeholder": "[图表预留 2.22-A]",
+      "placeholder_id": "2.22-A",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q24_用户输入是怎么一步步变成AI请求的.md",
+      "book_line": 17,
+      "chart_id": "VIS-2Q-021",
+      "chart_file": "charts/VIS-2Q-021_processUserInput决策树.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-021_processUserInput决策树.txt",
+      "chart_file_v2": "charts/VIS-2Q-021_processUserInput决策树.html",
+      "chart_file_v2_size": 19093
+    },
+    {
+      "placeholder": "[图表预留 2.22-B]",
+      "placeholder_id": "2.22-B",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q24_用户输入是怎么一步步变成AI请求的.md",
+      "book_line": 19,
+      "chart_id": "VIS-2Q-022",
+      "chart_file": "charts/VIS-2Q-022_输入处理流水线图.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-022_输入处理流水线图.txt",
+      "chart_file_v2": "charts/VIS-2Q-022_输入处理流水线图.html",
+      "chart_file_v2_size": 31733
+    },
+    {
+      "placeholder": "[图表预留 2.20-A]",
+      "placeholder_id": "2.20-A",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q20_这个工具到底藏了多少命令.md",
+      "book_line": 17,
+      "chart_id": "VIS-2Q-014",
+      "chart_file": "charts/VIS-2Q-014_命令四象限分类图.html",
+      "brief_file": "briefs/part2_qa/VIS-2Q-014_命令四象限分类图.txt",
+      "chart_file_v2": "charts/VIS-2Q-014_命令四象限分类图.html",
+      "chart_file_v2_size": 25765
+    },
+    {
+      "placeholder": "[图表预留 3.18-A]",
+      "placeholder_id": "3.18-A",
+      "book_file": "book/part3_子系统完全解析/18_Bash_AST解析器完全解析.md",
+      "book_line": 35,
+      "chart_id": "VIS-3-018A",
+      "chart_file": "charts/VIS-3-018A_Bash_AST解析管线全景图.html",
+      "brief_file": "briefs/part3_new/VIS-3-018A_Bash_AST解析管线全景图.txt",
+      "chart_file_v2": "charts/VIS-3-018A_Bash_AST解析管线全景图.html",
+      "chart_file_v2_size": 34103
+    },
+    {
+      "placeholder": "[图表预留 3.18-B]",
+      "placeholder_id": "3.18-B",
+      "book_file": "book/part3_子系统完全解析/18_Bash_AST解析器完全解析.md",
+      "book_line": 37,
+      "chart_id": "VIS-3-018B",
+      "chart_file": "charts/VIS-3-018B_FAIL-CLOSED安全模型.html",
+      "brief_file": "briefs/part3_new/VIS-3-018B_FAIL-CLOSED安全模型.txt",
+      "chart_file_v2": "charts/VIS-3-018B_FAIL-CLOSED安全模型.html",
+      "chart_file_v2_size": 41142
+    },
+    {
+      "placeholder": "[图表预留 3.19-A]",
+      "placeholder_id": "3.19-A",
+      "book_file": "book/part3_子系统完全解析/19_Cron调度系统完全解析.md",
+      "book_line": 28,
+      "chart_id": "VIS-3-019A",
+      "chart_file": "charts/VIS-3-019A_Cron调度器架构图.html",
+      "brief_file": "briefs/part3_new/VIS-3-019A_Cron调度器架构图.txt",
+      "chart_file_v2": "charts/VIS-3-019A_Cron调度器架构图.html",
+      "chart_file_v2_size": 34679
+    },
+    {
+      "placeholder": "[图表预留 3.19-B]",
+      "placeholder_id": "3.19-B",
+      "book_file": "book/part3_子系统完全解析/19_Cron调度系统完全解析.md",
+      "book_line": 30,
+      "chart_id": "VIS-3-019B",
+      "chart_file": "charts/VIS-3-019B_Cron任务生命周期.html",
+      "brief_file": "briefs/part3_new/VIS-3-019B_Cron任务生命周期.txt",
+      "chart_file_v2": "charts/VIS-3-019B_Cron任务生命周期.html",
+      "chart_file_v2_size": 33441
+    },
+    {
+      "placeholder": "[图表预留 3.20-A]",
+      "placeholder_id": "3.20-A",
+      "book_file": "book/part3_子系统完全解析/20_团队记忆同步完全解析.md",
+      "book_line": 28,
+      "chart_id": "VIS-3-020A",
+      "chart_file": "charts/VIS-3-020A_团队记忆同步架构.html",
+      "brief_file": "briefs/part3_new/VIS-3-020A_团队记忆同步架构.txt",
+      "chart_file_v2": "charts/VIS-3-020A_团队记忆同步架构.html",
+      "chart_file_v2_size": 31444
+    },
+    {
+      "placeholder": "[图表预留 3.20-B]",
+      "placeholder_id": "3.20-B",
+      "book_file": "book/part3_子系统完全解析/20_团队记忆同步完全解析.md",
+      "book_line": 30,
+      "chart_id": "VIS-3-020B",
+      "chart_file": "charts/VIS-3-020B_PullPush同步流程.html",
+      "brief_file": "briefs/part3_new/VIS-3-020B_PullPush同步流程.txt",
+      "chart_file_v2": "charts/VIS-3-020B_PullPush同步流程.html",
+      "chart_file_v2_size": 21517
+    },
+    {
+      "placeholder": "[图表预留 3.22-A]",
+      "placeholder_id": "3.22-A",
+      "book_file": "book/part3_子系统完全解析/22_PromptCache可观测性完全解析.md",
+      "book_line": 17,
+      "chart_id": "VIS-3-022A",
+      "chart_file": "charts/VIS-3-022A_CacheBreak检测流程.html",
+      "brief_file": "briefs/part3_new/VIS-3-022A_CacheBreak检测流程.txt",
+      "chart_file_v2": "charts/VIS-3-022A_CacheBreak检测流程.html",
+      "chart_file_v2_size": 33449
+    },
+    {
+      "placeholder": "[图表预留 0.1-A]",
+      "placeholder_id": "0.1-A",
+      "book_file": "book/part0_序章/00_序章.md",
+      "book_line": 61,
+      "chart_id": "VIS-0-002B",
+      "chart_file": "charts/VIS-0-002B_CC源码全量统计仪表盘.html",
+      "brief_file": null,
+      "chart_file_v2": "charts/VIS-0-002B_CC源码全量统计仪表盘.html",
+      "chart_file_v2_size": 36390
+    },
+    {
+      "placeholder": "[图表预留 0.1-B]",
+      "placeholder_id": "0.1-B",
+      "book_file": "book/part0_序章/00_序章.md",
+      "book_line": 65,
+      "chart_id": "VIS-0-001",
+      "chart_file": "charts/VIS-0-001_英雄架构图.html",
+      "brief_file": "briefs/overview/VIS-0-001_英雄架构图.txt",
+      "chart_file_v2": "charts/VIS-0-001_英雄架构图.html",
+      "chart_file_v2_size": 33092
+    },
+    {
+      "placeholder": "[图表预留 0.2-A]",
+      "placeholder_id": "0.2-A",
+      "book_file": "book/part0_序章/00_序章.md",
+      "book_line": 81,
+      "chart_id": "VIS-0-004",
+      "chart_file": "charts/VIS-0-004_数据流完整旅程图.html",
+      "brief_file": "briefs/overview/VIS-0-004_数据流完整旅程图.txt",
+      "chart_file_v2": "charts/VIS-0-004_数据流完整旅程图.html",
+      "chart_file_v2_size": 25944
+    },
+    {
+      "placeholder": "[图表预留 0.2-B]",
+      "placeholder_id": "0.2-B",
+      "book_file": "book/part0_序章/00_序章.md",
+      "book_line": 87,
+      "chart_id": "VIS-0-003",
+      "chart_file": "charts/VIS-0-003_技术栈全景.html",
+      "brief_file": "briefs/overview/VIS-0-003_技术栈全景.txt",
+      "chart_file_v2": "charts/VIS-0-003_技术栈全景.html",
+      "chart_file_v2_size": 32261
+    },
+    {
+      "placeholder": "[图表预留 0.3-A]",
+      "placeholder_id": "0.3-A",
+      "book_file": "book/part0_序章/00_序章.md",
+      "book_line": 110,
+      "chart_id": "VIS-0-010",
+      "chart_file": "charts/VIS-0-010_43个工具完整目录.html",
+      "brief_file": "briefs/overview/VIS-0-010_43个工具完整目录.txt",
+      "chart_file_v2": "charts/VIS-0-010_40个工具完整目录.html",
+      "chart_file_v2_size": 30845
+    },
+    {
+      "placeholder": "[图表预留 0.3-B]",
+      "placeholder_id": "0.3-B",
+      "book_file": "book/part0_序章/00_序章.md",
+      "book_line": 120,
+      "chart_id": "VIS-0-006",
+      "chart_file": "charts/VIS-0-006_安全模型全景图.html",
+      "brief_file": "briefs/overview/VIS-0-006_安全模型全景图.txt",
+      "chart_file_v2": "charts/VIS-0-006_安全模型全景图.html",
+      "chart_file_v2_size": 27760
+    },
+    {
+      "placeholder": "[图表预留 0.3-C]",
+      "placeholder_id": "0.3-C",
+      "book_file": "book/part0_序章/00_序章.md",
+      "book_line": 122,
+      "chart_id": "VIS-0-009",
+      "chart_file": "charts/VIS-0-009_权限模型对照表.html",
+      "brief_file": "briefs/overview/VIS-0-009_权限模型对照表.txt",
+      "chart_file_v2": "charts/VIS-0-009_权限模型对照表.html",
+      "chart_file_v2_size": 23862
+    },
+    {
+      "placeholder": "[图表预留 0.3-D]",
+      "placeholder_id": "0.3-D",
+      "book_file": "book/part0_序章/00_序章.md",
+      "book_line": 128,
+      "chart_id": "VIS-0-013",
+      "chart_file": "charts/VIS-0-013_MCP传输方式对比.html",
+      "brief_file": "briefs/overview/VIS-0-013_MCP传输方式对比.txt",
+      "chart_file_v2": "charts/VIS-0-013_MCP传输方式对比.html",
+      "chart_file_v2_size": 29274
+    },
+    {
+      "placeholder": "[图表预留 0.3-E]",
+      "placeholder_id": "0.3-E",
+      "book_file": "book/part0_序章/00_序章.md",
+      "book_line": 135,
+      "chart_id": "VIS-0-011",
+      "chart_file": "charts/VIS-0-011_配置文件完整地图.html",
+      "brief_file": "briefs/overview/VIS-0-011_配置文件完整地图.txt",
+      "chart_file_v2": "charts/VIS-0-011_配置文件完整地图.html",
+      "chart_file_v2_size": 29832
+    },
+    {
+      "placeholder": "[图表预留 0.3-F]",
+      "placeholder_id": "0.3-F",
+      "book_file": "book/part0_序章/00_序章.md",
+      "book_line": 147,
+      "chart_id": "VIS-0-012",
+      "chart_file": "charts/VIS-0-012_Hook事件完整目录.html",
+      "brief_file": "briefs/overview/VIS-0-012_Hook事件完整目录.txt",
+      "chart_file_v2": "charts/VIS-0-012_Hook事件完整目录.html",
+      "chart_file_v2_size": 26869
+    },
+    {
+      "placeholder": "[图表预留 0.3-G]",
+      "placeholder_id": "0.3-G",
+      "book_file": "book/part0_序章/00_序章.md",
+      "book_line": 151,
+      "chart_id": "VIS-0-007",
+      "chart_file": "charts/VIS-0-007_扩展生态地图.html",
+      "brief_file": "briefs/overview/VIS-0-007_扩展生态地图.txt",
+      "chart_file_v2": "charts/VIS-0-007_扩展生态地图.html",
+      "chart_file_v2_size": 26163
+    },
+    {
+      "placeholder": "[图表预留 0.3-H]",
+      "placeholder_id": "0.3-H",
+      "book_file": "book/part0_序章/00_序章.md",
+      "book_line": 153,
+      "chart_id": "VIS-0-005",
+      "chart_file": "charts/VIS-0-005_模块依赖网络图.html",
+      "brief_file": "briefs/overview/VIS-0-005_模块依赖网络图.txt",
+      "chart_file_v2": "charts/VIS-0-005_模块依赖网络图.html",
+      "chart_file_v2_size": 31204
+    },
+    {
+      "placeholder": "[图表预留 0.4-A]",
+      "placeholder_id": "0.4-A",
+      "book_file": "book/part0_序章/00_序章.md",
+      "book_line": 161,
+      "chart_id": "VIS-0-014",
+      "chart_file": "charts/VIS-0-014_本书知识图谱.html",
+      "brief_file": "briefs/overview/VIS-0-014_本书知识图谱.txt",
+      "chart_file_v2": "charts/VIS-0-014_本书知识图谱.html",
+      "chart_file_v2_size": 33436
+    },
+    {
+      "placeholder": "[图表预留 0.4-B]",
+      "placeholder_id": "0.4-B",
+      "book_file": "book/part0_序章/00_序章.md",
+      "book_line": 180,
+      "chart_id": "VIS-0-008",
+      "chart_file": "charts/VIS-0-008_性能优化全景.html",
+      "brief_file": "briefs/overview/VIS-0-008_性能优化全景.txt",
+      "chart_file_v2": "charts/VIS-0-008_性能优化全景.html",
+      "chart_file_v2_size": 22222
+    },
+    {
+      "placeholder": "[图表预留 0.5-A]",
+      "placeholder_id": "0.5-A",
+      "book_file": "book/part0_序章/00_序章.md",
+      "book_line": 213,
+      "chart_id": "VIS-0-015",
+      "chart_file": "charts/VIS-0-015_概念速查表.html",
+      "brief_file": "briefs/overview/VIS-0-015_概念速查表.txt",
+      "chart_file_v2": "charts/VIS-0-015_概念速查表.html",
+      "chart_file_v2_size": 18481
+    },
+    {
+      "placeholder": "[图表预留 Q26-A]",
+      "placeholder_id": "Q26-A",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q26_为什么Claude_Code能像Agent一样工作.md",
+      "book_line": 118,
+      "chart_id": "VIS-Q26-A",
+      "chart_file": "charts/VIS-Q26-A_六条件金字塔.html",
+      "brief_file": "handoff/codex-content-merge/charts-briefs/N6-brief.md",
+      "chart_file_v2": "charts/VIS-Q26-A_六条件金字塔.html",
+      "chart_file_v2_size": 22734
+    },
+    {
+      "placeholder": "[图表预留 Q27-A]",
+      "placeholder_id": "Q27-A",
+      "book_file": "book/part2_好奇心驱动的深度问答/Q27_为什么Agent工作台必须有权限压缩和恢复.md",
+      "book_line": null,
+      "chart_id": "VIS-Q27-A",
+      "chart_file": "charts/VIS-Q27-A_三根梁支撑图.html",
+      "brief_file": "handoff/codex-content-merge/charts-briefs/N7-brief.md",
+      "chart_file_v2": "charts/VIS-Q27-A_三根梁支撑图.html",
+      "chart_file_v2_size": 25383
+    },
+    {
+      "placeholder": "[图表预留 12-A]",
+      "placeholder_id": "12-A",
+      "book_file": "book/part3_子系统完全解析/12_Bridge远程架构完全解析.md",
+      "book_line": null,
+      "chart_id": "VIS-12-A",
+      "chart_file": "charts/VIS-12-A_Bridge双状态世界图.svg",
+      "brief_file": "handoff/codex-content-merge/charts-briefs/N8-brief.md",
+      "chart_file_v2": "charts/VIS-12-A_Bridge双状态世界图.html",
+      "chart_file_v2_size": 26137
+    },
+    {
+      "placeholder": "[图表预留 12-B]",
+      "placeholder_id": "12-B",
+      "book_file": "book/part3_子系统完全解析/12_Bridge远程架构完全解析.md",
+      "book_line": null,
+      "chart_id": "VIS-12-B",
+      "chart_file": "charts/VIS-12-B_Bridge崩溃恢复时序.svg",
+      "brief_file": "handoff/codex-content-merge/charts-briefs/N9-brief.md"
+    },
+    {
+      "placeholder": "[图表预留 12-C]",
+      "placeholder_id": "12-C",
+      "book_file": "book/part3_子系统完全解析/12_Bridge远程架构完全解析.md",
+      "book_line": null,
+      "chart_id": "VIS-12-C",
+      "chart_file": "charts/VIS-12-C_Mirror模式对照图.html",
+      "brief_file": "handoff/codex-content-merge/charts-briefs/N11-brief.md",
+      "chart_file_v2": "charts/VIS-12-C_Mirror模式对照图.html",
+      "chart_file_v2_size": 28817
+    },
+    {
+      "placeholder": "[图表预留 12-D]",
+      "placeholder_id": "12-D",
+      "book_file": "book/part3_子系统完全解析/12_Bridge远程架构完全解析.md",
+      "book_line": null,
+      "chart_id": "VIS-12-D",
+      "chart_file": "charts/VIS-12-D_发送契约vs状态面矩阵.html",
+      "brief_file": "handoff/codex-content-merge/charts-briefs/N13-brief.md",
+      "chart_file_v2": "charts/VIS-12-D_发送契约vs状态面矩阵.html",
+      "chart_file_v2_size": 33587
+    },
+    {
+      "placeholder": "[图表预留 23-A]",
+      "placeholder_id": "23-A",
+      "book_file": "book/part3_子系统完全解析/23_Peer与Session发现层完全解析.md",
+      "book_line": null,
+      "chart_id": "VIS-23-A",
+      "chart_file": "charts/VIS-23-A_Peer发现四层架构图.svg",
+      "brief_file": "handoff/codex-content-merge/charts-briefs/N1-brief.md"
+    },
+    {
+      "placeholder": "[图表预留 23-B]",
+      "placeholder_id": "23-B",
+      "book_file": "book/part3_子系统完全解析/23_Peer与Session发现层完全解析.md",
+      "book_line": null,
+      "chart_id": "VIS-23-B",
+      "chart_file": "charts/VIS-23-B_三套投影模型对比图.html",
+      "brief_file": "handoff/codex-content-merge/charts-briefs/N2-brief.md"
+    },
+    {
+      "placeholder": "[图表预留 24-A]",
+      "placeholder_id": "24-A",
+      "book_file": "book/part3_子系统完全解析/24_Assistant等于Viewer完全解析.md",
+      "book_line": null,
+      "chart_id": "VIS-24-A",
+      "chart_file": "charts/VIS-24-A_三条宿主链对比图.html",
+      "brief_file": "handoff/codex-content-merge/charts-briefs/N3-brief.md",
+      "chart_file_v2": "charts/VIS-24-A_三条宿主链对比图.html",
+      "chart_file_v2_size": 23624
+    },
+    {
+      "placeholder": "[图表预留 12-E]",
+      "placeholder_id": "12-E",
+      "book_file": "book/part3_子系统完全解析/12_Bridge远程架构完全解析.md",
+      "book_line": null,
+      "chart_id": "VIS-12-E",
+      "chart_file": "charts/VIS-12-E_Peer地址路由不对称流程.svg",
+      "brief_file": "handoff/codex-content-merge/charts-briefs/N12-brief.md"
+    },
+    {
+      "placeholder": "[图表预留 5-A]",
+      "placeholder_id": "5-A",
+      "book_file": "book/part2_代码架构完全解构/05_工具运行时.md",
+      "book_line": null,
+      "chart_id": "VIS-05-A",
+      "chart_file": "charts/VIS-05-A_工具装配四层链.svg",
+      "brief_file": "handoff/codex-content-merge/charts-briefs/N14-brief.md",
+      "chart_file_v2": "charts/VIS-05-A_工具装配四层链.html",
+      "chart_file_v2_size": 22394
+    },
+    {
+      "placeholder": "[图表预留 25-A]",
+      "placeholder_id": "25-A",
+      "book_file": "book/part3_子系统完全解析/25_Brief通信家族与Viewer结构化通道完全解析.md",
+      "book_line": null,
+      "chart_id": "VIS-25-A",
+      "chart_file": "charts/VIS-25-A_Brief双成员关系图.html",
+      "brief_file": "handoff/codex-content-merge/charts-briefs/N4-brief.md",
+      "chart_file_v2": "charts/VIS-25-A_Brief双成员关系图.html",
+      "chart_file_v2_size": 18808
+    },
+    {
+      "placeholder": "[图表预留 25-B]",
+      "placeholder_id": "25-B",
+      "book_file": "book/part3_子系统完全解析/25_Brief通信家族与Viewer结构化通道完全解析.md",
+      "book_line": null,
+      "chart_id": "VIS-25-B",
+      "chart_file": "charts/VIS-25-B_file_uuid闭环图.html",
+      "brief_file": "handoff/codex-content-merge/charts-briefs/N5-brief.md"
+    },
+    {
+      "placeholder": "[图表预留 12-F]",
+      "placeholder_id": "12-F",
+      "book_file": "book/part3_子系统完全解析/12_Bridge远程架构完全解析.md",
+      "book_line": null,
+      "chart_id": "VIS-12-F",
+      "chart_file": "charts/VIS-12-F_Perpetual_Bridge_KAIROS组合图.svg",
+      "brief_file": "handoff/codex-content-merge/charts-briefs/N10-brief.md",
+      "chart_file_v2": "charts/VIS-12-F_Perpetual_Bridge_KAIROS组合图.html",
+      "chart_file_v2_size": 26921
+    }
+  ],
+  "unmatched_placeholders": [],
+  "unmatched_charts": [
+    {
+      "chart_id": "VIS-0-002",
+      "chart_file": "test-viz/production/html/VIS-0-002_源码统计仪表盘.html",
+      "brief_file": "briefs/overview/VIS-0-002_源码统计仪表盘.txt",
+      "reason": "旧版源码统计仪表盘，已被 VIS-0-002B 全量统计仪表盘替代并归位至序章 [图表预留 0.1-A]；本图作为历史版本保留，不再嵌入序章避免重复"
+    },
+    {
+      "chart_id": "VIS-1-011",
+      "chart_file": "test-viz/production/html/VIS-1-011_本书阅读路径图.html",
+      "brief_file": "briefs/part1/VIS-1-011_本书阅读路径图.txt",
+      "reason": "新增可视化，无对应书中占位符"
+    },
+    {
+      "chart_id": "VIS-4-001",
+      "chart_file": "test-viz/production/html/VIS-4-001_并行IO策略示意图.html",
+      "brief_file": "briefs/part4/VIS-4-001_并行IO策略示意图.txt",
+      "reason": "新增可视化，无对应书中占位符"
+    },
+    {
+      "chart_id": "VIS-4-002",
+      "chart_file": "test-viz/production/html/VIS-4-002_Token成本金字塔.html",
+      "brief_file": "briefs/part4/VIS-4-002_Token成本金字塔.txt",
+      "reason": "新增可视化，无对应书中占位符"
+    },
+    {
+      "chart_id": "VIS-4-003",
+      "chart_file": "test-viz/production/html/VIS-4-003_Agent组合模式图.html",
+      "brief_file": "briefs/part4/VIS-4-003_Agent组合模式图.txt",
+      "reason": "新增可视化，无对应书中占位符"
+    },
+    {
+      "chart_id": "VIS-4-004",
+      "chart_file": "test-viz/production/html/VIS-4-004_防御纵深策略图.html",
+      "brief_file": "briefs/part4/VIS-4-004_防御纵深策略图.txt",
+      "reason": "新增可视化，无对应书中占位符"
+    },
+    {
+      "chart_id": "VIS-4-005",
+      "chart_file": "test-viz/production/html/VIS-4-005_遥测数据流全景图.html",
+      "brief_file": "briefs/part4/VIS-4-005_遥测数据流全景图.txt",
+      "reason": "新增可视化，无对应书中占位符"
+    },
+    {
+      "chart_id": "VIS-4-006",
+      "chart_file": "test-viz/production/html/VIS-4-006_错误恢复策略矩阵.html",
+      "brief_file": "briefs/part4/VIS-4-006_错误恢复策略矩阵.txt",
+      "reason": "新增可视化，无对应书中占位符"
+    },
+    {
+      "chart_id": "VIS-4-007",
+      "chart_file": "test-viz/production/html/VIS-4-007_信任获取阶梯图.html",
+      "brief_file": "briefs/part4/VIS-4-007_信任获取阶梯图.txt",
+      "reason": "新增可视化，无对应书中占位符"
+    },
+    {
+      "chart_id": "VIS-4-008",
+      "chart_file": "test-viz/production/html/VIS-4-008_声明式vs命令式对比.html",
+      "brief_file": "briefs/part4/VIS-4-008_声明式vs命令式对比.txt",
+      "reason": "新增可视化，无对应书中占位符"
+    },
+    {
+      "chart_id": "VIS-4-009",
+      "chart_file": "test-viz/production/html/VIS-4-009_插件架构三种模式.html",
+      "brief_file": "briefs/part4/VIS-4-009_插件架构三种模式.txt",
+      "reason": "新增可视化，无对应书中占位符"
+    },
+    {
+      "chart_id": "VIS-4-010",
+      "chart_file": "test-viz/production/html/VIS-4-010_六大原则思维导图.html",
+      "brief_file": "briefs/part4/VIS-4-010_六大原则思维导图.txt",
+      "reason": "新增可视化，无对应书中占位符"
+    },
+    {
+      "chart_id": "VIS-5-001",
+      "chart_file": "test-viz/production/html/VIS-5-001_代码复杂度热力图.html",
+      "brief_file": "briefs/part5/VIS-5-001_代码复杂度热力图.txt",
+      "reason": "新增可视化，无对应书中占位符"
+    },
+    {
+      "chart_id": "VIS-5-002",
+      "chart_file": "test-viz/production/html/VIS-5-002_技术债务分布图.html",
+      "brief_file": "briefs/part5/VIS-5-002_技术债务分布图.txt",
+      "reason": "新增可视化，无对应书中占位符"
+    },
+    {
+      "chart_id": "VIS-5-003",
+      "chart_file": "test-viz/production/html/VIS-5-003_竞品架构对比.html",
+      "brief_file": "briefs/part5/VIS-5-003_竞品架构对比.txt",
+      "reason": "新增可视化，无对应书中占位符"
+    },
+    {
+      "chart_id": "VIS-5-004",
+      "chart_file": "test-viz/production/html/VIS-5-004_可复用设计模式清单.html",
+      "brief_file": "briefs/part5/VIS-5-004_可复用设计模式清单.txt",
+      "reason": "新增可视化，无对应书中占位符"
+    },
+    {
+      "chart_id": "VIS-5-005",
+      "chart_file": "test-viz/production/html/VIS-5-005_未来演进路线图.html",
+      "brief_file": "briefs/part5/VIS-5-005_未来演进路线图.txt",
+      "reason": "新增可视化，无对应书中占位符"
+    }
+  ],
+  "duplicate_ids": {
+    "2.10-A": [
+      "book/part2_代码架构完全解构/10_Token经济学.md",
+      "book/part2_好奇心驱动的深度问答/Q10_用户能在Claude的生命周期里插多少个钩子.md"
+    ],
+    "2.10-B": [
+      "book/part2_代码架构完全解构/10_Token经济学.md",
+      "book/part2_好奇心驱动的深度问答/Q10_用户能在Claude的生命周期里插多少个钩子.md"
+    ],
+    "2.19-A": [
+      "book/part2_好奇心驱动的深度问答/Q21_MagicDocs是怎么自动维护文档的.md",
+      "book/part2_好奇心驱动的深度问答/Q19_Claude是怎么决定该想多深的.md"
+    ],
+    "2.20-A": [
+      "book/part2_好奇心驱动的深度问答/Q22_Computer_Use是怎么让AI操控你的屏幕的.md",
+      "book/part2_好奇心驱动的深度问答/Q20_这个工具到底藏了多少命令.md"
+    ],
+    "2.4-A": [
+      "book/part2_代码架构完全解构/04_查询循环.md",
+      "book/part2_好奇心驱动的深度问答/Q04_工具为什么能在模型还没停止说话时就开始执行.md"
+    ],
+    "2.5-A": [
+      "book/part2_代码架构完全解构/05_工具运行时.md",
+      "book/part2_好奇心驱动的深度问答/Q05_权限系统是怎么在灵活性和安全性之间走钢丝的.md"
+    ],
+    "2.5-B": [
+      "book/part2_代码架构完全解构/05_工具运行时.md",
+      "book/part2_好奇心驱动的深度问答/Q05_权限系统是怎么在灵活性和安全性之间走钢丝的.md"
+    ],
+    "2.6-A": [
+      "book/part2_代码架构完全解构/06_Agent编排.md",
+      "book/part2_好奇心驱动的深度问答/Q06_Claude在你打字的时候偷偷在做什么.md"
+    ]
+  }
+}
