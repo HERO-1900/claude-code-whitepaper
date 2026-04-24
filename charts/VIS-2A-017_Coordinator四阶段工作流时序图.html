@@ -3,40 +3,129 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>VIS-2A-017 Coordinator 四阶段工作流时序图</title>
+  <title>VIS-2A-017 Coordinator 四阶段工作流时序图 v9</title>
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    /* v2-fix-lang-priority · data-lang 优先 · lang fallback */
     html[data-lang="en"] .lz { display: none !important; }
     html[data-lang="zh"] .le { display: none !important; }
-    html:not([data-lang])[lang|="en"] .lz { display: none !important; }
-    html:not([data-lang]):not([lang|="en"]) .le { display: none !important; }
-    :root{--bg:#020617;--panel:#0f172a;--card:#0f172a;--border:#1e293b;--text:#e2e8f0;--muted:#64748b;--subtle:#334155;--amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;--rose:#fb7185;--slate:#94a3b8;--orange:#f97316}
-    [data-theme="warm"]{--bg:#f8f6f3;--panel:#ffffff;--card:#faf9f7;--border:#e2d9cc;--text:#1c1917;--muted:#78716c;--subtle:#d6ccc2}
-    [data-theme="light"]{--bg:#ffffff;--panel:#f8fafc;--card:#f8fafc;--border:#e2e8f0;--text:#0f172a;--muted:#64748b;--subtle:#cbd5e1}
+    :root{
+      --bg:#020617;--panel:#0f172a;--card:#0f172a;--border:#1e293b;
+      --text:#e2e8f0;--muted:#94a3b8;--subtle:#334155;
+      --amber:#fbbf24;--cyan:#22d3ee;--violet:#a78bfa;--emerald:#34d399;
+      --rose:#fb7185;--slate:#cbd5e1;--orange:#f97316;--line:#64748b;
+      --arrow-slate:#64748b;--arrow-amber:#fbbf24;--arrow-cyan:#22d3ee;
+      --arrow-violet:#9c6de4;--arrow-emerald:#34d399;
+    }
+    [data-theme="warm"]{
+      --bg:#f8f2e8;--panel:#ffffff;--card:#fdfaf5;--border:#c7b8a3;
+      --text:#1c1917;--muted:#5c5347;--subtle:#a89984;--line:#6b5d4f;
+      --amber:#b45309;--cyan:#0891b2;--violet:#7c3aed;--emerald:#047857;
+      --slate:#334155;--orange:#c96a00;
+      --arrow-slate:#6b5d4f;--arrow-amber:#b45309;--arrow-cyan:#0891b2;
+      --arrow-violet:#7c3aed;--arrow-emerald:#047857;
+    }
+    [data-theme="light"]{
+      --bg:#ffffff;--panel:#f8fafc;--card:#f8fafc;--border:#94a3b8;
+      --text:#0f172a;--muted:#475569;--subtle:#64748b;--line:#475569;
+      --amber:#b45309;--cyan:#007c8c;--violet:#6b3db0;--emerald:#047857;
+      --slate:#334155;--orange:#c96a00;
+      --arrow-slate:#475569;--arrow-amber:#b45309;--arrow-cyan:#007c8c;
+      --arrow-violet:#6b3db0;--arrow-emerald:#047857;
+    }
+    .phase-band-1{fill:rgba(251,191,36,0.07);stroke:rgba(251,191,36,0.30)}
+    .phase-band-2{fill:rgba(167,139,250,0.07);stroke:rgba(167,139,250,0.30)}
+    .phase-band-3{fill:rgba(34,211,238,0.07);stroke:rgba(34,211,238,0.30)}
+    .phase-band-4{fill:rgba(52,211,153,0.07);stroke:rgba(52,211,153,0.30)}
+    [data-theme="warm"] .phase-band-1{fill:rgba(180,83,9,0.10);stroke:rgba(180,83,9,0.45)}
+    [data-theme="warm"] .phase-band-2{fill:rgba(124,58,237,0.10);stroke:rgba(124,58,237,0.45)}
+    [data-theme="warm"] .phase-band-3{fill:rgba(8,145,178,0.10);stroke:rgba(8,145,178,0.45)}
+    [data-theme="warm"] .phase-band-4{fill:rgba(4,120,87,0.10);stroke:rgba(4,120,87,0.45)}
+    [data-theme="light"] .phase-band-1{fill:rgba(180,83,9,0.08);stroke:rgba(180,83,9,0.45)}
+    [data-theme="light"] .phase-band-2{fill:rgba(109,40,217,0.08);stroke:rgba(109,40,217,0.45)}
+    [data-theme="light"] .phase-band-3{fill:rgba(14,116,144,0.08);stroke:rgba(14,116,144,0.45)}
+    [data-theme="light"] .phase-band-4{fill:rgba(4,120,87,0.08);stroke:rgba(4,120,87,0.45)}
+    .callout-box{fill:rgba(251,191,36,0.08);stroke:rgba(251,191,36,0.40)}
+    [data-theme="warm"] .callout-box{fill:rgba(180,83,9,0.12);stroke:rgba(180,83,9,0.55)}
+    [data-theme="light"] .callout-box{fill:rgba(180,83,9,0.10);stroke:rgba(180,83,9,0.55)}
+    .annot-box{fill:rgba(15,23,42,0.85);stroke:#475569}
+    [data-theme="warm"] .annot-box{fill:#fdfaf5;stroke:#a89984}
+    [data-theme="light"] .annot-box{fill:#f8fafc;stroke:#94a3b8}
+    .legend-bar{fill:rgba(15,23,42,0.5);stroke:#334155}
+    [data-theme="warm"] .legend-bar{fill:#fdfaf5;stroke:#c7b8a3}
+    [data-theme="light"] .legend-bar{fill:#f1f5f9;stroke:#94a3b8}
+    .txt-amber{fill:#fbbf24}
+    [data-theme="warm"] .txt-amber,[data-theme="light"] .txt-amber{fill:#b45309}
+    .txt-cyan{fill:#22d3ee}
+    [data-theme="warm"] .txt-cyan{fill:#0891b2}
+    [data-theme="light"] .txt-cyan{fill:#007c8c}
+    .txt-violet{fill:#a78bfa}
+    [data-theme="warm"] .txt-violet,[data-theme="light"] .txt-violet{fill:#6b3db0}
+    .txt-emerald{fill:#34d399}
+    [data-theme="warm"] .txt-emerald,[data-theme="light"] .txt-emerald{fill:#047857}
+    .txt-slate{fill:#cbd5e1}
+    [data-theme="warm"] .txt-slate,[data-theme="light"] .txt-slate{fill:#334155}
+    .txt-muted{fill:#94a3b8}
+    [data-theme="warm"] .txt-muted,[data-theme="light"] .txt-muted{fill:#475569}
+    .txt-rose{fill:#fb7185}
+    [data-theme="warm"] .txt-rose,[data-theme="light"] .txt-rose{fill:#e11d48}
+    .line-amber{stroke:#fbbf24}
+    [data-theme="warm"] .line-amber,[data-theme="light"] .line-amber{stroke:#b45309}
+    .line-cyan{stroke:#22d3ee}
+    [data-theme="warm"] .line-cyan{stroke:#0891b2}
+    [data-theme="light"] .line-cyan{stroke:#007c8c}
+    .line-violet{stroke:#9c6de4}
+    [data-theme="warm"] .line-violet{stroke:#7c3aed}
+    [data-theme="light"] .line-violet{stroke:#6b3db0}
+    .line-emerald{stroke:#34d399}
+    [data-theme="warm"] .line-emerald,[data-theme="light"] .line-emerald{stroke:#047857}
+    .line-slate{stroke:#64748b}
+    [data-theme="warm"] .line-slate,[data-theme="light"] .line-slate{stroke:#475569}
+    .line-rose{stroke:#fb7185}
+    [data-theme="warm"] .line-rose,[data-theme="light"] .line-rose{stroke:#e11d48}
+    /* Legend text uses muted color, no separate CSS var needed */
+    .legend-txt-user{stroke:#64748b;fill:#94a3b8}
+    [data-theme="warm"] .legend-txt-user{stroke:#6b5d4f;fill:#5c5347}
+    [data-theme="light"] .legend-txt-user{stroke:#475569;fill:#475569}
+    .legend-txt-spawn{stroke:#34d399;fill:#94a3b8}
+    [data-theme="warm"] .legend-txt-spawn{stroke:#047857;fill:#5c5347}
+    [data-theme="light"] .legend-txt-spawn{stroke:#047857;fill:#475569}
+    .legend-txt-continue{stroke:#fbbf24;fill:#94a3b8}
+    [data-theme="warm"] .legend-txt-continue{stroke:#b45309;fill:#5c5347}
+    [data-theme="light"] .legend-txt-continue{stroke:#b45309;fill:#475569}
+    .legend-txt-note{stroke:#22d3ee;fill:#94a3b8}
+    [data-theme="warm"] .legend-txt-note{stroke:#0891b2;fill:#5c5347}
+    [data-theme="light"] .legend-txt-note{stroke:#007c8c;fill:#475569}
+    .legend-txt-fail{stroke:#fb7185;fill:#94a3b8}
+    [data-theme="warm"] .legend-txt-fail{stroke:#e11d48;fill:#5c5347}
+    [data-theme="light"] .legend-txt-fail{stroke:#e11d48;fill:#475569}
+    .legend-txt-misc{fill:#94a3b8}
+    [data-theme="warm"] .legend-txt-misc{fill:#5c5347}
+    [data-theme="light"] .legend-txt-misc{fill:#475569}
     *{margin:0;padding:0;box-sizing:border-box}
     body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospace;min-height:100vh;padding:20px 24px 32px}
     .svg-bg{fill:var(--bg)}
     .node-bg{fill:var(--panel)}
     .grid-line{stroke:var(--border)}
     .node-title{fill:var(--text)}
-    .node-meta{fill:var(--muted)}
-    .vis-header{display:flex;align-items:center;gap:12px;margin-bottom:16px}
-    .vis-dot{width:10px;height:10px;border-radius:50%;background:var(--amber);animation:pulse 2s infinite}
+    .vis-header{display:flex;align-items:center;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+    .vis-dot{width:12px;height:12px;border-radius:50%;background:#fbbf24;animation:pulse 2s infinite}
     @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.5;transform:scale(1.3)}}
     .vis-title{font-size:17px;font-weight:700;color:var(--text);letter-spacing:.02em}
     .vis-sub{font-size:11px;color:var(--muted);margin-left:4px}
-    .svg-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:16px;overflow-x:auto}
-    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px}
-    .card{background:var(--card);border:1px solid var(--border);border-radius:8px;padding:14px}
-    .card-hd{display:flex;align-items:center;gap:8px;margin-bottom:8px}
-    .card-dot{width:8px;height:8px;border-radius:50%}
-    .card-hd h3{font-size:12px;font-weight:600;color:var(--text)}
-    .card ul{list-style:none;font-size:11px;color:var(--muted);line-height:1.7}
-    .vis-footer{font-size:10px;color:var(--muted);text-align:center;border-top:1px solid var(--border);padding-top:10px}
+    .svg-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:16px;margin-bottom:18px;overflow-x:auto;max-width:1400px;width:100%}
+    .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:18px}
+    .card{background:var(--card);border:1px solid var(--border);border-radius:10px;padding:16px}
+    .card-hd{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+    .card-dot{width:10px;height:10px;border-radius:50%}
+    .card-hd h3{font-size:12px;font-weight:700;color:var(--text)}
+    .card ul{list-style:none;font-size:11px;color:var(--text);line-height:1.75}
+    .card li{margin-bottom:4px}
+    .vis-footer{font-size:12px;color:var(--muted);text-align:center;border-top:1px solid var(--border);padding-top:12px}
     .ctrl{position:fixed;top:16px;right:16px;display:flex;gap:6px;z-index:999}
-    .ctrl button{background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:10px;padding:5px 10px;border-radius:6px;cursor:pointer}
-    .ctrl button:hover{border-color:var(--amber)}</style>
+    .ctrl button{background:var(--panel);border:1px solid var(--border);color:var(--text);font-family:'JetBrains Mono',monospace;font-size:11px;padding:6px 12px;border-radius:6px;cursor:pointer}
+    .ctrl button:hover{border-color:#fbbf24}
+    @media (max-width:900px){.cards{grid-template-columns:1fr}}
+  </style>
 </head>
 <body>
 
@@ -55,25 +144,46 @@
 </div>
 
 <div class="svg-wrap">
-<svg viewBox="0 0 960 668" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block">
+<svg viewBox="0 0 1280 920" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;display:block;min-width:900px">
 <defs>
-  <pattern id="g17" width="40" height="40" patternUnits="userSpaceOnUse">
+  <pattern id="g19" width="40" height="40" patternUnits="userSpaceOnUse">
     <path d="M 40 0 L 0 0 0 40" fill="none" class="grid-line" stroke-width="0.5"/>
   </pattern>
-  <marker id="arr-s" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
-    <polygon points="0 0,9 3,0 6" fill="#94a3b8"/>
+  <marker id="arr-s" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+    <polygon points="0 0,11 4,0 8" fill="#64748b"/>
   </marker>
-  <marker id="arr-a" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
-    <polygon points="0 0,9 3,0 6" fill="#fbbf24"/>
+  <marker id="arr-s-w" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+    <polygon points="0 0,11 4,0 8" fill="#475569"/>
   </marker>
-  <marker id="arr-e" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
-    <polygon points="0 0,9 3,0 6" fill="#34d399"/>
+  <marker id="arr-a" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+    <polygon points="0 0,11 4,0 8" fill="#fbbf24"/>
   </marker>
-  <marker id="arr-c" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
-    <polygon points="0 0,9 3,0 6" fill="#22d3ee"/>
+  <marker id="arr-a-w" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+    <polygon points="0 0,11 4,0 8" fill="#b45309"/>
   </marker>
-  <marker id="arr-v" markerWidth="9" markerHeight="6" refX="8" refY="3" orient="auto">
-    <polygon points="0 0,9 3,0 6" fill="#a78bfa"/>
+  <marker id="arr-e" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+    <polygon points="0 0,11 4,0 8" fill="#34d399"/>
+  </marker>
+  <marker id="arr-e-w" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+    <polygon points="0 0,11 4,0 8" fill="#047857"/>
+  </marker>
+  <marker id="arr-c" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+    <polygon points="0 0,11 4,0 8" fill="#22d3ee"/>
+  </marker>
+  <marker id="arr-c-w" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+    <polygon points="0 0,11 4,0 8" fill="#0891b2"/>
+  </marker>
+  <marker id="arr-v" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+    <polygon points="0 0,11 4,0 8" fill="#9c6de4"/>
+  </marker>
+  <marker id="arr-v-w" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+    <polygon points="0 0,11 4,0 8" fill="#6b3db0"/>
+  </marker>
+  <marker id="arr-r" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+    <polygon points="0 0,11 4,0 8" fill="#fb7185"/>
+  </marker>
+  <marker id="arr-r-w" markerWidth="12" markerHeight="8" refX="10" refY="4" orient="auto" markerUnits="userSpaceOnUse">
+    <polygon points="0 0,11 4,0 8" fill="#e11d48"/>
   </marker>
   <filter id="glow-a">
     <feGaussianBlur stdDeviation="2.5" result="blur"/>
@@ -81,206 +191,266 @@
   </filter>
 </defs>
 
-<!-- background -->
-<rect width="960" height="668" class="svg-bg"/>
-<rect width="960" height="668" fill="url(#g17)" opacity="0.3"/>
+<rect width="1280" height="920" class="svg-bg"/>
+<rect width="1280" height="920" fill="url(#g19)" opacity="0.25"/>
 
-<!-- PHASE BANDS -->
-<!-- Phase 1 ANALYZE: y=105-228 -->
-<rect x="25" y="105" width="910" height="123" rx="4" fill="rgba(251,191,36,0.04)" stroke="rgba(251,191,36,0.12)" stroke-width="1"/>
-<!-- Phase 2 DISPATCH: y=235-375 -->
-<rect x="25" y="235" width="910" height="140" rx="4" fill="rgba(167,139,250,0.04)" stroke="rgba(167,139,250,0.12)" stroke-width="1"/>
-<!-- Phase 3 MONITOR: y=382-542 -->
-<rect x="25" y="382" width="910" height="160" rx="4" fill="rgba(34,211,238,0.04)" stroke="rgba(34,211,238,0.12)" stroke-width="1"/>
-<!-- Phase 4 SYNTHESIZE: y=549-650 -->
-<rect x="25" y="549" width="910" height="101" rx="4" fill="rgba(52,211,153,0.04)" stroke="rgba(52,211,153,0.12)" stroke-width="1"/>
+<!-- ═══ PHASE BANDS ═══ -->
+<!-- Phase 1: Analyze y=120-248, right edge at x=1180 for label at x=1185 -->
+<rect x="30" y="120" width="1150" height="128" rx="6" class="phase-band-1"/>
+<!-- Phase 2: Dispatch y=255-450 -->
+<rect x="30" y="255" width="1150" height="195" rx="6" class="phase-band-2"/>
+<!-- Phase 3: Monitor y=457-700 -->
+<rect x="30" y="457" width="1150" height="243" rx="6" class="phase-band-3"/>
+<!-- Phase 4: Synthesize y=707-870 -->
+<rect x="30" y="707" width="1150" height="163" rx="6" class="phase-band-4"/>
 
-<!-- Phase labels (right side) -->
-<text x="922" y="125" fill="#fbbf24" font-size="10" font-weight="700" font-family="JetBrains Mono" class="lz">① 分析</text>
-<text x="922" y="125" fill="#fbbf24" font-size="10" font-weight="700" font-family="JetBrains Mono" class="le">① Analyze</text>
-<text x="922" y="137" fill="#fbbf24" font-size="10" font-family="JetBrains Mono">ANALYZE</text>
-<text x="922" y="252" fill="#a78bfa" font-size="10" font-weight="700" font-family="JetBrains Mono" class="lz">② 调度</text>
-<text x="922" y="252" fill="#a78bfa" font-size="10" font-weight="700" font-family="JetBrains Mono" class="le">② Dispatch</text>
-<text x="922" y="264" fill="#a78bfa" font-size="10" font-family="JetBrains Mono">DISPATCH</text>
-<text x="922" y="399" fill="#22d3ee" font-size="10" font-weight="700" font-family="JetBrains Mono" class="lz">③ 监控</text>
-<text x="922" y="399" fill="#22d3ee" font-size="10" font-weight="700" font-family="JetBrains Mono" class="le">③ Monitor</text>
-<text x="922" y="411" fill="#22d3ee" font-size="10" font-family="JetBrains Mono">MONITOR</text>
-<text x="922" y="566" fill="#34d399" font-size="10" font-weight="700" font-family="JetBrains Mono" class="lz">④ 综合</text>
-<text x="922" y="566" fill="#34d399" font-size="10" font-weight="700" font-family="JetBrains Mono" class="le">④ Synthesize</text>
-<text x="922" y="578" fill="#34d399" font-size="10" font-family="JetBrains Mono">SYNTHESIZE</text>
+<!-- ═══ PHASE LABELS (far right column, centered at x=1226, y range aligned to each band) ═══ -->
+<!-- Phase 1 label at band center y=184 -->
+<rect x="1185" y="153" width="82" height="62" rx="6" fill="rgba(251,191,36,0.15)"/>
+<text x="1226" y="177" class="txt-amber" font-size="14" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">①</text>
+<text x="1226" y="195" class="txt-amber lz" font-size="13" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">分析</text>
+<text x="1226" y="195" class="txt-amber le" font-size="13" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Analyze</text>
+<text x="1226" y="209" class="txt-amber lz" font-size="10" text-anchor="middle" font-family="JetBrains Mono" opacity="0.75">ANALYZE</text>
+<text x="1226" y="209" class="txt-amber le" font-size="10" text-anchor="middle" font-family="JetBrains Mono" opacity="0.75">ANALYZE</text>
 
-<!-- ══════ PARTICIPANTS (header boxes) ══════ -->
+<!-- Phase 2 label at band center y=352 -->
+<rect x="1185" y="321" width="82" height="62" rx="6" fill="rgba(167,139,250,0.15)"/>
+<text x="1226" y="345" class="txt-violet" font-size="14" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">②</text>
+<text x="1226" y="363" class="txt-violet lz" font-size="13" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">调度</text>
+<text x="1226" y="363" class="txt-violet le" font-size="13" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Dispatch</text>
+<text x="1226" y="377" class="txt-violet lz" font-size="10" text-anchor="middle" font-family="JetBrains Mono" opacity="0.75">DISPATCH</text>
+<text x="1226" y="377" class="txt-violet le" font-size="10" text-anchor="middle" font-family="JetBrains Mono" opacity="0.75">DISPATCH</text>
 
-<!-- User: cx=95 -->
-<rect x="55" y="45" width="80" height="38" rx="6" class="node-bg"/>
-<rect x="55" y="45" width="80" height="38" rx="6" fill="rgba(148,163,184,0.12)" stroke="#94a3b8" stroke-width="1.5"/>
-<text x="95" y="63" fill="#e2e8f0" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono" class="lz">用户</text>
-<text x="95" y="63" fill="#e2e8f0" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono" class="le">User</text>
-<text x="95" y="75" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono">User</text>
+<!-- Phase 3 label at band center y=578 -->
+<rect x="1185" y="547" width="82" height="62" rx="6" fill="rgba(34,211,238,0.15)"/>
+<text x="1226" y="571" class="txt-cyan" font-size="14" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">③</text>
+<text x="1226" y="589" class="txt-cyan lz" font-size="13" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">监控</text>
+<text x="1226" y="589" class="txt-cyan le" font-size="13" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Monitor</text>
+<text x="1226" y="603" class="txt-cyan lz" font-size="10" text-anchor="middle" font-family="JetBrains Mono" opacity="0.75">MONITOR</text>
+<text x="1226" y="603" class="txt-cyan le" font-size="10" text-anchor="middle" font-family="JetBrains Mono" opacity="0.75">MONITOR</text>
 
-<!-- Coordinator: cx=340 -->
-<rect x="278" y="40" width="125" height="48" rx="6" class="node-bg"/>
-<rect x="278" y="40" width="125" height="48" rx="6" fill="rgba(251,191,36,0.15)" stroke="#fbbf24" stroke-width="2" filter="url(#glow-a)"/>
-<text x="340" y="62" fill="#fbbf24" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Coordinator</text>
-<text x="340" y="77" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">Manager · 370行 System Prompt</text>
-<text x="340" y="77" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">Manager · 370-line System Prompt</text>
+<!-- Phase 4 label at band center y=788 -->
+<rect x="1185" y="757" width="82" height="62" rx="6" fill="rgba(52,211,153,0.15)"/>
+<text x="1226" y="781" class="txt-emerald" font-size="14" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">④</text>
+<text x="1226" y="799" class="txt-emerald lz" font-size="13" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">综合</text>
+<text x="1226" y="799" class="txt-emerald le" font-size="13" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Synthesize</text>
+<text x="1226" y="813" class="txt-emerald lz" font-size="10" text-anchor="middle" font-family="JetBrains Mono" opacity="0.75">SYNTHESIZE</text>
+<text x="1226" y="813" class="txt-emerald le" font-size="10" text-anchor="middle" font-family="JetBrains Mono" opacity="0.75">SYNTHESIZE</text>
 
-<!-- Worker A: cx=575 -->
-<rect x="544" y="45" width="62" height="38" rx="6" class="node-bg"/>
-<rect x="544" y="45" width="62" height="38" rx="6" fill="rgba(52,211,153,0.12)" stroke="#34d399" stroke-width="1.5"/>
-<text x="575" y="63" fill="#e2e8f0" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Worker A</text>
-<text x="575" y="75" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">研究型</text>
-<text x="575" y="75" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">Research</text>
+<!-- ═══ PARTICIPANT HEADERS (all unified: height=60, y=52, bottom=112) ═══ -->
+<!-- User : cx=140 -->
+<rect x="90" y="52" width="100" height="60" rx="8" class="node-bg" stroke="#64748b" stroke-width="1.5"/>
+<text x="140" y="79" class="node-title lz" font-size="15" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">用户</text>
+<text x="140" y="79" class="node-title le" font-size="15" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">User</text>
+<text x="140" y="97" class="txt-muted lz" font-size="11" text-anchor="middle" font-family="JetBrains Mono">发起方</text>
+<text x="140" y="97" class="txt-muted le" font-size="11" text-anchor="middle" font-family="JetBrains Mono">Requester</text>
 
-<!-- Worker B: cx=695 -->
-<rect x="664" y="45" width="62" height="38" rx="6" class="node-bg"/>
-<rect x="664" y="45" width="62" height="38" rx="6" fill="rgba(34,211,238,0.12)" stroke="#22d3ee" stroke-width="1.5"/>
-<text x="695" y="63" fill="#e2e8f0" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Worker B</text>
-<text x="695" y="75" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">编码型</text>
-<text x="695" y="75" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">Code</text>
+<!-- Coordinator : cx=460 -->
+<rect x="360" y="52" width="200" height="60" rx="8" class="node-bg" stroke="#fbbf24" stroke-width="2.5" filter="url(#glow-a)"/>
+<rect x="360" y="52" width="200" height="60" rx="8" fill="rgba(251,191,36,0.12)" stroke="none"/>
+<text x="460" y="77" class="txt-amber" font-size="16" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Coordinator</text>
+<text x="460" y="97" class="txt-muted lz" font-size="11" text-anchor="middle" font-family="JetBrains Mono">调度中心 · 370行 System Prompt</text>
+<text x="460" y="97" class="txt-muted le" font-size="11" text-anchor="middle" font-family="JetBrains Mono">Orchestrator · 370-line Sys Prompt</text>
 
-<!-- Worker C: cx=815 -->
-<rect x="784" y="45" width="62" height="38" rx="6" class="node-bg"/>
-<rect x="784" y="45" width="62" height="38" rx="6" fill="rgba(167,139,250,0.12)" stroke="#a78bfa" stroke-width="1.5"/>
-<text x="815" y="63" fill="#e2e8f0" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Worker C</text>
-<text x="815" y="75" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">测试型</text>
-<text x="815" y="75" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">Test</text>
+<!-- Worker A : cx=730 -->
+<rect x="660" y="52" width="140" height="60" rx="8" class="node-bg" stroke="#34d399" stroke-width="2"/>
+<rect x="660" y="52" width="140" height="60" rx="8" fill="rgba(52,211,153,0.10)" stroke="none"/>
+<text x="730" y="77" class="node-title lz" font-size="14" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Worker A</text>
+<text x="730" y="77" class="node-title le" font-size="14" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Worker A</text>
+<text x="730" y="95" class="txt-emerald lz" font-size="11" text-anchor="middle" font-family="JetBrains Mono">研究型 · Research</text>
+<text x="730" y="95" class="txt-emerald le" font-size="11" text-anchor="middle" font-family="JetBrains Mono">Research Agent</text>
 
-<!-- ══════ LIFELINES ══════ -->
-<line x1="95" y1="83" x2="95" y2="650" stroke="#475569" stroke-width="1" stroke-dasharray="4,4"/>
-<!-- Coordinator double-line -->
-<line x1="336" y1="88" x2="336" y2="650" stroke="#fbbf24" stroke-width="1.5" opacity="0.5"/>
-<line x1="344" y1="88" x2="344" y2="650" stroke="#fbbf24" stroke-width="1.5" opacity="0.5"/>
-<line x1="575" y1="83" x2="575" y2="650" stroke="#34d399" stroke-width="1" opacity="0.5"/>
-<line x1="695" y1="83" x2="695" y2="650" stroke="#22d3ee" stroke-width="1" opacity="0.5"/>
-<line x1="815" y1="83" x2="815" y2="650" stroke="#a78bfa" stroke-width="1" opacity="0.5"/>
+<!-- Worker B : cx=920 -->
+<rect x="850" y="52" width="140" height="60" rx="8" class="node-bg" stroke="#22d3ee" stroke-width="2"/>
+<rect x="850" y="52" width="140" height="60" rx="8" fill="rgba(34,211,238,0.10)" stroke="none"/>
+<text x="920" y="77" class="node-title lz" font-size="14" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Worker B</text>
+<text x="920" y="77" class="node-title le" font-size="14" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Worker B</text>
+<text x="920" y="95" class="txt-cyan lz" font-size="11" text-anchor="middle" font-family="JetBrains Mono">编码型 · Code</text>
+<text x="920" y="95" class="txt-cyan le" font-size="11" text-anchor="middle" font-family="JetBrains Mono">Code Agent</text>
 
-<!-- ══════ PHASE 1: ANALYZE ══════ -->
-<!-- Step 1: User → Coordinator (y=125) -->
-<line x1="95" y1="130" x2="330" y2="130" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr-s)"/>
-<text x="213" y="125" fill="#e2e8f0" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono" class="lz">提交任务</text>
-<text x="213" y="125" fill="#e2e8f0" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono" class="le">Submit Task</text>
+<!-- Worker C : cx=1110 -->
+<rect x="1040" y="52" width="140" height="60" rx="8" class="node-bg" stroke="#9c6de4" stroke-width="2"/>
+<rect x="1040" y="52" width="140" height="60" rx="8" fill="rgba(156,109,228,0.10)" stroke="none"/>
+<text x="1110" y="77" class="node-title lz" font-size="14" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Worker C</text>
+<text x="1110" y="77" class="node-title le" font-size="14" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Worker C</text>
+<text x="1110" y="95" class="txt-violet lz" font-size="11" text-anchor="middle" font-family="JetBrains Mono">测试型 · Test</text>
+<text x="1110" y="95" class="txt-violet le" font-size="11" text-anchor="middle" font-family="JetBrains Mono">Test Agent</text>
 
-<!-- Step 2: Coordinator activation box + internal processing -->
-<rect x="336" y="148" width="8" height="38" rx="2" fill="#fbbf24" opacity="0.4"/>
-<text x="355" y="163" fill="#fbbf24" font-size="10" font-family="JetBrains Mono" class="lz">理解需求 &amp; 分解子任务</text>
-<text x="355" y="163" fill="#fbbf24" font-size="10" font-family="JetBrains Mono" class="le">Analyze Requirements &amp; Decompose</text>
-<text x="355" y="177" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="lz">制定任务分解方案</text>
-<text x="355" y="177" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="le">Plan task decomposition</text>
+<!-- ═══ LIFELINES ═══ -->
+<line x1="140" y1="112" x2="140" y2="880" stroke="#64748b" stroke-width="1.2" stroke-dasharray="5,5" opacity="0.7"/>
+<line x1="460" y1="112" x2="460" y2="880" stroke="#fbbf24" stroke-width="1.5" opacity="0.6"/>
+<line x1="730" y1="112" x2="730" y2="880" stroke="#34d399" stroke-width="1.2" opacity="0.6"/>
+<line x1="920" y1="112" x2="920" y2="880" stroke="#22d3ee" stroke-width="1.2" opacity="0.6"/>
+<line x1="1110" y1="112" x2="1110" y2="880" stroke="#9c6de4" stroke-width="1.2" opacity="0.6"/>
 
-<!-- ══════ PHASE 2: DISPATCH ══════ -->
-<!-- Anti-lazy delegation callout -->
-<rect x="38" y="248" width="230" height="52" rx="6" fill="rgba(251,191,36,0.06)" stroke="rgba(251,191,36,0.25)" stroke-width="1" stroke-dasharray="4,3"/>
-<text x="153" y="265" fill="#fbbf24" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono" class="lz">⚠ 反懒惰委托规则</text>
-<text x="153" y="265" fill="#fbbf24" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono" class="le">⚠ Anti-Lazy Delegation Rule</text>
-<text x="153" y="278" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">Coordinator 必须自己先理解</text>
-<text x="153" y="278" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">Coordinator must understand first</text>
-<text x="153" y="290" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">再给出精确指令，不能简单推给 Worker</text>
-<text x="153" y="290" fill="#94a3b8" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">give precise instructions to Workers</text>
+<!-- ═══════════════════════════════ PHASE 1: ANALYZE (y=120–255) ═══════════════════════════════ -->
 
-<!-- Step 4: Coordinator → Worker A (y=305) SPAWN -->
-<line x1="344" y1="305" x2="565" y2="305" stroke="#34d399" stroke-width="1.5" marker-end="url(#arr-e)"/>
-<text x="454" y="299" fill="#34d399" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">分配子任务 → Worker A</text>
-<text x="454" y="299" fill="#34d399" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">Spawn Agent → Worker A</text>
-<rect x="488" y="308" width="38" height="12" rx="2" fill="rgba(52,211,153,0.2)" stroke="#34d399" stroke-width="1"/>
-<text x="507" y="318" fill="#34d399" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">SPAWN</text>
+<!-- Step 1: User → Coordinator -->
+<line x1="140" y1="160" x2="450" y2="160" stroke="#64748b" stroke-width="2" marker-end="url(#arr-s)"/>
+<rect x="200" y="142" width="200" height="20" rx="4" class="annot-box" opacity="0.85"/>
+<text x="300" y="156" class="node-title lz" font-size="14" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">① 提交任务</text>
+<text x="300" y="156" class="node-title le" font-size="14" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">① Submit Task</text>
 
-<!-- Step 5: Coordinator → Worker B (y=330) SPAWN -->
-<line x1="344" y1="330" x2="685" y2="330" stroke="#22d3ee" stroke-width="1.5" marker-end="url(#arr-c)"/>
-<text x="514" y="324" fill="#22d3ee" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">分配子任务 → Worker B</text>
-<text x="514" y="324" fill="#22d3ee" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">Spawn Agent → Worker B</text>
-<rect x="608" y="333" width="38" height="12" rx="2" fill="rgba(34,211,238,0.2)" stroke="#22d3ee" stroke-width="1"/>
-<text x="627" y="343" fill="#22d3ee" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">SPAWN</text>
+<!-- Step 2: Coordinator analysis — narrow activation bar (12px) + single-line note -->
+<rect x="462" y="180" width="12" height="55" rx="3" fill="#fbbf24" opacity="0.5"/>
+<rect x="482" y="180" width="530" height="55" rx="6" class="annot-box"/>
+<text x="500" y="202" class="txt-amber lz" font-size="14" font-weight="700" font-family="JetBrains Mono">② 理解需求 &amp; 分解子任务</text>
+<text x="500" y="202" class="txt-amber le" font-size="14" font-weight="700" font-family="JetBrains Mono">② Analyze Requirements &amp; Decompose</text>
+<text x="500" y="222" class="txt-muted lz" font-size="12" font-family="JetBrains Mono">扫描 Agent-Skill 目录 → 推断 Worker 类型 → 规划并行度</text>
+<text x="500" y="222" class="txt-muted le" font-size="12" font-family="JetBrains Mono">Scan catalog → infer Worker types → decide parallelism</text>
 
-<!-- Step 6: Coordinator → Worker C (y=355) SPAWN -->
-<line x1="344" y1="355" x2="805" y2="355" stroke="#a78bfa" stroke-width="1.5" marker-end="url(#arr-v)"/>
-<text x="574" y="349" fill="#a78bfa" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">分配子任务 → Worker C</text>
-<text x="574" y="349" fill="#a78bfa" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">Spawn Agent → Worker C</text>
-<rect x="728" y="358" width="38" height="12" rx="2" fill="rgba(167,139,250,0.2)" stroke="#a78bfa" stroke-width="1"/>
-<text x="747" y="368" fill="#a78bfa" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">SPAWN</text>
+<!-- ═══════════════════════════════ PHASE 2: DISPATCH (y=255–457) ═══════════════════════════════ -->
 
-<!-- ══════ PHASE 3: MONITOR ══════ -->
-<!-- Step 7: Worker B → Coordinator (y=400) dashed -->
-<line x1="685" y1="400" x2="350" y2="400" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-c)"/>
-<text x="517" y="394" fill="#22d3ee" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">← 任务通知 (Worker B)</text>
-<text x="517" y="394" fill="#22d3ee" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">← Task Notification (Worker B)</text>
-<text x="517" y="406" fill="#475569" font-size="10" text-anchor="middle" font-family="JetBrains Mono">Task Notification XML</text>
+<!-- Anti-lazy callout: left side, 250px wide, 3 Chinese + 1 English line, font ≥12px -->
+<rect x="38" y="264" width="250" height="90" rx="8" class="callout-box" stroke-width="1.5" stroke-dasharray="5,3"/>
+<text x="163" y="288" class="txt-amber lz" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">⚠ 反懒惰委托规则</text>
+<text x="163" y="288" class="txt-amber le" font-size="12" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">⚠ Anti-Lazy Delegation</text>
+<text x="163" y="308" class="txt-slate lz" font-size="12" text-anchor="middle" font-family="JetBrains Mono">Coordinator 必须先读懂问题</text>
+<text x="163" y="308" class="txt-slate le" font-size="12" text-anchor="middle" font-family="JetBrains Mono">Coordinator must understand first</text>
+<text x="163" y="326" class="txt-slate lz" font-size="12" text-anchor="middle" font-family="JetBrains Mono">再给精确指令，禁止原文透传</text>
+<text x="163" y="326" class="txt-slate le" font-size="12" text-anchor="middle" font-family="JetBrains Mono">then give precise instructions</text>
+<text x="163" y="344" class="txt-amber lz" font-size="10" text-anchor="middle" font-family="JetBrains Mono" opacity="0.85">❌ "based on your findings, fix it"</text>
+<text x="163" y="344" class="txt-amber le" font-size="10" text-anchor="middle" font-family="JetBrains Mono" opacity="0.85">❌ "based on your findings, fix it"</text>
 
-<!-- Step 8: Coordinator activation + evaluation -->
-<rect x="336" y="420" width="8" height="28" rx="2" fill="#fbbf24" opacity="0.4"/>
-<text x="355" y="433" fill="#fbbf24" font-size="10" font-family="JetBrains Mono" class="lz">评估进度 &amp; 决策: Continue vs Spawn</text>
-<text x="355" y="433" fill="#fbbf24" font-size="10" font-family="JetBrains Mono" class="le">Evaluate Progress · Continue vs Spawn</text>
+<!-- Step 3: Coordinator → Worker A SPAWN -->
+<line x1="460" y1="380" x2="716" y2="380" stroke="#34d399" stroke-width="2.5" marker-end="url(#arr-e)"/>
+<rect x="558" y="364" width="80" height="18" rx="4" fill="rgba(52,211,153,0.25)" stroke="#34d399" stroke-width="1.5"/>
+<text x="598" y="376" fill="#34d399" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">SPAWN</text>
+<text x="598" y="358" class="txt-emerald lz" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">③ 分配 → Worker A</text>
+<text x="598" y="358" class="txt-emerald le" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">③ Spawn → Worker A</text>
 
-<!-- Step 9: Coordinator → Worker B CONTINUE (y=458) -->
-<line x1="344" y1="458" x2="685" y2="458" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arr-a)"/>
-<text x="514" y="452" fill="#fbbf24" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">追加指令 → Worker B</text>
-<text x="514" y="452" fill="#fbbf24" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">Send Instruction → Worker B</text>
-<rect x="598" y="461" width="54" height="12" rx="2" fill="rgba(251,191,36,0.2)" stroke="#fbbf24" stroke-width="1"/>
-<text x="625" y="471" fill="#fbbf24" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">CONTINUE</text>
+<!-- Step 4: Coordinator → Worker B SPAWN -->
+<line x1="460" y1="412" x2="906" y2="412" stroke="#22d3ee" stroke-width="2.5" marker-end="url(#arr-c)"/>
+<rect x="655" y="396" width="80" height="18" rx="4" fill="rgba(34,211,238,0.25)" stroke="#22d3ee" stroke-width="1.5"/>
+<text x="695" y="408" fill="#22d3ee" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">SPAWN</text>
+<text x="695" y="390" class="txt-cyan lz" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">④ 分配 → Worker B</text>
+<text x="695" y="390" class="txt-cyan le" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">④ Spawn → Worker B</text>
 
-<!-- Step 10: Worker A → Coordinator (y=488) completed -->
-<line x1="565" y1="488" x2="350" y2="488" stroke="#34d399" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-e)"/>
-<text x="457" y="482" fill="#34d399" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">← 完成通知 (Worker A)</text>
-<text x="457" y="482" fill="#34d399" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">← Task Completed (Worker A)</text>
+<!-- Step 5: Coordinator → Worker C SPAWN -->
+<line x1="460" y1="444" x2="1096" y2="444" stroke="#9c6de4" stroke-width="2.5" marker-end="url(#arr-v)"/>
+<rect x="755" y="428" width="80" height="18" rx="4" fill="rgba(156,109,228,0.25)" stroke="#9c6de4" stroke-width="1.5"/>
+<text x="795" y="440" fill="#9c6de4" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">SPAWN</text>
+<text x="795" y="422" class="txt-violet lz" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">⑤ 分配 → Worker C</text>
+<text x="795" y="422" class="txt-violet le" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">⑤ Spawn → Worker C</text>
 
-<!-- Step 11: Coordinator → Worker A SPAWN retry (y=516) -->
-<line x1="344" y1="516" x2="565" y2="516" stroke="#34d399" stroke-width="1.5" marker-end="url(#arr-e)"/>
-<text x="454" y="510" fill="#34d399" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">失败重试 → 新 Worker A'</text>
-<text x="454" y="510" fill="#34d399" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">Retry Failure → New Worker A'</text>
-<rect x="488" y="519" width="38" height="12" rx="2" fill="rgba(52,211,153,0.2)" stroke="#34d399" stroke-width="1"/>
-<text x="507" y="529" fill="#34d399" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">SPAWN</text>
+<!-- ═══════════════════════════════ PHASE 3: MONITOR (y=457–707) ═══════════════════════════════ -->
 
-<!-- Continue vs Spawn annotation box (left) -->
-<rect x="30" y="450" width="150" height="95" rx="6" fill="rgba(15,23,42,0.8)" stroke="#334155" stroke-width="1" stroke-dasharray="4,3"/>
-<text x="105" y="468" fill="#94a3b8" font-size="10" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Continue vs Spawn</text>
-<text x="105" y="484" fill="#fbbf24" font-size="10" text-anchor="middle" font-family="JetBrains Mono">Continue</text>
-<text x="105" y="495" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">上次结果基础上继续</text>
-<text x="105" y="495" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">Resume from last result</text>
-<text x="105" y="512" fill="#34d399" font-size="10" text-anchor="middle" font-family="JetBrains Mono">Spawn</text>
-<text x="105" y="523" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">全新独立子任务</text>
-<text x="105" y="523" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">New independent subtask</text>
-<text x="105" y="537" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="lz">Spawn×N = 多个并行</text>
-<text x="105" y="537" fill="#64748b" font-size="10" text-anchor="middle" font-family="JetBrains Mono" class="le">Spawn×N = multiple parallel</text>
+<!-- Continue vs Spawn legend box: right of phase band, avoid Worker C overlap -->
+<!-- Worker C lifeline x=1110, half-width 70 → edge at x=1180; box at x=1150, right edge at x=1268; just barely overlaps -->
+<!-- Moved slightly left: x=1148, w=120, right edge=1268 still near edge. Acceptable since label column is at x=1185. -->
+<rect x="1148" y="468" width="120" height="122" rx="6" class="annot-box" stroke-width="1" stroke-dasharray="3,2"/>
+<text x="1208" y="490" class="txt-amber" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Continue vs Spawn</text>
+<line x1="1160" y1="498" x2="1256" y2="498" stroke="#475569" stroke-width="0.8" opacity="0.5"/>
+<text x="1208" y="514" class="txt-amber" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Continue</text>
+<text x="1208" y="530" class="txt-slate lz" font-size="10" text-anchor="middle" font-family="JetBrains Mono">追加指令 · 续跑</text>
+<text x="1208" y="530" class="txt-slate le" font-size="10" text-anchor="middle" font-family="JetBrains Mono">append · resume</text>
+<text x="1208" y="546" class="txt-slate lz" font-size="10" text-anchor="middle" font-family="JetBrains Mono">原 Agent 追加新任务</text>
+<text x="1208" y="546" class="txt-slate le" font-size="10" text-anchor="middle" font-family="JetBrains Mono">append new task</text>
+<line x1="1160" y1="556" x2="1256" y2="556" stroke="#475569" stroke-width="0.8" opacity="0.3"/>
+<text x="1208" y="572" class="txt-emerald" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">Spawn</text>
+<text x="1208" y="588" class="txt-slate lz" font-size="10" text-anchor="middle" font-family="JetBrains Mono">创建新 Agent</text>
+<text x="1208" y="588" class="txt-slate le" font-size="10" text-anchor="middle" font-family="JetBrains Mono">fresh sub-agent</text>
 
-<!-- ══════ PHASE 4: SYNTHESIZE ══════ -->
-<!-- Step 12: All Workers → Coordinator (staggered y=558-574) -->
-<line x1="565" y1="558" x2="350" y2="558" stroke="#34d399" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-e)"/>
-<line x1="685" y1="565" x2="350" y2="565" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-c)"/>
-<line x1="805" y1="572" x2="350" y2="572" stroke="#a78bfa" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-v)"/>
-<text x="355" y="555" fill="#34d399" font-size="10" font-family="JetBrains Mono" class="lz">← 全部完成 → 汇总所有结果</text>
-<text x="355" y="555" fill="#34d399" font-size="10" font-family="JetBrains Mono" class="le">← All Completed → Synthesize</text>
+<!-- Step 6: Worker B → Coordinator task notification (dashed cyan, leftward) -->
+<line x1="910" y1="490" x2="474" y2="490" stroke="#22d3ee" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arr-c)"/>
+<text x="692" y="482" class="txt-cyan lz" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">⑥ ← 任务通知</text>
+<text x="692" y="482" class="txt-cyan le" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">⑥ ← Task Notification</text>
+<text x="692" y="502" class="txt-muted" font-size="10" text-anchor="middle" font-family="JetBrains Mono" font-style="italic">&lt;task_notification&gt;...&lt;/task_notification&gt;</text>
 
-<!-- Step 13: Coordinator synthesis activation -->
-<rect x="336" y="586" width="8" height="32" rx="2" fill="#34d399" opacity="0.4"/>
-<text x="355" y="598" fill="#34d399" font-size="10" font-family="JetBrains Mono" class="lz">综合结果 &amp; 生成最终回答</text>
-<text x="355" y="598" fill="#34d399" font-size="10" font-family="JetBrains Mono" class="le">Synthesize &amp; Produce Final Answer</text>
-<text x="355" y="612" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="lz">结合所有子任务结果 + Scratchpad 共享上下文</text>
-<text x="355" y="612" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="le">Combine all results + Scratchpad shared context</text>
+<!-- Step 7: Coordinator evaluation — narrow activation bar + note -->
+<rect x="462" y="526" width="12" height="46" rx="3" fill="#fbbf24" opacity="0.5"/>
+<rect x="482" y="526" width="560" height="46" rx="6" class="annot-box"/>
+<text x="500" y="547" class="txt-amber lz" font-size="13" font-weight="700" font-family="JetBrains Mono">⑦ 评估进度 · Continue vs Spawn 决策</text>
+<text x="500" y="547" class="txt-amber le" font-size="13" font-weight="700" font-family="JetBrains Mono">⑦ Evaluate Progress · Decide Continue vs Spawn</text>
+<text x="500" y="565" class="txt-muted lz" font-size="11" font-family="JetBrains Mono">原方向正确 → Continue；偏离 → 新指令</text>
+<text x="500" y="565" class="txt-muted le" font-size="11" font-family="JetBrains Mono">On-track → Continue; off-track → new instruction</text>
 
-<!-- Step 14: Coordinator → User final answer (y=638) -->
-<line x1="330" y1="638" x2="105" y2="638" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr-s)"/>
-<text x="213" y="632" fill="#e2e8f0" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono" class="lz">最终回答</text>
-<text x="213" y="632" fill="#e2e8f0" font-size="11" font-weight="600" text-anchor="middle" font-family="JetBrains Mono" class="le">Final Answer</text>
+<!-- Step 8: Coordinator → Worker B CONTINUE -->
+<line x1="460" y1="595" x2="906" y2="595" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#arr-a)"/>
+<rect x="655" y="579" width="80" height="18" rx="4" fill="rgba(251,191,36,0.25)" stroke="#fbbf24" stroke-width="1.5"/>
+<text x="695" y="591" fill="#fbbf24" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">CONTINUE</text>
+<text x="695" y="573" class="txt-amber lz" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">⑧ 追加指令 → Worker B</text>
+<text x="695" y="573" class="txt-amber le" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">⑧ Append → Worker B</text>
 
-<!-- ══════ LEGEND BAR ══════ -->
-<rect x="30" y="651" width="895" height="14" rx="3" fill="rgba(15,23,42,0.5)"/>
-<line x1="45" y1="658" x2="65" y2="658" stroke="#94a3b8" stroke-width="1.5" marker-end="url(#arr-s)"/>
-<text x="70" y="662" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="lz">用户消息</text>
-<text x="70" y="662" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="le">user msg</text>
-<line x1="155" y1="658" x2="175" y2="658" stroke="#34d399" stroke-width="1.5" marker-end="url(#arr-e)"/>
-<text x="180" y="662" fill="#64748b" font-size="10" font-family="JetBrains Mono">Spawn</text>
-<line x1="235" y1="654" x2="255" y2="654" stroke="#fbbf24" stroke-width="1.5" marker-end="url(#arr-a)"/>
-<text x="260" y="662" fill="#64748b" font-size="10" font-family="JetBrains Mono">Continue (SendMessage)</text>
-<line x1="410" y1="654" x2="430" y2="654" stroke="#22d3ee" stroke-width="1.5" stroke-dasharray="5,3" marker-end="url(#arr-c)"/>
-<text x="435" y="662" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="lz">Task Notification (子→父)</text>
-<text x="435" y="662" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="le">Task Notification (child→parent)</text>
-<text x="620" y="662" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="lz">│ 虚线: 通知/完成  │ 实线: 指令/Spawn</text>
-<text x="620" y="662" fill="#64748b" font-size="10" font-family="JetBrains Mono" class="le">│ dashed: notification  │ solid: instruction/spawn</text>
+<!-- Steps 9+10 merged as a single visual unit -->
+<!-- Failure arrow (left-going, dashed rose) at y=628 -->
+<line x1="716" y1="628" x2="474" y2="628" stroke="#fb7185" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arr-r)"/>
+<!-- Retry SPAWN arrow (right-going, emerald) at y=654 -->
+<line x1="460" y1="654" x2="716" y2="654" stroke="#34d399" stroke-width="2.5" marker-end="url(#arr-e)"/>
+<!-- SPAWN badge on retry arrow -->
+<rect x="558" y="638" width="80" height="18" rx="4" fill="rgba(52,211,153,0.25)" stroke="#34d399" stroke-width="1.5"/>
+<text x="598" y="650" fill="#34d399" font-size="11" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">SPAWN</text>
+<!-- Shared label ABOVE the pair -->
+<text x="588" y="613" class="txt-rose lz" font-size="12" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">⑨← 失败通知 · ⑩重试 →</text>
+<text x="588" y="613" class="txt-rose le" font-size="12" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">⑨← Failure · ⑩ Retry →</text>
+<text x="588" y="632" class="txt-muted lz" font-size="10" text-anchor="middle" font-family="JetBrains Mono">Worker A 失败 → Spawn 新 Worker A'</text>
+<text x="588" y="632" class="txt-muted le" font-size="10" text-anchor="middle" font-family="JetBrains Mono">Worker A failed → Spawn fresh Worker A'</text>
+
+<!-- ═══════════════════════════════ PHASE 4: SYNTHESIZE (y=707–880) ═══════════════════════════════ -->
+
+<!-- Step 11: Worker A' → Coordinator -->
+<line x1="716" y1="735" x2="474" y2="735" stroke="#34d399" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arr-e)"/>
+<text x="595" y="727" class="txt-emerald lz" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">⑪ ← Worker A' 完成</text>
+<text x="595" y="727" class="txt-emerald le" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">⑪ ← Worker A' Done</text>
+
+<!-- Step 12: Worker B → Coordinator -->
+<line x1="910" y1="758" x2="474" y2="758" stroke="#22d3ee" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arr-c)"/>
+<text x="692" y="750" class="txt-cyan lz" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">⑫ ← Worker B 完成</text>
+<text x="692" y="750" class="txt-cyan le" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">⑫ ← Worker B Done</text>
+
+<!-- Step 13: Worker C → Coordinator -->
+<line x1="1096" y1="780" x2="474" y2="780" stroke="#9c6de4" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arr-v)"/>
+<text x="785" y="772" class="txt-violet lz" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">⑬ ← Worker C 完成</text>
+<text x="785" y="772" class="txt-violet le" font-size="13" font-weight="600" text-anchor="middle" font-family="JetBrains Mono">⑬ ← Worker C Done</text>
+
+<!-- Step 14: Coordinator synthesis — narrow activation bar + single-line note -->
+<rect x="462" y="808" width="12" height="42" rx="3" fill="#34d399" opacity="0.55"/>
+<rect x="482" y="808" width="520" height="42" rx="6" class="annot-box"/>
+<text x="500" y="826" class="txt-emerald lz" font-size="14" font-weight="700" font-family="JetBrains Mono">⑭ 综合结果 &amp; 生成最终回答</text>
+<text x="500" y="826" class="txt-emerald le" font-size="14" font-weight="700" font-family="JetBrains Mono">⑭ Synthesize &amp; Produce Final Answer</text>
+<text x="500" y="842" class="txt-muted lz" font-size="11" font-family="JetBrains Mono">合并所有结果 + Scratchpad 白板 → 一次性答复</text>
+<text x="500" y="842" class="txt-muted le" font-size="11" font-family="JetBrains Mono">Merge results + Scratchpad → single reply</text>
+
+<!-- Step 15: Coordinator → User final answer -->
+<line x1="450" y1="862" x2="155" y2="862" stroke="#64748b" stroke-width="2" marker-end="url(#arr-s)"/>
+<rect x="210" y="846" width="195" height="20" rx="4" class="annot-box" opacity="0.85"/>
+<text x="307" y="860" class="node-title lz" font-size="14" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">⑮ 最终回答</text>
+<text x="307" y="860" class="node-title le" font-size="14" font-weight="700" text-anchor="middle" font-family="JetBrains Mono">⑮ Final Answer</text>
+
+<!-- ═══════════════════════════════ LEGEND BAR (6 cols, font-size 13px, line-height 1.6, col-gap ≥20px) ═══════════════════════════════ -->
+<rect x="30" y="884" width="1150" height="52" rx="6" class="legend-bar" stroke-width="1"/>
+
+<!-- Col 1: User msg | line 52-88 -->
+<line x1="52" y1="912" x2="88" y2="912" stroke="#64748b" stroke-width="2" marker-end="url(#arr-s)"/>
+<text x="98" y="917" class="txt-muted lz" font-size="13" font-family="JetBrains Mono">用户消息</text>
+<text x="98" y="917" class="txt-muted le" font-size="13" font-family="JetBrains Mono">User msg</text>
+
+<!-- Col 2: Spawn | line 220-256 -->
+<line x1="220" y1="912" x2="256" y2="912" stroke="#34d399" stroke-width="2.5" marker-end="url(#arr-e)"/>
+<text x="266" y="917" class="txt-emerald lz" font-size="13" font-family="JetBrains Mono">Spawn · 创建新 Agent</text>
+<text x="266" y="917" class="txt-emerald le" font-size="13" font-family="JetBrains Mono">Spawn · fresh sub-agent</text>
+
+<!-- Col 3: Continue | line 450-486 -->
+<line x1="450" y1="912" x2="486" y2="912" stroke="#fbbf24" stroke-width="2.5" marker-end="url(#arr-a)"/>
+<text x="496" y="917" class="txt-amber lz" font-size="13" font-family="JetBrains Mono">Continue · 追加指令</text>
+<text x="496" y="917" class="txt-amber le" font-size="13" font-family="JetBrains Mono">Continue · append instr.</text>
+
+<!-- Col 4: Task Notification | line 680-716 -->
+<line x1="680" y1="912" x2="716" y2="912" stroke="#22d3ee" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arr-c)"/>
+<text x="726" y="917" class="txt-cyan" font-size="13" font-family="JetBrains Mono">Task Notification</text>
+
+<!-- Col 5: Failure | line 930-966 -->
+<line x1="930" y1="912" x2="966" y2="912" stroke="#fb7185" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#arr-r)"/>
+<text x="976" y="917" class="txt-rose lz" font-size="13" font-family="JetBrains Mono">失败通知</text>
+<text x="976" y="917" class="txt-rose le" font-size="13" font-family="JetBrains Mono">Failure notice</text>
+
+<!-- Col 6: misc note | x=1080 -->
+<text x="1080" y="917" class="txt-muted lz" font-size="13" font-family="JetBrains Mono">│ 虚线=通知 实线=指令</text>
+<text x="1080" y="917" class="txt-muted le" font-size="13" font-family="JetBrains Mono">│ dashed=notif. solid=instr.</text>
 
 </svg>
 </div>
 
-<!-- INFO CARDS -->
 <div class="cards">
   <div class="card">
     <div class="card-hd">
@@ -288,10 +458,10 @@
       <h3><span class="lz">Coordinator 角色设计</span><span class="le">Coordinator Role Design</span></h3>
     </div>
     <ul>
-      <li>• <span class="lz">370行 System Prompt 约束其行为边界</span><span class="le">370-line System Prompt constrains behavior</span></li>
-      <li>• <span class="lz">反懒惰委托：必须自己先理解任务</span><span class="le">Anti-lazy delegation: must understand task first</span></li>
-      <li>• <span class="lz">不能写"based on your findings, fix it"</span><span class="le">Cannot write "based on your findings, fix it"</span></li>
-      <li>• <span class="lz">负责全程监控 Worker 进度并做决策</span><span class="le">Responsible for monitoring Workers and decisions</span></li>
+      <li>• <span class="lz">370 行 System Prompt 约束行为边界</span><span class="le">370-line System Prompt constrains behavior</span></li>
+      <li>• <span class="lz">反懒惰委托：必须先理解任务</span><span class="le">Anti-lazy: must understand task first</span></li>
+      <li>• <span class="lz">禁止原文透传精确指令</span><span class="le">No pass-through of original prompt</span></li>
+      <li>• <span class="lz">监控 Worker 进度决策 Continue/Spawn</span><span class="le">Monitors Workers, decides Continue/Spawn</span></li>
     </ul>
   </div>
   <div class="card">
@@ -300,22 +470,22 @@
       <h3><span class="lz">Spawn vs Continue 决策</span><span class="le">Spawn vs Continue Decision</span></h3>
     </div>
     <ul>
-      <li>• <span class="lz">Spawn(Agent): 创建全新子 Agent 处理独立任务</span><span class="le">Spawn(Agent): create new sub-agent for fresh task</span></li>
-      <li>• <span class="lz">Continue(SendMessage): 在原 Agent 上追加指令</span><span class="le">Continue(SendMessage): append instruction to existing agent</span></li>
-      <li>• <span class="lz">失败重试用 Spawn 而非继续失败的 Agent</span><span class="le">Retry failures via Spawn, not resuming failed agent</span></li>
-      <li>• <span class="lz">多个独立子任务可同时 Spawn 并行</span><span class="le">Multiple independent subtasks spawn in parallel</span></li>
+      <li>• <span class="lz">Spawn(Agent)：创建全新子 Agent</span><span class="le">Spawn(Agent): create new sub-agent</span></li>
+      <li>• <span class="lz">Continue：原 Agent 上追加指令</span><span class="le">Continue: append to existing agent</span></li>
+      <li>• <span class="lz">失败重试必须 Spawn</span><span class="le">Retry must always Spawn</span></li>
+      <li>• <span class="lz">独立子任务并行 Spawn × N</span><span class="le">Independent tasks → Spawn × N</span></li>
     </ul>
   </div>
   <div class="card">
     <div class="card-hd">
       <div class="card-dot" style="background:#22d3ee"></div>
-      <h3><span class="lz">Task Notification 通信机制</span><span class="le">Task Notification Protocol</span></h3>
+      <h3><span class="lz">Task Notification 机制</span><span class="le">Task Notification Protocol</span></h3>
     </div>
     <ul>
-      <li>• <span class="lz">子 Agent 通过 XML 格式注入消息历史</span><span class="le">Sub-agents inject Task Notification XML into history</span></li>
-      <li>• <span class="lz">Coordinator 读取 Task Notification 评估进度</span><span class="le">Coordinator reads notifications to evaluate progress</span></li>
-      <li>• <span class="lz">Scratchpad 文件作为 Agent 间共享白板</span><span class="le">Scratchpad file serves as shared whiteboard between agents</span></li>
-      <li>• <span class="lz">最终综合阶段结合所有结果生成答案</span><span class="le">Synthesis phase combines all results into final answer</span></li>
+      <li>• <span class="lz">子 Agent 以 XML 注入父消息历史</span><span class="le">Sub-agents inject XML into parent history</span></li>
+      <li>• <span class="lz">Coordinator 读取通知评估进度</span><span class="le">Coordinator reads notifications to evaluate</span></li>
+      <li>• <span class="lz">Scratchpad 为 Agent 间共享白板</span><span class="le">Scratchpad = shared whiteboard</span></li>
+      <li>• <span class="lz">综合阶段汇聚所有结果生成答复</span><span class="le">Synthesis merges all results into one reply</span></li>
     </ul>
   </div>
 </div>
@@ -333,7 +503,7 @@
   }
   function applyLang(l){
     document.documentElement.setAttribute('data-lang', l);
-    localStorage.setItem('vlang', l);
+    localStorage.setItem('vlang',l);
   }
   window.cycleTheme=function(){
     var cur=document.documentElement.getAttribute('data-theme')||'dark';
@@ -359,7 +529,6 @@
     var theme = params.get('theme');
     var lang = params.get('lang');
     function forceLang(l) {
-      // 直接翻转 .lz / .le 元素的显示，绕过图表 IIFE 的闭包 l 变量
       var en = l === 'en';
       document.querySelectorAll('.lz').forEach(function(e){
         e.style.display = en ? 'none' : '';
@@ -381,14 +550,13 @@
       }
       if (l) {
         document.documentElement.setAttribute('data-lang', l);
-        document.documentElement.setAttribute('lang', l);  // 双写，让 CSS 的 html[lang=*] 也命中
+        document.documentElement.setAttribute('lang', l);
         try { ['vlang','cc-lang','cc-locale','lang'].forEach(function(k){ localStorage.setItem(k, l); }); } catch(_){}
-        forceLang(l);  // 直接操作 .lz/.le，跳过 IIFE 闭包问题
+        forceLang(l);
       }
     }
     if (isEmbed) {
       applyState(theme, lang);
-      // FM-23 防御：一些图表用 createElement 晚期注入 .lz/.le 节点
       setTimeout(function(){ applyState(theme, lang); }, 100);
       setTimeout(function(){ applyState(theme, lang); }, 500);
       var hideCSS = document.createElement('style');
