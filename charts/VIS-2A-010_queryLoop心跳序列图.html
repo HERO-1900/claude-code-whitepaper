@@ -18,7 +18,11 @@
     .vis-title{font-size:17px;font-weight:700;color:var(--text)}
     .vis-sub{font-size:11px;color:var(--muted);margin-left:4px}
     .svg-wrap{background:var(--panel);border:1px solid var(--border);border-radius:12px;padding:12px;margin-bottom:16px;overflow-x:auto;max-width:1400px;margin-left:auto;margin-right:auto}
-    /* ===== 右侧面板主题适配 ===== */
+    /* dark 默认（与原 inline stroke 一致） */
+    .right-panel .exit-badge{fill:transparent;stroke:#475569;stroke-width:1}
+    .right-panel .exit-badge.active{stroke:#fbbf24;stroke-width:2}
+    .right-panel .metric-box{fill:transparent;stroke:#334155;stroke-width:1}
+    /* ===== 右侧面板主题适配 (v12: warm/light 统一改为浅色卡片) ===== */
     .right-panel .exit-conditions,
     .right-panel .performance-metrics,
     .right-panel .sequence-steps{transition:background .2s,border-color .2s,color .2s}
@@ -29,19 +33,26 @@
     [data-theme="light"] .right-panel .performance-metrics,
     [data-theme="light"] .right-panel .sequence-steps{background:rgba(0,0,0,0.06);border-color:rgba(0,0,0,0.12)}
     [data-theme="warm"] .right-panel .section-title,
-    [data-theme="light"] .right-panel .section-title{fill:#333}
-    [data-theme="warm"] .right-panel .exit-badge,
-    [data-theme="light"] .right-panel .exit-badge{background:rgba(0,0,0,0.08);stroke:#333;fill:#1a1a1a}
-    [data-theme="warm"] .right-panel .exit-badge.active,
-    [data-theme="light"] .right-panel .exit-badge.active{background:rgba(0,0,0,0.1);stroke:var(--accent-a);fill:#c05000;font-weight:bold}
-    [data-theme="warm"] .right-panel .metric-box,
-    [data-theme="light"] .right-panel .metric-box{background:rgba(0,0,0,0.04);border-color:rgba(0,0,0,0.1)}
+    [data-theme="light"] .right-panel .section-title{fill:#1c1917 !important}
+    /* 关键修复：exit-badge 在 warm/light 下原本是深色 → 改为浅色卡片 */
+    [data-theme="warm"] .right-panel .exit-badge{fill:#fdfaf5 !important;stroke:#a89984 !important}
+    [data-theme="light"] .right-panel .exit-badge{fill:#f8fafc !important;stroke:#94a3b8 !important}
+    [data-theme="warm"] .right-panel .exit-badge.active{fill:#fef5e7 !important;stroke:#b45309 !important}
+    [data-theme="light"] .right-panel .exit-badge.active{fill:#fef5e7 !important;stroke:#a06010 !important}
+    /* exit-badge 内的 text：warm/light 必须用深色文字 */
+    [data-theme="warm"] .right-panel .exit-text,
+    [data-theme="light"] .right-panel .exit-text{fill:#1c1917 !important}
+    [data-theme="warm"] .right-panel .exit-text-active,
+    [data-theme="light"] .right-panel .exit-text-active{fill:#a06010 !important}
+    /* metric-box 浅色化 */
+    [data-theme="warm"] .right-panel .metric-box{fill:#fdfaf5 !important;stroke:#c7b8a3 !important}
+    [data-theme="light"] .right-panel .metric-box{fill:#f8fafc !important;stroke:#94a3b8 !important}
     [data-theme="warm"] .right-panel .metric-label,
-    [data-theme="light"] .right-panel .metric-label{fill:#444}
+    [data-theme="light"] .right-panel .metric-label{fill:#44403c !important}
     [data-theme="warm"] .right-panel .legend-node,
-    [data-theme="light"] .right-panel .legend-node{stroke:#333}
+    [data-theme="light"] .right-panel .legend-node{stroke:#44403c}
     [data-theme="warm"] .right-panel .legend-text-main,
-    [data-theme="light"] .right-panel .legend-text-main{fill:#1a1a1a}
+    [data-theme="light"] .right-panel .legend-text-main{fill:#1c1917 !important}
     /* ===== 流程图面板主题适配 ===== */
     .phase-bg-r{transition:fill .2s,stroke .2s}
     .phase-bg-c{transition:fill .2s,stroke .2s}
@@ -237,26 +248,26 @@
 <text x="760" y="44" class="section-title" font-size="13" font-weight="600" letter-spacing="0.06em"><tspan class="lz">EXIT CONDITIONS · 终止条件</tspan><tspan class="le">EXIT CONDITIONS</tspan></text>
 
 <!-- 6 exit badges -->
-<rect x="760" y="56" width="360" height="28" rx="14" class="exit-badge" stroke="#475569" stroke-width="1"/>
-<text x="940" y="75" fill="#e2e8f0" font-size="12" text-anchor="middle">stop</text>
+<rect x="760" y="56" width="360" height="28" rx="14" class="exit-badge"/>
+<text x="940" y="75" class="exit-text" fill="#e2e8f0" font-size="12" text-anchor="middle">stop</text>
 
-<rect x="760" y="90" width="360" height="28" rx="14" class="exit-badge" stroke="#475569" stroke-width="1"/>
-<text x="940" y="109" fill="#e2e8f0" font-size="12" text-anchor="middle">max_turns</text>
+<rect x="760" y="90" width="360" height="28" rx="14" class="exit-badge"/>
+<text x="940" y="109" class="exit-text" fill="#e2e8f0" font-size="12" text-anchor="middle">max_turns</text>
 
-<rect x="760" y="124" width="360" height="28" rx="14" class="exit-badge" stroke="#475569" stroke-width="1"/>
-<text x="940" y="143" fill="#e2e8f0" font-size="12" text-anchor="middle">aborted_streaming</text>
+<rect x="760" y="124" width="360" height="28" rx="14" class="exit-badge"/>
+<text x="940" y="143" class="exit-text" fill="#e2e8f0" font-size="12" text-anchor="middle">aborted_streaming</text>
 
-<rect x="760" y="158" width="360" height="28" rx="14" class="exit-badge active" stroke="#fbbf24" stroke-width="2"/>
-<text x="940" y="177" fill="#fbbf24" font-size="12" text-anchor="middle" font-weight="700"><tspan class="lz">blocking_limit ★ Token超限</tspan><tspan class="le">blocking_limit ★ Token Over Budget</tspan></text>
+<rect x="760" y="158" width="360" height="28" rx="14" class="exit-badge active"/>
+<text x="940" y="177" class="exit-text-active" fill="#fbbf24" font-size="12" text-anchor="middle" font-weight="700"><tspan class="lz">blocking_limit ★ Token超限</tspan><tspan class="le">blocking_limit ★ Token Over Budget</tspan></text>
 
-<rect x="760" y="192" width="360" height="28" rx="14" class="exit-badge" stroke="#475569" stroke-width="1"/>
-<text x="940" y="211" fill="#e2e8f0" font-size="12" text-anchor="middle">model_error</text>
+<rect x="760" y="192" width="360" height="28" rx="14" class="exit-badge"/>
+<text x="940" y="211" class="exit-text" fill="#e2e8f0" font-size="12" text-anchor="middle">model_error</text>
 
-<rect x="760" y="226" width="360" height="28" rx="14" class="exit-badge" stroke="#475569" stroke-width="1"/>
-<text x="940" y="245" fill="#e2e8f0" font-size="12" text-anchor="middle">image_error</text>
+<rect x="760" y="226" width="360" height="28" rx="14" class="exit-badge"/>
+<text x="940" y="245" class="exit-text" fill="#e2e8f0" font-size="12" text-anchor="middle">image_error</text>
 
 <!-- PERFORMANCE METRICS -->
-<rect x="760" y="266" width="360" height="130" rx="8" class="metric-box" stroke="#334155" stroke-width="1"/>
+<rect x="760" y="266" width="360" height="130" rx="8" class="metric-box"/>
 <text x="774" y="286" class="section-title" font-size="13" font-weight="600"><tspan class="lz">PERFORMANCE METRICS · 性能指标</tspan><tspan class="le">PERFORMANCE METRICS</tspan></text>
 
 <text x="774" y="312" class="node-text-r" font-size="13" font-weight="600"><tspan class="lz">SYSTOLE (API等待)</tspan><tspan class="le">SYSTOLE (API wait)</tspan></text>
@@ -270,7 +281,7 @@
 <text x="852" y="389" class="node-text-c" font-size="12">~200ms</text>
 
 <!-- SEQUENCE STEPS -->
-<rect x="760" y="408" width="360" height="280" rx="8" class="metric-box" stroke="#334155" stroke-width="1"/>
+<rect x="760" y="408" width="360" height="280" rx="8" class="metric-box"/>
 <text x="774" y="428" class="section-title" font-size="13" font-weight="600"><tspan class="lz">SEQUENCE STEPS · 步骤说明</tspan><tspan class="le">SEQUENCE STEPS</tspan></text>
 
 <circle cx="784" cy="456" r="13" fill="rgba(120,53,15,0.4)" stroke-width="1.5" class="legend-node node-circle-a"/>
@@ -322,7 +333,7 @@
 </div>
 
 <div class="vis-footer">
-  VIS-2A-010 · Claude Code 2.1.88 · queryLoop() · callModel() · runTools() · canUseTool() · executePostSamplingHooks() · <span class="lz">v9 生产版</span><span class="le" style="display:none">v9 Production</span>
+  VIS-2A-010 · Claude Code 2.1.88 · queryLoop() · callModel() · runTools() · canUseTool() · executePostSamplingHooks() · <span class="lz">v12 生产版</span><span class="le" style="display:none">v12 Production</span>
 </div>
 
 <script>
