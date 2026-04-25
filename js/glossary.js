@@ -259,7 +259,11 @@
     const emptyStr = '☆'.repeat(5 - Math.ceil(stars));
     // i18n：难度徽章文案按 locale 切换
     const isEn = (function(){ try { return (localStorage.getItem('cc-locale')||'zh')==='en'; } catch(e){ return false; } })();
-    const friendlyMap = { '高': 'High', '中': 'Medium', '低': 'Low', '入门': 'Beginner', '进阶': 'Intermediate', '深入': 'Deep', '专家': 'Expert' };
+    const friendlyMap = {
+      '极高': 'Very High', '中高': 'High-Medium', '中低': 'Medium-Low',
+      '高': 'High', '中': 'Medium', '低': 'Low',
+      '入门': 'Beginner', '进阶': 'Intermediate', '深入': 'Deep', '专家': 'Expert'
+    };
     const friendlyLabel = isEn ? (friendlyMap[friendly] || friendly) : friendly;
     const labelSuffix = isEn ? ' readability' : '友好度';
     const titleText = isEn ? `Difficulty ${stars}/5` : `阅读难度 ${stars}/5`;
