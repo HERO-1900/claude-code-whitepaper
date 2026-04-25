@@ -1063,14 +1063,12 @@
       if (panel.classList.contains('visible')) closePanel();
       else if (currentView === 'reader') showView('landing');
     }
-    // 1 = landing, 2 = reader
+    // 快捷键映射（与导航栏 3 个按钮对齐）
+    // 1 = landing (全景), 2 = reader (章节), 3 = inspiration (灵感)
+    // 旧的 3 = gallery 已删除（图表画廊功能已下线，2026-04-26）
     if (e.key === '1' && !e.ctrlKey && !e.metaKey && !isInputFocused()) showView('landing');
     if (e.key === '2' && !e.ctrlKey && !e.metaKey && !isInputFocused()) showView('reader');
     if (e.key === '3' && !e.ctrlKey && !e.metaKey && !isInputFocused()) {
-      showView('gallery');
-      if (window.Gallery) { Gallery.init().then(() => Gallery.render(document.getElementById('gallery-container'))); }
-    }
-    if (e.key === '4' && !e.ctrlKey && !e.metaKey && !isInputFocused()) {
       showView('inspiration');
       if (window.InspirationLab) { InspirationLab.init().then(() => InspirationLab.render(document.getElementById('inspiration-container'))); }
     }
