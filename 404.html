@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-theme="warm">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>404 · Claude Code 白皮书</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2280%22>📜</text></svg>">
+  <style>
+    :root {
+      --bg: #0b0a08;
+      --bg-card: #1a1814;
+      --text: #f5f0e8;
+      --muted: #8c8378;
+      --accent: #c77d2e;
+      --accent-glow: rgba(199, 125, 46, 0.35);
+      --border: rgba(245, 240, 232, 0.12);
+    }
+    [data-theme="warm"] {
+      --bg: #f5f1ea;
+      --bg-card: #fbf9f4;
+      --text: #2b2a27;
+      --muted: #7a7166;
+      --accent: #c77d2e;
+      --accent-glow: rgba(199, 125, 46, 0.25);
+      --border: rgba(43, 42, 39, 0.1);
+    }
+    [data-theme="light"] {
+      --bg: #ffffff;
+      --bg-card: #f9f9f9;
+      --text: #1a1a1a;
+      --muted: #6b6b6b;
+      --accent: #b8691f;
+      --accent-glow: rgba(184, 105, 31, 0.18);
+      --border: rgba(0, 0, 0, 0.08);
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      line-height: 1.6;
+    }
+    .wrap {
+      max-width: 560px;
+      text-align: center;
+      animation: fade-in 0.6s ease-out;
+    }
+    @keyframes fade-in {
+      from { opacity: 0; transform: translateY(12px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .term {
+      font-family: "JetBrains Mono", SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 14px;
+      color: var(--muted);
+      margin-bottom: 24px;
+      letter-spacing: 0.05em;
+    }
+    .term .prompt { color: var(--accent); }
+    .term .err { color: #d97757; }
+    h1 {
+      font-size: 96px;
+      font-weight: 200;
+      letter-spacing: -0.04em;
+      color: var(--accent);
+      text-shadow: 0 0 40px var(--accent-glow);
+      margin-bottom: 8px;
+      font-family: Georgia, "Noto Serif SC", serif;
+    }
+    .lz, .le { display: block; }
+    html[data-lang="en"] .lz { display: none; }
+    html:not([data-lang="en"]) .le { display: none; }
+    .subtitle {
+      font-family: Georgia, "Noto Serif SC", serif;
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+    .desc {
+      color: var(--muted);
+      font-size: 15px;
+      margin-bottom: 36px;
+    }
+    .actions {
+      display: flex;
+      gap: 12px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .btn {
+      padding: 10px 24px;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 14px;
+      font-weight: 500;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+    }
+    .btn-primary {
+      background: var(--accent);
+      color: #fff;
+      border: 1px solid var(--accent);
+    }
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+    .btn-ghost {
+      background: transparent;
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+    .btn-ghost:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .footer-note {
+      margin-top: 60px;
+      font-size: 12px;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+  </style>
+  <script>
+    // 同步父站点 theme + lang（如果用户切过）
+    (function() {
+      try {
+        var t = localStorage.getItem('cc-theme') || 'warm';
+        var l = localStorage.getItem('cc-locale') || 'zh';
+        document.documentElement.setAttribute('data-theme', t);
+        document.documentElement.setAttribute('data-lang', l);
+        document.documentElement.setAttribute('lang', l === 'en' ? 'en' : 'zh-CN');
+      } catch (e) {}
+    })();
+  </script>
+</head>
+<body>
+  <div class="wrap">
+    <div class="term">
+      <span class="prompt">$</span> claude --read /this-page
+      <br>
+      <span class="err">✗</span> chapter not found
+    </div>
+
+    <h1>404</h1>
+
+    <p class="subtitle lz">这一页不在白皮书里</p>
+    <p class="subtitle le">This page isn't in the whitepaper</p>
+
+    <p class="desc lz">你可能点了一个旧链接，或者输入的路径不存在。<br>试试回到首页，或从目录里找你想读的章节。</p>
+    <p class="desc le">You may have followed an old link or mistyped the URL.<br>Head back home or browse the table of contents.</p>
+
+    <div class="actions">
+      <a href="/claude-code-whitepaper/" class="btn btn-primary">
+        <span class="lz">← 回到首页</span>
+        <span class="le">← Back to home</span>
+      </a>
+      <a href="https://github.com/HERO-1900/claude-code-whitepaper/issues" class="btn btn-ghost" target="_blank" rel="noopener">
+        <span class="lz">报告问题</span>
+        <span class="le">Report issue</span>
+      </a>
+    </div>
+
+    <p class="footer-note">
+      <span class="lz">Claude Code 2.1.88 · 白皮书</span>
+      <span class="le">Claude Code 2.1.88 · Whitepaper</span>
+    </p>
+  </div>
+</body>
+</html>
