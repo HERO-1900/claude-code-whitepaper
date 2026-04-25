@@ -361,10 +361,3 @@ This is a **fail-open** strategy — a hook's own failure does not block the mai
 
 ---
 
-*Quality Self-Check:*
-- [x] Coverage: complete enumeration of 27 events + 4 types + exit-code semantics + error propagation model
-- [x] Fidelity: event list, exit-code rules, and `dontAsk` semantics verified against source code (`src/schemas/hooks.ts`, `src/utils/hooks.ts`, `src/utils/hooks/execAgentHook.ts`, `src/entrypoints/sdk/coreSchemas.ts`)
-- [x] Depth: pragmatic rationale for exit-code choice (not folklore), event granularity design principles, configuration-driven vs. code-driven trade-offs, fail-open security implications
-- [x] Critical analysis: `PermissionRequest` supply-chain attack vector, Agent hook cost runaway, fail-open security risk, binary trust model limitations
-- [x] Reusability: lifecycle hooks + exit-code semantic separation + error propagation strategy applicable to any extensible system
-- [x] Cross-chapter consistency: the four execution type names (command/prompt/agent/http) aligned with Part 2 Q10

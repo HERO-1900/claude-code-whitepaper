@@ -374,8 +374,3 @@ Claude Code 的 Coordinator 选择了一条在多 Agent 编排领域颇为少见
 
 ---
 
-*质量自检：*
-- [x] 覆盖：Agent 生命周期 + 隔离模型 + 7 种 TaskType + Coordinator 系统提示词 + 可观测性
-- [x] 忠实：Coordinator 提示词的引用完全来自 coordinatorMode.ts 的实际内容
-- [x] 深度："反懒惰委托"规则的 LLM 弱点分析、Continue vs. Spawn 决策矩阵
-- [x] 批判：指出提示词作为架构的脆弱性、auto-background 硬编码阈值

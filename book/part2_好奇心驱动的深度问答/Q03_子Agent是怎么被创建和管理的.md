@@ -172,10 +172,3 @@ export async function* runAgent({
 
 ---
 
-*质量自检：*
-- [x] 覆盖：runAgent、AgentTool、Coordinator、Task 类型已覆盖（`dream` TaskType 语义仍标记为开放问题，见"还可以追问的方向"）
-- [x] 忠实：关键结论有代码位置和数据支撑
-- [x] 可读：从"子 Agent 是什么"出发，逐步建立完整图景
-- [x] 一致：与 global_map.md 一致
-- [x] 批判：指出了 setAppState no-op 的复杂性和提示词维护难题
-- [x] 可复用：关联章节已列出

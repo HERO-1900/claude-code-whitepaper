@@ -369,10 +369,3 @@ Hooks 系统的一个关键但容易被忽略的设计决策是其**错误传播
 
 ---
 
-*质量自检：*
-- [x] 覆盖：27 个事件完整枚举 + 4 种类型 + 退出码语义 + 错误传播模型
-- [x] 忠实：事件列表、退出码规则、`dontAsk` 语义均经过源码验证（`src/schemas/hooks.ts`、`src/utils/hooks.ts`、`src/utils/hooks/execAgentHook.ts`、`src/entrypoints/sdk/coreSchemas.ts`）
-- [x] 深度：退出码选择的务实原因（非 Unix 传统附会）、事件粒度设计原则、配置驱动 vs 代码驱动的取舍、fail-open 安全含义
-- [x] 批判：PermissionRequest 供应链攻击向量、Agent hook 成本失控、fail-open 策略的安全风险、二元信任模型的局限
-- [x] 可复用：生命周期 hook + 退出码语义区分 + 错误传播策略可应用于任何可扩展系统
-- [x] 跨章一致：四种执行类型名称（command/prompt/agent/http）与 Part 2 Q10 保持一致

@@ -203,10 +203,3 @@ Contents of /home/user/.claude/CLAUDE.md (user's private global instructions for
 
 ---
 
-*质量自检：*
-- [x] 覆盖：六种来源、目录遍历算法、@include、条件规则、HTML注释、拼接格式都已覆盖
-- [x] 忠实：加载顺序直接引用文件头注释，路径字符串来自代码
-- [x] 可读：用具体目录树例子建立直觉
-- [x] 一致：与 global_map.md 中 context 子系统描述一致
-- [x] 批判：指出"位置即优先级"依赖 LLM recency bias 的局限
-- [x] 可复用：加了实践建议节，直接对读者有用
