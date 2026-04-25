@@ -52,10 +52,14 @@ function fail(name, detail) {
   page.on('response', (resp) => {
     if (resp.status() >= 400) {
       const u = resp.url();
-      // 忽略第三方 / favicon
-      if (u.includes(BASE) && !u.endsWith('favicon.ico')) {
-        REPORT.networkFails.push({ url: u, status: resp.status() });
-      }
+      // 忽略：第三方 / favicon / inline-warm 渐进增强 fallback / chart-embed-fallback 探测
+      if (
+        !u.includes(BASE) ||
+        u.endsWith('favicon.ico') ||
+        u.includes('/test-viz/inline-warm/') ||
+        u.includes('/inline-warm/')
+      ) return;
+      REPORT.networkFails.push({ url: u, status: resp.status() });
     }
   });
 
@@ -129,12 +133,8 @@ function fail(name, detail) {
     const linkClicked = await page.evaluate(() => {
       const toc = document.querySelector('#toc');
       if (!toc) return { found: false, reason: 'no #toc' };
-      const items = Array.from(toc.querySelectorAll('a, button, li, [data-chapter], [data-path]'));
-      // 找 innerText 不空的 leaf 节点（避免点到 part 标题）
-      const leaves = items.filter((el) => {
-        const t = (el.innerText || '').trim();
-        return t.length > 4 && t.length < 80 && !el.querySelector('a, button');
-      });
+      // 真实 DOM：TOC items 是 div.toc-chapter（带 data-chapter-id）
+      const leaves = Array.from(toc.querySelectorAll('.toc-chapter, [data-chapter-id]'));
       if (leaves.length === 0) return { found: false, reason: 'no leaf items', total: items.length };
       const target = leaves[Math.min(3, leaves.length - 1)]; // 第 4 个，避开 part 标题
       target.click();
@@ -164,7 +164,7 @@ function fail(name, detail) {
     const before = await page.evaluate(() => {
       const toc = document.querySelector('#toc');
       if (!toc) return { total: 0, visible: 0 };
-      const items = toc.querySelectorAll('a, button, li, [data-chapter], [data-path]');
+      const items = toc.querySelectorAll('.toc-chapter, [data-chapter-id]');
       let visible = 0;
       items.forEach((el) => {
         const r = el.getBoundingClientRect();
@@ -189,7 +189,7 @@ function fail(name, detail) {
       const after = await page.evaluate(() => {
         const toc = document.querySelector('#toc');
         if (!toc) return { total: 0, visible: 0 };
-        const items = toc.querySelectorAll('a, button, li, [data-chapter], [data-path]');
+        const items = toc.querySelectorAll('.toc-chapter, [data-chapter-id]');
         let visible = 0;
         items.forEach((el) => {
           const r = el.getBoundingClientRect();
@@ -222,23 +222,14 @@ function fail(name, detail) {
       const tocLeaves = await page.evaluate(() => {
         const toc = document.querySelector('#toc');
         if (!toc) return 0;
-        const items = Array.from(toc.querySelectorAll('a, button, li, [data-chapter], [data-path]'));
-        const leaves = items.filter((el) => {
-          const t = (el.innerText || '').trim();
-          return t.length > 4 && t.length < 80 && !el.querySelector('a, button');
-        });
-        return leaves.length;
+        return toc.querySelectorAll('.toc-chapter, [data-chapter-id]').length;
       });
       const tryN = Math.min(tocLeaves, 12);
       for (let i = 0; i < tryN; i++) {
         const clicked = await page.evaluate((idx) => {
           const toc = document.querySelector('#toc');
           if (!toc) return false;
-          const items = Array.from(toc.querySelectorAll('a, button, li, [data-chapter], [data-path]'));
-          const leaves = items.filter((el) => {
-            const t = (el.innerText || '').trim();
-            return t.length > 4 && t.length < 80 && !el.querySelector('a, button');
-          });
+          const leaves = Array.from(toc.querySelectorAll('.toc-chapter, [data-chapter-id]'));
           if (idx >= leaves.length) return false;
           leaves[idx].click();
           return true;
