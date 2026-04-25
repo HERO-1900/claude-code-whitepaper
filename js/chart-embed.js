@@ -28,7 +28,10 @@
 
   // ===== STAGE 1 改造常量 =====
   const COLLAPSE_STORAGE_KEY = 'cc-chart-collapsed';
-  const VIEWPORT_ROOT_MARGIN = '200px';
+  // 性能优化（2026-04-25）：原 200px 一进章节就把视口附近 5~6 张图全部预拉，
+  // 网络抖动时容易"等图"。改 600px → 提前更早预热（用户阅读速度跟得上），
+  // 配合下方对未滚到位置图表的 IDLE-预加载，做到"滑到时多半已就绪"。
+  const VIEWPORT_ROOT_MARGIN = '600px';
   // 已加载 iframe 的弱引用列表（用于主题切换时 broadcast）
   const loadedIframes = new Set();
 
@@ -346,8 +349,14 @@
     return mapLoadPromise;
   }
 
-  // Start loading immediately
-  loadChartMap();
+  // ===== 性能优化（2026-04-25）：不在脚本加载时立即 fetch chart-embedding-map.json。
+  // 只有在用户进入 Reader 视图（ChartEmbed.embed 被调用）时才真正发起请求。
+  // 同时用 requestIdleCallback 在浏览器空闲时预热一次，缩短首次进入 Reader 时的等待。
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(function(){ loadChartMap(); }, { timeout: 4000 });
+  } else {
+    setTimeout(function(){ loadChartMap(); }, 2000);
+  }
 
   // ===== CHART NAME EXTRACTION =====
   function getChartDisplayName(mapping) {
@@ -720,15 +729,18 @@
                 .then(function(html) {
                   div.innerHTML = html;
                   div.className = 'chart-inline-warm';
-                  // Mermaid 图表渲染
+                  // Mermaid 图表渲染（按需加载 mermaid lib —— 避免 3.2MB 首屏阻塞）
                   var mermaidEl = div.querySelector('.mermaid-chart');
-                  if (mermaidEl && window.mermaid) {
+                  if (mermaidEl) {
                     var diagram = mermaidEl.getAttribute('data-diagram');
-                    if (diagram) {
-                      var id = 'mermaid-' + Date.now();
-                      mermaid.render(id, diagram).then(function(result) {
-                        mermaidEl.innerHTML = result.svg;
-                      }).catch(function(err) { console.warn('Mermaid render error:', err); });
+                    if (diagram && window.ensureMermaid) {
+                      window.ensureMermaid().then(function() {
+                        if (!window.mermaid) return;
+                        var id = 'mermaid-' + Date.now();
+                        window.mermaid.render(id, diagram).then(function(result) {
+                          mermaidEl.innerHTML = result.svg;
+                        }).catch(function(err) { console.warn('Mermaid render error:', err); });
+                      });
                     }
                   }
                 })

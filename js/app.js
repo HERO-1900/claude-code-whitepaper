@@ -5,15 +5,24 @@
   'use strict';
 
   // ===== 难度评级数据（TOC 用） =====
+  // 性能优化（2026-04-25）：用 requestIdleCallback 推迟到浏览器空闲，
+  // 避免首屏与 search-index、chart-embedding-map 抢带宽。
   let difficultyMap = {};
-  fetch('book/_shared/difficulty-ratings.json').then(r=>r.json()).then(d=>{
-    var ratings = d.ratings || d;
-    ratings.forEach(function(r){
-      difficultyMap[r.chapter] = r;
-    });
-    // TOC 已渲染完毕，加入难度筛选器
-    addDifficultyFilter();
-  }).catch(function(){});
+  function loadDifficultyRatings() {
+    fetch('book/_shared/difficulty-ratings.json').then(r=>r.json()).then(d=>{
+      var ratings = d.ratings || d;
+      ratings.forEach(function(r){
+        difficultyMap[r.chapter] = r;
+      });
+      // TOC 已渲染完毕，加入难度筛选器
+      addDifficultyFilter();
+    }).catch(function(){});
+  }
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(loadDifficultyRatings, { timeout: 3000 });
+  } else {
+    setTimeout(loadDifficultyRatings, 1500);
+  }
 
   function addDifficultyFilter() {
     // 给每个 TOC 章节标记难度等级
@@ -592,6 +601,13 @@
           hljs.highlightElement(block);
         });
       }
+      // 性能优化（2026-04-25）：所有章节内图片加 lazy + async decode，
+      // 防止滚动到对应位置之前消耗带宽。images/ 目录有 33MB，多张大图，
+      // 不 lazy 会拖慢章节切换。
+      chapterBody.querySelectorAll('img').forEach(img => {
+        if (!img.hasAttribute('loading')) img.setAttribute('loading', 'lazy');
+        if (!img.hasAttribute('decoding')) img.setAttribute('decoding', 'async');
+      });
     } else {
       chapterBody.innerHTML = '<pre style="white-space:pre-wrap">' + escapeHTML(md) + '</pre>';
     }
@@ -747,11 +763,33 @@
   let searchIndex = null;
   let searchDebounceTimer = null;
 
-  // 加载搜索索引
-  fetch('js/search-index.json')
-    .then(r => r.ok ? r.json() : Promise.reject('索引加载失败'))
-    .then(data => { searchIndex = data; })
-    .catch(() => { console.warn('[Search] 搜索索引加载失败，仅支持标题搜索'); });
+  // 加载搜索索引（700KB，性能优化 2026-04-25：延迟到首次聚焦搜索框 / idle 才 fetch）
+  let searchIndexPromise = null;
+  function ensureSearchIndex() {
+    if (searchIndex) return Promise.resolve(searchIndex);
+    if (searchIndexPromise) return searchIndexPromise;
+    searchIndexPromise = fetch('js/search-index.json')
+      .then(r => r.ok ? r.json() : Promise.reject('索引加载失败'))
+      .then(data => { searchIndex = data; return data; })
+      .catch(() => { console.warn('[Search] 搜索索引加载失败，仅支持标题搜索'); return null; });
+    return searchIndexPromise;
+  }
+  // 首次聚焦 / 输入搜索框 → 立刻拉取；加载完成后自动重跑当前查询
+  if (tocSearch) {
+    var triggerSearchLoad = function(){
+      ensureSearchIndex().then(function(){
+        if (tocSearch.value) performSearch(tocSearch.value);
+      });
+    };
+    tocSearch.addEventListener('focus', triggerSearchLoad, { once: true });
+    tocSearch.addEventListener('input', triggerSearchLoad, { once: true });
+  }
+  // idle 兜底：5s 后浏览器空闲时静默预热（不会与首屏抢带宽）
+  if (typeof requestIdleCallback === 'function') {
+    requestIdleCallback(function(){ ensureSearchIndex(); }, { timeout: 8000 });
+  } else {
+    setTimeout(function(){ ensureSearchIndex(); }, 5000);
+  }
 
   /**
    * 在文本中高亮关键词，返回 HTML

@@ -67,6 +67,52 @@
   <link rel="stylesheet" href="css/tokens.css">
   <link rel="stylesheet" href="css/style.css">
   <link rel="stylesheet" href="css/lib/highlight-github-dark.min.css">
+
+  <!-- ===== Mermaid 按需加载器（性能优化 2026-04-25）=====
+       原本 mermaid.min.js 3.2MB sync script 每次首屏都阻塞 JS 解析 ~6 秒。
+       改为按需加载：只有当章节里实际出现 mermaid 图时才下载并初始化。
+       约 80% 的访问者完全不需要它（看 Welcome / Tools Catalog 页面）。 -->
+  <script>
+    (function(){
+      var loadingPromise = null;
+      window.ensureMermaid = function() {
+        if (window.mermaid) return Promise.resolve(window.mermaid);
+        if (loadingPromise) return loadingPromise;
+        loadingPromise = new Promise(function(resolve, reject){
+          var s = document.createElement('script');
+          s.src = 'js/lib/mermaid.min.js';
+          s.async = true;
+          s.onload = function(){
+            try {
+              if (window.mermaid && window.mermaid.initialize) {
+                window.mermaid.initialize({
+                  startOnLoad: false,
+                  theme: 'base',
+                  securityLevel: 'loose',
+                  flowchart: { curve: 'basis', padding: 20, nodeSpacing: 40, rankSpacing: 60, htmlLabels: true, useMaxWidth: false },
+                  themeVariables: {
+                    primaryColor: '#fbf9f4',
+                    primaryBorderColor: '#c77d2e',
+                    primaryTextColor: '#2b2a27',
+                    lineColor: '#5a5a5a',
+                    secondaryColor: '#efeae1',
+                    tertiaryColor: '#f5f2ed',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, PingFang SC, Noto Sans SC, sans-serif',
+                    fontSize: '18px',
+                    edgeLabelBackground: '#f5f2ed'
+                  }
+                });
+              }
+              resolve(window.mermaid);
+            } catch(e) { reject(e); }
+          };
+          s.onerror = reject;
+          document.head.appendChild(s);
+        });
+        return loadingPromise;
+      };
+    })();
+  </script>
 </head>
 <body>
   <!-- ==================== WELCOME / GUIDE VIEW ==================== -->
@@ -1104,24 +1150,28 @@
     </div>
   </div>
 
-  <!-- Scripts -->
-  <script src="js/lib/highlight.min.js"></script>
-  <script src="js/lib/marked.min.js"></script>
-  <script src="js/lib/mermaid.min.js"></script>
-  <script>mermaid.initialize({startOnLoad:false, theme:'base', securityLevel:'loose', flowchart:{curve:'basis', padding:20, nodeSpacing:40, rankSpacing:60, htmlLabels:true, useMaxWidth:false}, themeVariables:{primaryColor:'#fbf9f4',primaryBorderColor:'#c77d2e',primaryTextColor:'#2b2a27',lineColor:'#5a5a5a',secondaryColor:'#efeae1',tertiaryColor:'#f5f2ed',fontFamily:'-apple-system, BlinkMacSystemFont, PingFang SC, Noto Sans SC, sans-serif',fontSize:'18px',edgeLabelBackground:'#f5f2ed'}});</script>
-  <script src="js/data.js"></script>
-  <script src="js/tools-data.js"></script>
-  <script src="js/engine.js"></script>
-  <script src="js/chart-embed.js"></script>
-  <script src="js/glossary.js?v=20260413"></script>
-  <script src="js/gallery.js"></script>
+  <!-- Scripts ===== 性能优化（2026-04-25）=====
+       全部加 defer：让 HTML 解析不被 script 下载/执行阻塞，FCP 大幅前移。
+       defer scripts 按文档顺序在 DOMContentLoaded 之前依次执行，依赖顺序保留。
+       mermaid 改为按需加载（在 chapter 渲染需要时再 inject），不再首屏阻塞。
+       highlight.min.js 也 defer。 -->
+  <script defer src="js/lib/highlight.min.js"></script>
+  <script defer src="js/lib/marked.min.js"></script>
+  <!-- mermaid.min.js 3.2MB —— 改为按需加载（见 js/app.js 的 ensureMermaid()）。
+       原 sync script + initialize 内联代码也挪到 ensureMermaid() 里。 -->
+  <script defer src="js/data.js"></script>
+  <script defer src="js/tools-data.js"></script>
+  <script defer src="js/engine.js"></script>
+  <script defer src="js/chart-embed.js"></script>
+  <script defer src="js/glossary.js?v=20260413"></script>
+  <script defer src="js/gallery.js"></script>
   <!-- review-mode.js 仅限开发环境，生产环境不加载 -->
-  <script src="js/inspiration-lab.js"></script>
-  <script src="js/i18n.js?v=20260414"></script>
-  <script src="js/app.js?v=20260414"></script>
+  <script defer src="js/inspiration-lab.js"></script>
+  <script defer src="js/i18n.js?v=20260414"></script>
+  <script defer src="js/app.js?v=20260425"></script>
   <!-- SVG 构建时 bundle（6 张 panorama 流程图），svg-inline.js 优先查该 bundle -->
-  <script src="js/svg-inline-data.js?v=20260420"></script>
-  <script src="js/svg-inline.js?v=20260420b"></script>
+  <script defer src="js/svg-inline-data.js?v=20260420"></script>
+  <script defer src="js/svg-inline.js?v=20260420b"></script>
   <!-- difficulty-map.js 已弃用，难度信息改为 TOC 色点 -->
 
   <!-- ===== V4 Hero 动画引擎 =====
