@@ -127,11 +127,12 @@
         <!-- Phase 1 + 2: Terminal & pillars -->
         <div class="v4h-scene-terminal" id="v4h-sceneTerminal">
           <svg class="v4h-pillars-svg" id="v4h-pillarsSvg" viewBox="0 0 1200 800" preserveAspectRatio="xMidYMid meet" aria-hidden="true">
-            <line class="v4h-pillar-line" data-i="0" x1="600" y1="400" x2="600" y2="180"></line>
-            <line class="v4h-pillar-line" data-i="1" x1="600" y1="400" x2="860" y2="290"></line>
-            <line class="v4h-pillar-line" data-i="2" x1="600" y1="400" x2="760" y2="590"></line>
-            <line class="v4h-pillar-line" data-i="3" x1="600" y1="400" x2="440" y2="590"></line>
-            <line class="v4h-pillar-line" data-i="4" x1="600" y1="400" x2="340" y2="290"></line>
+            <!-- 2026-04-26 用户反馈五角星小气，line 端点外推约 1.27x，配合 pillar div radius 0.32→0.42 -->
+            <line class="v4h-pillar-line" data-i="0" x1="600" y1="400" x2="600" y2="120"></line>
+            <line class="v4h-pillar-line" data-i="1" x1="600" y1="400" x2="925" y2="262"></line>
+            <line class="v4h-pillar-line" data-i="2" x1="600" y1="400" x2="800" y2="638"></line>
+            <line class="v4h-pillar-line" data-i="3" x1="600" y1="400" x2="400" y2="638"></line>
+            <line class="v4h-pillar-line" data-i="4" x1="600" y1="400" x2="275" y2="262"></line>
           </svg>
 
           <div class="v4h-terminal-core" id="v4h-terminalCore">
@@ -1208,17 +1209,18 @@
     }
 
     // 计算五支柱位置（五边形围绕中心）
+    // 2026-04-26 用户反馈"五角星显得有点小气"，半径放大约 25%
     function positionPillars() {
       var w = stage.offsetWidth || window.innerWidth;
       var h = stage.offsetHeight || window.innerHeight;
 
       var radius;
       if (w < 768) {
-        radius = Math.min(w, h) * 0.32;
+        radius = Math.min(w, h) * 0.38;       // 移动端 0.32 → 0.38
       } else if (w < 1024) {
-        radius = Math.min(w, h) * 0.34;
+        radius = Math.min(w, h) * 0.40;       // 平板 0.34 → 0.40
       } else {
-        radius = Math.min(w, h) * 0.32;
+        radius = Math.min(w, h) * 0.42;       // 桌面 0.32 → 0.42（最大跃升）
       }
 
       var angles = [-90, -18, 54, 126, 198];

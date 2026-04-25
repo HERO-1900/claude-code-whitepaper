@@ -42,10 +42,26 @@ html, body {
 .view.active { display: flex; }
 
 /* ===== TOP NAV ===== */
-/* welcome 动画播放时沉浸式 —— 隐藏 topnav，避免与 skip 按钮重叠（用户反馈）
-   DOM 结构：#welcome 和 #topnav 都是 <body> 直接子元素 + welcome 在前，
-   用 sibling 选择器 ~ 匹配 */
-#welcome.active ~ #topnav { display: none; }
+/* welcome 动画播放时沉浸式 —— 但保留右上角 lang/theme 切换器
+   2026-04-26 修复：原本整个 topnav 隐藏导致老外打开看不懂全是中文 + 找不到语言切换
+   现在做法：透明 topnav，藏掉 nav-left（主菜单）和 nav-center（breadcrumb），
+   只露 nav-right（语言/主题/元喻），让用户随时能切英文 */
+#welcome.active ~ #topnav {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  border-bottom: none;
+  box-shadow: none;
+  pointer-events: none;  /* nav-right 子元素自己 pointer-events:auto 抢回 */
+}
+#welcome.active ~ #topnav .nav-left,
+#welcome.active ~ #topnav .nav-center {
+  display: none !important;
+}
+#welcome.active ~ #topnav .nav-right {
+  pointer-events: auto;
+  margin-left: auto;
+}
 
 #topnav {
   position: fixed;
