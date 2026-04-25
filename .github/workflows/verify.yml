@@ -1,0 +1,209 @@
+name: verify
+
+# 公仓发布验证 CI
+# 触发：push / pull_request 到 main，以及每天 UTC 02:00（北京 10:00）定时巡检
+# 设计：5 分钟内跑完，纯验证，不依赖私仓，不需要 secrets
+#
+# 三层校验：
+#   1. 静态结构检查（关键文件存在、JSON 合法、.nojekyll 存在）
+#   2. 线上 URL 拨测（HTTP 200，对 GitHub Pages live 站点）
+#   3. Playwright 5 场景冒烟（首页 / 中英切换 / 章节加载 / 难度过滤 / 图表 iframe）
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  schedule:
+    # 每日北京时间 10:00 巡检（UTC 02:00）
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  static-check:
+    name: "[1/3] static structure"
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: 关键文件存在性
+        run: |
+          set -e
+          echo "==> Checking critical files"
+          required=(
+            "index.html"
+            "200.html"
+            ".nojekyll"
+            "robots.txt"
+            "sitemap.xml"
+            "README.md"
+            "LICENSE"
+            "css/style.css"
+            "css/tokens.css"
+            "js/app.js"
+            "js/i18n.js"
+            "js/data.js"
+            "js/locales/zh.json"
+            "js/locales/en.json"
+            "test-viz/chart-embedding-map.json"
+            "handoff/brainstorm/sparks-v1.json"
+            "handoff/brainstorm/blueprints-v1.json"
+            "book/_shared/glossary.json"
+            "book/_shared/difficulty-ratings.json"
+          )
+          missing=0
+          for f in "${required[@]}"; do
+            if [ ! -f "$f" ]; then
+              echo "  MISSING: $f"
+              missing=$((missing+1))
+            else
+              echo "  OK: $f"
+            fi
+          done
+          if [ "$missing" -gt 0 ]; then
+            echo "==> $missing critical files missing"
+            exit 1
+          fi
+
+      - name: JSON 合法性
+        run: |
+          set -e
+          echo "==> Validating JSON files"
+          fail=0
+          while IFS= read -r f; do
+            if ! python3 -c "import json,sys; json.load(open(sys.argv[1]))" "$f" 2>/dev/null; then
+              echo "  INVALID: $f"
+              fail=$((fail+1))
+            fi
+          done < <(find . -name "*.json" -not -path "./node_modules/*" -not -path "./.git/*")
+          echo "==> JSON check done, $fail invalid"
+          [ "$fail" -eq 0 ]
+
+      - name: 数量基线（章节 + 图表）
+        run: |
+          set -e
+          zh=$(find book -name "*.md" -type f | wc -l | tr -d ' ')
+          en=$(find book-en -name "*.md" -type f | wc -l | tr -d ' ')
+          charts=$(find charts -name "*.html" -type f | wc -l | tr -d ' ')
+          echo "zh chapters: $zh"
+          echo "en chapters: $en"
+          echo "charts:      $charts"
+          # 基线：zh 至少 80 个、en 至少 80 个、图表至少 100
+          if [ "$zh" -lt 80 ]; then echo "FAIL: zh chapters < 80"; exit 1; fi
+          if [ "$en" -lt 80 ]; then echo "FAIL: en chapters < 80"; exit 1; fi
+          if [ "$charts" -lt 100 ]; then echo "FAIL: charts < 100"; exit 1; fi
+
+  url-smoke:
+    name: "[2/3] live URL smoke"
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    needs: static-check
+    # PR 跑不到 live，因为 PR 还没合并；只在 push/schedule/manual 跑
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - name: 等 GitHub Pages 部署（60s）
+        run: sleep 60
+
+      - name: 拨测核心 URL
+        run: |
+          set -e
+          BASE="https://hero-1900.github.io/claude-code-whitepaper"
+          urls=(
+            "/"
+            "/.nojekyll"
+            "/index.html"
+            "/css/style.css"
+            "/css/tokens.css"
+            "/js/app.js"
+            "/js/i18n.js"
+            "/js/locales/zh.json"
+            "/js/locales/en.json"
+            "/robots.txt"
+            "/sitemap.xml"
+            "/README.md"
+            "/LICENSE"
+            "/test-viz/chart-embedding-map.json"
+            "/handoff/brainstorm/sparks-v1.json"
+            "/handoff/brainstorm/blueprints-v1.json"
+            "/book/_shared/glossary.json"
+            "/book/_shared/difficulty-ratings.json"
+          )
+          fail=0
+          for u in "${urls[@]}"; do
+            code=""
+            for i in 1 2 3; do
+              code=$(curl -sS --max-time 15 -o /dev/null -w "%{http_code}" "$BASE$u" || true)
+              [ "$code" = "200" ] && break
+              sleep 3
+            done
+            if [ "$code" = "200" ]; then
+              echo "  200  $u"
+            else
+              echo "  $code  $u"
+              fail=$((fail+1))
+            fi
+          done
+          # 抽样 3 个章节 + 3 个图表（URL 含 CJK，要 url-encode）
+          samples=(
+            "/book/part1_认识这个系统/01_这不是聊天机器人.md"
+            "/book-en/part1_认识这个系统/01_这不是聊天机器人.md"
+            "/book/part3_子系统完全解析/01_权限系统完全解析.md"
+            "/charts/VIS-1-001_Tool调用循环图.html"
+            "/charts/VIS-3-001_投机执行时序图.html"
+            "/charts/VIS-0-001_英雄架构图.html"
+          )
+          for u in "${samples[@]}"; do
+            enc=$(python3 -c "import sys,urllib.parse; print(urllib.parse.quote(sys.argv[1], safe='/'))" "$u")
+            code=""
+            for i in 1 2 3; do
+              code=$(curl -sS --max-time 15 -o /dev/null -w "%{http_code}" "$BASE$enc" || true)
+              [ "$code" = "200" ] && break
+              sleep 3
+            done
+            if [ "$code" = "200" ]; then
+              echo "  200  $u"
+            else
+              echo "  $code  $u"
+              fail=$((fail+1))
+            fi
+          done
+          echo "==> URL smoke: $fail failures"
+          [ "$fail" -eq 0 ]
+
+  playwright-smoke:
+    name: "[3/3] Playwright 5 scenarios"
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    needs: static-check
+    if: github.event_name != 'pull_request'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: 等 Pages 部署
+        run: sleep 60
+
+      - name: 安装 Playwright（仅 chromium）
+        run: |
+          npm init -y >/dev/null 2>&1 || true
+          npm i --no-save playwright@1.59.1
+          npx playwright install --with-deps chromium
+
+      - name: 跑 CI 冒烟脚本
+        run: node scripts/ci-smoke.js
+        env:
+          SMOKE_BASE_URL: "https://hero-1900.github.io/claude-code-whitepaper"
+
+      - name: 上传报告（失败时）
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ci-smoke-report
+          path: |
+            ci-smoke-report.json
+            ci-smoke-*.png
+          retention-days: 7
