@@ -119,37 +119,36 @@ function fail(name, detail) {
 
   // -------- Scenario 3: 章节加载 --------
   try {
-    // 找一个章节链接（toc / sidebar）
-    const linkClicked = await page.evaluate(() => {
-      const links = Array.from(document.querySelectorAll('a[href], [data-chapter], [data-href], li'));
-      // 找包含 「这不是聊天机器人」 或 第一章相关字样的 link
-      const target = links.find((el) => {
-        const t = (el.innerText || el.textContent || '').trim();
-        return t.includes('这不是聊天机器人') || t.includes('代码地图') || t.includes('权限系统');
-      });
-      if (target) {
-        // 优先 click anchor，否则触发 mousedown
-        target.click();
-        return (target.innerText || '').slice(0, 50);
-      }
-      return null;
+    // 步骤 1：进 reader 视图（首页是 hero/panorama 模式，TOC 在 reader view 里）
+    await page.evaluate(() => {
+      const navReader = document.querySelector('#nav-reader');
+      if (navReader) navReader.click();
     });
-    if (!linkClicked) {
-      fail('chapter_load', { reason: 'no chapter link found' });
-    } else {
-      await page.waitForTimeout(3500);
-      const readerLen = await page.evaluate(() => {
-        // 找 reader / chapter 容器
-        const sel = ['#reader', '.reader', '.chapter-content', '#chapter', 'main', 'article'];
-        for (const s of sel) {
-          const el = document.querySelector(s);
-          if (el && el.innerText && el.innerText.length > 500) {
-            return el.innerText.length;
-          }
-        }
-        return document.body.innerText.length;
+    await page.waitForTimeout(2500);
+    // 步骤 2：在 #toc 里找一个章节链接（动态生成，可能是 a / button / li）
+    const linkClicked = await page.evaluate(() => {
+      const toc = document.querySelector('#toc');
+      if (!toc) return { found: false, reason: 'no #toc' };
+      const items = Array.from(toc.querySelectorAll('a, button, li, [data-chapter], [data-path]'));
+      // 找 innerText 不空的 leaf 节点（避免点到 part 标题）
+      const leaves = items.filter((el) => {
+        const t = (el.innerText || '').trim();
+        return t.length > 4 && t.length < 80 && !el.querySelector('a, button');
       });
-      if (readerLen < 500) {
+      if (leaves.length === 0) return { found: false, reason: 'no leaf items', total: items.length };
+      const target = leaves[Math.min(3, leaves.length - 1)]; // 第 4 个，避开 part 标题
+      target.click();
+      return { found: true, text: (target.innerText || '').slice(0, 60), totalLeaves: leaves.length };
+    });
+    if (!linkClicked.found) {
+      fail('chapter_load', linkClicked);
+    } else {
+      await page.waitForTimeout(4000);
+      const readerLen = await page.evaluate(() => {
+        const body = document.querySelector('#chapter-body');
+        return body ? (body.innerText || '').length : 0;
+      });
+      if (readerLen < 200) {
         fail('chapter_load', { readerLen, clicked: linkClicked });
       } else {
         ok('chapter_load', { readerLen, clicked: linkClicked });
@@ -159,15 +158,13 @@ function fail(name, detail) {
     fail('chapter_load', { error: String(e) });
   }
 
-  // -------- Scenario 4: 难度过滤 --------
+  // -------- Scenario 4: 难度过滤（在 reader view 里）--------
   try {
-    // 回首页防止状态污染
-    await page.goto(BASE + '/', { waitUntil: 'load', timeout: 30000 });
-    await page.waitForTimeout(2000);
+    // 章节加载场景已经在 reader view，可以继续用
     const before = await page.evaluate(() => {
-      // 数 toc 里的章节 item 数
-      const items = document.querySelectorAll('[data-difficulty], .toc-item, .chapter-item, li.chapter, li[data-ch]');
-      // 只数可见的
+      const toc = document.querySelector('#toc');
+      if (!toc) return { total: 0, visible: 0 };
+      const items = toc.querySelectorAll('a, button, li, [data-chapter], [data-path]');
       let visible = 0;
       items.forEach((el) => {
         const r = el.getBoundingClientRect();
@@ -176,21 +173,23 @@ function fail(name, detail) {
       return { total: items.length, visible };
     });
     const filterClicked = await page.evaluate(() => {
+      // 难度过滤通常是 toc 上方/侧边的按钮组
       const els = Array.from(document.querySelectorAll('button, a, [role=button], [data-difficulty]'));
       const btn = els.find((el) => {
         const t = (el.innerText || '').trim();
-        return t === '入门' || t === 'Easy' || t === '简单' || t === '初级';
+        return t === '入门' || t === 'Easy' || t === '简单' || t === '初级' || t === '初阶';
       });
       if (btn) { btn.click(); return true; }
       return false;
     });
     if (!filterClicked) {
-      // filter 按钮不存在不算 hard fail（页面结构可能改）
       ok('difficulty_filter', { skipped: 'no easy button found', before });
     } else {
-      await page.waitForTimeout(1200);
+      await page.waitForTimeout(1500);
       const after = await page.evaluate(() => {
-        const items = document.querySelectorAll('[data-difficulty], .toc-item, .chapter-item, li.chapter, li[data-ch]');
+        const toc = document.querySelector('#toc');
+        if (!toc) return { total: 0, visible: 0 };
+        const items = toc.querySelectorAll('a, button, li, [data-chapter], [data-path]');
         let visible = 0;
         items.forEach((el) => {
           const r = el.getBoundingClientRect();
@@ -199,7 +198,6 @@ function fail(name, detail) {
         return { total: items.length, visible };
       });
       if (before.visible === after.visible && before.total > 0) {
-        // 数量没变可能是 filter 没生效
         fail('difficulty_filter', { before, after, reason: 'visible count unchanged' });
       } else {
         ok('difficulty_filter', { before, after });
@@ -210,37 +208,55 @@ function fail(name, detail) {
   }
 
   // -------- Scenario 5: 图表 iframe --------
+  // 不依赖具体哪一章有图，遍历多个章节找到第一个 iframe 即可
   try {
-    // 章节内查找 iframe（前面 chapter_load 已切到一个章节；如果没切，重新打开一个）
-    const iframes = await page.evaluate(() => {
-      return Array.from(document.querySelectorAll('iframe')).map((f) => ({
-        src: f.src,
-        w: f.getBoundingClientRect().width,
-        h: f.getBoundingClientRect().height,
-      }));
+    let foundIframe = null;
+    // 先看当前 chapter-body
+    foundIframe = await page.evaluate(() => {
+      const iframes = Array.from(document.querySelectorAll('#chapter-body iframe, iframe'));
+      const charts = iframes.filter((f) => f.src && f.src.includes('/charts/'));
+      return charts.length > 0 ? { src: charts[0].src, count: charts.length } : null;
     });
-    const chartIframes = iframes.filter((f) => f.src && f.src.includes('/charts/'));
-    if (chartIframes.length === 0) {
-      // 如果当前页没图表，主动切到肯定有图的章节
-      await page.evaluate(() => {
-        const links = Array.from(document.querySelectorAll('a, li, [data-chapter]'));
-        const target = links.find((el) => (el.innerText || '').includes('代码地图') || (el.innerText || '').includes('系统调用'));
-        if (target) target.click();
+    if (!foundIframe) {
+      // 在 #toc 里挑前 8 个 leaf，逐个点击直到找到 iframe
+      const tocLeaves = await page.evaluate(() => {
+        const toc = document.querySelector('#toc');
+        if (!toc) return 0;
+        const items = Array.from(toc.querySelectorAll('a, button, li, [data-chapter], [data-path]'));
+        const leaves = items.filter((el) => {
+          const t = (el.innerText || '').trim();
+          return t.length > 4 && t.length < 80 && !el.querySelector('a, button');
+        });
+        return leaves.length;
       });
-      await page.waitForTimeout(4000);
-      const iframes2 = await page.evaluate(() => {
-        return Array.from(document.querySelectorAll('iframe')).map((f) => ({
-          src: f.src,
-        }));
-      });
-      const chartIframes2 = iframes2.filter((f) => f.src && f.src.includes('/charts/'));
-      if (chartIframes2.length === 0) {
-        fail('chart_iframe', { reason: 'no chart iframe found in any tested chapter' });
-      } else {
-        ok('chart_iframe', { count: chartIframes2.length, sample: chartIframes2[0].src });
+      const tryN = Math.min(tocLeaves, 12);
+      for (let i = 0; i < tryN; i++) {
+        const clicked = await page.evaluate((idx) => {
+          const toc = document.querySelector('#toc');
+          if (!toc) return false;
+          const items = Array.from(toc.querySelectorAll('a, button, li, [data-chapter], [data-path]'));
+          const leaves = items.filter((el) => {
+            const t = (el.innerText || '').trim();
+            return t.length > 4 && t.length < 80 && !el.querySelector('a, button');
+          });
+          if (idx >= leaves.length) return false;
+          leaves[idx].click();
+          return true;
+        }, i);
+        if (!clicked) break;
+        await page.waitForTimeout(2500);
+        foundIframe = await page.evaluate(() => {
+          const iframes = Array.from(document.querySelectorAll('#chapter-body iframe, iframe'));
+          const charts = iframes.filter((f) => f.src && f.src.includes('/charts/'));
+          return charts.length > 0 ? { src: charts[0].src, count: charts.length } : null;
+        });
+        if (foundIframe) break;
       }
+    }
+    if (foundIframe) {
+      ok('chart_iframe', foundIframe);
     } else {
-      ok('chart_iframe', { count: chartIframes.length, sample: chartIframes[0].src });
+      fail('chart_iframe', { reason: 'no chart iframe found in 12 sampled chapters' });
     }
   } catch (e) {
     fail('chart_iframe', { error: String(e) });
