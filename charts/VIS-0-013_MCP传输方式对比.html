@@ -334,7 +334,9 @@
 <script>
 (function(){
   function setTheme(t){try{localStorage.setItem('vtheme',t);}catch(e){}
-    document.documentElement.setAttribute('data-theme',t);
+    document.documentElement.setAttribute('data-theme', t);
+        // V2 主题桥接修复 (2026-04-22)：body 也要同步，避免 [data-theme="dark"] body 选择器把 var 锁死
+        document.body && document.body.setAttribute('data-theme', t);
     document.querySelectorAll('.cb').forEach(b=>b.classList.remove('active'));
     const map={dark:0,warm:1,light:2};
     document.querySelectorAll('.cb')[map[t]]?.classList.add('active');

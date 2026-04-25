@@ -287,7 +287,9 @@ footer{margin-top:16px;text-align:center;font-size:10px;color:var(--txt3)}
   var stored=localStorage.getItem('vtheme');
   if(stored){i=themes.indexOf(stored);if(i<0)i=0;}
   document.documentElement.setAttribute('data-theme',themes[i]);
-  window.cycleTheme=function(){i=(i+1)%3;var t=themes[i];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
+  window.cycleTheme=function(){i=(i+1)%3;var t=themes[i];document.documentElement.setAttribute('data-theme', t);
+        // V2 主题桥接修复 (2026-04-22)：body 也要同步，避免 [data-theme="dark"] body 选择器把 var 锁死
+        document.body && document.body.setAttribute('data-theme', t);localStorage.setItem('vtheme',t);};
   var lang=localStorage.getItem('vlang')||'zh';
   document.documentElement.setAttribute('lang',lang);
   window.toggleLang=function(){lang=lang==='zh'?'en':'zh';document.documentElement.setAttribute('lang',lang);localStorage.setItem('vlang',lang);};

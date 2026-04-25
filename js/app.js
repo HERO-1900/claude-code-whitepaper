@@ -326,80 +326,116 @@
   });
 
   function renderPanelHTML(data) {
+    // i18n: read locale per render（与切换器一致），优先取 fieldEn 回退中文
+    const isEn = (function(){ try { return (localStorage.getItem('cc-locale')||'zh')==='en'; } catch(e){ return false; } })();
+    function pick(field) {
+      if (!data) return '';
+      if (isEn && data[field + 'En'] != null) return data[field + 'En'];
+      return data[field] != null ? data[field] : '';
+    }
+    function pickFrom(obj, field) {
+      if (!obj) return '';
+      if (isEn && obj[field + 'En'] != null) return obj[field + 'En'];
+      return obj[field] != null ? obj[field] : '';
+    }
+
     // Stats with explanations
     const statsHTML = data.stats.map(s => {
-      const explanation = s.explain || '';
+      const lbl = pickFrom(s, 'lbl');
+      const explanation = pickFrom(s, 'explain');
       return `<div class="panel-stat-card">
         <div class="val" style="color:${data.color}">${s.val}</div>
-        <div class="lbl">${s.lbl}</div>
+        <div class="lbl">${lbl}</div>
         ${explanation ? `<div class="stat-explain">${explanation}</div>` : ''}
       </div>`;
     }).join('');
 
-    // Concepts with detailed explanations
+    // Concepts —— 统一渲染：永远 name + explain（即使 explain 为空），消除字号不一致
     const conceptsHTML = data.concepts.map(c => {
-      if (typeof c === 'object' && c.name) {
-        return `<li>
-          <div class="concept-name">${c.name}</div>
-          <div class="concept-explain">${c.explain}</div>
-        </li>`;
+      let name, explain;
+      if (typeof c === 'object' && c !== null) {
+        name = pickFrom(c, 'name');
+        explain = pickFrom(c, 'explain');
+      } else {
+        name = c;
+        explain = '';
       }
-      return `<li>${c}</li>`;
+      return `<li>
+        <div class="concept-name">${name}</div>
+        ${explain ? `<div class="concept-explain">${explain}</div>` : ''}
+      </li>`;
     }).join('');
 
     const chaptersHTML = data.chapters.map(ch => {
       const chId = findChapterId(ch.part, ch.num);
+      const partLabel = pickFrom(ch, 'part') || ch.part;
+      const chTitle = pickFrom(ch, 'title') || ch.title;
       return `<div class="panel-link" data-chapter="${chId || ''}">
-        <span>${ch.part} / ${ch.title}</span>
+        <span>${partLabel} / ${chTitle}</span>
         <span class="arrow">→</span>
       </div>`;
     }).join('');
 
-    // Pick metaphor based on current setting
-    const metaphorText = currentMetaphor === 'city'
-      ? (data.cityMetaphor || data.metaphor)
-      : data.metaphor;
-    const analogyText = currentMetaphor === 'city'
-      ? (data.cityAnalogy || data.osAnalogy)
-      : data.osAnalogy;
-    const _isEnAnalogy = (function(){ try { return (localStorage.getItem('cc-locale')||'zh')==='en'; } catch(e){ return false; } })();
+    // Pick metaphor based on current setting + locale
+    const cityMeta = pick('cityMetaphor') || pick('metaphor');
+    const osMeta = pick('metaphor');
+    const metaphorText = currentMetaphor === 'city' ? cityMeta : osMeta;
+    const cityAna = pick('cityAnalogy') || pick('osAnalogy');
+    const osAna = pick('osAnalogy');
+    const analogyText = currentMetaphor === 'city' ? cityAna : osAna;
     const analogyLabel = currentMetaphor === 'city'
-      ? (_isEnAnalogy ? '🏙 City Analogy' : '🏙 城市类比')
-      : (_isEnAnalogy ? '🔑 OS Analogy' : '🔑 OS 类比');
+      ? (isEn ? '🏙 City Analogy' : '🏙 城市类比')
+      : (isEn ? '🔑 OS Analogy' : '🔑 OS 类比');
 
-    // One-sentence "why this matters"
-    const whyMatters = data.whyMatters || '';
+    // Section labels —— 统一 i18n
+    const L = isEn ? {
+      whyMatters: 'Why it matters: ',
+      keyData: 'Key Data',
+      overview: 'Overview',
+      coreConcepts: 'Core Concepts',
+      relatedChapters: 'Related Chapters',
+    } : {
+      whyMatters: '为什么重要：',
+      keyData: '关键数据',
+      overview: '概述',
+      coreConcepts: '核心概念',
+      relatedChapters: '相关章节',
+    };
+
+    const title = pick('title');
+    const description = pick('description');
+    const whyMatters = pick('whyMatters');
 
     return `
       <div class="panel-header">
         <div class="panel-icon" style="background:${data.color}20;color:${data.color};border:1px solid ${data.color}40">${data.icon}</div>
         <div>
-          <div class="panel-title" style="color:${data.color}">${data.title}</div>
+          <div class="panel-title" style="color:${data.color}">${title}</div>
           <div class="panel-subtitle">${metaphorText}</div>
         </div>
       </div>
 
       <div class="os-analogy">${analogyLabel}: ${analogyText}</div>
 
-      ${whyMatters ? `<div class="panel-why-matters"><strong>为什么重要：</strong>${whyMatters}</div>` : ''}
+      ${whyMatters ? `<div class="panel-why-matters"><strong>${L.whyMatters}</strong>${whyMatters}</div>` : ''}
 
       <div class="panel-section">
-        <h3>关键数据</h3>
+        <h3>${L.keyData}</h3>
         <div class="panel-stat-grid">${statsHTML}</div>
       </div>
 
       <div class="panel-section">
-        <h3>概述</h3>
-        <div class="panel-description">${data.description}</div>
+        <h3>${L.overview}</h3>
+        <div class="panel-description">${description}</div>
       </div>
 
       <div class="panel-section">
-        <h3>核心概念</h3>
+        <h3>${L.coreConcepts}</h3>
         <ul class="concept-list">${conceptsHTML}</ul>
       </div>
 
       <div class="panel-section">
-        <h3>相关章节</h3>
+        <h3>${L.relatedChapters}</h3>
         <div class="panel-links">${chaptersHTML}</div>
       </div>
     `;

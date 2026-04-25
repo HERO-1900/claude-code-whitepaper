@@ -636,6 +636,11 @@
     function applyState(t, l) {
       if (t) {
         document.documentElement.setAttribute('data-theme', t);
+        // 关键：本图表 CSS 用 [data-theme="..."] 选择器（无 :root 限定）
+        // 既匹配 <html> 也匹配 <body>。<body data-theme="dark"> 会与 html 的新 theme
+        // 在 CSS 变量上打架（同特异性，body 后定义胜出）→ 主题切换看不到效果。
+        // 修复：同时改 body 的 data-theme，让两层一致。
+        document.body && document.body.setAttribute('data-theme', t);
         try { localStorage.setItem('vtheme', t); localStorage.setItem('cc-theme', t); } catch(_){}
       }
       if (l) {

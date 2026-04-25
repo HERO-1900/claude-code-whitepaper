@@ -562,7 +562,9 @@ body{background:var(--bg);color:var(--text);font-family:'JetBrains Mono',monospa
 (function(){
   var THEMES=['dark','warm','light'];
   function applyTheme(t){
-    document.documentElement.setAttribute('data-theme',t);
+    document.documentElement.setAttribute('data-theme', t);
+        // V2 主题桥接修复 (2026-04-22)：body 也要同步，避免 [data-theme="dark"] body 选择器把 var 锁死
+        document.body && document.body.setAttribute('data-theme', t);
     localStorage.setItem('vtheme',t);
   }
   function applyLang(l){

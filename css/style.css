@@ -6254,3 +6254,51 @@ mark.search-highlight {
 [data-theme="warm"] .toc-subgroup {
   padding-top: 14px;
 }
+
+/* ===== 语言切换防闪屏（2026-04-22） =====
+   切换语言时给 body 加 .cc-lang-switching，主要内容轻度淡出 + 阻断点击
+   防止：连续点击导致中间态 DOM 闪烁、用户看到一半中文一半英文 */
+body.cc-lang-switching #landing,
+body.cc-lang-switching #reader,
+body.cc-lang-switching #gallery,
+body.cc-lang-switching #inspiration,
+body.cc-lang-switching #welcome {
+  opacity: 0.55;
+  transition: opacity 180ms ease-out;
+  pointer-events: none;
+}
+body.cc-lang-switching .cc-lang-switcher {
+  /* 切换器本身保持可点（不被禁用），但视觉提示"工作中" */
+  opacity: 0.7;
+  cursor: progress;
+}
+/* 切换中按钮变灰，告诉用户"在切换" */
+body.cc-lang-switching .cc-lang-btn {
+  pointer-events: none;
+}
+
+/* ===== Concept list 字号对齐（2026-04-22） =====
+   修复架构全景侧边栏点开节点后 concept 字体大小不一致的问题
+   原因：早期数据混合用 string 和 {name, explain} 两种 concept 格式，
+        渲染出的 li 高度不同；现在 renderPanelHTML 统一升格为 name+explain
+        结构，CSS 这里把单 .concept-name (无 explain) 时的留白也补齐 */
+.concept-list li {
+  padding: 8px 0;
+  font-size: 13px;
+  line-height: 1.55;
+}
+.concept-list .concept-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-primary);
+  margin-bottom: 2px;
+}
+.concept-list .concept-explain {
+  font-size: 12px;
+  color: var(--text-muted);
+  line-height: 1.55;
+}
+/* 单行 concept（无 explain）也保持等高，避免视觉抖动 */
+.concept-list li:has(.concept-name:only-child) {
+  padding: 10px 0;
+}

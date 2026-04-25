@@ -108,7 +108,9 @@ svg.diagram{
   var t=localStorage.getItem('vtheme')||'dark';
   var l=localStorage.getItem('vlang')||'zh';
   document.documentElement.setAttribute('data-lang', l);
-  document.documentElement.setAttribute('data-theme',t);
+  document.documentElement.setAttribute('data-theme', t);
+        // V2 主题桥接修复 (2026-04-22)：body 也要同步，避免 [data-theme="dark"] body 选择器把 var 锁死
+        document.body && document.body.setAttribute('data-theme', t);
   function applyLang(){
     document.querySelectorAll('.lz').forEach(function(e){var hide=l==='en';e.style.display=hide?'none':'';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',hide?'none':'');});
     document.querySelectorAll('.le').forEach(function(e){var show=l==='en';e.style.display=show?'':'none';if(e.tagName==='text'||e.closest('svg'))e.setAttribute('display',show?'':'none');});

@@ -469,7 +469,9 @@
 
 <script>
 (function(){
-  var t=localStorage.getItem('vtheme')||'dark';document.documentElement.setAttribute('data-theme',t);
+  var t=localStorage.getItem('vtheme')||'dark';document.documentElement.setAttribute('data-theme', t);
+        // V2 主题桥接修复 (2026-04-22)：body 也要同步，避免 [data-theme="dark"] body 选择器把 var 锁死
+        document.body && document.body.setAttribute('data-theme', t);
   window.cycleTheme=function(){var themes=['dark','warm','light'];var i=(themes.indexOf(document.documentElement.getAttribute('data-theme'))+1)%3;t=themes[i];document.documentElement.setAttribute('data-theme',t);localStorage.setItem('vtheme',t);};
   window.toggleLang=function(){var cur=document.documentElement.getAttribute('data-lang')||'zh';var next=cur==='en'?'zh':'en';document.documentElement.setAttribute('data-lang',next);localStorage.setItem('vlang',next);};
   var _sl=localStorage.getItem('vlang');if(_sl){document.documentElement.setAttribute('data-lang',_sl);}})();

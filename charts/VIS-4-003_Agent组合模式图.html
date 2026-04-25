@@ -496,7 +496,9 @@ svg{width:100%;height:auto;display:block}
 (function(){
   var t=localStorage.getItem('vtheme')||'dark';
   var l=localStorage.getItem('vlang')||'zh';
-  document.documentElement.setAttribute('data-theme',t);
+  document.documentElement.setAttribute('data-theme', t);
+        // V2 主题桥接修复 (2026-04-22)：body 也要同步，避免 [data-theme="dark"] body 选择器把 var 锁死
+        document.body && document.body.setAttribute('data-theme', t);
   document.documentElement.setAttribute('data-lang',l);
   document.getElementById('langBtn').textContent=l==='zh'?'EN':'中';
   window.cycleTheme=function(){

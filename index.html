@@ -1593,23 +1593,63 @@
         try { return localStorage.getItem('cc-locale') || 'zh'; } catch(e) { return 'zh'; }
       }
 
-      function setLocale(locale) {
+      // ===== 切换风暴防御（2026-04-22 新增） =====
+      // 用户痛点：连续点击切换按钮会"疯狂闪屏 / 白屏 / 长时间无反应"
+      // 4 道防线：
+      //   1) inFlight 互斥锁：上一次切换没完成不允许进入下一次
+      //   2) pendingTarget：切换中收到新点击只记最后一次目标
+      //   3) DOM 冻结 class：CSS 在切换期淡出主要内容避免闪屏
+      //   4) requestAnimationFrame 包裹 DOM 重建，与浏览器渲染节奏对齐
+      var inFlight = false;
+      var pendingTarget = null;
+
+      function applyLocaleChange(locale) {
+        document.body.classList.add('cc-lang-switching');
         try { localStorage.setItem('cc-locale', locale); } catch(e) {}
-        // 优先：原地切换（无 reload）—— i18n.js 切换 DOM 文案 + app.js onLocaleChange
-        // 重建 TOC + 如在 reader 则 reload 当前章节 + 更新按钮 active 状态
-        if (window.i18n && typeof window.i18n.switch === 'function') {
-          window.i18n.switch(locale).then(function() {
-            if (typeof window.__appOnLocaleChange === 'function') {
-              window.__appOnLocaleChange();
-            } else {
-              window.location.reload();
-            }
-            // 更新按钮 active 状态（切完成后，而非切之前 —— 避免切换失败状态错位）
-            updateUI(locale);
-          });
-        } else {
+
+        if (!window.i18n || typeof window.i18n.switch !== 'function') {
           window.location.reload();
+          return Promise.resolve();
         }
+
+        return window.i18n.switch(locale).then(function() {
+          return new Promise(function(resolve) {
+            requestAnimationFrame(function() {
+              try {
+                if (typeof window.__appOnLocaleChange === 'function') {
+                  window.__appOnLocaleChange();
+                }
+              } catch(e) { console.warn('[lang] onLocaleChange fail', e); }
+              updateUI(locale);
+              setTimeout(function() {
+                document.body.classList.remove('cc-lang-switching');
+                resolve();
+              }, 200);
+            });
+          });
+        }).catch(function(err) {
+          console.warn('[lang] switch failed', err);
+          document.body.classList.remove('cc-lang-switching');
+        });
+      }
+
+      function setLocale(locale) {
+        if (getLocale() === locale && !inFlight) return;
+        if (inFlight) {
+          pendingTarget = locale;  // 切换中：只记最后一次意图
+          return;
+        }
+        inFlight = true;
+        applyLocaleChange(locale).then(function() {
+          inFlight = false;
+          if (pendingTarget && pendingTarget !== getLocale()) {
+            var t = pendingTarget;
+            pendingTarget = null;
+            setLocale(t);
+          } else {
+            pendingTarget = null;
+          }
+        });
       }
 
       function updateUI(locale) {
