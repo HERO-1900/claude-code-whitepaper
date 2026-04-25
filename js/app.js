@@ -1618,7 +1618,20 @@
       if (typeof window.__appRefreshDifficultyFilter === 'function') {
         window.__appRefreshDifficultyFilter();
       }
+      // 灵感板块：切语言时重渲染当前活动 tab（火花/蓝图）
+      // Bug 1 修复（2026-04-26）：原先只在 onLocaleChange 里没调到 inspiration，
+      // 导致 sparks tab 不刷新，只有切到 blueprints 再回来才更新。
+      var inspContainer = document.getElementById('inspiration-container');
+      if (window.InspirationLab && inspContainer && inspContainer.children.length > 0) {
+        InspirationLab.render(inspContainer);
+      }
     } catch (e) { console.warn('[app] onLocaleChange partial fail', e); }
+    // 通知图表 iframe 切换语言（Bug 3 修复链路侧）
+    try {
+      if (typeof window.dispatchEvent === 'function') {
+        window.dispatchEvent(new CustomEvent('cc-locale-change'));
+      }
+    } catch(e) {}
     // 如果正在阅读某章节，重新加载新语言版
     if (currentView === 'reader' && currentChapter) {
       loadChapter(currentChapter);

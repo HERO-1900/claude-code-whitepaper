@@ -70,15 +70,57 @@
       .catch(function (err) { console.warn('[i18n] 加载失败:', locale, err); });
   }
 
+  /** 同步 <html> 上的 lang/data-lang 属性，触发 chart-embed.js 的 MutationObserver
+   *  → 让所有已加载的图表 iframe 收到 cc-lang postMessage 自动切换 .lz/.le */
+  function syncHtmlLangAttr(newLocale) {
+    try {
+      var html = document.documentElement;
+      html.setAttribute('data-lang', newLocale);
+      html.setAttribute('lang', newLocale === 'en' ? 'en' : 'zh-CN');
+    } catch (e) {}
+  }
+
+  /** 显式向所有图表 iframe 广播 lang/theme（不依赖 MutationObserver，
+   *  因为某些时序下 mutation 没触发 chart-embed 监听器）*/
+  function broadcastToCharts(newLocale) {
+    try {
+      var theme = document.documentElement.getAttribute('data-theme') || 'dark';
+      // 向当前 DOM 中所有图表 iframe 直接发 postMessage
+      document.querySelectorAll('iframe.chart-embed-iframe').forEach(function (f) {
+        if (!f.contentWindow) return;
+        try {
+          f.contentWindow.postMessage({ type: 'cc-lang', lang: newLocale }, '*');
+          f.contentWindow.postMessage({ type: 'cc-theme', theme: theme }, '*');
+          f.contentWindow.postMessage({ type: 'v2-sync', lang: newLocale, theme: theme }, '*');
+        } catch (e) { /* cross-origin/detached, 静默 */ }
+      });
+    } catch (e) { console.warn('[i18n] broadcastToCharts 失败', e); }
+  }
+
   /** 切换语言 */
   function switchLocale(newLocale) {
     locale = newLocale;
     try { localStorage.setItem('cc-locale', newLocale); } catch (e) {}
+    syncHtmlLangAttr(newLocale);
+    broadcastToCharts(newLocale);  // 显式广播，兜底 MutationObserver
     return fetch('js/locales/' + newLocale + '.json')
       .then(function (r) { return r.json(); })
-      .then(function (data) { dict = data; apply(); })
+      .then(function (data) {
+        dict = data; apply();
+        // apply() 后再广播一次（处理 i18n 触发章节重渲染期间新创建的 iframe）
+        setTimeout(function () { broadcastToCharts(newLocale); }, 300);
+        setTimeout(function () { broadcastToCharts(newLocale); }, 1000);
+      })
       .catch(function (err) { console.warn('[i18n] 切换失败:', newLocale, err); });
   }
+
+  /** 初始化时也同步一次 */
+  document.addEventListener('DOMContentLoaded', function () {
+    try {
+      var l = (localStorage.getItem('cc-locale') || 'zh');
+      syncHtmlLangAttr(l);
+    } catch (e) {}
+  });
 
   // 暴露到全局
   window.i18n = {

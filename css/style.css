@@ -1204,7 +1204,9 @@ mark.search-highlight {
     radial-gradient(ellipse at 80% 60%, rgba(0,212,255,0.03) 0%, transparent 40%);
 }
 .welcome-container {
-  max-width: 860px;
+  /* Bug 2 修复（2026-04-26）：宽屏下从 860px 死板限制 → 弹性 1100px 上限 + 92vw 留白
+     2400px 屏在原方案下两侧 ~770px 黑边，改后两侧约 96px 留白。 */
+  max-width: min(1100px, 92vw);
   margin: 0 auto;
   padding: 48px 24px 60px;
   animation: fadeInUp 0.8s ease-out;
@@ -3691,7 +3693,7 @@ mark.search-highlight {
 
 /* ===== INSPIRATION LAB ===== */
 #inspiration { overflow-y: auto; padding-top: 48px; }
-#inspiration-container { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+#inspiration-container { max-width: min(1600px, 94vw); margin: 0 auto; padding: 2rem 1.5rem; }
 .insp-header { margin-bottom: 2rem; }
 .insp-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
 .insp-title { font-size: 1.8rem; color: var(--accent-gold); font-weight: 700; }
@@ -4854,16 +4856,18 @@ mark.search-highlight {
 
 /* === 阅读页 editorial 排版 === */
 
-/* 1. 章节正文 */
+/* 1. 章节正文 — Bug 2 修复（2026-04-26）：宽屏自适应
+   原 max-width: 800px 在 1920px+ 屏幕上左右空大量黑边
+   改 min(1200px, 100%)：宽屏更舒展，窄屏等比缩 */
 [data-theme="warm"] #chapter-body {
   font-family: Georgia, "Noto Serif SC", "Source Han Serif SC", "PingFang SC", serif;
   font-size: 16px;
   line-height: 1.7;
   color: #2b2a27;
   letter-spacing: 0.01em;
-  max-width: 800px;
+  max-width: min(1200px, 100%);
   margin: 0 auto;
-  padding: 32px 24px;
+  padding: 32px 32px;
 }
 
 /* 2. 标题层级 */
@@ -5645,9 +5649,9 @@ mark.search-highlight {
   }
 }
 
-/* 正文 max-width 放宽（有右侧栏了不需要那么窄） */
+/* 正文 max-width 放宽（Bug 2 修复 2026-04-26：宽屏自适应到 1200px） */
 [data-theme="warm"] #chapter-body {
-  max-width: 800px;
+  max-width: min(1200px, 100%);
 }
 
 /* 内联 warm 图表 — 无框无边直接融入正文流 */
@@ -6166,10 +6170,12 @@ mark.search-highlight {
 
 /* ---------- ISS-02/04：宽屏居中 + 正文 max-width 响应式放大 ---------- */
 
-/* 超宽屏（≥1600）让整个 reader 居中，两侧留白，避免内容过度左偏 */
+/* Bug 2 修复（2026-04-26）：超宽屏下 reader 不再死板 cap 1760px。
+   2400px viewport 上原方案两侧约 320px 黑边，改 min(1920px, 96vw) 后两侧
+   ~48px 留白，更接近现代信息密度阅读站点（Stripe / Linear / Vercel）。 */
 @media (min-width: 1600px) {
   #reader {
-    max-width: 1760px;
+    max-width: min(1920px, 96vw);
     margin: 0 auto;
   }
 }

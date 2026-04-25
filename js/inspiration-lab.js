@@ -424,4 +424,22 @@
     setTab: function(tab) { currentTab = tab; },
     getTab: function() { return currentTab; }
   };
+
+  // 语言切换时重渲染当前活动 tab —— 修复 Bug 1（火花/蓝图 tab 内容不刷新）
+  // 监听两种事件：
+  //  (1) i18n.js / index.html 里 setLocale 后 dispatch 的全局事件（若有）
+  //  (2) 直接劫持 window.i18n.switch 链路兜底
+  function refreshIfMounted() {
+    var container = document.getElementById('inspiration-container');
+    if (container && container.children.length > 0 && loaded) {
+      render(container);
+    }
+  }
+  window.addEventListener('cc-locale-change', refreshIfMounted);
+  // 同时挂 hook 兜底：__appOnLocaleChange 链路
+  var prevHook = window.__appOnInspirationLocaleChange;
+  window.__appOnInspirationLocaleChange = function() {
+    try { if (typeof prevHook === 'function') prevHook(); } catch(e) {}
+    refreshIfMounted();
+  };
 })();
