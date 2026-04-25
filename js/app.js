@@ -24,8 +24,9 @@
     setTimeout(loadDifficultyRatings, 1500);
   }
 
-  function addDifficultyFilter() {
-    // 给每个 TOC 章节标记难度等级
+  // 把难度等级（easy/medium/hard/expert）打到每条 .toc-chapter 上
+  // 单独抽出来：每次 buildTOC 完成后都要重新调用（因为 TOC 重建会丢失 dataset）
+  function tagTocChaptersWithDifficulty() {
     document.querySelectorAll('.toc-chapter').forEach(function(el) {
       var chId = el.dataset.chapterId;
       if (!chId) return;
@@ -44,38 +45,68 @@
         }
       }
     });
+  }
 
-    // 在搜索框下方插入筛选器
+  // 渲染（或刷新）TOC 顶部的难度筛选条。i18n 切换时也调它，保证标签语言跟随。
+  function renderDifficultyFilterBar() {
     var search = document.getElementById('toc-search');
     if (!search) return;
+    // 已存在则先移除（locale 切换时重渲）
+    var existing = document.querySelector('.toc-filter-bar');
+    var prevActive = existing ? existing.querySelector('.toc-filter.active')?.dataset.level : 'all';
+    if (existing) existing.remove();
+
     var bar = document.createElement('div');
     bar.className = 'toc-filter-bar';
     var _isEnFilter = (function(){ try { return (localStorage.getItem('cc-locale')||'zh')==='en'; } catch(e){ return false; } })();
     var filterLabels = _isEnFilter
       ? { all: 'All', easy: 'Beginner', medium: 'Intermediate', hard: 'Advanced', expert: 'Expert' }
       : { all: '全部', easy: '入门', medium: '进阶', hard: '深入', expert: '专家' };
-    bar.innerHTML = '<button class="toc-filter active" data-level="all">' + filterLabels.all + '</button>' +
-      '<button class="toc-filter" data-level="easy" style="--fc:#4a7c50">' + filterLabels.easy + '</button>' +
-      '<button class="toc-filter" data-level="medium" style="--fc:#4a6b8a">' + filterLabels.medium + '</button>' +
-      '<button class="toc-filter" data-level="hard" style="--fc:#c77d2e">' + filterLabels.hard + '</button>' +
-      '<button class="toc-filter" data-level="expert" style="--fc:#b84a3a">' + filterLabels.expert + '</button>';
+    function btn(level, label, color) {
+      var cls = 'toc-filter' + (level === prevActive ? ' active' : '');
+      var style = color ? ' style="--fc:' + color + '"' : '';
+      return '<button class="' + cls + '" data-level="' + level + '"' + style + '>' + label + '</button>';
+    }
+    bar.innerHTML =
+      btn('all', filterLabels.all) +
+      btn('easy', filterLabels.easy, '#4a7c50') +
+      btn('medium', filterLabels.medium, '#4a6b8a') +
+      btn('hard', filterLabels.hard, '#c77d2e') +
+      btn('expert', filterLabels.expert, '#b84a3a');
     search.parentNode.insertBefore(bar, search.nextSibling);
+
+    function applyFilter(level) {
+      document.querySelectorAll('.toc-chapter').forEach(function(el) {
+        if (level === 'all' || !level) {
+          el.style.opacity = '';
+        } else {
+          el.style.opacity = el.dataset.diffLevel === level ? '1' : '0.25';
+        }
+      });
+    }
 
     bar.addEventListener('click', function(e) {
       var btn = e.target.closest('.toc-filter');
       if (!btn) return;
       bar.querySelectorAll('.toc-filter').forEach(function(b) { b.classList.remove('active'); });
       btn.classList.add('active');
-      var level = btn.dataset.level;
-      document.querySelectorAll('.toc-chapter').forEach(function(el) {
-        if (level === 'all') {
-          el.style.opacity = '';
-        } else {
-          el.style.opacity = el.dataset.diffLevel === level ? '1' : '0.25';
-        }
-      });
+      applyFilter(btn.dataset.level);
     });
+
+    // 应用之前的过滤状态（locale 切换后保留用户选择）
+    if (prevActive && prevActive !== 'all') applyFilter(prevActive);
   }
+
+  function addDifficultyFilter() {
+    tagTocChaptersWithDifficulty();
+    renderDifficultyFilterBar();
+  }
+
+  // 暴露给 __appOnLocaleChange / buildTOC 调用
+  window.__appRefreshDifficultyFilter = function() {
+    tagTocChaptersWithDifficulty();
+    renderDifficultyFilterBar();
+  };
 
   function getDifficulty(chFile) {
     if (!chFile) return null;
@@ -591,25 +622,24 @@
       renderMarkdown(md);
     } catch (err) {
       clearTimeout(loadingTimer);
+      // 用户向错误提示——不再泄漏开发者命令（python3 -m http.server）
+      // 提供 Retry 按钮，让用户在临时网络抖动后重试
+      const retryId = 'chapter-retry-' + Date.now();
       chapterBody.innerHTML = _isEnCh ? `
         <div class="empty-state">
-          <h2>Chapter failed to load</h2>
-          <p>File: ${ch.file}</p>
-          <p style="color:#ff6b6b;margin-top:10px">${err.message}</p>
-          <p style="margin-top:16px;font-size:13px;color:#4a5568">
-            Tip: make sure you're running a local server from the <code>web/</code> directory<br>
-            e.g. <code>cd web && python3 -m http.server 8000</code>
-          </p>
+          <h2>Chapter unavailable</h2>
+          <p>We couldn't load this chapter right now.</p>
+          <p style="color:#9a8b76;margin-top:8px;font-size:13px">If the problem persists, please try a different chapter from the table of contents.</p>
+          <button id="${retryId}" class="cc-btn-retry" style="margin-top:18px;padding:8px 18px;background:transparent;border:1px solid var(--border);color:var(--text-primary);border-radius:4px;cursor:pointer;font-family:inherit;">Retry</button>
         </div>` : `
         <div class="empty-state">
-          <h2>无法加载章节</h2>
-          <p>文件: ${ch.file}</p>
-          <p style="color:#ff6b6b;margin-top:10px">${err.message}</p>
-          <p style="margin-top:16px;font-size:13px;color:#4a5568">
-            提示：请确保从 <code>web/</code> 目录启动本地服务器<br>
-            例如: <code>cd web && python3 -m http.server 8000</code>
-          </p>
+          <h2>章节暂时无法显示</h2>
+          <p>这一章节暂时没能加载出来。</p>
+          <p style="color:#9a8b76;margin-top:8px;font-size:13px">如果问题持续，请从左侧目录选择其他章节。</p>
+          <button id="${retryId}" class="cc-btn-retry" style="margin-top:18px;padding:8px 18px;background:transparent;border:1px solid var(--border);color:var(--text-primary);border-radius:4px;cursor:pointer;font-family:inherit;">重试</button>
         </div>`;
+      var btn = document.getElementById(retryId);
+      if (btn) btn.addEventListener('click', function() { loadChapter(ch); });
     }
   }
 
@@ -1584,6 +1614,10 @@
       renderToolGrid();
       renderCommandCatalog();
       renderHiddenFeatures();
+      // 难度筛选器：buildTOC 重建了 TOC 节点，需要重新打 diff-level + 重渲 bar
+      if (typeof window.__appRefreshDifficultyFilter === 'function') {
+        window.__appRefreshDifficultyFilter();
+      }
     } catch (e) { console.warn('[app] onLocaleChange partial fail', e); }
     // 如果正在阅读某章节，重新加载新语言版
     if (currentView === 'reader' && currentChapter) {

@@ -9,13 +9,18 @@
   var GRID_EL = document.getElementById('difficulty-map-grid');
   if (!GRID_EL) return;
 
-  // 难度分组配置
+  // 难度分组配置（label/labelEn 双语 + range 单位段）
   var GROUPS = [
-    { label: '入门',  range: [1, 2],   color: '#4a7c50', emoji: '🌱' },
-    { label: '进阶',  range: [2, 3],   color: '#4a6b8a', emoji: '📘' },
-    { label: '深入',  range: [3, 4],   color: '#c77d2e', emoji: '🔍' },
-    { label: '专家',  range: [4, 5],   color: '#b84a3a', emoji: '🧠' },
+    { label: '入门', labelEn: 'Beginner',     range: [1, 2], color: '#4a7c50', emoji: '🌱' },
+    { label: '进阶', labelEn: 'Intermediate', range: [2, 3], color: '#4a6b8a', emoji: '📘' },
+    { label: '深入', labelEn: 'Advanced',     range: [3, 4], color: '#c77d2e', emoji: '🔍' },
+    { label: '专家', labelEn: 'Expert',       range: [4, 5], color: '#b84a3a', emoji: '🧠' },
   ];
+
+  function isEn() {
+    try { return (localStorage.getItem('cc-locale') || 'zh') === 'en'; }
+    catch (e) { return false; }
+  }
 
   /**
    * 从 BOOK_STRUCTURE 里找到与 difficulty-ratings.json 的 chapter 路径匹配的章节对象。
@@ -140,15 +145,19 @@
       var col = document.createElement('div');
       col.className = 'dm-column';
 
-      // 列头
+      // 列头（双语支持）
+      var en = isEn();
+      var labelTxt = en ? g.group.labelEn : g.group.label;
+      var rangeTxt = g.group.range[0] + '–' + g.group.range[1] + (en ? ' pts' : ' 分');
+      var countTxt = g.chapters.length + (en ? ' chapters' : ' 章');
       var header = document.createElement('div');
       header.className = 'dm-column-header';
       header.style.borderBottomColor = g.group.color;
       header.innerHTML =
         '<span class="dm-header-emoji">' + g.group.emoji + '</span>' +
-        '<span class="dm-header-label">' + g.group.label + '</span>' +
-        '<span class="dm-header-range">' + g.group.range[0] + '–' + g.group.range[1] + ' 分</span>' +
-        '<span class="dm-header-count">' + g.chapters.length + ' 章</span>';
+        '<span class="dm-header-label">' + labelTxt + '</span>' +
+        '<span class="dm-header-range">' + rangeTxt + '</span>' +
+        '<span class="dm-header-count">' + countTxt + '</span>';
       col.appendChild(header);
 
       // 章节卡片列表
@@ -167,16 +176,19 @@
           '<span class="dm-card-title">' + title + '</span>' +
           '<span class="dm-card-score">' + it.difficulty.toFixed(1) + '</span>';
 
-        // Tooltip 内容
-        var tooltipText = it.chapter.title;
+        // Tooltip 内容（双语）
+        var en2 = isEn();
+        var tt = en2
+          ? (it.chapter.titleEn || it.chapter.title)
+          : it.chapter.title;
         if (it.metaphor && it.metaphor !== '—') {
-          tooltipText += '\n比喻：' + it.metaphor;
+          tt += en2 ? ('\nMetaphor: ' + it.metaphor) : ('\n比喻：' + it.metaphor);
         }
-        tooltipText += '\n文科友好度：' + it.friendly;
-        if (it.notes) {
-          tooltipText += '\n' + it.notes;
-        }
-        card.setAttribute('title', tooltipText);
+        tt += en2
+          ? ('\nReadability: ' + it.friendly)
+          : ('\n文科友好度：' + it.friendly);
+        if (it.notes) tt += '\n' + it.notes;
+        card.setAttribute('title', tt);
 
         // 点击 / 键盘导航
         card.addEventListener('click', function () {
