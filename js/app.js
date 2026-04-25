@@ -589,6 +589,16 @@
 
   // ===== CHAPTER LOADING =====
   async function loadChapter(ch) {
+    // Bug B 修复（2026-04-26）：切语言时会重新 loadChapter，
+    // 如果是同章节，保留滚动位置 + 滚动百分比（中英长度可能不同，按 % 还原）
+    const isSameChapter = currentChapter && currentChapter.id === ch.id;
+    let preserveScrollPct = null;
+    if (isSameChapter) {
+      const scroller = document.querySelector('#chapter-content') || document.scrollingElement || document.documentElement;
+      if (scroller && scroller.scrollHeight > scroller.clientHeight) {
+        preserveScrollPct = scroller.scrollTop / (scroller.scrollHeight - scroller.clientHeight);
+      }
+    }
     currentChapter = ch;
 
     // Update TOC active state
@@ -606,6 +616,11 @@
     updateChapterNav();
     history.replaceState(null, '', `#chapter-${ch.id}`);
 
+    // 把保留的 scroll 百分比挂到本次 fetch 后的渲染流程
+    if (preserveScrollPct !== null) {
+      window.__pendingScrollPct = preserveScrollPct;
+    }
+
     // 防抖 loading 占位符 —— fetch 在 300ms 内完成就不闪"加载中..."
     // 避免短暂网络请求让用户感觉卡顿（保留原内容直到新内容就位）
     let loadingShown = false;
@@ -620,6 +635,24 @@
       const md = await resp.text();
       clearTimeout(loadingTimer);
       renderMarkdown(md);
+      // Bug B 修复：还原切语言前的滚动位置（按百分比，因中英长度不同）
+      if (typeof window.__pendingScrollPct === 'number') {
+        const pct = window.__pendingScrollPct;
+        window.__pendingScrollPct = null;
+        // 多次 rAF 等图表 lazy load 撑高内容
+        const restore = () => {
+          const scroller = document.querySelector('#chapter-content') || document.scrollingElement || document.documentElement;
+          if (scroller && scroller.scrollHeight > scroller.clientHeight) {
+            scroller.scrollTop = pct * (scroller.scrollHeight - scroller.clientHeight);
+          }
+        };
+        requestAnimationFrame(() => requestAnimationFrame(() => {
+          restore();
+          // 二次还原（图表渲染完后内容会再变高）
+          setTimeout(restore, 300);
+          setTimeout(restore, 800);
+        }));
+      }
     } catch (err) {
       clearTimeout(loadingTimer);
       // 用户向错误提示——不再泄漏开发者命令（python3 -m http.server）

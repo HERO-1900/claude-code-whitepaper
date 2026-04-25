@@ -4856,16 +4856,17 @@ mark.search-highlight {
 
 /* === 阅读页 editorial 排版 === */
 
-/* 1. 章节正文 — Bug 2 修复（2026-04-26）：宽屏自适应
-   原 max-width: 800px 在 1920px+ 屏幕上左右空大量黑边
-   改 min(1200px, 100%)：宽屏更舒展，窄屏等比缩 */
+/* 1. 章节正文 — Bug 2 修复（2026-04-26 v3）：完全自适应
+   - clamp(800px, 92vw, 1800px)：800px 下限 + 92vw 弹性 + 1800px 上限
+   - 在 2000px 屏幕能撑到 1800px，2400px 屏也能到 1800px（保持可读性）
+   - 在 900px 屏自动缩到 ~830px 留 70px padding */
 [data-theme="warm"] #chapter-body {
   font-family: Georgia, "Noto Serif SC", "Source Han Serif SC", "PingFang SC", serif;
   font-size: 16px;
   line-height: 1.7;
   color: #2b2a27;
   letter-spacing: 0.01em;
-  max-width: min(1200px, 100%);
+  max-width: clamp(800px, 92vw, 1800px);
   margin: 0 auto;
   padding: 32px 32px;
 }
@@ -5649,9 +5650,9 @@ mark.search-highlight {
   }
 }
 
-/* 正文 max-width 放宽（Bug 2 修复 2026-04-26：宽屏自适应到 1200px） */
+/* 正文 max-width 放宽（Bug 2 修复 2026-04-26 v3：clamp 完全弹性 800-1800px） */
 [data-theme="warm"] #chapter-body {
-  max-width: min(1200px, 100%);
+  max-width: clamp(800px, 92vw, 1800px);
 }
 
 /* 内联 warm 图表 — 无框无边直接融入正文流 */
