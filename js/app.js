@@ -307,13 +307,25 @@
     let inspInited = false;
     navBtns.inspiration.addEventListener('click', () => {
       showView('inspiration');
+      const container = document.getElementById('inspiration-container');
       if (!inspInited && window.InspirationLab) {
+        // Bug 修复 2026-04-27：之前点开 → 容器空白 → fetch ~600KB 后才显示，
+        // 用户感觉"卡死"。立刻先渲染 loading 骨架屏。
+        const _isEnInsp = (function(){ try { return (localStorage.getItem('cc-locale')||'zh')==='en'; } catch(e){ return false; } })();
+        if (container) {
+          container.innerHTML = `
+            <div class="insp-loading" style="text-align:center;padding:80px 24px;color:var(--text-muted, #8c8378);">
+              <div style="display:inline-block;width:48px;height:48px;border:3px solid var(--border, #2a2a2a);border-top-color:var(--accent, #c77d2e);border-radius:50%;animation:insp-spin 0.9s linear infinite;margin-bottom:16px;"></div>
+              <div style="font-size:14px;letter-spacing:0.05em;">${_isEnInsp ? 'Loading inspirations…' : '灵感加载中…'}</div>
+              <style>@keyframes insp-spin{to{transform:rotate(360deg);}}</style>
+            </div>`;
+        }
         InspirationLab.init().then(() => {
-          InspirationLab.render(document.getElementById('inspiration-container'));
+          InspirationLab.render(container);
           inspInited = true;
         });
       } else if (window.InspirationLab) {
-        InspirationLab.render(document.getElementById('inspiration-container'));
+        InspirationLab.render(container);
       }
     });
   }

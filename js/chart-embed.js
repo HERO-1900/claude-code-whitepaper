@@ -550,12 +550,14 @@
     // 暴露给 IntersectionObserver 回调
     container.__ccLoadIframe = loadIframe;
 
-    if (viewportObserver) {
-      viewportObserver.observe(container);
-    } else {
-      // 退化：立即加载
-      loadIframe();
-    }
+    // Bug 修复 2026-04-27：用户反馈"图表只在滚到才加载，迟钝"。
+    // 改为：进入章节立刻 eager-load **所有图表**（一章一般 5-10 张，
+    // 每张 ~30KB iframe，总流量 < 500KB，可接受）。
+    // 保留 viewportObserver 作 fallback（虽然不会触发）。
+    requestAnimationFrame(() => {
+      // 用 rAF 让浏览器先处理 chapter render 再开始 iframe 加载，避免阻塞章节文本
+      setTimeout(loadIframe, 0);
+    });
 
     // ===== 折叠按钮 =====
     const collapseBtn = header.querySelector('.chart-embed-collapse-btn');

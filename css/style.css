@@ -1593,14 +1593,13 @@ mark.search-highlight {
 .loop-step.active .step-label { color: var(--accent-cyan); font-weight: 700; }
 .loop-step:hover .step-label { color: var(--text-secondary); }
 .loop-step:hover .step-num { border-color: var(--text-muted); }
+/* Bug 修复 2026-04-27：原 progress-bar 用 margin-top:-28px 把横线拉到圆圈正中央，
+   视觉上像横线穿心，丑。删掉。11 个数字编号已经够清楚显示进度。 */
 .loop-progress-bar {
-  height: 2px; background: var(--border); border-radius: 1px;
-  margin-top: -28px; margin-bottom: 28px; position: relative; z-index: 1;
-  margin-left: 20px; margin-right: 20px;
+  display: none;
 }
 .loop-progress-fill {
-  height: 100%; background: linear-gradient(90deg, var(--accent-cyan), var(--accent-purple));
-  border-radius: 1px; transition: width 0.5s ease; width: 0%;
+  display: none;
 }
 
 /* Loop card container */
@@ -5036,25 +5035,21 @@ mark.search-highlight {
    ================================================================ */
 
 .v4h-stage {
-  position: relative;
-  /* 修复（2026-04-25 v2）：之前用 width:calc(100% + 48px) 是为了避开 scrollbar 误差，
-     但因为 .welcome-container 有 max-width:860px，stage 只能到 ~908px，
-     导致 1440px viewport 上左右各有 ~290px 白边。
-     正确解法：突破 .welcome-container 的 max-width，让 stage 全屏宽。
-     技巧：left:50%; right:50%; margin-left:-50vw; margin-right:-50vw 让 stage 对齐 viewport。
-     #welcome 已经设了 overflow-x:hidden，scrollbar 由 overflow:hidden auto 控制——
-     在 v4h-stage 占满 viewport 高度时不会触发 vertical scroll，所以不存在 100vw 误差问题。 */
-  left: 50%;
-  right: 50%;
-  margin-left: -50vw;
-  margin-right: -50vw;
-  width: 100vw;
-  max-width: 100vw;
-  /* 抵消 .welcome-container padding-top(48px) */
-  margin-top: -48px;
-  /* 占满 topnav 以下的全部视口区域 */
-  min-height: calc(100vh - 48px);
-  height: calc(100vh - 48px);
+  /* 修复（2026-04-27 v3）：之前用 100vw + 负 margin 突破 .welcome-container 限宽
+     导致右下白边（welcome-container padding-bottom:60px + scrollbar 15px 一并算进 stage 内）。
+     新方案：position:fixed inset:0，stage 直接锚到 viewport 四角，
+     彻底脱离 .welcome-container 的几何影响。 */
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  z-index: 50;  /* 在 topnav (z-index 100) 下、其他内容上 */
   display: flex;
   align-items: center;
   justify-content: center;
