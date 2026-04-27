@@ -11,8 +11,8 @@
 
 ## 一键访问 · Read it now
 
-- 线上版（中文）：<https://hero-1900.github.io/claude-code-whitepaper/>
-- Live (English UI): <https://hero-1900.github.io/claude-code-whitepaper/?lang=en>
+- 线上版（中文）：<https://insidecc.dev/>
+- Live (English UI): <https://insidecc.dev/?lang=en>
 - 源仓库（公仓镜像）：<https://github.com/HERO-1900/claude-code-whitepaper>
 
 > 中英双语 · 三主题（dark / warm / light）· 移动端适配 · 无需登录、无需注册

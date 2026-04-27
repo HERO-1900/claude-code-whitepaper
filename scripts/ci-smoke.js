@@ -16,7 +16,7 @@ const fs = require('fs');
 const path = require('path');
 const os = require('os');
 
-const BASE = process.env.SMOKE_BASE_URL || 'https://hero-1900.github.io/claude-code-whitepaper';
+const BASE = process.env.SMOKE_BASE_URL || 'https://insidecc.dev';
 const OUT_REPORT = path.join(process.cwd(), 'ci-smoke-report.json');
 
 const REPORT = {

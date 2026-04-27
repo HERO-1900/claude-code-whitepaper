@@ -109,7 +109,7 @@ jobs:
       - name: 拨测核心 URL
         run: |
           set -e
-          BASE="https://hero-1900.github.io/claude-code-whitepaper"
+          BASE="https://insidecc.dev"
           urls=(
             "/"
             "/.nojekyll"
@@ -196,7 +196,7 @@ jobs:
       - name: 跑 CI 冒烟脚本
         run: node scripts/ci-smoke.js
         env:
-          SMOKE_BASE_URL: "https://hero-1900.github.io/claude-code-whitepaper"
+          SMOKE_BASE_URL: "https://insidecc.dev"
 
       - name: 上传报告（失败时）
         if: failure()
