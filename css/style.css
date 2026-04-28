@@ -712,7 +712,15 @@ body:has(#welcome.active) {
 }
 
 /* ===== READER VIEW ===== */
-#reader { padding-top: 48px; flex-direction: row; }
+/* 必须给 view 加 bg：body 末尾的 giscus iframe（位于 normal flow y=60）会从 absolute 定位的
+   透明 view 下面透出来，造成 reader 顶部出现"黑条"。给所有非 welcome view 加底色。 */
+#reader { padding-top: 48px; flex-direction: row; background: var(--bg-primary); }
+#gallery, #inspiration { background: var(--bg-primary); }
+
+/* Giscus 当前仅作为页面级评论挂在 body 末尾，没有真正绑定到 chapter；
+   在没找到合适放置位置之前先隐藏，避免它透到视图下层造成 ghost 黑条。
+   后续做正式的 per-chapter giscus 时再放到 #chapter-content 末尾。 */
+.giscus, .giscus-frame, #giscus-container { display: none !important; }
 
 #sidebar {
   width: 260px;
@@ -1218,6 +1226,16 @@ mark.search-highlight {
   color: var(--text-muted);
 }
 .empty-state h2 { font-size: 20px; margin-bottom: 10px; color: var(--text-secondary); }
+
+/* 章节未加载时隐藏 nav/emoji-bar，避免 border 和"0 个表情"形成视觉黑条 */
+#chapter-content:has(#chapter-body > .empty-state) #chapter-nav-top,
+#chapter-content:has(#chapter-body > .empty-state) #chapter-nav-bottom,
+#chapter-content:has(#chapter-body > .empty-state) #chapter-emoji-bar,
+#chapter-content:has(#chapter-body:empty) #chapter-nav-top,
+#chapter-content:has(#chapter-body:empty) #chapter-nav-bottom,
+#chapter-content:has(#chapter-body:empty) #chapter-emoji-bar {
+  display: none;
+}
 
 /* ===== SCROLLBAR ===== */
 ::-webkit-scrollbar { width: 6px; }
@@ -5093,11 +5111,13 @@ mark.search-highlight {
   backdrop-filter: blur(4px);
   transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, opacity 0.4s ease;
 }
-/* Global skip 按钮挂在 #welcome 层，z-index 更高，对浅/暖主题也要有对比度 */
+/* Global skip 按钮挂在 #welcome 层，z-index 更高，对浅/暖主题也要有对比度
+   位置：bottom-right —— 避开顶栏 nav-right 的 lang/theme 切换器（2026-04-29 修） */
 .v4h-skip-btn--global {
   position: fixed;  /* 固定在视口 */
-  top: 16px;
-  right: 16px;
+  top: auto;
+  right: 24px;
+  bottom: 24px;
   z-index: 200;
   opacity: 1;  /* 立即可见，不受父容器 fadeInUp 影响 */
 }

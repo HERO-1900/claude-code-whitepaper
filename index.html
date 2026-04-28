@@ -49,12 +49,14 @@
         }
         var stored = localStorage.getItem('cc-theme');
         // 合法值：'dark' | 'light' | 'warm' | 'auto'
+        // auto 在 FOUC 阶段就解析为具体主题，避免空 data-theme → :root 默认 light → 与 stored=warm 用户预期不一致 + 视觉跳变
         if (stored === 'light') {
           document.documentElement.setAttribute('data-theme', 'light');
         } else if (stored === 'dark') {
           document.documentElement.setAttribute('data-theme', 'dark');
         } else if (stored === 'auto') {
-          document.documentElement.removeAttribute('data-theme');
+          var prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+          document.documentElement.setAttribute('data-theme', prefersLight ? 'light' : 'warm');
         } else {
           document.documentElement.setAttribute('data-theme', 'warm');
         }
@@ -1456,13 +1458,16 @@
         return stored;
       }
 
-      /** 把 theme 应用到 <html> data-theme 属性 */
+      /** 把 theme 应用到 <html> data-theme 属性
+       *  Bug 修复 2026-04-29：auto 不再 removeAttribute（会让页面闪到 :root 默认 light，
+       *  与点击前的 warm 形成视觉冲击 = 用户感知"狂闪"）。
+       *  改为：auto 根据系统偏好解析为具体主题再写入 data-theme，与其他模式行为一致。 */
       function applyTheme(theme) {
+        var resolved = theme;
         if (theme === 'auto') {
-          document.documentElement.removeAttribute('data-theme');
-        } else {
-          document.documentElement.setAttribute('data-theme', theme);
+          resolved = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'warm';
         }
+        document.documentElement.setAttribute('data-theme', resolved);
       }
 
       /** 把 theme 写入 localStorage 并应用 */
