@@ -1243,11 +1243,14 @@ mark.search-highlight {
 }
 .welcome-container {
   /* Bug 2 修复（2026-04-26）：宽屏下从 860px 死板限制 → 弹性 1100px 上限 + 92vw 留白
-     2400px 屏在原方案下两侧 ~770px 黑边，改后两侧约 96px 留白。 */
+     2400px 屏在原方案下两侧 ~770px 黑边，改后两侧约 96px 留白。
+     Bug 修复（2026-04-28 v5）：删 animation: fadeInUp。
+     根因：CSS 规范规定任何 ancestor 有 transform/animation 会让子元素 position:fixed 失效，
+     降级为 relative-to-that-ancestor。这正是 hero stage 覆盖只有 1100px 不全屏的根因。
+     hero 自己有完整的进场动画序列，不需要外层再 fadeIn。 */
   max-width: min(1100px, 92vw);
   margin: 0 auto;
   padding: 48px 24px 60px;
-  animation: fadeInUp 0.8s ease-out;
 }
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(20px); }
