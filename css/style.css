@@ -54,9 +54,25 @@ html, body {
   box-shadow: none;
   pointer-events: none;  /* nav-right 子元素自己 pointer-events:auto 抢回 */
 }
-/* Bug 修复 2026-04-28：用户反馈"hero 动画底部还有一道白边"。
-   .v4h-stage 是 position:fixed 但 ::after 滚动条 / overscroll bg 仍可能透出 body 默认 bg。
-   兜底：welcome.active 期间整个 body 强制黑底。 */
+/* Bug 修复 2026-04-28 v2：v4h-stage 只在 welcome.active 时显示为 fixed 全屏 */
+#welcome.active .v4h-stage {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  width: auto;
+  height: auto;
+  max-width: none;
+  max-height: none;
+  margin: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+/* welcome 期间 body 强制黑底兜底 hero 底部白线 */
 body:has(#welcome.active) {
   background: #000 !important;
 }
@@ -5041,28 +5057,12 @@ mark.search-highlight {
    ================================================================ */
 
 .v4h-stage {
-  /* 修复（2026-04-27 v3）：之前用 100vw + 负 margin 突破 .welcome-container 限宽
-     导致右下白边（welcome-container padding-bottom:60px + scrollbar 15px 一并算进 stage 内）。
-     新方案：position:fixed inset:0，stage 直接锚到 viewport 四角，
-     彻底脱离 .welcome-container 的几何影响。 */
-  position: fixed;
-  top: 0;
-  right: 0;
-  bottom: 0;
-  left: 0;
-  width: auto;
-  height: auto;
-  max-width: none;
-  max-height: none;
-  margin: 0;
-  z-index: 50;  /* 在 topnav (z-index 100) 下、其他内容上 */
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  overflow: hidden;
+  /* 修复（2026-04-28 v4）：fixed inset:0 让 stage 永远固定在视口，切到 reader 后仍盖在
+     内容上方，形成"底部黑色狗皮膏药"bug。新方案：默认 display:none，
+     只在 #welcome.active 时显示为 fixed inset:0；切走 welcome 自动消失。 */
+  display: none;
   background: #000000;
   transition: background 1.6s ease;
-  margin-bottom: 48px;
   /* 覆盖 .welcome-container 的 fadeInUp 动画，hero 有自己的入场序列 */
   animation: none;
 }
