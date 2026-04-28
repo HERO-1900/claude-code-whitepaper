@@ -54,6 +54,12 @@ html, body {
   box-shadow: none;
   pointer-events: none;  /* nav-right 子元素自己 pointer-events:auto 抢回 */
 }
+/* Bug 修复 2026-04-28：用户反馈"hero 动画底部还有一道白边"。
+   .v4h-stage 是 position:fixed 但 ::after 滚动条 / overscroll bg 仍可能透出 body 默认 bg。
+   兜底：welcome.active 期间整个 body 强制黑底。 */
+body:has(#welcome.active) {
+  background: #000 !important;
+}
 #welcome.active ~ #topnav .nav-left,
 #welcome.active ~ #topnav .nav-center {
   display: none !important;

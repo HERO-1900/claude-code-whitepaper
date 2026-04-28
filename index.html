@@ -177,7 +177,7 @@
 
           <div class="v4h-kpi-row" role="list">
             <div class="v4h-kpi-item" role="listitem"><span class="v4h-kpi-num">88</span>&nbsp;<span data-i18n="hero.v4_kpi_chapters_unit">章</span></div>
-            <div class="v4h-kpi-item" role="listitem"><span data-i18n="hero.v4_kpi_words_prefix">约</span><span class="v4h-kpi-num" data-i18n="hero.v4_kpi_words_num">39</span>&nbsp;<span data-i18n="hero.v4_kpi_words_unit">万字</span></div>
+            <div class="v4h-kpi-item" role="listitem"><span class="v4h-kpi-num" data-i18n="hero.v4_kpi_words_prefix">约</span><span class="v4h-kpi-num" data-i18n="hero.v4_kpi_words_num">39</span>&nbsp;<span data-i18n="hero.v4_kpi_words_unit">万字</span></div>
             <div class="v4h-kpi-item" role="listitem"><span class="v4h-kpi-num">122</span>&nbsp;<span data-i18n="hero.v4_kpi_charts_unit">图表</span></div>
             <div class="v4h-kpi-item" role="listitem"><span class="v4h-kpi-num">185</span>&nbsp;<span data-i18n="hero.v4_kpi_prompts_unit">Prompt 全收录</span></div>
           </div>
@@ -1470,6 +1470,20 @@
         try { localStorage.setItem('cc-theme', theme); } catch(e) {}
         applyTheme(theme);
         updateSwitcherUI(theme);
+        // Bug 修复 2026-04-28：MutationObserver 不可靠，显式 broadcast 主题给所有图表 iframe
+        try {
+          var lang = document.documentElement.getAttribute('data-lang') || 'zh';
+          var resolvedTheme = (theme === 'auto')
+            ? (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'warm')
+            : theme;
+          document.querySelectorAll('iframe.chart-embed-iframe').forEach(function(f){
+            if (!f.contentWindow) return;
+            try {
+              f.contentWindow.postMessage({ type: 'cc-theme', theme: resolvedTheme }, '*');
+              f.contentWindow.postMessage({ type: 'v2-sync', theme: resolvedTheme, lang: lang }, '*');
+            } catch(e){}
+          });
+        } catch(e) { console.warn('[theme] broadcast 失败', e); }
       }
 
       /** 更新切换器按钮的 active 状态 */
@@ -1547,16 +1561,13 @@
         });
       }
 
-      /* ---- 5. 系统偏好变化时（auto 模式）自动刷新 ---- */
-
+      /* ---- 5. 系统偏好变化（auto 模式） ----
+         Bug 修复 2026-04-28：用户反馈"滑着滑着主题就切了" —
+         根因是 auto 模式 + OS 临界时间（如 Mac 自动夜间）触发 prefers-color-scheme 变化。
+         修法：彻底禁用滚动期间自动切。auto 模式只在 init 时跑一次，运行时不再监听。
+         如果用户真要 follow OS，重启页面才生效（牺牲实时性换稳定性）。 */
       function bindSystemPreferenceChange() {
-        var mq = window.matchMedia('(prefers-color-scheme: light)');
-        mq.addEventListener('change', function() {
-          var current = localStorage.getItem('cc-theme') || 'warm';
-          if (current === 'auto') {
-            applyTheme('auto'); // 触发媒体查询重新计算
-          }
-        });
+        // 不再 addEventListener — 故意空函数
       }
 
       /* ---- 6. 初始化 ---- */
