@@ -1,6 +1,6 @@
 # Prompt Source Collection: The Complete Prompt Library for Claude Code
 
-> This chapter systematically catalogs the Prompt units discovered in the Claude Code 2.1.88 source code, spanning **12 categories**. The numbering scheme: P001–P183 as primary indices (183 entries, author-assigned indexing, not native source code identifiers), plus P101a/P101b as secondary indices (used to split the two variants of P101), and 6暂未恢复的外部 `.txt` references (listed only in section 12.10 with filenames and call locations, pending future recovery). Provided as a reference appendix for readers to cross-reference with the analysis chapters in Part II. Each prompt is annotated with source file path, line number, and Chinese design notes.
+> This chapter systematically catalogs the Prompt units discovered in the Claude Code 2.1.88 source code, spanning **12 categories**. The numbering scheme: P001–P183 as primary indices (183 entries, author-assigned indexing, not native source code identifiers), plus P101a/P101b as secondary indices (used to split the two variants of P101), and 6currently unrecovered external `.txt` references (listed only in section 12.10 with filenames and call locations, pending future recovery). Provided as a reference appendix for readers to cross-reference with the analysis chapters in Part II. Each prompt is annotated with source file path, line number, and Chinese design notes.
 >
 > **Scope of Coverage**: English source text **fully transcribed verbatim** — all 185 Prompt units are presented in SoT source code original form, without abridgment, excerpt, or summarization. Design notes are written in Chinese. `${VAR}` interpolations in TS template strings have known string constants expanded (e.g., `${ASK_USER_QUESTION_TOOL_NAME}` → `AskUserQuestion`), while dynamic condition branches (e.g., `${whatHappens}`) retain the `${...}` placeholder with explanatory notes in the design notes.
 >
@@ -42,7 +42,7 @@ the user in their messages or local files.
 
 (When Output Style is configured, the first sentence becomes: `helps users according to your "Output Style" below, which describes how you should respond to user queries.`)
 
-**Design Notes**: Identity definition + security红线 combined into one. `CYBER_RISK_INSTRUCTION` comes from the independent `src/constants/cyberRiskInstruction.ts`, managed by the Safeguards team, requiring review for modifications. URL guessing prohibition prevents the model from fabricating links without evidence.
+**Design Notes**: Identity definition + security guardrails combined into one. `CYBER_RISK_INSTRUCTION` comes from the independent `src/constants/cyberRiskInstruction.ts`, managed by the Safeguards team, requiring review for modifications. URL guessing prohibition prevents the model from fabricating links without evidence.
 
 ---
 
@@ -144,7 +144,7 @@ the user in their messages or local files.
 **Length**: ~450 tokens  
 **Trigger**: Every session start
 
-💡 **Plain-language理解**: This prompt is Claude's "pre-action checklist." Just like a surgeon must verify identity and surgical site before making an incision, Claude must evaluate "can this action be undone? Will it affect others?" before executing potentially dangerous operations (deleting files, pushing code, sending messages) — the cost of evaluation is low, the cost of mistakes is high, so it's better to ask once too often.
+💡 **Plain-language explanation**: This prompt is Claude's "pre-action checklist." Just like a surgeon must verify identity and surgical site before making an incision, Claude must evaluate "can this action be undone? Will it affect others?" before executing potentially dangerous operations (deleting files, pushing code, sending messages) — the cost of evaluation is low, the cost of mistakes is high, so it's better to ask once too often.
 
 **Original**:
 
@@ -325,7 +325,7 @@ You have been invoked in the following environment:
 **Length**: ~600 tokens  
 **Trigger**: Only when `PROACTIVE` or `KAIROS` feature flag is enabled and `isProactiveActive()` is true
 
-💡 **Plain-language理解**: This is Claude's "autonomous driving mode manual." In normal mode, Claude is "driving assistance" — you speak, it acts. In Kairos mode, Claude is "self-driving" — it proactively detects tasks, makes decisions, executes, and uses the Sleep tool to control its own pace. This prompt tells it how to work autonomously when "the user is not present," and how to switch to collaboration mode when "the user returns."
+💡 **Plain-language explanation**: This is Claude's "autonomous driving mode manual." In normal mode, Claude is "driving assistance" — you speak, it acts. In Kairos mode, Claude is "self-driving" — it proactively detects tasks, makes decisions, executes, and uses the Sleep tool to control its own pace. This prompt tells it how to work autonomously when "the user is not present," and how to switch to collaboration mode when "the user returns."
 
 **Original**:
 
@@ -450,7 +450,7 @@ not, ask the user to check their hooks configuration.
 - The conversation has unlimited context through automatic summarization.
 ```
 
-**Design Notes**: `<system-reminder>` is Claude Code's side-channel injection pathway — the system can attach instructions to any tool result or user message (such as memory content, skill hints, Companion info), and the model needs to understand these are "system-attached" rather than written by the user. The "unlimited context" prompt prevents the model from自行 truncating due to "context almost full."
+**Design Notes**: `<system-reminder>` is Claude Code's side-channel injection pathway — the system can attach instructions to any tool result or user message (such as memory content, skill hints, Companion info), and the model needs to understand these are "system-attached" rather than written by the user. The "unlimited context" prompt prevents the model from self-truncating due to "context almost full."
 
 ---
 
@@ -561,7 +561,7 @@ Length limits: keep text between tool calls to ≤25 words. Keep final responses
 to ≤100 words unless the task requires more detail.
 ```
 
-**Design Notes**: This is an experiment in an A/B test — research shows quantitative length constraints ("≤25 words") are more effective at reducing output tokens than qualitative descriptions ("be concise") (~1.2% reduction, figure from `prompts.ts:527` code comment `research shows ~1.2% output token reduction vs`). Measuring quality impact on ant internal users first, then推广 to external users.
+**Design Notes**: This is an experiment in an A/B test — research shows quantitative length constraints ("≤25 words") are more effective at reducing output tokens than qualitative descriptions ("be concise") (~1.2% reduction, figure from `prompts.ts:527` code comment `research shows ~1.2% output token reduction vs`). Measuring quality impact on ant internal users first, then rolling out to external users.
 
 ---
 
@@ -727,7 +727,7 @@ CRITICAL: Respond with TEXT ONLY. Do NOT call any tools.
 **Length**: ~700 tokens (excluding preamble)  
 **Trigger**: When a session first hits the context limit, performing a full compaction on all conversation history
 
-💡 **Plain-language理解**: This is Claude's "final exam paper." When conversation history becomes too long to keep, the system asks Claude to write the entire conversation as a structured 9-section "project handoff document" — not just recording "what was done," but also "why it was done," "what the user said," and "what comes next." This document then replaces the original conversation history to continue the session.
+💡 **Plain-language explanation**: This is Claude's "final exam paper." When conversation history becomes too long to keep, the system asks Claude to write the entire conversation as a structured 9-section "project handoff document" — not just recording "what was done," but also "why it was done," "what the user said," and "what comes next." This document then replaces the original conversation history to continue the session.
 
 **Original**:
 
@@ -1095,7 +1095,7 @@ Claude Code's memory system uses a file-based persistence scheme, with MEMORY.md
 **Length**: ~1,200 tokens  
 **Trigger**: Injected into system prompt when memory feature is enabled
 
-💡 **Plain-language analogy**: This is Claude's "memory filing cabinet label system." Just as an office divides files into four drawers—personnel records, project notes, client资料, and reference manuals—Claude's memory also has four categories: knowing who you are (user), remembering your preferences (feedback), understanding project state (project), and recording external resource locations (reference). Each type has clear rules about when to save and when to use it.
+💡 **Plain-language analogy**: This is Claude's "memory filing cabinet label system." Just as an office divides files into four drawers—personnel records, project notes, client documents, and reference manuals—Claude's memory also has four categories: knowing who you are (user), remembering your preferences (feedback), understanding project state (project), and recording external resource locations (reference). Each type has clear rules about when to save and when to use it.
 
 **Original**:
 
@@ -1260,7 +1260,7 @@ you to save a PR list or activity summary, ask what was *surprising* or *non-obv
 about it — that is the part worth keeping.
 ```
 
-**Design Notes**: The last point is especially important—even when the user explicitly asks to save something, the model should still追问"which part is truly worth remembering," preventing the memory system from being polluted by activity-log-style noise.
+**Design Notes**: The last point is especially important—even when the user explicitly asks to save something, the model should still ask"which part is truly worth remembering," preventing the memory system from being polluted by activity-log-style noise.
 
 ---
 
@@ -1762,7 +1762,7 @@ content directly into it.
 Return a brief summary of what you consolidated, updated, or pruned.
 `````
 
-**Design Notes**: The four-phase process (Orient → Gather → Consolidate → Prune) mimics the human memory consolidation process. `Converting relative dates to absolute dates` prevents "last week" from becoming a forever-ambiguous reference. `Don't exhaustively read transcripts` prevents the Dream process from consuming excessive tokens reading full JSONL session transcripts (which could be hundreds of MB). Extracting from `dream.ts` allows the auto-dream feature to operate不受 KAIROS feature flag 限制.
+**Design Notes**: The four-phase process (Orient → Gather → Consolidate → Prune) mimics the human memory consolidation process. `Converting relative dates to absolute dates` prevents "last week" from becoming a forever-ambiguous reference. `Don't exhaustively read transcripts` prevents the Dream process from consuming excessive tokens reading full JSONL session transcripts (which could be hundreds of MB). Extracting from `dream.ts` allows the auto-dream feature to operate independent of the KAIROS feature flag.
 
 ---
 
@@ -2575,7 +2575,7 @@ Notes:
 
 **Design Notes**: This injection is the "common calibration layer" for all sub-Agents — addressing three common sub-Agent problems: 1) cwd reset causing relative paths to fail (absolute paths required); 2) response reports that recap read code in large chunks (only "load-bearing text" — bugs or function signatures — is allowed); 3) format noise (emoji banned, no colon before tool calls).
 
-## 五、Coordinator Prompts
+## V. Coordinator Prompts
 
 Coordinator mode is Claude Code's multi-Worker parallel architecture, where the Coordinator is responsible for task distribution and result synthesis.
 
@@ -4338,7 +4338,7 @@ If called outside an EnterWorktree session, the tool is a **no-op**: it reports 
 - Once exited, EnterWorktree can be called again to create a fresh worktree
 ```
 
-**Design Notes**: **Scope isolation** — can only operate on worktrees created in this session,不会误删用户手动创建的. `discard_changes` is a double-confirmation mechanism.
+**Design Notes**: **Scope isolation** — can only operate on worktrees created in this session,and won't accidentally delete user-manually-created ones. `discard_changes` is a double-confirmation mechanism.
 
 ---
 ### 6.15 ListMcpResourcesTool (MCP Resource List)
@@ -4980,7 +4980,7 @@ The assistant did not use the todo list because this is a single command executi
 When in doubt, use this tool. Being proactive with task management demonstrates attentiveness and ensures you complete all requirements successfully.
 ```
 
-**Design Notes**: At 184 lines, this is the third-longest tool Prompt (after BashTool and AgentTool), with大量 being **Few-shot examples** — 4 positive examples teaching when to use, 4 negative examples teaching when not to. This is a textbook-level application of Few-shot teaching in Prompt Engineering.
+**Design Notes**: At 184 lines, this is the third-longest tool Prompt (after BashTool and AgentTool), with much of which being **Few-shot examples** — 4 positive examples teaching when to use, 4 negative examples teaching when not to. This is a textbook-level application of Few-shot teaching in Prompt Engineering.
 
 ---
 ### 6.34 ToolSearchTool (Tool Search)
@@ -5209,7 +5209,7 @@ Usage notes:
 
 **Source**: `src/tools/SyntheticOutputTool/` (internal tool; no user-facing Prompt)
 
-**Note**: The Synthetic Output tool is a system-internal tool used to inject synthetic tool call results into the model. It has no面向 model's description because the model doesn't actively invoke it.
+**Note**: The Synthetic Output tool is a system-internal tool used to inject synthetic tool call results into the model. It has nomodel-facing's description because the model doesn't actively invoke it.
 
 ---
 
@@ -5622,7 +5622,7 @@ messages, and user feedback.
 
 
 
-## 八、Bundled Skill Templates (Full Collection of 14)
+## VIII. Bundled Skill Templates (Full Collection of 14)
 
 Bundled Skills are built-in workflow templates registered under `src/skills/bundled/`. When a user executes `/skill-name`, the corresponding `getPromptForCommand()` is called, and the returned text is injected into the session as the user message. Unlike tool descriptions (statically mounted), skill prompts are loaded on demand.
 
@@ -5724,7 +5724,7 @@ The English prompt content is already in English — no translation needed.
 
 The English prompt content is already in English — no translation needed.
 
-**Design Notes**: In the three-phase flow (Research → Spawn → Track), Phase 1's e2e test recipe discovery is the key — parallel migration without verification手段 equals mass-producing bugs. The `5-30` worker range is empirically calibrated: fewer than 5 makes parallelism not worth the overhead, more than 30 creates excessive management overhead. Each Worker is forced to use `isolation: "worktree"` to ensure no shared state.
+**Design Notes**: In the three-phase flow (Research → Spawn → Track), Phase 1's e2e test recipe discovery is the key — parallel migration without verification means equals mass-producing bugs. The `5-30` worker range is empirically calibrated: fewer than 5 makes parallelism not worth the overhead, more than 30 creates excessive management overhead. Each Worker is forced to use `isolation: "worktree"` to ensure no shared state.
 
 ---
 
@@ -6317,7 +6317,7 @@ ${EXPLANATORY_FEATURE_PROMPT}
 These prompts do not belong to any single system; instead, they are scattered throughout the infrastructure layer as auxiliary instructions.
 
 ---
-### 11.1 CYBER_RISK_INSTRUCTION (Security的红线)
+### 11.1 CYBER_RISK_INSTRUCTION (Security Guardrails)
 
 **Source**: `src/constants/cyberRiskInstruction.ts` line 24  
 **Length**: ~100 tokens  

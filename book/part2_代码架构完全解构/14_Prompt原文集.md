@@ -8121,9 +8121,7 @@ The contract: when non-trivial implementation happens on your turn, independent 
 **来源**：`coordinator/coordinatorMode.ts` 第 251-336 行  
 **触发条件**：Coordinator 模式启用
 
-**核心原则**：
-
-```
+**核心原则**：`Never delegate understanding`——Coordinator 必须亲自理解 worker 的研究发现，再写出包含具体文件路径、行号、变更方案的精确 worker prompt。
 
 **原文**：
 
