@@ -56,7 +56,7 @@ Combined with projects like claw-code (121K+ stars, 50K in 2 hours) and open-age
 
 What you're opening is an engineering system with **1,884 TypeScript files**[^1]. It has its own process scheduler, security sandbox, file version management, multi-instance coordinator, telemetry pipeline, plugin ecosystem—if you absolutely must use one word to describe it, the most accurate would be:
 
-[^1]: **On the "1,884" figure**: This is the total count of TypeScript source files (`.ts` + `.tsx` suffix) in the `src/` directory (reproducible with `find src/ -name '*.ts' -o -name '*.tsx' | wc -l`). If you count all files in `src/` (including `.json` / `.proto` / `.css` and other types), the total is 1,902. This book consistently uses **1,884 (TypeScript source口径)**—because this book analyzes TS source code itself, and non-source files fall outside the scope of analysis. The difference of 18 files are configuration and resource files, which don't affect understanding the system's architecture.
+[^1]: **On the "1,884" figure**: This is the total count of TypeScript source files (`.ts` + `.tsx` suffix) in the `src/` directory (reproducible with `find src/ -name '*.ts' -o -name '*.tsx' | wc -l`). If you count all files in `src/` (including `.json` / `.proto` / `.css` and other types), the total is 1,902. This book consistently uses **1,884 (TypeScript source perspective)**—because this book analyzes TS source code itself, and non-source files fall outside the scope of analysis. The difference of 18 files are configuration and resource files, which don't affect understanding the system's architecture.
 
 **An operating system designed for AI agents.**
 
@@ -82,7 +82,7 @@ This book conducts a source-level architectural analysis of Claude Code **versio
 >
 > 2. **A small number of source modules are missing from the current snapshot.** Specifically: `SendUserFileTool` execution host directory, `UserCrossSessionMessage` rendering component, `peerSessions.js` complete implementation, `fireCompanionObserver` defining host (`src/buddy/observer.ts`), callers of `setReplBridgeActive`, the `@anthropic-ai/sandbox-runtime` closed-source sandbox package. These absences don't affect understanding of system behavior, but this book won't make unsourced speculation on their specific implementations—where analysis gaps occur, the main text will explicitly note them.
 >
-> 💡 **Plain English**: Think of archaeologists studying unearthed pottery shards—we can restore the object's shape, craftsmanship, and purpose, but we can't claim to have还原ed every step of the potter's craft. This source code lets us see Claude Code's complete architectural blueprint, just with a few "shards" still buried underground.
+> 💡 **Plain English**: Think of archaeologists studying unearthed pottery shards—we can restore the object's shape, craftsmanship, and purpose, but we can't claim to have reconstructed every step of the potter's craft. This source code lets us see Claude Code's complete architectural blueprint, just with a few "shards" still buried underground.
 
 In this book, you'll find:
 
@@ -92,7 +92,7 @@ In this book, you'll find:
 - How Tokens are scrutinized like currency, and cache hit rates affect every decision like exchange rates
 - How enterprise administrators remotely control Claude Code on every developer's machine through a nine-layer configuration system
 
-> **[Chart Placeholder 0.2-A]**: Complete Data Flow Journey—from "refactor this function for me" to final output, showing one interaction crossing 10 stages (string → object → JSON → SSE → ReactNode) of complete data形态 evolution.
+> **[Chart Placeholder 0.2-A]**: Complete Data Flow Journey—from "refactor this function for me" to final output, showing one interaction crossing 10 stages (string → object → JSON → SSE → ReactNode) of complete data shape evolution.
 
 **This is not a usage guide.** You won't learn how to use Claude Code here—the official documentation does that well already.
 
@@ -158,7 +158,7 @@ This analogy builds intuition. The table below is the book's "translation glossa
 
 > 💡 **Plain English**: Hooks are like **parcel locker notifications**—package arrived, automatically notifies you = event hook. You can set "notify me when it arrives" or "just leave it at the door" = custom Hook behavior. The system automatically triggers your preset actions at key moments.
 
-> **[Chart Placeholder 0.3-F]**: Complete Hook Events Directory—27 events × 4 lifecycle phases (Session / Query / Tool / Agent) complete mount point清单, with parameters and typical uses for each event.
+> **[Chart Placeholder 0.3-F]**: Complete Hook Events Directory—27 events × 4 lifecycle phases (Session / Query / Tool / Agent) complete list of mount points, with parameters and typical uses for each event.
 
 | **Package Manager (apt/npm)** | Plugin system + Skills | Installing, validating, sandboxed execution of third-party extensions—doing the same job as OS package managers |
 
@@ -193,7 +193,7 @@ The book is divided into six parts—you can read straight through or skip aroun
 ### Part 5: Engineering Philosophy
 *Design principles distilled from code.* "Hide work inside waiting time," "Token is a first-class citizen," "Treat AI as LEGO blocks"—six engineering philosophies you can take away and apply to your own projects (including Prompt's Eight Design Wisdom).
 
-> **[Chart Placeholder 0.4-B]**: Performance Optimization Panorama—Before/After comparison of five major acceleration strategies (Prompt Cache, Streaming Execution, Speculative Execution, etc.), with Part 5 "Engineering Philosophy" chapters逐一 dissecting the engineering tradeoffs behind these numbers.
+> **[Chart Placeholder 0.4-B]**: Performance Optimization Panorama—Before/After comparison of five major acceleration strategies (Prompt Cache, Streaming Execution, Speculative Execution, etc.), with Part 5 "Engineering Philosophy" chapters one by one dissecting the engineering tradeoffs behind these numbers.
 
 ### Part 6: Critique and Beyond
 *Honest trade-off analysis.* What is the complexity cost of this system? How would we design it from scratch? How can you apply these ideas to your own projects?

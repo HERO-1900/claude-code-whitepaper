@@ -61,8 +61,8 @@ The Claude Code public source release catalyzed a concentrated explosion of open
 | **claude-code-from-scratch** | 472 | Windy3f3f3f3f | ~1,300-line TypeScript hands-on tutorial | Prologue project statistics |
 | **claude-code-prompts** | 322 | repowise-dev | Ready-to-use prompt templates | Community ecosystem |
 | **Multica** | — | @jiayuan_jy | Multi-agent collaboration platform | Community ecosystem impact |
-| **Claude Code 橙皮书** (*Orange Book*) | — | @AlchainHust (Huashu) | 75-page practical handbook, Feishu doc | Competitive reference |
-| **驾驭工程** (*Harness Engineering*) | — | @blackanger (AlexZ) | Online book at zhanghandong.github.io | Competitive reference |
+| **Claude Code Orange Book** (*Orange Book*) | — | @AlchainHust (Huashu) | 75-page practical handbook, Feishu doc | Competitive reference |
+| **Harness Engineering** (*Harness Engineering*) | — | @blackanger (AlexZ) | Online book at zhanghandong.github.io | Competitive reference |
 
 ### Competing Projects Referenced in Analysis
 
