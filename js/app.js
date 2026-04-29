@@ -697,6 +697,57 @@
     }
   }
 
+  // 全站代码块复制按钮（2026-04-29）：覆盖 chapter / inspiration / 任何动态渲染处
+  function addCopyButtons(root) {
+    if (!root) return;
+    var isEnFn = function() { try { return (localStorage.getItem('cc-locale') || 'zh') === 'en'; } catch(e) { return false; } };
+    root.querySelectorAll('pre').forEach(function(pre) {
+      if (pre.querySelector('.copy-btn')) return;
+      // 跳过过短的内联式 pre
+      var text0 = (pre.textContent || '').trim();
+      if (text0.length < 20) return;
+      var btn = document.createElement('button');
+      btn.className = 'copy-btn';
+      btn.type = 'button';
+      btn.setAttribute('aria-label', isEnFn() ? 'Copy' : '复制');
+      btn.title = isEnFn() ? 'Copy' : '复制';
+      btn.innerHTML = '<span class="copy-icon">⧉</span>';
+      btn.addEventListener('click', function(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        var code = pre.querySelector('code') || pre;
+        var text = code.innerText || code.textContent || '';
+        var done = function(ok) {
+          btn.classList.toggle('copied', ok);
+          btn.classList.toggle('failed', !ok);
+          btn.innerHTML = ok ? (isEnFn() ? '✓ Copied' : '✓ 已复制') : (isEnFn() ? '✗ Failed' : '✗ 失败');
+          setTimeout(function() {
+            btn.classList.remove('copied', 'failed');
+            btn.innerHTML = '<span class="copy-icon">⧉</span>';
+          }, 1500);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(function() { done(true); }, function() { done(false); });
+        } else {
+          // 兜底：textarea + execCommand
+          try {
+            var ta = document.createElement('textarea');
+            ta.value = text;
+            ta.style.position = 'fixed'; ta.style.opacity = '0';
+            document.body.appendChild(ta);
+            ta.select();
+            var ok = document.execCommand('copy');
+            document.body.removeChild(ta);
+            done(ok);
+          } catch (err) { done(false); }
+        }
+      });
+      pre.appendChild(btn);
+    });
+  }
+  // 暴露给其他模块（chart-embed / inspiration 等如有需要）
+  window.__addCopyButtons = addCopyButtons;
+
   function renderMarkdown(md) {
     if (window.marked) {
       // Use marked.parse (works across v4-v14+)
@@ -712,6 +763,8 @@
           hljs.highlightElement(block);
         });
       }
+      // 一键复制按钮注入（用户要求 2026-04-29）
+      addCopyButtons(chapterBody);
       // 性能优化（2026-04-25）：所有章节内图片加 lazy + async decode，
       // 防止滚动到对应位置之前消耗带宽。images/ 目录有 33MB，多张大图，
       // 不 lazy 会拖慢章节切换。

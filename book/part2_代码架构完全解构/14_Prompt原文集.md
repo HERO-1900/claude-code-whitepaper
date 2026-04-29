@@ -7840,33 +7840,33 @@ For example, to get tab context:
 ---
 ### 11.3 Session Name / Session Title（会话命名）
 
-**来源**：`src/commands/rename/generateSessionName.ts` + `src/utils/sessionTitle.ts`  
+**来源**：`src/commands/rename/generateSessionName.ts` 第 22 行 + `src/utils/sessionTitle.ts` 第 56-68 行  
 **长度**：约 60 + 150 tokens  
 **触发条件**：会话开始后自动生成，或用户执行 `/rename`
 
 两个不同但互补的命名系统：
 
-**generateSessionName**（kebab-case 内部标识）：
+**=== generateSessionName ===**（kebab-case 内部标识）
+
 ```
-Generate a short kebab-case name (2-4 words) that captures the main topic
-of this conversation.
+Generate a short kebab-case name (2-4 words) that captures the main topic of this conversation. Use lowercase words separated by hyphens. Examples: "fix-login-bug", "add-auth-feature", "refactor-api-client", "debug-test-failures". Return JSON with a "name" field.
 ```
 
-**SESSION_TITLE_PROMPT**（用户可见标题）：
+**=== SESSION_TITLE_PROMPT ===**（用户可见标题）
+
 ```
-Generate a concise, sentence-case title (3-7 words) that captures the main
-topic or goal of this coding session. The title should be clear enough that
-the user recognizes the session in a list. Use sentence case: capitalize
-only the first word and proper nouns.
+Generate a concise, sentence-case title (3-7 words) that captures the main topic or goal of this coding session. The title should be clear enough that the user recognizes the session in a list. Use sentence case: capitalize only the first word and proper nouns.
 
 Return JSON with a single "title" field.
 
 Good examples:
 {"title": "Fix login button on mobile"}
 {"title": "Add OAuth authentication"}
+{"title": "Debug failing CI tests"}
+{"title": "Refactor API client error handling"}
 
 Bad (too vague): {"title": "Code changes"}
-Bad (too long): {"title": "Investigate and fix the issue where..."}
+Bad (too long): {"title": "Investigate and fix the issue where the login button does not respond on mobile devices"}
 Bad (wrong case): {"title": "Fix Login Button On Mobile"}
 ```
 
