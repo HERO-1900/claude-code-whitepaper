@@ -837,10 +837,11 @@ mark.search-highlight {
   flex-wrap: wrap;
 }
 .toc-filter {
-  font-size: 11px;
-  padding: 3px 8px;
+  font-size: 12px;
+  padding: 6px 11px;
+  min-height: 30px;  /* 触摸目标 + 视觉舒适（原 24px 太挤）*/
   border: 1px solid var(--border);
-  border-radius: 4px;
+  border-radius: 5px;
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
