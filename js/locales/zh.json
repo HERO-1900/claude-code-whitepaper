@@ -93,8 +93,8 @@
     "bottom_back_to_map": "返回全景地图 ↑",
     "bottom_heading": "准备好深入了解了吗？",
     "bottom_subtitle": "从 88 章完整解析中选择你最好奇的主题开始阅读",
-    "v4_start_reading": "开始阅读 \u00a0→",
-    "v4_random_chapter": "随机跳转一章 \u00a0⇄"
+    "v4_start_reading": "开始阅读  →",
+    "v4_random_chapter": "随机跳转一章  ⇄"
   },
   "metaphor": {
     "switch_label": "选择比喻视角",
@@ -279,7 +279,7 @@
   "dict": {
     "title": "📖 Claude Code 词典",
     "description": "从 Claude Code 2.1.88 源码中萃取的核心术语词典——涵盖核心机制、工具、子系统、Prompt 模式、工程方法、协议、数据概念、基础设施、行业术语和领域语言。",
-    "search_placeholder": "🔍 搜索词条 / 释义 / 通俗解释...",
+    "search_placeholder": "🔍 搜索词条 / 释义 / 通俗解释（全文匹配）...",
     "search": "搜索",
     "entries_unit": "词条",
     "shown_unit": "显示",
@@ -300,7 +300,12 @@
     "tooltip_more": "点击查看完整释义",
     "highlight_on": "术语高亮：开",
     "highlight_off": "术语高亮：关",
-    "highlight_aria": "术语高亮开关"
+    "highlight_aria": "术语高亮开关",
+    "priority_title": "按优先级筛选",
+    "prio_all": "全部优先级",
+    "prio_1": "P1 必学",
+    "prio_2": "P2 进阶",
+    "prio_3": "P3 细分"
   },
   "vocab": {
     "btn": "⭐ 我的生词本",

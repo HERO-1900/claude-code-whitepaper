@@ -1119,7 +1119,13 @@
 
       <div class="dict-toolbar">
         <div class="dict-search-row">
-          <input type="text" id="dict-search" class="dict-search" data-i18n-attr="placeholder:dict.search_placeholder" placeholder="🔍 搜索词条 / 释义 / 通俗解释..." />
+          <input type="text" id="dict-search" class="dict-search" data-i18n-attr="placeholder:dict.search_placeholder" placeholder="🔍 搜索词条 / 释义 / 通俗解释（全文匹配）..." />
+          <select id="dict-prio-select" class="dict-sort" data-i18n-attr="title:dict.priority_title" title="按优先级筛选">
+            <option value="all" data-i18n="dict.prio_all">全部优先级</option>
+            <option value="1" data-i18n="dict.prio_1">P1 必学</option>
+            <option value="2" data-i18n="dict.prio_2">P2 进阶</option>
+            <option value="3" data-i18n="dict.prio_3">P3 细分</option>
+          </select>
           <select id="dict-sort" class="dict-sort" data-i18n-attr="title:dict.sort_title" title="排序方式">
             <option value="alpha" data-i18n="dict.sort_alpha">A-Z 字母</option>
             <option value="section" data-i18n="dict.sort_section">系统板块</option>
@@ -1131,9 +1137,7 @@
         <div class="dict-filter-row">
           <div class="dict-filter-group" id="dict-cat-filters" aria-label="categories"></div>
         </div>
-        <div class="dict-filter-row">
-          <div class="dict-filter-group" id="dict-prio-filters" aria-label="priorities"></div>
-        </div>
+        <!-- 优先级 chip 行已移除（用户反馈：与类别同维度不合理，改为 select 与 sort 同行） -->
       </div>
 
       <div class="dict-body">

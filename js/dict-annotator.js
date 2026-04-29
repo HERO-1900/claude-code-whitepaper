@@ -473,13 +473,15 @@
     const favBtn = body.querySelector('.dict-modal-fav');
     if (favBtn) {
       favBtn.addEventListener('click', () => {
-        const added = toggleWordbook(favBtn.dataset.id);
+        const id = favBtn.dataset.id;
+        const added = toggleWordbook(id);
         favBtn.classList.toggle('added', added);
         favBtn.textContent = added ? L().added_wordbook : L().add_wordbook;
         // 通知 dictionary view 同步徽章计数
         if (window.Dictionary && typeof window.Dictionary.refreshWordbookBadge === 'function') {
           window.Dictionary.refreshWordbookBadge();
         }
+        try { window.dispatchEvent(new CustomEvent('cc-wordbook-changed', { detail: { id, added }})); } catch(e){}
       });
     }
     // 跳转

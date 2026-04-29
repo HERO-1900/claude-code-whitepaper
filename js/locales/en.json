@@ -93,8 +93,8 @@
     "bottom_back_to_map": "Back to Overview ↑",
     "bottom_heading": "Ready to dive deeper?",
     "bottom_subtitle": "Pick the topic you're most curious about from all 88 chapters",
-    "v4_start_reading": "Start Reading \u00a0→",
-    "v4_random_chapter": "Random Chapter \u00a0⇄"
+    "v4_start_reading": "Start Reading  →",
+    "v4_random_chapter": "Random Chapter  ⇄"
   },
   "metaphor": {
     "switch_label": "Choose a metaphor lens",
@@ -279,7 +279,7 @@
   "dict": {
     "title": "📖 Claude Code Glossary",
     "description": "Core terminology distilled from the Claude Code 2.1.88 source code — covering core mechanisms, tools, subsystems, prompt patterns, engineering methods, protocols, data concepts, infrastructure, industry terms, and domain language.",
-    "search_placeholder": "🔍 Search terms / definitions / plain explanations...",
+    "search_placeholder": "🔍 Search terms / definitions / explanations (full-text)...",
     "search": "Search",
     "entries_unit": "entries",
     "shown_unit": "shown",
@@ -300,7 +300,12 @@
     "tooltip_more": "Click for full entry",
     "highlight_on": "Term highlighting: on",
     "highlight_off": "Term highlighting: off",
-    "highlight_aria": "Toggle term highlighting"
+    "highlight_aria": "Toggle term highlighting",
+    "priority_title": "Filter by priority",
+    "prio_all": "All Priority",
+    "prio_1": "P1 Essential",
+    "prio_2": "P2 Advanced",
+    "prio_3": "P3 Specialized"
   },
   "vocab": {
     "btn": "⭐ My Wordbook",

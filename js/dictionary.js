@@ -405,20 +405,20 @@
       });
     }
 
-    // 优先级 chips
-    const prioContainer = document.getElementById('dict-prio-filters');
-    if (prioContainer) {
+    // 优先级 select（v2: 不再用 chip 而是 select 与 sort 同行）
+    const prioSelect = document.getElementById('dict-prio-select');
+    if (prioSelect) {
+      // 同步当前值
+      if (prioSelect.value !== String(activePriority)) prioSelect.value = String(activePriority);
+      // 更新 option 标签上的计数（如果不需要可去掉这步）
       const pcounts = { all: entries.length, 1: 0, 2: 0, 3: 0 };
       entries.forEach(e => { pcounts[e.priority] = (pcounts[e.priority] || 0) + 1; });
-      const allLabel = L().filter_all;
-      prioContainer.innerHTML = `<button class="dict-chip ${activePriority === 'all' ? 'active' : ''}" data-prio="all">${allLabel} <span class="dict-chip-count">${pcounts.all}</span></button>` +
-        [1, 2, 3].map(p => `<button class="dict-chip prio-chip prio-${p} ${String(activePriority) === String(p) ? 'active' : ''}" data-prio="${p}">${escapeHtml(prioLabels[p])} <span class="dict-chip-count">${pcounts[p] || 0}</span></button>`).join('');
-      prioContainer.querySelectorAll('.dict-chip').forEach(btn => {
-        btn.addEventListener('click', () => {
-          activePriority = btn.dataset.prio;
-          renderFilters();
-          renderList();
-        });
+      Array.from(prioSelect.options).forEach(opt => {
+        const v = opt.value;
+        const baseLab = opt.dataset.label || opt.textContent.replace(/\s*\(\d+\)\s*$/, '');
+        if (!opt.dataset.label) opt.dataset.label = baseLab;
+        const n = v === 'all' ? pcounts.all : (pcounts[v] || 0);
+        opt.textContent = baseLab + ' (' + n + ')';
       });
     }
   }
@@ -568,6 +568,10 @@
         const added = toggleWordbook(id);
         btn.classList.toggle('added', added);
         btn.textContent = added ? L().added_wordbook : L().add_wordbook;
+        // 即时刷新顶部生词本徽章计数（用户反馈需要立刻跳动）
+        refreshWordbookBadge();
+        // 通知其他组件（章节内 popup / annotator）— 用 storage 事件 + 自定义事件
+        try { window.dispatchEvent(new CustomEvent('cc-wordbook-changed', { detail: { id, added }})); } catch(e){}
       });
     });
   }
@@ -589,6 +593,16 @@
       sort.__bound = true;
       sort.addEventListener('change', () => {
         activeSort = sort.value;
+        renderList();
+      });
+    }
+    // 优先级 select（v2 移到 toolbar 与 sort 同行）
+    const prioSel = document.getElementById('dict-prio-select');
+    if (prioSel && !prioSel.__bound) {
+      prioSel.__bound = true;
+      prioSel.addEventListener('change', () => {
+        activePriority = prioSel.value;
+        renderFilters();
         renderList();
       });
     }
