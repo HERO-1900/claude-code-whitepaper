@@ -248,7 +248,7 @@
     "definition_zh": "程序向外部服务发出请求并等待响应的动作",
     "definition_en": "The action of a program making a request to an external service and waiting for a response",
     "plain_explanation_zh": "💡 像点外卖——打电话给餐厅下单，等服务员送来",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像点外卖——打电话给餐厅下单，等服务员送来 [EN translation pending]",
     "priority": 1,
     "see_also": [],
     "mention_count": 106,
@@ -263,7 +263,11 @@
     ],
     "chapters_en": [
       "part2_\\345\\245\\275\\345\\245\\207\\345\\277\\203\\351\\251\\261\\345\\212\\250\\347\\232\\204\\346\\267\\261\\345\\272\\246\\351\\227\\256\\347\\255\\224/Q10_\\347\\224\\250\\346\\210\\267\\350\\203\\275\\345\\234\\250Claude\\347\\232\\204\\347\\256\\241\\347\\220\\206\\345\\267\\245\\345\\216\\202/02_VIS-2A-010_queryLoop\\345\\277\\253\\350\\210\\252\\345\\272\\246\\345\\210\\266\\345\\275\\224.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part1_认识这个系统/01_这不是聊天机器人.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "preconnect",
@@ -289,7 +293,11 @@
     ],
     "chapters_en": [
       "part4_工程哲学/01_在等待时间里藏工作.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/02_启动序列.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "ast",
@@ -318,7 +326,11 @@
       "part2_\\345\\245\\275\\345\\245\\207\\345\\277\\203\\351\\251\\261\\345\\212\\250\\347\\232\\204\\346\\267\\261\\345\\272\\246\\351\\227\\256\\347\\255\\224/Q10_\\347\\224\\250\\346\\210\\267\\350\\203\\275\\345\\234\\250Claude\\347\\232\\204\\347\\256\\241\\347\\220\\206\\345\\267\\245\\345\\216\\202/02_VIS-2A-010_queryLoop\\345\\277\\253\\350\\210\\252\\345\\272\\246\\345\\210\\266\\345\\275\\224.md",
       "part2_代码架构完全解构/04_查询循环.md",
       "part2_代码架构完全解构/10_Token经济学.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "abort-controller",
@@ -351,7 +363,11 @@
       "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md",
       "part2_好奇心驱动的深度问答/Q04_工具为什么能在模型还没停止说话时就开始执行.md",
       "part2_好奇心驱动的深度问答/Q14_多个Claude实例是怎么协同工作的.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part1_认识这个系统/02_五分钟看懂系统架构.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "abort-signal",
@@ -382,7 +398,11 @@
       "part3_子系统完全解析/12_Bridge远程架构完全解析.md",
       "part3_子系统完全解析/任务执行管道完全解析.md",
       "part3_子系统完全解析/记忆系统完全解析.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_好奇心驱动的深度问答/Q16_如何从浏览器远程驾驶你的终端AI.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "agent-loop",
@@ -393,7 +413,7 @@
     "definition_zh": "LLM Agent 的基本心跳模式——接收输入→调用模型→执行工具→循环",
     "definition_en": "The basic heartbeat pattern of an LLM Agent — receive input→call model→execute tools→loop",
     "plain_explanation_zh": "💡 像健身房的私教循环：询问目标→制定计划→示范动作→等待下一轮",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像健身房的私教循环：询问目标→制定计划→示范动作→等待下一轮 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 8,
@@ -412,7 +432,11 @@
       "part1_认识这个系统/04_八个子系统的全景地图.md",
       "part2_代码架构完全解构/04_查询循环.md",
       "part3_子系统完全解析/协调器模式完全解析.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "agent-creation",
@@ -506,7 +530,7 @@
     "definition_zh": "子 Agent 的唯一标识——一个对话 session 中可以创建多个 AgentId，各自独立生命周期",
     "definition_en": "Unique identifier for sub-agents — multiple AgentIds can be created in one session, each with independent lifecycle",
     "plain_explanation_zh": "💡 像会议室的临时门牌——开哪个会贴哪个，开完就摘掉",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像会议室的临时门牌——开哪个会贴哪个，开完就摘掉 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 14,
@@ -525,7 +549,11 @@
       "part3_子系统完全解析/04_Hooks子系统完全解析.md",
       "part3_子系统完全解析/10_Agent与任务系统完全解析.md",
       "part3_子系统完全解析/任务执行管道完全解析.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "agent-tool",
@@ -693,7 +721,11 @@
       "part1_认识这个系统/03_读懂本书需要的全部概念.md",
       "part1_认识这个系统/04_八个子系统的全景地图.md",
       "part2_代码架构完全解构/01_代码地图.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part3_子系统完全解析/22_PromptCache可观测性完全解析.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "brief-tool",
@@ -757,7 +789,7 @@
     "definition_zh": "Linux 沙箱工具，利用用户命名空间创建隔离环境，无需 root 权限",
     "definition_en": "Linux sandbox tool that creates isolated environments using user namespaces without root privileges",
     "plain_explanation_zh": "💡 像快递气泡垫——包得严严实实，里面东西坏了不影响外面",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像快递气泡垫——包得严严实实，里面东西坏了不影响外面 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 1,
@@ -768,7 +800,11 @@
     ],
     "chapters_en": [
       "part3_子系统完全解析/07_Sandbox沙箱系统完全解析.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part3_子系统完全解析/07_Sandbox沙箱系统完全解析.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "claude-local-md",
@@ -946,7 +982,7 @@
     "definition_zh": "流式 API 中一次传输的数据片段；AI 流式响应中一个 chunk 可能只包含几个字符",
     "definition_en": "A single data fragment transmitted in streaming API; one chunk may contain only a few characters",
     "plain_explanation_zh": "💡 像寄快递分多个小包裹——一个大件拆成许多小包分批寄",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像寄快递分多个小包裹——一个大件拆成许多小包分批寄 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 1,
@@ -957,7 +993,11 @@
     ],
     "chapters_en": [
       "part2_代码架构完全解构/14_Prompt原文集.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "claude-code-guide",
@@ -995,7 +1035,7 @@
     "definition_zh": "将恶意命令片段注入用户输入、在服务器端被执行的安全漏洞",
     "definition_en": "Security vulnerability where malicious command fragments are injected into user input and executed server-side",
     "plain_explanation_zh": "💡 像在填表时在'姓名'栏填了一串'删除所有文件'",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像在填表时在'姓名'栏填了一串'删除所有文件' [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 4,
@@ -1008,7 +1048,11 @@
     "chapters_en": [
       "part2_代码架构完全解构/07_安全架构.md",
       "part2_代码架构完全解构/14_Prompt原文集.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/07_安全架构.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "coordinator-mode",
@@ -1120,7 +1164,11 @@
     "chapters_en": [
       "part2_好奇心驱动的深度问答/Q23_Deep_Link和Teleport是怎么跨设备连接的.md",
       "part3_子系统完全解析/17_遥测与分析系统完全解析.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_好奇心驱动的深度问答/Q23_Deep_Link和Teleport是怎么跨设备连接的.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "deepimmutable",
@@ -1131,7 +1179,7 @@
     "definition_zh": "CC 使用的 TypeScript 类型——递归标记对象为只读，编译期阻止任何修改",
     "definition_en": "TypeScript type used by CC — recursively marks objects as readonly, preventing any modification at compile time",
     "plain_explanation_zh": "💡 像雕塑完成后的玻璃罩——摸不到也改不了",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像雕塑完成后的玻璃罩——摸不到也改不了 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 4,
@@ -1144,7 +1192,11 @@
     "chapters_en": [
       "part2_代码架构完全解构/07_安全架构.md",
       "part2_代码架构完全解构/13_横切关注点.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/07_安全架构.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "dream-consolidation",
@@ -1229,7 +1281,7 @@
     "definition_zh": "Anthropic API 的扩展推理模式，启用时 API 强制要求 temperature=1",
     "definition_en": "Anthropic API extended reasoning mode; when enabled, API requires temperature=1",
     "plain_explanation_zh": "💡 像学生在草稿纸上打草稿——写得多但不直接给老师看",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像学生在草稿纸上打草稿——写得多但不直接给老师看 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 1,
@@ -1240,7 +1292,11 @@
     ],
     "chapters_en": [
       "part2_代码架构完全解构/14_Prompt原文集.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "F-041",
@@ -1287,7 +1343,11 @@
     "chapters_zh": [
       "part2_代码架构完全解构/14_Prompt原文集.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "git-bundle",
@@ -1337,7 +1397,11 @@
       "part2_好奇心驱动的深度问答/Q23_Deep_Link和Teleport是怎么跨设备连接的.md",
       "part3_子系统完全解析/远程Agent管理完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_好奇心驱动的深度问答/Q23_Deep_Link和Teleport是怎么跨设备连接的.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "git-safety-protocol",
@@ -1422,7 +1486,11 @@
       "part1_认识这个系统/03_读懂本书需要的全部概念.md",
       "part1_认识这个系统/04_八个子系统的全景地图.md",
       "part2_代码架构完全解构/01_代码地图.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "F-089",
@@ -1468,7 +1536,11 @@
       "part3_子系统完全解析/17_遥测与分析系统完全解析.md",
       "part3_子系统完全解析/记忆系统完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_好奇心驱动的深度问答/Q09_Session里那个默默记笔记的AI是谁.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "heredoc",
@@ -1556,7 +1628,11 @@
       "part2_代码架构完全解构/03_提示词工厂.md",
       "part2_代码架构完全解构/04_查询循环.md",
       "part2_代码架构完全解构/09_扩展生态.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part1_认识这个系统/04_八个子系统的全景地图.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "harness-engineering",
@@ -1582,7 +1658,11 @@
       "part0_序章/00_序章.md",
       "part5_supplementary/83_Harness_Engineering.md",
       "references.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "hook-interception",
@@ -1601,7 +1681,11 @@
     "chapters_zh": [
       "part2_好奇心驱动的深度问答/Q24_用户输入是怎么一步步变成AI请求的.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_好奇心驱动的深度问答/Q24_用户输入是怎么一步步变成AI请求的.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "F-031",
@@ -1701,7 +1785,7 @@
     "definition_zh": "Input/Output 操作——读取数据进内存，或把数据写出内存",
     "definition_en": "Input/Output operation — reading data into memory or writing data out of memory",
     "plain_explanation_zh": "💡 像图书馆借还书——借进来是输入，还出去是输出",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像图书馆借还书——借进来是输入，还出去是输出 [EN translation pending]",
     "priority": 1,
     "see_also": [],
     "mention_count": 8,
@@ -1713,7 +1797,11 @@
       "part2_好奇心驱动的深度问答/Q04_工具为什么能在模型还没停止说话时就开始执行.md",
       "part4_工程哲学/01_在等待时间里藏工作.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/02_启动序列.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "inprocessrunner",
@@ -1774,7 +1862,11 @@
       "part2_代码架构完全解构/01_代码地图.md",
       "part2_代码架构完全解构/04_查询循环.md",
       "part2_代码架构完全解构/05_工具运行时.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "jsonl-session",
@@ -1839,7 +1931,11 @@
       "part2_代码架构完全解构/14_Prompt原文集.md",
       "part2_好奇心驱动的深度问答/Q16_如何从浏览器远程驾驶你的终端AI.md",
       "part3_子系统完全解析/12_Bridge远程架构完全解析.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/05_工具运行时.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "jwt-refresh",
@@ -2157,7 +2253,11 @@
       "part2_代码架构完全解构/07_安全架构.md",
       "part2_代码架构完全解构/11_配置治理.md",
       "part2_好奇心驱动的深度问答/Q01_那三行在import之前的代码是什么把戏.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/02_启动序列.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "mailbox-polling",
@@ -2317,7 +2417,11 @@
       "part2_代码架构完全解构/12_终端UI.md",
       "part2_代码架构完全解构/13_横切关注点.md",
       "part2_代码架构完全解构/14_Prompt原文集.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/01_代码地图.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "one-hot",
@@ -2415,7 +2519,7 @@
     "definition_zh": "利用 ../ 等序列突破目录限制、访问未授权文件的安全漏洞",
     "definition_en": "Security vulnerability using ../ sequences to break out of directory restrictions and access unauthorized files",
     "plain_explanation_zh": "💡 像从酒店房间试图用走廊钥匙打开隔壁房间",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像从酒店房间试图用走廊钥匙打开隔壁房间 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 2,
@@ -2428,7 +2532,11 @@
     "chapters_en": [
       "part2_代码架构完全解构/07_安全架构.md",
       "part2_代码架构完全解构/14_Prompt原文集.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/07_安全架构.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "perpetual-bridge",
@@ -2512,7 +2620,11 @@
       "part1_认识这个系统/02_五分钟看懂系统架构.md",
       "part1_认识这个系统/03_读懂本书需要的全部概念.md",
       "part1_认识这个系统/04_八个子系统的全景地图.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "prompt-engineering-wisdom",
@@ -2653,7 +2765,11 @@
       "part1_认识这个系统/03_读懂本书需要的全部概念.md",
       "part1_认识这个系统/04_八个子系统的全景地图.md",
       "part2_代码架构完全解构/01_代码地图.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "sql-injection",
@@ -2664,7 +2780,7 @@
     "definition_zh": "将恶意 SQL 片段注入输入参数、操纵数据库查询的安全漏洞；可用参数化查询根治",
     "definition_en": "Security vulnerability injecting malicious SQL fragments into input parameters to manipulate database queries; preventable with parameterized queries",
     "plain_explanation_zh": "💡 像在银行单子的金额栏写'-100元取走",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像在银行单子的金额栏写'-100元取走 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 1,
@@ -2675,7 +2791,11 @@
     ],
     "chapters_en": [
       "part2_代码架构完全解构/07_安全架构.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/07_安全架构.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "sse",
@@ -2686,7 +2806,7 @@
     "definition_zh": "服务器向客户端单向推送事件的 HTTP 标准；CC 用它接收 AI 的逐 token 流式输出",
     "definition_en": "HTTP standard for server-to-client one-way event streaming; CC uses it to receive AI token-by-token output",
     "plain_explanation_zh": "💡 像电视台广播——发送方不停发，接收方只能接收不能回复",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像电视台广播——发送方不停发，接收方只能接收不能回复 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 40,
@@ -2705,7 +2825,11 @@
       "part2_代码架构完全解构/05_工具运行时.md",
       "part2_代码架构完全解构/09_扩展生态.md",
       "part2_代码架构完全解构/14_Prompt原文集.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "seatbelt",
@@ -2716,7 +2840,7 @@
     "definition_zh": "macOS 内核级沙箱框架，通过策略配置文件限制进程的权限",
     "definition_en": "macOS kernel-level sandbox framework that restricts process permissions via policy configuration files",
     "plain_explanation_zh": "💡 像汽车安全带——限制你在事故时不会被甩出车外",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像汽车安全带——限制你在事故时不会被甩出车外 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 1,
@@ -2727,7 +2851,11 @@
     ],
     "chapters_en": [
       "part0_序章/00_序章.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "seccomp",
@@ -2829,7 +2957,11 @@
     "chapters_zh": [],
     "chapters_en": [
       "part3_子系统完全解析/08_遥测与可观测性完全解析.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part3_子系统完全解析/08_遥测与可观测性完全解析.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "slash-command",
@@ -2943,7 +3075,11 @@
     "chapters_zh": [
       "part2_好奇心驱动的深度问答/Q16_如何从浏览器远程驾驶你的终端AI.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_好奇心驱动的深度问答/Q16_如何从浏览器远程驾驶你的终端AI.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "stable-idle-detection",
@@ -3056,7 +3192,7 @@
     "definition_zh": "HTTPS 建立安全连接的过程——交换密钥、验证证书，通常需要 1-2 个 RTT",
     "definition_en": "Process of establishing HTTPS secure connection — key exchange and certificate verification, typically 1-2 RTTs",
     "plain_explanation_zh": "💡 像机场过安检——扫码+核对证件，验证通过才放行",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像机场过安检——扫码+核对证件，验证通过才放行 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 6,
@@ -3067,7 +3203,11 @@
       "part3_子系统完全解析/远程Agent管理完全解析.md",
       "part4_工程哲学/01_在等待时间里藏工作.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/02_启动序列.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "task-stop",
@@ -3194,7 +3334,11 @@
       "part2_好奇心驱动的深度问答/Q23_Deep_Link和Teleport是怎么跨设备连接的.md",
       "part3_子系统完全解析/21_FastMode与UltraPlan完全解析.md",
       "part3_子系统完全解析/远程Agent管理完全解析.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_好奇心驱动的深度问答/Q23_Deep_Link和Teleport是怎么跨设备连接的.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "temperature",
@@ -3205,7 +3349,7 @@
     "definition_zh": "控制 LLM 输出随机性的采样参数（T=0 确定性，T=1 原始分布），不是天气温度",
     "definition_en": "Sampling parameter controlling LLM output randomness (T=0 deterministic, T=1 raw distribution); not weather temperature",
     "plain_explanation_zh": "💡 像调色板的颜色范围——0=非黑即白，1=允许所有颜色混进来",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像调色板的颜色范围——0=非黑即白，1=允许所有颜色混进来 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 4,
@@ -3216,7 +3360,11 @@
     ],
     "chapters_en": [
       "part2_代码架构完全解构/04_查询循环.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/04_查询循环.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "tick",
@@ -3461,7 +3609,11 @@
     "chapters_zh": [
       "part3_子系统完全解析/Vim模式完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part3_子系统完全解析/Vim模式完全解析.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "wal-mode",
@@ -3586,7 +3738,7 @@
     "definition_zh": "运行时类型校验声明——定义输入数据的形状，非法输入在到达业务逻辑前被拒绝",
     "definition_en": "Runtime type validation declaration — defines input data shape, rejects invalid input before it reaches business logic",
     "plain_explanation_zh": "💡 像登机前的安检机——不合规格的行李直接拦下",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像登机前的安检机——不合规格的行李直接拦下 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 11,
@@ -3605,7 +3757,11 @@
       "part2_代码架构完全解构/07_安全架构.md",
       "part3_子系统完全解析/05_插件系统完全解析.md",
       "part3_子系统完全解析/09_设置系统完全解析.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/01_代码地图.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "buildpostcompactmessages",
@@ -3616,7 +3772,7 @@
     "definition_zh": "CC 在当前 turn 内拼回压缩结果继续 yield，保留 generator state 跨大型上下文重写——这是反直觉的工程选择",
     "definition_en": "CC concatenates compaction results back within current turn and continues yielding, preserving generator state across large context rewrites — a counter-intuitive engineering choice",
     "plain_explanation_zh": "💡 像搬家时在旧房子打包好再继续住在里面同时搬——不用出去找临时住所",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像搬家时在旧房子打包好再继续住在里面同时搬——不用出去找临时住所 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 2,
@@ -3629,7 +3785,11 @@
     "chapters_en": [
       "part2_代码架构完全解构/04_查询循环.md",
       "part2_好奇心驱动的深度问答/Q27_为什么Agent工作台必须有权限压缩和恢复.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/04_查询循环.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "copyoverlaytomain-atomicity",
@@ -3771,7 +3931,11 @@
       "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md",
       "part2_好奇心驱动的深度问答/Q07_CLAUDE_md是怎么被找到和组装的.md",
       "part2_好奇心驱动的深度问答/Q13_Skills和斜杠命令有什么本质区别.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/07_安全架构.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "frontmatter-paths",
@@ -3808,7 +3972,7 @@
     "definition_zh": "CPU 流水线预取在应用层的等价物——投机完成后立即触发下一次预测，形成连续投机链",
     "definition_en": "Application-level equivalent of CPU pipeline prefetch — after speculation completes, immediately triggers next prediction, forming continuous speculation chain",
     "plain_explanation_zh": "💡 像短道速滑交接棒——前一棒还没到终点，后一棒已经滑出去接了",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像短道速滑交接棒——前一棒还没到终点，后一棒已经滑出去接了 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 2,
@@ -3821,7 +3985,11 @@
     "chapters_en": [
       "part3_子系统完全解析/02_投机执行子系统完全解析.md",
       "part4_工程哲学/01_在等待时间里藏工作.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part3_子系统完全解析/02_投机执行子系统完全解析.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "generator-chain",
@@ -3832,7 +4000,7 @@
     "definition_zh": "CC 的父子通信机制——子 Agent yield 消息，父 Agent 通过 for await 直接消费，无消息队列",
     "definition_en": "CC's parent-child communication mechanism — child Agent yields messages, parent consumes directly via for await, no message queue",
     "plain_explanation_zh": "💡 像对讲机——按下说话键就能实时传到对方，不用留言等回复",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像对讲机——按下说话键就能实时传到对方，不用留言等回复 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 4,
@@ -3842,7 +4010,11 @@
       "part1_认识这个系统/03_读懂本书需要的全部概念.md",
       "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "generator-chain-as-ipc",
@@ -3960,7 +4132,7 @@
     "definition_zh": "macOS 系统级加密凭证存储——应用通过 API 存取密码/证书，系统负责加密保护",
     "definition_en": "macOS system-level encrypted credential storage — apps access passwords/certificates via API, system handles encryption",
     "plain_explanation_zh": "💡 像酒店保险箱——前台帮你开，但里面只有你自己能拿东西",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像酒店保险箱——前台帮你开，但里面只有你自己能拿东西 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 1,
@@ -3971,7 +4143,11 @@
     ],
     "chapters_en": [
       "part4_工程哲学/01_在等待时间里藏工作.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part4_工程哲学/01_在等待时间里藏工作.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "npm-package",
@@ -4000,7 +4176,11 @@
       "part2_代码架构完全解构/07_安全架构.md",
       "part2_代码架构完全解构/09_扩展生态.md",
       "part2_代码架构完全解构/14_Prompt原文集.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "omitclaudemd",
@@ -4065,7 +4245,7 @@
     "definition_zh": "流式传输中逐字符到达的工具参数 JSON 片段，StreamingToolExecutor 实时尝试解析",
     "definition_en": "JSON fragment of tool parameters arriving character-by-character during streaming; StreamingToolExecutor tries to parse in real-time",
     "plain_explanation_zh": "💡 像拼图逐渐成形——每收到一块就试着拼上去，拼完整了才知道全貌",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像拼图逐渐成形——每收到一块就试着拼上去，拼完整了才知道全貌 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 2,
@@ -4076,7 +4256,11 @@
     ],
     "chapters_en": [
       "part2_代码架构完全解构/04_查询循环.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/04_查询循环.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "partial-json-progressive-parse",
@@ -4164,7 +4348,7 @@
     "definition_zh": "CC 沙箱唯一的 post-exec 主动清理——命令执行后检查 scrubPaths，若文件被创建则立即删除",
     "definition_en": "CC sandbox's only post-exec active cleanup — after command execution, checks scrubPaths and deletes any created files immediately",
     "plain_explanation_zh": "💡 像酒店退房后前台检查——如果发现你弄坏了什么东西，立即处理不留后患",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像酒店退房后前台检查——如果发现你弄坏了什么东西，立即处理不留后患 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 1,
@@ -4175,7 +4359,11 @@
     ],
     "chapters_en": [
       "part2_代码架构完全解构/07_安全架构.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/07_安全架构.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "setappstatefortasks",
@@ -4186,7 +4374,7 @@
     "definition_zh": "setAppStateForTasks 是 no-op 的合法穿透点——整个隔离边界唯一的 escape hatch，安全审计必看",
     "definition_en": "setAppStateForTasks is the legitimate escape hatch for no-op — the only legal penetration point of the entire isolation boundary, required for security audits",
     "plain_explanation_zh": "💡 像银行金库唯一的备用钥匙——平时不用，但紧急情况必须有",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像银行金库唯一的备用钥匙——平时不用，但紧急情况必须有 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 3,
@@ -4199,7 +4387,11 @@
     "chapters_en": [
       "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md",
       "part3_子系统完全解析/10_Agent与任务系统完全解析.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "sibling-abort-controller",
@@ -4228,7 +4420,11 @@
       "part2_代码架构完全解构/05_工具运行时.md",
       "part2_好奇心驱动的深度问答/Q04_工具为什么能在模型还没停止说话时就开始执行.md",
       "part4_工程哲学/01_在等待时间里藏工作.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/05_工具运行时.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "temperature-sampling",
@@ -4256,7 +4452,11 @@
       "part2_代码架构完全解构/04_查询循环.md",
       "part2_好奇心驱动的深度问答/Q08_设置系统为什么需要五层优先级.md",
       "part3_子系统完全解析/21_FastMode与UltraPlan完全解析.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/04_查询循环.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "text-delta",
@@ -4267,7 +4467,7 @@
     "definition_zh": "Anthropic API 流式事件类型，表示 AI 生成的新增文本片段（类似打字机逐字输出）",
     "definition_en": "Anthropic API streaming event type representing a newly generated text fragment (like typewriter output)",
     "plain_explanation_zh": "💡 像电子书阅读器的文字逐字显示效果",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像电子书阅读器的文字逐字显示效果 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 4,
@@ -4280,7 +4480,11 @@
     "chapters_en": [
       "part2_\\345\\245\\275\\345\\245\\207\\345\\277\\203\\351\\251\\261\\345\\212\\250\\347\\232\\204\\346\\267\\261\\345\\272\\246\\351\\227\\256\\347\\255\\224/Q10_\\347\\224\\250\\346\\210\\267\\350\\203\\275\\345\\234\\250Claude\\347\\232\\204\\347\\256\\241\\347\\220\\206\\345\\267\\245\\345\\216\\202/02_VIS-2A-010_queryLoop\\345\\277\\253\\350\\210\\252\\345\\272\\246\\345\\210\\266\\345\\275\\224.md",
       "part2_代码架构完全解构/04_查询循环.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_\\345\\245\\275\\345\\245\\207\\345\\277\\203\\351\\251\\261\\345\\212\\250\\347\\232\\204\\346\\267\\261\\345\\272\\246\\351\\227\\256\\347\\255\\224/Q10_\\347\\224\\250\\346\\210\\267\\350\\203\\275\\345\\234\\250Claude\\347\\232\\204\\347\\256\\241\\347\\220\\206\\345\\267\\245\\345\\216\\202/02_VIS-2A-010_queryLoop\\345\\277\\253\\350\\210\\252\\345\\272\\246\\345\\210\\266\\345\\275\\224.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "tmux-backend",
@@ -4317,7 +4521,7 @@
     "definition_zh": "Anthropic API 的 content block 类型——AI 声明要调用某个工具及其参数",
     "definition_en": "Anthropic API content block type — AI declaring it will call a tool and its parameters",
     "plain_explanation_zh": "💡 像服务员写在点菜单上的菜名——不是最后上的菜，是告诉厨房要做什么",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像服务员写在点菜单上的菜名——不是最后上的菜，是告诉厨房要做什么 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 69,
@@ -4336,7 +4540,11 @@
       "part2_\\345\\245\\275\\345\\245\\207\\345\\277\\203\\351\\251\\261\\345\\212\\250\\347\\232\\204\\346\\267\\261\\345\\272\\246\\351\\227\\256\\347\\255\\224/Q10_\\347\\224\\250\\346\\210\\267\\350\\203\\275\\345\\234\\250Claude\\347\\232\\204\\347\\256\\241\\347\\220\\206\\345\\267\\245\\345\\216\\202/02_VIS-2A-010_queryLoop\\345\\277\\253\\350\\210\\252\\345\\272\\246\\345\\210\\266\\345\\275\\224.md",
       "part2_代码架构完全解构/04_查询循环.md",
       "part2_代码架构完全解构/05_工具运行时.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part1_认识这个系统/02_五分钟看懂系统架构.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "viewer-only",
@@ -4403,7 +4611,7 @@
     "definition_zh": "generator 函数的关键字——暂停执行并返回一个值，下次调用时从暂停处继续",
     "definition_en": "Keyword in generator functions — pauses execution and returns a value, resumes from pause point on next call",
     "plain_explanation_zh": "💡 像课堂举手发言——停下来回答问题，之后从停下的地方继续",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像课堂举手发言——停下来回答问题，之后从停下的地方继续 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 23,
@@ -4422,7 +4630,11 @@
       "part2_代码架构完全解构/13_横切关注点.md",
       "part2_代码架构完全解构/14_Prompt原文集.md",
       "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/04_查询循环.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "collaboration-channels",
@@ -4469,7 +4681,11 @@
     "chapters_zh": [
       "part2_代码架构完全解构/06_Agent编排.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/06_Agent编排.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "three-way-dispatch",
@@ -4488,7 +4704,11 @@
     "chapters_zh": [
       "part2_好奇心驱动的深度问答/Q24_用户输入是怎么一步步变成AI请求的.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_好奇心驱动的深度问答/Q24_用户输入是怎么一步步变成AI请求的.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "three-channel-telemetry",
@@ -4508,7 +4728,11 @@
       "part3_子系统完全解析/17_遥测与分析系统完全解析.md",
       "references.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part3_子系统完全解析/17_遥测与分析系统完全解析.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "context-modifier",
@@ -4584,7 +4808,11 @@
     "chapters_zh": [
       "part5_批判与超越/01_这个系统的代价.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part5_批判与超越/01_这个系统的代价.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "context-engineering",
@@ -4595,7 +4823,7 @@
     "definition_zh": "管理输入 LLM 的上下文信息（文件、历史、指令）以最大化推理质量的工程",
     "definition_en": "Engineering practice of managing LLM input context (files, history, instructions) to maximize reasoning quality",
     "plain_explanation_zh": "💡 像给律师整理证据材料——材料组织得好，辩护质量就高",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像给律师整理证据材料——材料组织得好，辩护质量就高 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 4,
@@ -4608,7 +4836,11 @@
     "chapters_en": [
       "part0_序章/00_序章.md",
       "part5_supplementary/83_Harness_Engineering.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "F-075",
@@ -4660,7 +4892,11 @@
     ],
     "chapters_en": [
       "part1_认识这个系统/03_读懂本书需要的全部概念.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "F-097",
@@ -4912,7 +5148,7 @@
     "definition_zh": "计算机科学通用模式——等待事件→分发处理→继续等待",
     "definition_en": "A common computer science pattern — wait for event→dispatch handler→continue waiting",
     "plain_explanation_zh": "💡 像餐厅前台接单：等客人点餐→把单送到厨房→继续等下一单",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像餐厅前台接单：等客人点餐→把单送到厨房→继续等下一单 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 19,
@@ -4927,7 +5163,11 @@
     ],
     "chapters_en": [
       "part1_认识这个系统/01_这不是聊天机器人.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part1_认识这个系统/01_这不是聊天机器人.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "five-region-architecture",
@@ -4964,7 +5204,11 @@
     "chapters_zh": [
       "part2_代码架构完全解构/01_代码地图.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/01_代码地图.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "task-state",
@@ -5187,7 +5431,11 @@
       "part3_子系统完全解析/09_设置系统完全解析.md",
       "part3_子系统完全解析/记忆系统完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_好奇心驱动的深度问答/Q22_Computer_Use是怎么让AI操控你的屏幕的.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "F-037",
@@ -5414,7 +5662,11 @@
       "part3_子系统完全解析/16_输出样式系统完全解析.md",
       "part5_批判与超越/01_这个系统的代价.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part3_子系统完全解析/04_Hooks子系统完全解析.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "dependency-resolver",
@@ -5499,7 +5751,11 @@
     ],
     "chapters_en": [
       "part3_子系统完全解析/07_Sandbox沙箱系统完全解析.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/07_安全架构.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "dream-task",
@@ -5752,7 +6008,11 @@
       "part2_代码架构完全解构/13_横切关注点.md",
       "part2_好奇心驱动的深度问答/Q02_上下文压缩为什么需要六套机制.md",
       "part2_好奇心驱动的深度问答/Q06_Claude在你打字的时候偷偷在做什么.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part3_子系统完全解析/02_投机执行子系统完全解析.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "fork",
@@ -5916,7 +6176,11 @@
       "part2_好奇心驱动的深度问答/Q06_Claude在你打字的时候偷偷在做什么.md",
       "part2_好奇心驱动的深度问答/Q21_MagicDocs是怎么自动维护文档的.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/01_代码地图.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "side-effect-import",
@@ -5990,7 +6254,11 @@
       "part2_代码架构完全解构/14_Prompt原文集.md",
       "part4_工程哲学/06_Prompt的八大设计智慧.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/05_工具运行时.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "dynamic-boundary",
@@ -6113,7 +6381,11 @@
     "chapters_zh": [
       "part5_批判与超越/01_这个系统的代价.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part5_批判与超越/01_这个系统的代价.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "atomic-file-write",
@@ -6162,7 +6434,11 @@
     "chapters_zh": [
       "part2_代码架构完全解构/14_Prompt原文集.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "anti-delegation",
@@ -6228,7 +6504,7 @@
     "definition_zh": "事件驱动架构模式——发布者广播事件，订阅者按需接收；与 HTTP 点对点请求不同",
     "definition_en": "Event-driven architecture — publishers broadcast events, subscribers receive on demand; different from HTTP point-to-point",
     "plain_explanation_zh": "💡 像微信公众号——作者发布文章，所有订阅者都能收到",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像微信公众号——作者发布文章，所有订阅者都能收到 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 2,
@@ -6240,7 +6516,11 @@
     "chapters_en": [
       "part1_认识这个系统/01_这不是聊天机器人.md",
       "part2_代码架构完全解构/13_横切关注点.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/13_横切关注点.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "observability-first",
@@ -6265,7 +6545,11 @@
       "part3_子系统完全解析/17_遥测与分析系统完全解析.md",
       "part4_工程哲学/05_可观测性是产品功能不是运维工具.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part3_子系统完全解析/04_Hooks子系统完全解析.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "homograph-attack",
@@ -6285,7 +6569,11 @@
       "part2_代码架构完全解构/09_扩展生态.md",
       "part2_好奇心驱动的深度问答/Q12_插件系统是怎么防止你被恶意扩展攻击的.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/09_扩展生态.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "homograph-detection",
@@ -6468,7 +6756,11 @@
       "part2_代码架构完全解构/08_状态与持久化.md",
       "part2_好奇心驱动的深度问答/Q18_AI的记忆是怎么跨越对话存活的.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/08_状态与持久化.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "memory-type-taxonomy",
@@ -6557,7 +6849,11 @@
     ],
     "chapters_en": [
       "part3_子系统完全解析/Vim模式完全解析.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part3_子系统完全解析/Vim模式完全解析.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "etags-based-optimistic-concurrency",
@@ -6608,7 +6904,11 @@
       "part4_工程哲学/04_多层防线不是偏执是必要.md",
       "part5_批判与超越/03_把这些思想用在你的项目里.md",
       "references.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/07_安全架构.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "F-061",
@@ -6896,7 +7196,11 @@
       "part3_子系统完全解析/记忆系统完全解析.md",
       "references.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/13_横切关注点.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "list-peers-tool",
@@ -7047,7 +7351,11 @@
     ],
     "chapters_en": [
       "part3_子系统完全解析/05_插件系统完全解析.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_好奇心驱动的深度问答/Q10_用户能在Claude的生命周期里插多少个钩子.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "F-072",
@@ -7238,7 +7546,11 @@
       "part2_代码架构完全解构/01_代码地图.md",
       "part2_代码架构完全解构/05_工具运行时.md",
       "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "tool-interface",
@@ -7265,7 +7577,11 @@
     "see_also": [
       "tool_call",
       "mcp"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part1_认识这个系统/01_这不是聊天机器人.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "tool-description",
@@ -7502,7 +7818,11 @@
     ],
     "chapters_en": [
       "part2_代码架构完全解构/05_工具运行时.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "latency-hiding",
@@ -7527,7 +7847,11 @@
     ],
     "chapters_en": [
       "part4_工程哲学/01_在等待时间里藏工作.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part4_工程哲学/01_在等待时间里藏工作.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "F-091",
@@ -7838,7 +8162,11 @@
     ],
     "see_also": [
       "speculative-execution"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "speculative-execution",
@@ -7868,7 +8196,11 @@
     ],
     "chapters_en": [
       "part2_好奇心驱动的深度问答/Q06_Claude在你打字的时候偷偷在做什么.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "jitter",
@@ -7930,7 +8262,11 @@
       "part3_子系统完全解析/07_Sandbox沙箱系统完全解析.md",
       "part4_工程哲学/03_把AI当乐高积木.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/09_扩展生态.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "cost-of-ownership",
@@ -7971,7 +8307,11 @@
       "part3_子系统完全解析/14_语音系统完全解析.md",
       "part3_子系统完全解析/键绑定系统完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part3_子系统完全解析/14_语音系统完全解析.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "explore-agent",
@@ -8014,7 +8354,7 @@
     "definition_zh": "发给 AI 模型的输入文本，告诉它要做什么",
     "definition_en": "Input text sent to an AI model telling it what to do",
     "plain_explanation_zh": "💡 像给导游一张任务卡——上面写着要去哪里、看什么",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像给导游一张任务卡——上面写着要去哪里、看什么 [EN translation pending]",
     "priority": 1,
     "see_also": [],
     "mention_count": 551,
@@ -8033,7 +8373,11 @@
       "part1_认识这个系统/02_五分钟看懂系统架构.md",
       "part1_认识这个系统/03_读懂本书需要的全部概念.md",
       "part1_认识这个系统/04_八个子系统的全景地图.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "F-020",
@@ -8186,7 +8530,11 @@
     "chapters_zh": [
       "part2_好奇心驱动的深度问答/Q12_插件系统是怎么防止你被恶意扩展攻击的.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_好奇心驱动的深度问答/Q12_插件系统是怎么防止你被恶意扩展攻击的.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "operator-motion-composition",
@@ -8205,7 +8553,11 @@
     "chapters_zh": [
       "part3_子系统完全解析/Vim模式完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part3_子系统完全解析/Vim模式完全解析.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "systole",
@@ -8466,7 +8818,11 @@
     "chapters_zh": [
       "part3_子系统完全解析/20_团队记忆同步完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part3_子系统完全解析/20_团队记忆同步完全解析.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "F-014",
@@ -9097,7 +9453,11 @@
     "chapters_zh": [
       "part2_好奇心驱动的深度问答/Q08_设置系统为什么需要五层优先级.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_好奇心驱动的深度问答/Q08_设置系统为什么需要五层优先级.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "source-code",
@@ -9175,7 +9535,11 @@
     "chapters_zh": [],
     "chapters_en": [
       "part3_子系统完全解析/Vim模式完全解析.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part3_子系统完全解析/Vim模式完全解析.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "drop-in-directory",
@@ -9265,7 +9629,11 @@
       "part2_代码架构完全解构/13_横切关注点.md",
       "part3_子系统完全解析/12_Bridge远程架构完全解析.md",
       "part3_子系统完全解析/18_Bash_AST解析器完全解析.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/08_状态与持久化.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "set-app-state-noop",
@@ -9512,7 +9880,11 @@
     "chapters_zh": [
       "part3_子系统完全解析/17_遥测与分析系统完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part3_子系统完全解析/17_遥测与分析系统完全解析.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "systematic-redundancy",
@@ -9743,7 +10115,11 @@
       "part2_代码架构完全解构/05_工具运行时.md",
       "part2_代码架构完全解构/10_Token经济学.md",
       "part2_好奇心驱动的深度问答/Q02_上下文压缩为什么需要六套机制.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/05_工具运行时.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "renderresultforassistant",
@@ -9764,7 +10140,11 @@
     ],
     "chapters_en": [
       "part2_代码架构完全解构/05_工具运行时.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part3_子系统完全解析/25_Brief通信家族与Viewer结构化通道完全解析.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "continue-vs-spawn",
@@ -9909,7 +10289,11 @@
       "part1_认识这个系统/03_读懂本书需要的全部概念.md",
       "part2_代码架构完全解构/14_Prompt原文集.md",
       "part2_好奇心驱动的深度问答/Q11_对话也可以像代码一样分支和回滚吗.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "prompt-cache-break-detection",
@@ -9962,7 +10346,11 @@
     "chapters_en": [
       "part2_代码架构完全解构/10_Token经济学.md",
       "part2_好奇心驱动的深度问答/Q02_上下文压缩为什么需要六套机制.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_好奇心驱动的深度问答/Q02_上下文压缩为什么需要六套机制.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "F-022",
@@ -10069,7 +10457,11 @@
     "chapters_zh": [
       "part2_代码架构完全解构/04_查询循环.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/04_查询循环.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "magic-docs",
@@ -10518,7 +10910,11 @@
     "chapters_zh": [],
     "chapters_en": [
       "part3_子系统完全解析/14_语音系统完全解析.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part3_子系统完全解析/14_语音系统完全解析.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "voice-mode-gates",
@@ -10555,7 +10951,11 @@
     "chapters_zh": [
       "part2_好奇心驱动的深度问答/Q17_你的声音是怎么变成代码指令的.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part2_好奇心驱动的深度问答/Q17_你的声音是怎么变成代码指令的.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "F-094",
@@ -10625,7 +11025,7 @@
     "definition_zh": "将处理请求的一系列对象连成链，每个对象决定是否处理或传给下一个",
     "definition_en": "Chain of objects handling requests; each decides whether to process or pass to the next",
     "plain_explanation_zh": "💡 像逐级上报的审批流程——科员→科长→局长，每级可以批准或上报",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像逐级上报的审批流程——科员→科长→局长，每级可以批准或上报 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 4,
@@ -10641,7 +11041,11 @@
       "part2_代码架构完全解构/04_查询循环.md",
       "part2_代码架构完全解构/05_工具运行时.md",
       "part3_子系统完全解析/16_输出样式系统完全解析.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/04_查询循环.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "sha256-naming",
@@ -10974,7 +11378,7 @@
     "definition_zh": "将一个类的接口转换成客户希望的另一个接口；CC 用它把工具结果包装成 API 消息格式",
     "definition_en": "Convert one class interface to what the client expects; CC uses it to wrap tool results into API message format",
     "plain_explanation_zh": "💡 像电源适配器——让不同国家的电器能插上同一插座",
-    "plain_explanation_en": "",
+    "plain_explanation_en": "💡 像电源适配器——让不同国家的电器能插上同一插座 [EN translation pending]",
     "priority": 2,
     "see_also": [],
     "mention_count": 25,
@@ -10991,7 +11395,11 @@
       "part2_代码架构完全解构/07_安全架构.md",
       "part2_好奇心驱动的深度问答/Q22_Computer_Use是怎么让AI操控你的屏幕的.md",
       "part3_子系统完全解析/07_Sandbox沙箱系统完全解析.md"
-    ]
+    ],
+    "first_appearance": {
+      "chapter": "part2_代码架构完全解构/04_查询循环.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "partial-compact",
@@ -11196,7 +11604,11 @@
     "chapters_zh": [
       "part3_子系统完全解析/10_Agent与任务系统完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "first_appearance": {
+      "chapter": "part3_子系统完全解析/10_Agent与任务系统完全解析.md",
+      "context_zh": ""
+    }
   },
   {
     "id": "keybinding",
