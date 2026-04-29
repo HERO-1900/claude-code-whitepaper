@@ -129,7 +129,8 @@
     "chapters_zh": [
       "part3_子系统完全解析/03_MCP平台完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "include-directive",
@@ -632,7 +633,8 @@
       "part1_认识这个系统/02_五分钟看懂系统架构.md",
       "part1_认识这个系统/03_读懂本书需要的全部概念.md",
       "part1_认识这个系统/04_八个子系统的全景地图.md"
-    ]
+    ],
+    "_suppressed": true
   },
   {
     "id": "memory-source-discovery",
@@ -814,7 +816,8 @@
     ],
     "chapters_en": [
       "part2_代码架构完全解构/14_Prompt原文集.md"
-    ]
+    ],
+    "_suppressed": true
   },
   {
     "id": "cron-scheduler",
@@ -842,7 +845,6 @@
     "mention_count_zh": 1,
     "mention_count_en": 0,
     "chapters_zh": [
-      "part2_代码架构完全解构/14_Prompt原文集.md",
       "part3_子系统完全解析/19_Cron调度系统完全解析.md"
     ],
     "chapters_en": []
@@ -965,7 +967,8 @@
     "chapters_zh": [
       "part3_子系统完全解析/13_Buddy伴侣系统完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "few-shot",
@@ -1059,11 +1062,9 @@
     ],
     "priority": 1,
     "mention_count": 8,
-    "mention_count_zh": 5,
+    "mention_count_zh": 0,
     "mention_count_en": 8,
-    "chapters_zh": [
-      "part3_子系统完全解析/18_Bash_AST解析器完全解析.md"
-    ],
+    "chapters_zh": [],
     "chapters_en": [
       "part2_代码架构完全解构/05_工具运行时.md",
       "part2_代码架构完全解构/14_Prompt原文集.md"
@@ -1088,13 +1089,12 @@
       "git-readonly-whitelist"
     ],
     "priority": 2,
-    "mention_count": 5,
-    "mention_count_zh": 5,
+    "mention_count": 0,
+    "mention_count_zh": 0,
     "mention_count_en": 0,
-    "chapters_zh": [
-      "part3_子系统完全解析/18_Bash_AST解析器完全解析.md"
-    ],
-    "chapters_en": []
+    "chapters_zh": [],
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "F-089",
@@ -1118,7 +1118,8 @@
     ],
     "chapters_en": [
       "part2_代码架构完全解构/01_代码地图.md"
-    ]
+    ],
+    "_suppressed": true
   },
   {
     "id": "growthbook-feature-gate",
@@ -1205,7 +1206,7 @@
     "system_section": "part5_supplementary/83_Harness_Engineering",
     "definition_zh": "AI Agent 工程化范式新词。Harness（哈尼斯，原意马具）指把 LLM 模型封装成能完成实际任务的\"骑手\"的全套外围工程：Prompt、工具、权限、记忆、UI 等。Claude Code 是该范式典型代表。",
     "definition_en": "Emerging term in AI agent engineering. 'Harness' (originally horse tack) refers to the full peripheral engineering that turns an LLM into a task-completing 'rider': prompts, tools, permissions, memory, UI. Claude Code is a canonical example.",
-    "plain_explanation_zh": "💡 像把一匹野马装上马鞍 + 缰绳 + 鞍袋——光有马跑不成事，全套装备到位才能拉车",
+    "plain_explanation_zh": "💡 像把野马（LLM 模型）装上马鞍（Prompt 设计）+ 缰绳（权限系统）+ 鞍袋（工具集）——光有马跑不成事，全套装备到位才能拉车",
     "plain_explanation_en": "💡 Like fitting a wild horse with saddle + reins + bags—the horse alone can't haul; full tack makes it useful",
     "priority": 1,
     "see_also": [
@@ -1263,7 +1264,8 @@
       "part2_代码架构完全解构/09_扩展生态.md",
       "part3_子系统完全解析/远程Agent管理完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "hooks-system",
@@ -1675,7 +1677,8 @@
     ],
     "chapters_en": [
       "part3_子系统完全解析/06_CLAUDE_md加载系统完全解析.md"
-    ]
+    ],
+    "_suppressed": true
   },
   {
     "id": "mulberry32",
@@ -1706,7 +1709,8 @@
     "chapters_en": [
       "part2_好奇心驱动的深度问答/Q15_终端里那只小动物是怎么活起来的.md",
       "part3_子系统完全解析/13_Buddy伴侣系统完全解析.md"
-    ]
+    ],
+    "_suppressed": true
   },
   {
     "id": "F-040",
@@ -1730,7 +1734,8 @@
     "chapters_en": [
       "part2_好奇心驱动的深度问答/Q15_终端里那只小动物是怎么活起来的.md",
       "part3_子系统完全解析/13_Buddy伴侣系统完全解析.md"
-    ]
+    ],
+    "_suppressed": true
   },
   {
     "id": "overlay-filesystem",
@@ -1740,7 +1745,7 @@
     "system_section": "part4_工程哲学/01_在等待时间里藏工作",
     "definition_zh": "投机执行中的写操作隔离机制——写入被重定向到临时目录 ~/.claude/tmp/speculation/，接受时复制到主目录，拒绝时删除整个 overlay。",
     "definition_en": "Write operation isolation mechanism in speculative execution—writes redirected to temp directory ~/.claude/tmp/speculation/, copied to main directory when accepted, entire overlay deleted when rejected.",
-    "plain_explanation_zh": "💡 像在草稿纸上画画——画完了觉得好就描到正式画纸上，不好就扔掉草稿",
+    "plain_explanation_zh": "💡 像草稿纸画画——所有改动先在草稿纸（overlay 层）上画，觉得满意就誊到正式纸上（commit），不满意整张草稿丢掉",
     "plain_explanation_en": "💡 Like drawing on draft paper—if good trace to formal drawing, if not throw away draft",
     "first_appearance": {
       "chapter": "part4_工程哲学/01_在等待时间里藏工作.md",
@@ -1779,7 +1784,8 @@
     "chapters_zh": [],
     "chapters_en": [
       "part3_子系统完全解析/23_Peer与Session发现层完全解析.md"
-    ]
+    ],
+    "_suppressed": true
   },
   {
     "id": "proto-field-isolation",
@@ -1849,13 +1855,12 @@
       "dream-consolidation"
     ],
     "priority": 1,
-    "mention_count": 1,
-    "mention_count_zh": 1,
+    "mention_count": 0,
+    "mention_count_zh": 0,
     "mention_count_en": 0,
-    "chapters_zh": [
-      "part0_序章/00_序章.md"
-    ],
-    "chapters_en": []
+    "chapters_zh": [],
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "prompt-design-wisdom",
@@ -1868,13 +1873,12 @@
     "plain_explanation_zh": "💡 像写法律条文——必须身份清楚、规则量化、例子充分、漏洞预警全到位",
     "plain_explanation_en": "💡 Like writing legal text—identity clear, rules quantified, examples sufficient, edge cases warned",
     "priority": 1,
-    "mention_count": 1,
-    "mention_count_zh": 1,
+    "mention_count": 0,
+    "mention_count_zh": 0,
     "mention_count_en": 0,
-    "chapters_zh": [
-      "part0_序章/00_序章.md"
-    ],
-    "chapters_en": []
+    "chapters_zh": [],
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "prompt-unit",
@@ -2442,7 +2446,7 @@
     "system_section": "04_查询循环",
     "definition_zh": "用户附加 +500k 等指令触发的客户端续命机制。当模型正常 stop 时，checkTokenBudget() 注入 isMeta: true 的用户消息让模型「以为用户催促继续」。出现 diminish returns（连续3次增量<500 token）时强制停止，防止无限续命。区别于 taskBudget（API 服务端限额）。",
     "definition_en": "Client-side continuation mechanism triggered by user appending +500k. When model stops normally, checkTokenBudget() injects an isMeta: true user message making the model 'think the user is urging continuation'. Diminishing returns (3 consecutive deltas <500 tokens) forces stop, preventing infinite continuation. Distinct from taskBudget (API server-side limit).",
-    "plain_explanation_zh": "💡 像马拉松补给站——每跑完一段系统看你还有体力就递水让你继续，但发现你原地踏步就算水站还有水也强制停",
+    "plain_explanation_zh": "💡 像马拉松补给站——每隔几公里设一站，跑完一段就补给。用户在消息后加 +500k 让 AI 多跑会儿",
     "plain_explanation_en": "💡 Like marathon aid stations — after each segment the system checks if you have energy, hands you water to keep going, but forces you to stop if you're running in place",
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/04_查询循环.md",
@@ -2519,7 +2523,8 @@
     ],
     "chapters_en": [
       "part3_子系统完全解析/06_CLAUDE_md加载系统完全解析.md"
-    ]
+    ],
+    "_suppressed": true
   },
   {
     "id": "vim-state-machine",
@@ -2588,7 +2593,8 @@
       "part2_代码架构完全解构/14_Prompt原文集.md",
       "part2_好奇心驱动的深度问答/Q16_如何从浏览器远程驾驶你的终端AI.md",
       "part2_好奇心驱动的深度问答/Q17_你的声音是怎么变成代码指令的.md"
-    ]
+    ],
+    "_suppressed": true
   },
   {
     "id": "worker",
@@ -2741,7 +2747,8 @@
       "part2_好奇心驱动的深度问答/Q21_MagicDocs是怎么自动维护文档的.md",
       "part3_子系统完全解析/10_Agent与任务系统完全解析.md",
       "part4_工程哲学/02_token是一等公民.md"
-    ]
+    ],
+    "_suppressed": true
   },
   {
     "id": "iterm2-backend",
@@ -3212,7 +3219,7 @@
     "system_section": "part1_认识这个系统/01_这不是聊天机器人",
     "definition_zh": "LLM 单次推理能\"看见\"的最长 token 序列。Claude Sonnet 4.5 是 200K，Opus 4.7 是 1M。Claude Code 通过上下文压缩、prompt cache、动态裁剪等机制在窗口内塞下尽可能多有效信息。",
     "definition_en": "The maximum number of tokens a language model can process. Claude Code coordinates all context information sources within this limit, triggering compression mechanisms when the window approaches capacity. One of the hardest hard limits in the Claude Code architecture.",
-    "plain_explanation_zh": "💡 像视野——你能同时看见的范围，超出就看不见。LLM 也一样",
+    "plain_explanation_zh": "💡 像一本 300 页的书——你能同时看见的字数。Sonnet 4.5 = 200K 字（约 300 页），Opus 4.7 = 1M 字（1500 页）",
     "plain_explanation_en": "💡 Like field of view—what you can see at once. LLMs work the same",
     "priority": 1,
     "see_also": [
@@ -3256,7 +3263,8 @@
       "part2_代码架构完全解构/06_Agent编排.md",
       "part3_子系统完全解析/10_Agent与任务系统完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "bypass-immune",
@@ -3421,7 +3429,8 @@
     "chapters_zh": [
       "part2_好奇心驱动的深度问答/Q02_上下文压缩为什么需要六套机制.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "proactive-mode",
@@ -3471,7 +3480,8 @@
       "part1_认识这个系统/03_读懂本书需要的全部概念.md",
       "part2_代码架构完全解构/11_配置治理.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "five-region-architecture",
@@ -3566,7 +3576,8 @@
     "chapters_zh": [
       "part3_子系统完全解析/任务执行管道完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "F-054",
@@ -3592,7 +3603,8 @@
       "part2_代码架构完全解构/06_Agent编排.md",
       "part2_好奇心驱动的深度问答/Q26_为什么Claude_Code能像Agent一样工作.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "task-claiming",
@@ -4094,7 +4106,8 @@
       "part3_子系统完全解析/16_输出样式系统完全解析.md",
       "part4_工程哲学/02_token是一等公民.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "F-067",
@@ -4116,7 +4129,8 @@
     "chapters_zh": [
       "part3_子系统完全解析/16_输出样式系统完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "F-068",
@@ -4138,7 +4152,8 @@
     "chapters_zh": [
       "part3_子系统完全解析/16_输出样式系统完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "bundled-skill",
@@ -4474,7 +4489,8 @@
     "chapters_zh": [
       "part2_代码架构完全解构/03_提示词工厂.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "dynamic-injection",
@@ -4550,7 +4566,8 @@
     "chapters_zh": [
       "part2_代码架构完全解构/04_查询循环.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "coordinator",
@@ -4852,8 +4869,7 @@
     "mention_count_en": 26,
     "chapters_zh": [
       "part1_认识这个系统/03_读懂本书需要的全部概念.md",
-      "part2_代码架构完全解构/04_查询循环.md",
-      "part2_好奇心驱动的深度问答/Q02_上下文压缩为什么需要六套机制.md"
+      "part2_代码架构完全解构/04_查询循环.md"
     ],
     "chapters_en": [
       "part1_认识这个系统/02_五分钟看懂系统架构.md",
@@ -5064,7 +5080,8 @@
     "chapters_zh": [
       "part3_子系统完全解析/13_Buddy伴侣系统完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "fail-open",
@@ -5137,7 +5154,8 @@
     "chapters_zh": [],
     "chapters_en": [
       "part2_代码架构完全解构/07_安全架构.md"
-    ]
+    ],
+    "_suppressed": true
   },
   {
     "id": "failure-mode-warning",
@@ -5504,7 +5522,8 @@
     ],
     "chapters_en": [
       "part2_代码架构完全解构/03_提示词工厂.md"
-    ]
+    ],
+    "_suppressed": true
   },
   {
     "id": "work-secret",
@@ -5612,7 +5631,8 @@
       "part3_子系统完全解析/12_Bridge远程架构完全解析.md",
       "part3_子系统完全解析/23_Peer与Session发现层完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "tool-is-concurrency-safe",
@@ -5634,11 +5654,9 @@
     ],
     "priority": 2,
     "mention_count": 21,
-    "mention_count_zh": 3,
+    "mention_count_zh": 0,
     "mention_count_en": 21,
-    "chapters_zh": [
-      "part2_代码架构完全解构/05_工具运行时.md"
-    ],
+    "chapters_zh": [],
     "chapters_en": [
       "part1_认识这个系统/02_五分钟看懂系统架构.md",
       "part2_代码架构完全解构/01_代码地图.md",
@@ -5820,7 +5838,8 @@
       "part2_代码架构完全解构/01_代码地图.md",
       "part2_代码架构完全解构/02_启动序列.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "app-state",
@@ -5929,7 +5948,8 @@
       "part3_子系统完全解析/10_Agent与任务系统完全解析.md",
       "part3_子系统完全解析/任务执行管道完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "async-generator",
@@ -5991,7 +6011,8 @@
       "part2_代码架构完全解构/14_Prompt原文集.md",
       "part4_工程哲学/02_token是一等公民.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "F-002",
@@ -6016,7 +6037,8 @@
     ],
     "chapters_en": [
       "part2_\\345\\245\\275\\345\\245\\207\\345\\277\\203\\351\\251\\261\\345\\212\\250\\347\\232\\204\\346\\267\\261\\345\\272\\246\\351\\227\\256\\347\\255\\224/Q10_\\347\\224\\250\\346\\210\\267\\350\\203\\275\\345\\234\\250Claude\\347\\232\\204\\347\\256\\241\\347\\220\\206\\345\\267\\245\\345\\216\\202/02_VIS-2A-010_queryLoop\\345\\277\\253\\350\\210\\252\\345\\272\\246\\345\\210\\266\\345\\275\\224.md"
-    ]
+    ],
+    "_suppressed": true
   },
   {
     "id": "F-074",
@@ -6038,7 +6060,8 @@
     "chapters_zh": [
       "part3_子系统完全解析/22_PromptCache可观测性完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "chain-of-thought",
@@ -6189,7 +6212,7 @@
     "system_section": "part2_好奇心驱动的深度问答/Q06_Claude在你打字的时候偷偷在做什么",
     "definition_zh": "在用户尚未输入下一条消息之前，系统预判用户意图并提前启动完整的 AI 推理循环。猜对了响应延迟归零，猜错了丢弃结果。",
     "definition_en": "Before the user inputs the next message, the system predicts user intent and starts a complete AI reasoning cycle in advance. If correct, response latency drops to zero; if wrong, results are discarded.",
-    "plain_explanation_zh": "💡 像服务员在你翻菜单时就预先备好食材——你刚开口说要点什么，菜已经在做了",
+    "plain_explanation_zh": "💡 像服务员翻菜单时备食材——猜你点凉拌黄瓜就先洗黄瓜，你点了别的厨师就把食材扔了",
     "plain_explanation_en": "💡 Like a waiter prepping ingredients while you browse the menu — by the time you say what you want, it's already being cooked",
     "priority": 1,
     "mention_count": 123,
@@ -6398,7 +6421,8 @@
     "chapters_zh": [
       "part2_代码架构完全解构/03_提示词工厂.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "prompt-injection",
@@ -6576,8 +6600,7 @@
     "mention_count_en": 9,
     "chapters_zh": [
       "part2_\\345\\245\\275\\345\\245\\207\\345\\277\\203\\351\\251\\261\\345\\212\\250\\347\\232\\204\\346\\267\\261\\345\\272\\246\\351\\227\\256\\347\\255\\224/Q10_\\347\\224\\250\\346\\210\\267\\350\\203\\275\\345\\234\\250Claude\\347\\232\\204\\347\\256\\241\\347\\220\\206\\345\\267\\245\\345\\216\\202/02_VIS-2A-010_queryLoop\\345\\277\\253\\350\\210\\252\\345\\272\\246\\345\\210\\266\\345\\275\\224.md",
-      "part2_代码架构完全解构/04_查询循环.md",
-      "part3_子系统完全解析/22_PromptCache可观测性完全解析.md"
+      "part2_代码架构完全解构/04_查询循环.md"
     ],
     "chapters_en": [
       "part2_\\345\\245\\275\\345\\245\\207\\345\\277\\203\\351\\251\\261\\345\\212\\250\\347\\232\\204\\346\\267\\261\\345\\272\\246\\351\\227\\256\\347\\255\\224/Q10_\\347\\224\\250\\346\\210\\267\\350\\203\\275\\345\\234\\250Claude\\347\\232\\204\\347\\256\\241\\347\\220\\206\\345\\267\\245\\345\\216\\202/02_VIS-2A-010_queryLoop\\345\\277\\253\\350\\210\\252\\345\\272\\246\\345\\210\\266\\345\\275\\224.md"
@@ -6678,7 +6701,8 @@
       "part3_子系统完全解析/08_遥测与可观测性完全解析.md",
       "part3_子系统完全解析/11_文件历史系统完全解析.md",
       "part3_子系统完全解析/17_遥测与分析系统完全解析.md"
-    ]
+    ],
+    "_suppressed": true
   },
   {
     "id": "F-045",
@@ -6704,7 +6728,8 @@
       "part3_子系统完全解析/02_投机执行子系统完全解析.md",
       "part3_子系统完全解析/10_Agent与任务系统完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "agent",
@@ -6762,7 +6787,8 @@
       "part1_认识这个系统/03_读懂本书需要的全部概念.md",
       "part2_代码架构完全解构/08_状态与持久化.md",
       "part3_子系统完全解析/11_文件历史系统完全解析.md"
-    ]
+    ],
+    "_suppressed": true
   },
   {
     "id": "F-006",
@@ -6786,7 +6812,8 @@
       "part2_代码架构完全解构/09_扩展生态.md",
       "part3_子系统完全解析/12_Bridge远程架构完全解析.md",
       "part3_子系统完全解析/远程Agent管理完全解析.md"
-    ]
+    ],
+    "_suppressed": true
   },
   {
     "id": "server-authoritative",
@@ -7015,13 +7042,13 @@
   },
   {
     "id": "frontmatter-paths",
-    "term_zh": "条件规则",
-    "term_en": "Conditional Rules",
+    "term_zh": "frontmatter 路径配置",
+    "term_en": "Frontmatter Paths",
     "category": "prompt_pattern",
     "system_section": "part2_好奇心驱动的深度问答/Q07_CLAUDE_md是怎么被找到和组装的",
-    "definition_zh": "通过 YAML frontmatter 的 paths 字段声明规则只对特定文件路径生效的机制，如仅在 TypeScript 文件中生效的编码规范。",
+    "definition_zh": "在 Markdown frontmatter 元数据块中声明的文件路径列表，用于让某文档关联引用其他文件。注意：frontmatter 是 markdown 顶部 --- 包围的元数据头（参见 frontmatter 词条），不是\"条件规则\"。",
     "definition_en": "Mechanism where rules are declared to only apply to specific file paths via YAML frontmatter paths field, such as coding standards applying only to TypeScript files.",
-    "plain_explanation_zh": "💡 像公司里只有后厨人员才需要食品安全规范——规则精确到岗位",
+    "plain_explanation_zh": "💡 像书的版权页里写的\"参考文献列表\"——独立于正文，结构化声明引用关系",
     "plain_explanation_en": "💡 Like only kitchen staff need food safety regulations—rules are precise to the position",
     "first_appearance": {
       "chapter": "part2_好奇心驱动的深度问答/Q07_CLAUDE_md是怎么被找到和组装的.md",
@@ -7032,17 +7059,12 @@
       "include-directive"
     ],
     "priority": 2,
-    "mention_count": 34,
-    "mention_count_zh": 34,
+    "mention_count": 0,
+    "mention_count_zh": 0,
     "mention_count_en": 0,
-    "chapters_zh": [
-      "part2_代码架构完全解构/07_安全架构.md",
-      "part2_代码架构完全解构/09_扩展生态.md",
-      "part2_好奇心驱动的深度问答/Q05_权限系统是怎么在灵活性和安全性之间走钢丝的.md",
-      "part2_好奇心驱动的深度问答/Q07_CLAUDE_md是怎么被找到和组装的.md",
-      "part3_子系统完全解析/01_权限系统完全解析.md"
-    ],
-    "chapters_en": []
+    "chapters_zh": [],
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "claude-code-simple",
@@ -7389,7 +7411,8 @@
       "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md",
       "part5_批判与超越/03_把这些思想用在你的项目里.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "computer-use",
@@ -7568,7 +7591,8 @@
     ],
     "chapters_en": [
       "part2_代码架构完全解构/14_Prompt原文集.md"
-    ]
+    ],
+    "_suppressed": true
   },
   {
     "id": "feature-flag",
@@ -7684,7 +7708,8 @@
       "part2_代码架构完全解构/14_Prompt原文集.md",
       "part2_好奇心驱动的深度问答/Q02_上下文压缩为什么需要六套机制.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "process-user-input",
@@ -7808,7 +7833,8 @@
     "chapters_zh": [
       "part3_子系统完全解析/13_Buddy伴侣系统完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "F-036",
@@ -8180,7 +8206,8 @@
     "chapters_zh": [
       "part2_代码架构完全解构/03_提示词工厂.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "prompt-cache-break-detection",
@@ -8259,7 +8286,8 @@
       "part2_代码架构完全解构/10_Token经济学.md",
       "part3_子系统完全解析/22_PromptCache可观测性完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "compile-time-gating",
@@ -8364,10 +8392,9 @@
     ],
     "priority": 2,
     "mention_count": 35,
-    "mention_count_zh": 35,
+    "mention_count_zh": 1,
     "mention_count_en": 35,
     "chapters_zh": [
-      "part2_代码架构完全解构/14_Prompt原文集.md",
       "part2_好奇心驱动的深度问答/Q21_MagicDocs是怎么自动维护文档的.md"
     ],
     "chapters_en": [
@@ -8425,7 +8452,8 @@
     "chapters_zh": [
       "part2_好奇心驱动的深度问答/Q21_MagicDocs是怎么自动维护文档的.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "self-correction",
@@ -8585,7 +8613,8 @@
     "chapters_zh": [
       "part3_子系统完全解析/13_Buddy伴侣系统完全解析.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "memoize",
@@ -8856,7 +8885,8 @@
       "part3_子系统完全解析/10_Agent与任务系统完全解析.md",
       "part3_子系统完全解析/12_Bridge远程架构完全解析.md",
       "part3_子系统完全解析/19_Cron调度系统完全解析.md"
-    ]
+    ],
+    "_suppressed": true
   },
   {
     "id": "scheduler-lock",
@@ -9118,7 +9148,8 @@
       "part2_代码架构完全解构/09_扩展生态.md",
       "part2_好奇心驱动的深度问答/Q10_用户能在Claude的生命周期里插多少个钩子.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "partial-compact",
@@ -9167,7 +9198,8 @@
     "chapters_zh": [
       "part2_代码架构完全解构/11_配置治理.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "hook",
@@ -9249,7 +9281,8 @@
     "chapters_zh": [
       "references.md"
     ],
-    "chapters_en": []
+    "chapters_en": [],
+    "_suppressed": true
   },
   {
     "id": "F-018",
@@ -9280,7 +9313,7 @@
     "system_section": "07_安全架构",
     "definition_zh": "auto-approve 模式的安全阀。核心逻辑是 fail-closed（故障关闭）：当 AI 权限分类器不可用时（网络故障、服务宕机、响应超时），系统触发 tengu_iron_gate_closed——直接拒绝该工具调用，而不是降级放行。默认 fail-closed，Anthropic 可远程切换为 fail-open 避免整体瘫痪。",
     "definition_en": "The safety valve of auto-approve mode. Core logic is fail-closed: when the AI permission classifier is unavailable (network failure, service down, timeout), system triggers tengu_iron_gate_closed — directly denies the tool call rather than degrading to allow. Default fail-closed; Anthropic can remotely switch to fail-open to avoid total paralysis.",
-    "plain_explanation_zh": "💡 像银行金库的断电自动锁——断电时自动锁死（fail-closed），而不是自动打开（fail-open）",
+    "plain_explanation_zh": "💡 像门口铁门 + AI 安检员（一个判断命令安不安全的小型 AI）——高风险操作必须双重过审",
     "plain_explanation_en": "💡 Like a bank vault that locks automatically on power loss — locks shut (fail-closed) rather than opening (fail-open)",
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/07_安全架构.md",
@@ -9538,7 +9571,8 @@
       "part2_代码架构完全解构/07_安全架构.md",
       "part2_代码架构完全解构/14_Prompt原文集.md",
       "part3_子系统完全解析/06_CLAUDE_md加载系统完全解析.md"
-    ]
+    ],
+    "_suppressed": true
   },
   {
     "id": "prefetch",
@@ -9713,5 +9747,793 @@
     "chapters_zh": [],
     "chapters_en": [],
     "_suppressed": true
+  },
+  {
+    "id": "terminal-cli",
+    "term_zh": "终端",
+    "term_en": "CLI",
+    "category": "infra",
+    "system_section": "part0_序章",
+    "definition_zh": "程序员用键盘输入命令、看程序文字回应的'黑底白字'窗口。Mac 叫 Terminal，Windows 叫 CMD/PowerShell。Claude Code 整个就活在终端里——你打字它做事。",
+    "definition_en": "The 'black-screen, text-input' window programmers use to type commands and see text responses. Called Terminal on Mac, CMD/PowerShell on Windows. Claude Code lives entirely in the terminal—you type, it acts.",
+    "plain_explanation_zh": "💡 像跟电脑用文字聊天的纯文字版聊天窗口——只能用键盘打字、电脑用文字回",
+    "plain_explanation_en": "💡 Like a text-only chat window with your computer—only keyboard input, text replies",
+    "priority": 1,
+    "see_also": [
+      "repl"
+    ],
+    "mention_count": 374,
+    "mention_count_zh": 374,
+    "mention_count_en": 168,
+    "chapters_zh": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/01_这不是聊天机器人.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part2_代码架构完全解构/01_代码地图.md",
+      "part2_代码架构完全解构/02_启动序列.md"
+    ],
+    "chapters_en": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/01_这不是聊天机器人.md",
+      "part1_认识这个系统/04_八个子系统的全景地图.md",
+      "part2_代码架构完全解构/01_代码地图.md",
+      "part2_代码架构完全解构/02_启动序列.md"
+    ]
+  },
+  {
+    "id": "api",
+    "term_zh": "API",
+    "term_en": "API",
+    "category": "industry_term",
+    "system_section": "part1_认识这个系统",
+    "definition_zh": "程序之间互相'打电话'的标准接口。当 Claude Code 调用 Anthropic 服务器，就是发了一次 API 调用，传问题、收答案。'API key' 是身份证密码，证明你有权调用。",
+    "definition_en": "Standard interface for programs to 'call' each other. When Claude Code calls Anthropic's server, it makes an API call—sending the question, receiving the answer. An 'API key' is your password proving you're authorized to call.",
+    "plain_explanation_zh": "💡 像点外卖 App 给餐厅打的电话——你说要什么、它送什么过来。API key 就是你的会员卡",
+    "plain_explanation_en": "💡 Like the call your delivery app makes to a restaurant—you state what, they deliver. API key = your membership card",
+    "priority": 1,
+    "see_also": [
+      "preconnect",
+      "jwt"
+    ],
+    "mention_count": 598,
+    "mention_count_zh": 598,
+    "mention_count_en": 598,
+    "chapters_zh": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/01_这不是聊天机器人.md",
+      "part1_认识这个系统/02_五分钟看懂系统架构.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part1_认识这个系统/04_八个子系统的全景地图.md"
+    ],
+    "chapters_en": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/01_这不是聊天机器人.md",
+      "part1_认识这个系统/02_五分钟看懂系统架构.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part1_认识这个系统/04_八个子系统的全景地图.md"
+    ]
+  },
+  {
+    "id": "prompt-basic",
+    "term_zh": "Prompt",
+    "term_en": "Prompt",
+    "category": "core_mechanism",
+    "system_section": "part2_代码架构完全解构/03_提示词工厂",
+    "definition_zh": "给 AI 模型的'操作手册 + 当前任务'指令。Claude Code 每次会话开始会注入约 22 段独立 prompt（系统行为、工具说明、记忆等），决定 AI 怎么响应。",
+    "definition_en": "The 'manual + current task' instruction given to an AI model. Claude Code injects ~22 independent prompt sections per session (system behavior, tool descriptions, memory, etc.) shaping how the AI responds.",
+    "plain_explanation_zh": "💡 像给员工写的工作守则——告诉它身份是谁、能做什么、不能做什么、当前任务是啥",
+    "plain_explanation_en": "💡 Like an employee handbook—tells the AI who it is, what it can and can't do, and the current task",
+    "priority": 1,
+    "see_also": [
+      "system-prompt",
+      "prompt-cache",
+      "prompt-design-wisdom"
+    ],
+    "mention_count": 551,
+    "mention_count_zh": 551,
+    "mention_count_en": 551,
+    "chapters_zh": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/01_这不是聊天机器人.md",
+      "part1_认识这个系统/02_五分钟看懂系统架构.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part1_认识这个系统/04_八个子系统的全景地图.md"
+    ],
+    "chapters_en": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/01_这不是聊天机器人.md",
+      "part1_认识这个系统/02_五分钟看懂系统架构.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part1_认识这个系统/04_八个子系统的全景地图.md"
+    ]
+  },
+  {
+    "id": "runtime",
+    "term_zh": "运行时",
+    "term_en": "Runtime",
+    "category": "infra",
+    "system_section": "part0_序章",
+    "definition_zh": "程序'运行起来后'的实际执行环境，区别于'代码静态文本'。Claude Code 的运行时 = Node.js（JavaScript 引擎）+ 内存里活的对象 + 网络连接 + 子进程等。",
+    "definition_en": "The actual execution environment when a program is 'live and running,' vs static code text. Claude Code's runtime = Node.js (JavaScript engine) + live objects in memory + network connections + subprocesses.",
+    "plain_explanation_zh": "💡 像菜谱（代码）vs 厨房现场（运行时）——代码是说明书，运行时是真在切菜煮饭的状态",
+    "plain_explanation_en": "💡 Like a recipe (code) vs the kitchen actively cooking (runtime)—code is text, runtime is the live state",
+    "priority": 1,
+    "see_also": [
+      "abstraction-layer"
+    ],
+    "mention_count": 191,
+    "mention_count_zh": 191,
+    "mention_count_en": 39,
+    "chapters_zh": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/02_五分钟看懂系统架构.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part2_代码架构完全解构/01_代码地图.md",
+      "part2_代码架构完全解构/02_启动序列.md"
+    ],
+    "chapters_en": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/02_五分钟看懂系统架构.md",
+      "part2_代码架构完全解构/07_安全架构.md",
+      "part2_代码架构完全解构/14_Prompt原文集.md",
+      "part3_子系统完全解析/07_Sandbox沙箱系统完全解析.md"
+    ]
+  },
+  {
+    "id": "repl",
+    "term_zh": "REPL",
+    "term_en": "REPL",
+    "category": "infra",
+    "system_section": "part0_序章",
+    "definition_zh": "Read-Eval-Print Loop 缩写：读输入 → 求值 → 输出 → 循环。最经典是 Python 的 >>>提示符。Claude Code 本质就是一个 AI 增强版 REPL：你输入问题，AI 思考调用工具，输出结果，循环。",
+    "definition_en": "Read-Eval-Print Loop: read input → evaluate → print output → loop. Classic example: Python's >>> prompt. Claude Code is essentially an AI-enhanced REPL: you ask, AI thinks/uses tools, outputs result, loops.",
+    "plain_explanation_zh": "💡 像跟人对话——你说一句、它回一句、再循环下去",
+    "plain_explanation_en": "💡 Like a conversation—you say something, it responds, repeat",
+    "priority": 1,
+    "see_also": [
+      "terminal-cli"
+    ],
+    "mention_count": 60,
+    "mention_count_zh": 60,
+    "mention_count_en": 60,
+    "chapters_zh": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/01_这不是聊天机器人.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part1_认识这个系统/04_八个子系统的全景地图.md",
+      "part2_代码架构完全解构/01_代码地图.md"
+    ],
+    "chapters_en": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/01_这不是聊天机器人.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part1_认识这个系统/04_八个子系统的全景地图.md",
+      "part2_代码架构完全解构/01_代码地图.md"
+    ]
+  },
+  {
+    "id": "source-code",
+    "term_zh": "源文件",
+    "term_en": "source code",
+    "category": "industry_term",
+    "system_section": "part0_序章",
+    "definition_zh": "程序员写的、人类可读的代码文本，区别于编译/打包后的'机器可执行版本'。Claude Code 的源代码主要是 TypeScript（一种带类型检查的 JavaScript）写的。",
+    "definition_en": "Human-readable code text written by programmers, vs the compiled/bundled 'machine-executable version.' Claude Code's source is mostly TypeScript (JavaScript with type checking).",
+    "plain_explanation_zh": "💡 像菜谱是给厨师看的（源代码），打印成的菜单是给顾客看的（最终产品）",
+    "plain_explanation_en": "💡 Like a recipe (source) is for the chef, the printed menu (final product) is for the diner",
+    "priority": 1,
+    "see_also": [
+      "typescript-javascript",
+      "runtime"
+    ],
+    "mention_count": 19,
+    "mention_count_zh": 19,
+    "mention_count_en": 2,
+    "chapters_zh": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/01_这不是聊天机器人.md",
+      "part2_代码架构完全解构/01_代码地图.md",
+      "part2_代码架构完全解构/14_Prompt原文集.md",
+      "part2_好奇心驱动的深度问答/Q16_如何从浏览器远程驾驶你的终端AI.md"
+    ],
+    "chapters_en": [
+      "part2_代码架构完全解构/14_Prompt原文集.md"
+    ]
+  },
+  {
+    "id": "typescript-javascript",
+    "term_zh": "TypeScript",
+    "term_en": "TypeScript",
+    "category": "industry_term",
+    "system_section": "part0_序章",
+    "definition_zh": "JavaScript 是浏览器+服务器最流行的编程语言之一。TypeScript 是 JS 加了'类型注释'的版本——多了一层'这个变量是数字、那个是字符串'的检查，更不容易写错。Claude Code 用 TS 写。",
+    "definition_en": "JavaScript is one of the most popular browser+server languages. TypeScript adds 'type annotations' on top—an extra layer checking 'this var is a number, that's a string'—catches more bugs. Claude Code is written in TS.",
+    "plain_explanation_zh": "💡 像写信 vs 填表——JS 是自由写信，TS 是有格子提示哪填数字哪填名字",
+    "plain_explanation_en": "💡 Like prose vs a form—JS is free writing, TS has labeled boxes (number here, name there)",
+    "priority": 1,
+    "see_also": [
+      "source-code"
+    ],
+    "mention_count": 86,
+    "mention_count_zh": 86,
+    "mention_count_en": 86,
+    "chapters_zh": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/01_这不是聊天机器人.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part1_认识这个系统/04_八个子系统的全景地图.md",
+      "part2_代码架构完全解构/01_代码地图.md"
+    ],
+    "chapters_en": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/01_这不是聊天机器人.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part1_认识这个系统/04_八个子系统的全景地图.md",
+      "part2_代码架构完全解构/01_代码地图.md"
+    ]
+  },
+  {
+    "id": "sync-async",
+    "term_zh": "同步",
+    "term_en": "sync",
+    "category": "engineering_method",
+    "system_section": "part2_代码架构完全解构/04_查询循环",
+    "definition_zh": "同步 = '排队等'，一件做完才下一件；异步 = '派出去后台做，先做别的'。AI 调用 + 网络请求 + 文件读写都是异步的，Claude Code 因此能'同时'读三个文件。",
+    "definition_en": "Sync = 'wait in line'—one task at a time; Async = 'fire and forget, do other things while waiting.' AI calls, network, file IO are all async; that's why Claude Code can read 3 files 'simultaneously.'",
+    "plain_explanation_zh": "💡 像在 ATM 排队（同步）vs 取号叫到再来（异步）——后者你能去先逛街",
+    "plain_explanation_en": "💡 Like queuing at the ATM (sync) vs taking a number and being paged (async)—the latter lets you shop",
+    "priority": 1,
+    "see_also": [
+      "latency-hiding",
+      "streaming-tool-executor",
+      "io-operation"
+    ],
+    "mention_count": 136,
+    "mention_count_zh": 136,
+    "mention_count_en": 11,
+    "chapters_zh": [
+      "part0_序章/00_序章.md",
+      "part2_\\344\\273\\243\\347\\240\\201\\346\\236\\266\\346\\236\\204\\345\\256\\214\\345\\205\\250\\350\\247\\243\\346\\236\\204/05_\\345\\267\\245\\345\\205\\267\\350\\277\\220\\350\\241\\214\\346\\227\\266.md",
+      "part2_代码架构完全解构/02_启动序列.md",
+      "part2_代码架构完全解构/05_工具运行时.md",
+      "part2_代码架构完全解构/08_状态与持久化.md"
+    ],
+    "chapters_en": [
+      "part2_\\344\\273\\243\\347\\240\\201\\346\\236\\266\\346\\236\\204\\345\\256\\214\\345\\205\\250\\350\\247\\243\\346\\236\\204/05_\\345\\267\\245\\345\\205\\267\\350\\277\\220\\350\\241\\214\\346\\227\\266.md",
+      "part2_\\345\\245\\275\\345\\245\\207\\345\\277\\203\\351\\251\\261\\345\\212\\250\\347\\232\\204\\346\\267\\261\\345\\272\\246\\351\\227\\256\\347\\255\\224/Q10_\\347\\224\\250\\346\\210\\267\\350\\203\\275\\345\\234\\250Claude\\347\\232\\204\\347\\256\\241\\347\\220\\206\\345\\267\\245\\345\\216\\202/02_VIS-2A-010_queryLoop\\345\\277\\253\\350\\210\\252\\345\\272\\246\\345\\210\\266\\345\\275\\224.md",
+      "part2_代码架构完全解构/12_终端UI.md"
+    ]
+  },
+  {
+    "id": "io-operation",
+    "term_zh": "I/O",
+    "term_en": "I/O",
+    "category": "infra",
+    "system_section": "part4_工程哲学",
+    "definition_zh": "Input/Output 缩写——程序读外部数据（读文件、收网络）或写外部（存文件、发请求）。比纯计算慢得多（毫秒到秒级），所以异步处理 I/O 是性能关键。",
+    "definition_en": "Input/Output—programs reading external data (file read, network receive) or writing external (file save, request send). Much slower than pure computation (ms to s), so async I/O is performance-critical.",
+    "plain_explanation_zh": "💡 像跟外界打交道：进门收快递（input）/ 出门寄信（output）——比在家想事情慢得多",
+    "plain_explanation_en": "💡 Like dealing with the outside world: receiving deliveries (input) / mailing letters (output)—much slower than thinking at home",
+    "priority": 1,
+    "see_also": [
+      "sync-async",
+      "streaming-tool-executor"
+    ],
+    "mention_count": 60,
+    "mention_count_zh": 60,
+    "mention_count_en": 60,
+    "chapters_zh": [
+      "part0_序章/00_序章.md",
+      "part2_代码架构完全解构/02_启动序列.md",
+      "part2_代码架构完全解构/04_查询循环.md",
+      "part2_代码架构完全解构/08_状态与持久化.md",
+      "part2_代码架构完全解构/12_终端UI.md"
+    ],
+    "chapters_en": [
+      "part0_序章/00_序章.md",
+      "part2_代码架构完全解构/02_启动序列.md",
+      "part2_代码架构完全解构/04_查询循环.md",
+      "part2_代码架构完全解构/08_状态与持久化.md",
+      "part2_代码架构完全解构/12_终端UI.md"
+    ]
+  },
+  {
+    "id": "json",
+    "term_zh": "JSON",
+    "term_en": "JSON",
+    "category": "protocol",
+    "system_section": "part2_代码架构完全解构",
+    "definition_zh": "程序之间传数据用的标准文本格式：用 { } 包裹键值对，方括号 [ ] 表数组。AI 工具调用、API 请求/响应、配置文件全用 JSON。可读，但缺少注释和容错。",
+    "definition_en": "Standard text format for inter-program data exchange: { } for key-value pairs, [ ] for arrays. AI tool calls, API requests/responses, config files all use JSON. Readable but lacks comments and forgiveness.",
+    "plain_explanation_zh": "💡 像统一格式的快递单——发件人/收件人/地址都按表格填，扫描机能秒读",
+    "plain_explanation_en": "💡 Like a standardized shipping label—sender/receiver/address all in fixed slots, scanners read instantly",
+    "priority": 1,
+    "see_also": [
+      "jsonl"
+    ],
+    "mention_count": 166,
+    "mention_count_zh": 166,
+    "mention_count_en": 166,
+    "chapters_zh": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part2_代码架构完全解构/01_代码地图.md",
+      "part2_代码架构完全解构/04_查询循环.md",
+      "part2_代码架构完全解构/05_工具运行时.md"
+    ],
+    "chapters_en": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part2_代码架构完全解构/01_代码地图.md",
+      "part2_代码架构完全解构/04_查询循环.md",
+      "part2_代码架构完全解构/05_工具运行时.md"
+    ]
+  },
+  {
+    "id": "concurrency",
+    "term_zh": "并行",
+    "term_en": "parallel",
+    "category": "engineering_method",
+    "system_section": "part2_代码架构完全解构/05_工具运行时",
+    "definition_zh": "并发 = 多任务交替推进（一颗 CPU 也行）；并行 = 多任务真同时跑（要多核或多机）。Claude Code 工具系统按'是否有副作用'决定能不能并行：Read 可以，Bash 不行。",
+    "definition_en": "Concurrency = multiple tasks advancing alternately (works on one CPU); Parallelism = multiple tasks truly simultaneous (needs multi-core/machine). Claude Code tools are classified by side-effect: Read can parallel, Bash can't.",
+    "plain_explanation_zh": "💡 像一个收银员轮流招呼三桌客人（并发）vs 三个收银员同时干活（并行）",
+    "plain_explanation_en": "💡 Like one cashier alternating between 3 tables (concurrency) vs 3 cashiers working at once (parallelism)",
+    "priority": 1,
+    "see_also": [
+      "streaming-tool-executor",
+      "concurrency-safe",
+      "side-effect"
+    ],
+    "mention_count": 239,
+    "mention_count_zh": 239,
+    "mention_count_en": 71,
+    "chapters_zh": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/01_这不是聊天机器人.md",
+      "part1_认识这个系统/02_五分钟看懂系统架构.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part1_认识这个系统/04_八个子系统的全景地图.md"
+    ],
+    "chapters_en": [
+      "part2_\\345\\245\\275\\345\\245\\207\\345\\277\\203\\351\\251\\261\\345\\212\\250\\347\\232\\204\\346\\267\\261\\345\\272\\246\\351\\227\\256\\347\\255\\224/Q10_\\347\\224\\250\\346\\210\\267\\350\\203\\275\\345\\234\\250Claude\\347\\232\\204\\347\\256\\241\\347\\220\\206\\345\\267\\245\\345\\216\\202/02_VIS-2A-010_queryLoop\\345\\277\\253\\350\\210\\252\\345\\272\\246\\345\\210\\266\\345\\275\\224.md",
+      "part2_代码架构完全解构/03_提示词工厂.md",
+      "part2_代码架构完全解构/05_工具运行时.md",
+      "part2_代码架构完全解构/06_Agent编排.md",
+      "part2_代码架构完全解构/07_安全架构.md"
+    ]
+  },
+  {
+    "id": "process-thread",
+    "term_zh": "进程",
+    "term_en": "process",
+    "category": "infra",
+    "system_section": "part2_代码架构完全解构/07_安全架构",
+    "definition_zh": "进程 = 操作系统的一个独立'运行实例'，有自己的内存空间。线程 = 进程内更轻量级的并发执行流。子进程 = 由父进程通过 fork/spawn 启动的独立进程。Claude Code 的 BashTool 通过子进程跑命令，与主进程隔离防崩溃。",
+    "definition_en": "Process = an OS 'running instance' with its own memory. Thread = lighter concurrent flow within a process. Subprocess = an independent process spawned by a parent. Claude Code's BashTool runs commands in subprocesses, isolated from the main process.",
+    "plain_explanation_zh": "💡 像办公室——进程是独立办公室（有门有桌椅），线程是同办公室里的几个员工，子进程是分公司",
+    "plain_explanation_en": "💡 Like offices—process is a separate office (own door, own desks), thread is colleagues in the same office, subprocess is a branch office",
+    "priority": 1,
+    "see_also": [
+      "sandbox"
+    ],
+    "mention_count": 317,
+    "mention_count_zh": 317,
+    "mention_count_en": 122,
+    "chapters_zh": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/02_五分钟看懂系统架构.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part1_认识这个系统/04_八个子系统的全景地图.md",
+      "part2_代码架构完全解构/02_启动序列.md"
+    ],
+    "chapters_en": [
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part1_认识这个系统/04_八个子系统的全景地图.md",
+      "part2_代码架构完全解构/01_代码地图.md",
+      "part2_代码架构完全解构/03_提示词工厂.md",
+      "part2_代码架构完全解构/05_工具运行时.md"
+    ]
+  },
+  {
+    "id": "git-basics",
+    "term_zh": "git",
+    "term_en": "git",
+    "category": "industry_term",
+    "system_section": "part2_代码架构完全解构",
+    "definition_zh": "git = 程序员用的版本控制工具，能记录代码每次改动 + 多人协作。仓库 = 一个项目的代码 + 历史。分支 = 在主线之外建一条'平行宇宙'试改东西。Claude Code 大量与 git 交互（读分支状态、commit、worktree）。",
+    "definition_en": "git = version control for programmers, tracks every code change + enables collaboration. Repository = a project's code + history. Branch = a 'parallel universe' off the main line for experimental changes. Claude Code heavily interacts with git (read branch state, commit, worktree).",
+    "plain_explanation_zh": "💡 像写小说带'自动备份 + 平行宇宙'功能——任何时候能回滚、还能开几个并行版本试不同剧情",
+    "plain_explanation_en": "💡 Like writing a novel with built-in 'save points + parallel universes'—rollback anytime, try alternate plots",
+    "priority": 1,
+    "see_also": [
+      "worktree-tool"
+    ],
+    "mention_count": 631,
+    "mention_count_zh": 631,
+    "mention_count_en": 514,
+    "chapters_zh": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/01_这不是聊天机器人.md",
+      "part1_认识这个系统/02_五分钟看懂系统架构.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part1_认识这个系统/04_八个子系统的全景地图.md"
+    ],
+    "chapters_en": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/01_这不是聊天机器人.md",
+      "part1_认识这个系统/02_五分钟看懂系统架构.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part1_认识这个系统/04_八个子系统的全景地图.md"
+    ]
+  },
+  {
+    "id": "network-protocols",
+    "term_zh": "HTTP",
+    "term_en": "HTTP",
+    "category": "protocol",
+    "system_section": "part4_工程哲学/01_在等待时间里藏工作",
+    "definition_zh": "网络通信三层基础：TCP = 可靠传输保证数据按序送达；TLS = 加密层防中间人偷看（HTTPS 的 S）；HTTP = 应用层协议（浏览器和 API 都用）。Claude Code 预连接 (preconnect) 是预先完成 TCP+TLS 握手省时间。",
+    "definition_en": "Three foundational network layers: TCP = reliable delivery in order; TLS = encryption layer preventing eavesdropping (the S in HTTPS); HTTP = application protocol (browsers + APIs). Claude Code's preconnect saves time by pre-establishing TCP+TLS handshakes.",
+    "plain_explanation_zh": "💡 像寄快递——TCP 是物流网保证按顺序送到，TLS 是密封信封防偷看，HTTP 是写信内容的格式",
+    "plain_explanation_en": "💡 Like shipping—TCP guarantees ordered delivery, TLS is the sealed envelope, HTTP is the letter format",
+    "priority": 2,
+    "see_also": [
+      "preconnect"
+    ],
+    "mention_count": 92,
+    "mention_count_zh": 92,
+    "mention_count_en": 92,
+    "chapters_zh": [
+      "part1_认识这个系统/04_八个子系统的全景地图.md",
+      "part2_代码架构完全解构/02_启动序列.md",
+      "part2_代码架构完全解构/03_提示词工厂.md",
+      "part2_代码架构完全解构/04_查询循环.md",
+      "part2_代码架构完全解构/09_扩展生态.md"
+    ],
+    "chapters_en": [
+      "part1_认识这个系统/04_八个子系统的全景地图.md",
+      "part2_代码架构完全解构/02_启动序列.md",
+      "part2_代码架构完全解构/03_提示词工厂.md",
+      "part2_代码架构完全解构/04_查询循环.md",
+      "part2_代码架构完全解构/09_扩展生态.md"
+    ]
+  },
+  {
+    "id": "mdm-policy",
+    "term_zh": "MDM",
+    "term_en": "MDM",
+    "category": "infra",
+    "system_section": "part2_代码架构完全解构/07_安全架构",
+    "definition_zh": "Mobile Device Management = IT 部门给企业员工设备下发的统一管控配置（哪些 App 允许、哪些网址封禁等）。Claude Code 启动时读 MDM 看是否被企业禁用某些功能。",
+    "definition_en": "Mobile Device Management = unified control config IT departments push to corporate devices (allowed apps, blocked URLs, etc.). Claude Code reads MDM at startup to see if features are corporate-disabled.",
+    "plain_explanation_zh": "💡 像公司发给员工的'工作手机管理系统'——能远程关掉某些功能，员工没权改",
+    "plain_explanation_en": "💡 Like a corporate phone management system—IT can remote-disable features, employee can't override",
+    "priority": 2,
+    "mention_count": 54,
+    "mention_count_zh": 54,
+    "mention_count_en": 54,
+    "chapters_zh": [
+      "part2_代码架构完全解构/02_启动序列.md",
+      "part2_代码架构完全解构/04_查询循环.md",
+      "part2_代码架构完全解构/07_安全架构.md",
+      "part2_代码架构完全解构/11_配置治理.md",
+      "part2_好奇心驱动的深度问答/Q01_那三行在import之前的代码是什么把戏.md"
+    ],
+    "chapters_en": [
+      "part2_代码架构完全解构/02_启动序列.md",
+      "part2_代码架构完全解构/04_查询循环.md",
+      "part2_代码架构完全解构/07_安全架构.md",
+      "part2_代码架构完全解构/11_配置治理.md",
+      "part2_好奇心驱动的深度问答/Q01_那三行在import之前的代码是什么把戏.md"
+    ]
+  },
+  {
+    "id": "trust-boundary",
+    "term_zh": "信任边界",
+    "term_en": "trust boundary",
+    "category": "engineering_method",
+    "system_section": "part2_代码架构完全解构/07_安全架构",
+    "definition_zh": "安全工程概念：把系统按信任等级分层（最高 = 用户、其次 = 管理员、最低 = 不可信外部输入）。跨边界的数据要消毒。Claude Code 的安全架构有 6 级信任分层（用户/管理员/MCP 服务器/AI/沙箱/外部）。",
+    "definition_en": "Security engineering concept: layer system components by trust level (highest = user, then admin, lowest = untrusted external input). Data crossing boundaries must be sanitized. Claude Code has 6 trust tiers (user/admin/MCP server/AI/sandbox/external).",
+    "plain_explanation_zh": "💡 像机场分层安检——内圈是机长（最信任），外圈是行李（最不信任），中间靠安检过滤",
+    "plain_explanation_en": "💡 Like airport zoning—pilot is innermost (most trusted), luggage is outermost (least), security checks gate between",
+    "priority": 2,
+    "see_also": [
+      "defense-in-depth",
+      "sandbox",
+      "fail-closed"
+    ],
+    "mention_count": 14,
+    "mention_count_zh": 14,
+    "mention_count_en": 1,
+    "chapters_zh": [
+      "part2_代码架构完全解构/07_安全架构.md",
+      "part2_好奇心驱动的深度问答/Q23_Deep_Link和Teleport是怎么跨设备连接的.md",
+      "part3_子系统完全解析/03_MCP平台完全解析.md",
+      "part3_子系统完全解析/07_Sandbox沙箱系统完全解析.md"
+    ],
+    "chapters_en": [
+      "part3_子系统完全解析/07_Sandbox沙箱系统完全解析.md"
+    ]
+  },
+  {
+    "id": "oauth-keychain",
+    "term_zh": "OAuth",
+    "term_en": "OAuth",
+    "category": "protocol",
+    "system_section": "part2_代码架构完全解构",
+    "definition_zh": "OAuth = 标准的'第三方授权'协议，让你授权应用访问你的账号但不告诉它密码（如'用 GitHub 登录'）。Keychain = macOS 的密钥库，安全保存 token 和密码。Claude Code 启动时从 Keychain 预读取 OAuth token。",
+    "definition_en": "OAuth = standard 'third-party authorization' protocol, letting you grant app access to your account without sharing the password (e.g., 'Sign in with GitHub'). Keychain = macOS's secure store for tokens/passwords. Claude Code prefetches OAuth tokens from Keychain at startup.",
+    "plain_explanation_zh": "💡 像酒店给你一张房卡（OAuth token），不会给你保险柜密码——卡丢了能挂失",
+    "plain_explanation_en": "💡 Like a hotel keycard (OAuth token), not the safe combo—lost card? Just deactivate it",
+    "priority": 2,
+    "see_also": [
+      "api",
+      "jwt"
+    ],
+    "mention_count": 81,
+    "mention_count_zh": 81,
+    "mention_count_en": 81,
+    "chapters_zh": [
+      "part2_代码架构完全解构/01_代码地图.md",
+      "part2_代码架构完全解构/02_启动序列.md",
+      "part2_代码架构完全解构/12_终端UI.md",
+      "part2_代码架构完全解构/13_横切关注点.md",
+      "part2_代码架构完全解构/14_Prompt原文集.md"
+    ],
+    "chapters_en": [
+      "part2_代码架构完全解构/01_代码地图.md",
+      "part2_代码架构完全解构/02_启动序列.md",
+      "part2_代码架构完全解构/12_终端UI.md",
+      "part2_代码架构完全解构/13_横切关注点.md",
+      "part2_代码架构完全解构/14_Prompt原文集.md"
+    ]
+  },
+  {
+    "id": "cache-hit",
+    "term_zh": "缓存命中",
+    "term_en": "cache hit",
+    "category": "engineering_method",
+    "system_section": "part2_代码架构完全解构",
+    "definition_zh": "缓存命中 = 找的数据正好在缓存里（快）；命中率 = 命中次数 / 总查询次数。Claude Code 把 system prompt 这种重复内容缓存，命中率越高越省 token 越快。",
+    "definition_en": "Cache hit = the requested data is already in cache (fast); hit rate = hits / total queries. Claude Code caches recurring content like system prompts; higher hit rate = fewer tokens, faster.",
+    "plain_explanation_zh": "💡 像超市的常用商品放在收银台旁边（缓存）——命中率高 = 大多数顾客拿了就走，不用跑到货架",
+    "plain_explanation_en": "💡 Like grocery essentials by the register—high hit rate = most shoppers grab and go, no aisle trip",
+    "priority": 2,
+    "see_also": [
+      "prompt-cache"
+    ],
+    "mention_count": 40,
+    "mention_count_zh": 40,
+    "mention_count_en": 5,
+    "chapters_zh": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part2_代码架构完全解构/03_提示词工厂.md",
+      "part2_代码架构完全解构/10_Token经济学.md",
+      "part2_代码架构完全解构/12_终端UI.md"
+    ],
+    "chapters_en": [
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part2_代码架构完全解构/14_Prompt原文集.md",
+      "part2_好奇心驱动的深度问答/Q11_对话也可以像代码一样分支和回滚吗.md"
+    ]
+  },
+  {
+    "id": "frontmatter",
+    "term_zh": "frontmatter",
+    "term_en": "frontmatter",
+    "category": "data_concept",
+    "system_section": "part2_好奇心驱动的深度问答/Q03",
+    "definition_zh": "Markdown 文件最顶部用 --- 包围的元数据块（YAML 格式），声明文件名、标题、描述等结构化字段。Agent 定义文件用 frontmatter 声明 agent name / description / tools 等。",
+    "definition_en": "A YAML metadata block at the top of a Markdown file, fenced by ---, declaring structured fields like name, title, description. Agent definition files use frontmatter to declare agent name / description / tools.",
+    "plain_explanation_zh": "💡 像书的版权页——封面之前那一页写作者、出版社、ISBN 这些信息，跟正文分开",
+    "plain_explanation_en": "💡 Like a book's copyright page—the page before the cover with author/publisher/ISBN, separate from the story",
+    "priority": 2,
+    "see_also": [
+      "claude-md"
+    ],
+    "mention_count": 112,
+    "mention_count_zh": 112,
+    "mention_count_en": 107,
+    "chapters_zh": [
+      "part2_代码架构完全解构/07_安全架构.md",
+      "part2_代码架构完全解构/14_Prompt原文集.md",
+      "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md",
+      "part2_好奇心驱动的深度问答/Q07_CLAUDE_md是怎么被找到和组装的.md",
+      "part2_好奇心驱动的深度问答/Q13_Skills和斜杠命令有什么本质区别.md"
+    ],
+    "chapters_en": [
+      "part2_代码架构完全解构/07_安全架构.md",
+      "part2_代码架构完全解构/14_Prompt原文集.md",
+      "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md",
+      "part2_好奇心驱动的深度问答/Q07_CLAUDE_md是怎么被找到和组装的.md",
+      "part2_好奇心驱动的深度问答/Q13_Skills和斜杠命令有什么本质区别.md"
+    ]
+  },
+  {
+    "id": "github-star",
+    "term_zh": "GitHub",
+    "term_en": "GitHub",
+    "category": "industry_term",
+    "system_section": "part0_序章",
+    "definition_zh": "GitHub = 全球程序员存代码、协作、发布的平台。Star = 用户给项目'点赞'，是衡量项目热度的重要指标。开源 = 公开源代码任何人可看可改可用。Claude Code 是闭源商业产品，但白皮书研究的是泄漏源码。",
+    "definition_en": "GitHub = global platform where programmers store code, collaborate, publish. Star = 'like' given by users, key popularity metric. Open Source = public source code anyone can view/modify/use. Claude Code is closed-source commercial; this whitepaper studies leaked source.",
+    "plain_explanation_zh": "💡 像程序员的微博——发'作品'等点赞，但作品是代码",
+    "plain_explanation_en": "💡 Like Twitter for programmers—post 'works' for likes, but the works are code",
+    "priority": 2,
+    "see_also": [
+      "source-code"
+    ],
+    "mention_count": 170,
+    "mention_count_zh": 170,
+    "mention_count_en": 170,
+    "chapters_zh": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/01_这不是聊天机器人.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part1_认识这个系统/04_八个子系统的全景地图.md",
+      "part2_代码架构完全解构/01_代码地图.md"
+    ],
+    "chapters_en": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/01_这不是聊天机器人.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part1_认识这个系统/04_八个子系统的全景地图.md",
+      "part2_代码架构完全解构/01_代码地图.md"
+    ]
+  },
+  {
+    "id": "npm-package",
+    "term_zh": "npm",
+    "term_en": "npm",
+    "category": "infra",
+    "system_section": "part2_代码架构完全解构/09_扩展生态",
+    "definition_zh": "npm = Node.js 的包管理器，让你一行命令安装/卸载/升级第三方代码库（如 npm install react）。Claude Code 用 npm 安装数千个依赖，发布也通过 npm。",
+    "definition_en": "npm = Node.js's package manager—one command to install/uninstall/upgrade third-party libraries (e.g., npm install react). Claude Code uses npm to install thousands of dependencies and to publish itself.",
+    "plain_explanation_zh": "💡 像手机的应用商店——但是给开发者用，装的是代码组件不是 App",
+    "plain_explanation_en": "💡 Like an app store—but for developers, installing code components instead of apps",
+    "priority": 2,
+    "mention_count": 60,
+    "mention_count_zh": 60,
+    "mention_count_en": 56,
+    "chapters_zh": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part2_代码架构完全解构/07_安全架构.md",
+      "part2_代码架构完全解构/09_扩展生态.md",
+      "part2_代码架构完全解构/14_Prompt原文集.md"
+    ],
+    "chapters_en": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "part2_代码架构完全解构/07_安全架构.md",
+      "part2_代码架构完全解构/09_扩展生态.md",
+      "part2_代码架构完全解构/14_Prompt原文集.md"
+    ]
+  },
+  {
+    "id": "abort-controller",
+    "term_zh": "AbortController",
+    "term_en": "AbortController",
+    "category": "infra",
+    "system_section": "part2_代码架构完全解构/04_查询循环",
+    "definition_zh": "Web/Node 标准 API：AbortController 是'中断遥控器'，调用其 abort() 后，所有持有它信号 (AbortSignal) 的异步任务收到信号自行终止。Claude Code 工具批次中断、流式响应取消都用此。",
+    "definition_en": "Web/Node standard API: AbortController is the 'abort remote'; calling its abort() makes all async tasks holding its signal (AbortSignal) self-terminate. Claude Code uses it for tool batch abort and streaming response cancel.",
+    "plain_explanation_zh": "💡 像一个总开关——拉一下，所有连着它的电器自动断电",
+    "plain_explanation_en": "💡 Like a master switch—pull it, all connected devices power down",
+    "priority": 2,
+    "see_also": [
+      "abort-signal",
+      "sibling-abort-controller"
+    ],
+    "mention_count": 43,
+    "mention_count_zh": 43,
+    "mention_count_en": 43,
+    "chapters_zh": [
+      "part1_认识这个系统/02_五分钟看懂系统架构.md",
+      "part2_代码架构完全解构/05_工具运行时.md",
+      "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md",
+      "part2_好奇心驱动的深度问答/Q04_工具为什么能在模型还没停止说话时就开始执行.md",
+      "part2_好奇心驱动的深度问答/Q14_多个Claude实例是怎么协同工作的.md"
+    ],
+    "chapters_en": [
+      "part1_认识这个系统/02_五分钟看懂系统架构.md",
+      "part2_代码架构完全解构/05_工具运行时.md",
+      "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md",
+      "part2_好奇心驱动的深度问答/Q04_工具为什么能在模型还没停止说话时就开始执行.md",
+      "part2_好奇心驱动的深度问答/Q14_多个Claude实例是怎么协同工作的.md"
+    ]
+  },
+  {
+    "id": "temperature-sampling",
+    "term_zh": "temperature",
+    "term_en": "temperature",
+    "category": "core_mechanism",
+    "system_section": "part2_代码架构完全解构/04_查询循环",
+    "definition_zh": "LLM 生成时的'创意自由度'参数：0 最严谨（每次同输入同输出），1 平衡，>1 越发散。Claude Code 默认 temperature=1，依靠 prompt 约束保证一致性，不靠温度压制随机性。",
+    "definition_en": "LLM generation's 'creativity dial': 0 = strict (same input → same output), 1 = balanced, >1 = more divergent. Claude Code defaults to temperature=1, relying on prompt constraints (not temperature suppression) for consistency.",
+    "plain_explanation_zh": "💡 像厨师的创意自由度——0 是严格按菜谱做，1 是允许临场发挥",
+    "plain_explanation_en": "💡 Like a chef's creative latitude—0 = strict recipe, 1 = improvise",
+    "priority": 2,
+    "see_also": [
+      "determinism"
+    ],
+    "mention_count": 17,
+    "mention_count_zh": 17,
+    "mention_count_en": 16,
+    "chapters_zh": [
+      "part2_代码架构完全解构/04_查询循环.md",
+      "part2_好奇心驱动的深度问答/Q08_设置系统为什么需要五层优先级.md",
+      "part3_子系统完全解析/21_FastMode与UltraPlan完全解析.md"
+    ],
+    "chapters_en": [
+      "part2_代码架构完全解构/04_查询循环.md",
+      "part2_好奇心驱动的深度问答/Q08_设置系统为什么需要五层优先级.md",
+      "part3_子系统完全解析/21_FastMode与UltraPlan完全解析.md"
+    ]
+  },
+  {
+    "id": "jwt",
+    "term_zh": "JWT",
+    "term_en": "JWT",
+    "category": "protocol",
+    "system_section": "part2_代码架构完全解构/07_安全架构",
+    "definition_zh": "一种'自包含的身份令牌'格式：用 JSON 写身份信息 + 签名，服务端不用查数据库就能验真。Claude Code 用 JWT refresh 机制延长登录有效期。",
+    "definition_en": "A self-contained identity token format: identity info written in JSON + signed; server verifies without DB lookup. Claude Code uses JWT refresh to extend login validity.",
+    "plain_explanation_zh": "💡 像盖章的身份证——本身带防伪，看一眼就知道真假，不用打电话核对",
+    "plain_explanation_en": "💡 Like a stamped ID card—built-in anti-fake; verifiable at a glance, no phone confirmation needed",
+    "priority": 3,
+    "see_also": [
+      "oauth-keychain",
+      "api"
+    ],
+    "mention_count": 54,
+    "mention_count_zh": 54,
+    "mention_count_en": 54,
+    "chapters_zh": [
+      "part2_代码架构完全解构/05_工具运行时.md",
+      "part2_代码架构完全解构/07_安全架构.md",
+      "part2_代码架构完全解构/14_Prompt原文集.md",
+      "part2_好奇心驱动的深度问答/Q16_如何从浏览器远程驾驶你的终端AI.md",
+      "part3_子系统完全解析/12_Bridge远程架构完全解析.md"
+    ],
+    "chapters_en": [
+      "part2_代码架构完全解构/05_工具运行时.md",
+      "part2_代码架构完全解构/07_安全架构.md",
+      "part2_代码架构完全解构/14_Prompt原文集.md",
+      "part2_好奇心驱动的深度问答/Q16_如何从浏览器远程驾驶你的终端AI.md",
+      "part3_子系统完全解析/12_Bridge远程架构完全解析.md"
+    ]
+  },
+  {
+    "id": "ast",
+    "term_zh": "AST",
+    "term_en": "AST",
+    "category": "engineering_method",
+    "system_section": "part3_子系统完全解析/18_Bash_AST解析器",
+    "definition_zh": "代码或文本被'语法解析'后形成的树状结构，每个节点是一个语法单元（命令、参数、操作符）。Claude Code 的 Bash AST 解析器把命令拆成树后做安全检查（如禁 rm -rf /）。",
+    "definition_en": "Tree structure formed when code/text is 'syntactically parsed'; each node is a syntax unit (command, argument, operator). Claude Code's Bash AST parser splits commands into trees for safety checks (e.g., block rm -rf /).",
+    "plain_explanation_zh": "💡 像把句子拆成主谓宾——'我吃饭' → 主语-动词-宾语树，让机器能逐部分检查",
+    "plain_explanation_en": "💡 Like parsing a sentence into subject-verb-object—lets machines inspect each part",
+    "priority": 3,
+    "mention_count": 60,
+    "mention_count_zh": 60,
+    "mention_count_en": 60,
+    "chapters_zh": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/01_这不是聊天机器人.md",
+      "part2_\\345\\245\\275\\345\\245\\207\\345\\277\\203\\351\\251\\261\\345\\212\\250\\347\\232\\204\\346\\267\\261\\345\\272\\246\\351\\227\\256\\347\\255\\224/Q10_\\347\\224\\250\\346\\210\\267\\350\\203\\275\\345\\234\\250Claude\\347\\232\\204\\347\\256\\241\\347\\220\\206\\345\\267\\245\\345\\216\\202/02_VIS-2A-010_queryLoop\\345\\277\\253\\350\\210\\252\\345\\272\\246\\345\\210\\266\\345\\275\\224.md",
+      "part2_代码架构完全解构/04_查询循环.md",
+      "part2_代码架构完全解构/10_Token经济学.md"
+    ],
+    "chapters_en": [
+      "part0_序章/00_序章.md",
+      "part1_认识这个系统/01_这不是聊天机器人.md",
+      "part2_\\345\\245\\275\\345\\245\\207\\345\\277\\203\\351\\251\\261\\345\\212\\250\\347\\232\\204\\346\\267\\261\\345\\272\\246\\351\\227\\256\\347\\255\\224/Q10_\\347\\224\\250\\346\\210\\267\\350\\203\\275\\345\\234\\250Claude\\347\\232\\204\\347\\256\\241\\347\\220\\206\\345\\267\\245\\345\\216\\202/02_VIS-2A-010_queryLoop\\345\\277\\253\\350\\210\\252\\345\\272\\246\\345\\210\\266\\345\\275\\224.md",
+      "part2_代码架构完全解构/04_查询循环.md",
+      "part2_代码架构完全解构/10_Token经济学.md"
+    ]
   }
 ]
