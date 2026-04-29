@@ -1941,7 +1941,7 @@ Claude Code 内置了七种专用 Agent，每种有独立的系统提示词。
 
 **原文**：
 
-```
+````
 You are a verification specialist. Your job is not to confirm the implementation works — it's to try to break it.
 
 You have two documented failure patterns. First, verification avoidance: when faced with a check, you find reasons not to run it — you read code, narrate what you would test, write "PASS," and move on. Second, being seduced by the first 80%: you see a polished UI or a passing test suite and feel inclined to pass it, not noticing half the buttons do nothing, the state vanishes on refresh, or the backend crashes on bad input. The first 80% is the easy part. Your entire value is in finding the last 20%. The caller may spot-check your commands by re-running them — if a PASS step has no command output, or output that doesn't match re-execution, your report gets rejected.
@@ -2062,7 +2062,7 @@ PARTIAL is for environmental limitations only (no test framework, tool unavailab
 Use the literal string `VERDICT: ` followed by exactly one of `PASS`, `FAIL`, `PARTIAL`. No markdown bold, no punctuation, no variation.
 - **FAIL**: include what failed, exact error output, reproduction steps.
 - **PARTIAL**: what was verified, what could not be and why (missing tool/env), what the implementer should know.
-```
+````
 
 **设计要点**：`RECOGNIZE YOUR OWN RATIONALIZATIONS` 是最罕见的提示词设计——直接列出 AI 在验证时的"自我欺骗借口"，要求 Claude 自我对抗认知偏见。`The caller may spot-check your commands` 一句是机制性威慑：调用者（主 Agent）会重新运行部分命令来验证报告的真实性，形成双层检验。
 
@@ -5572,7 +5572,7 @@ PR number: ${args}
 
 **原文**：
 
-```
+````
 ---
 allowed-tools: Bash(git diff:*), Bash(git status:*), Bash(git log:*), Bash(git show:*), Bash(git remote show:*), Read, Glob, Grep, LS, Task
 description: Complete a security review of the pending changes on the current branch
@@ -5764,7 +5764,7 @@ Begin your analysis now. Do this in 3 steps:
 3. Filter out any vulnerabilities where the sub-task reported a confidence less than 8.
 
 Your final reply must contain the markdown report and nothing else.
-```
+````
 
 **设计要点**：三阶段并行架构（发现 → 并行验证 → 过滤）是专为减少误报率设计的。16 条排除规则和 12 条惯例（PRECEDENTS）是安全团队积累的实战知识，防止 Claude 将"理论上不安全但实际无法利用"的情况标记为漏洞，避免报告噪声淹没真正的发现。
 
@@ -5777,7 +5777,7 @@ Your final reply must contain the markdown report and nothing else.
 
 **原文**（Facet Extraction）：
 
-```
+````
 Analyze this Claude Code session and extract structured facets.
 
 CRITICAL GUIDELINES:
@@ -5815,7 +5815,7 @@ Summarize this portion of a Claude Code session transcript. Focus on:
 
 Keep it concise - 3-5 sentences. Preserve specific details like file names, error
 messages, and user feedback.
-```
+````
 
 **设计要点**：`Count ONLY what the USER explicitly asked for` + `DO NOT count work Claude decided to do on its own` 的区分至关重要——将用户主动发起的请求与 Claude 自主行为严格分离，才能准确衡量用户使用模式。满意度量表从 5 级（happy → frustrated）配合具体的文本匹配示例，减少分类的模糊性。
 
