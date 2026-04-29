@@ -1027,6 +1027,52 @@ mark.search-highlight {
   position: relative;  /* 给 .copy-btn 提供锚点 */
 }
 
+/* === Prompt 中英切换 tab（2026-04-29）=== */
+.prompt-lang-tabs {
+  display: inline-flex;
+  gap: 0;
+  margin: 8px 0 -1px 0;  /* 紧贴下面的 pre */
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-radius: 6px 6px 0 0;
+  overflow: hidden;
+  position: relative;
+  z-index: 1;
+}
+.prompt-lang-tab {
+  padding: 4px 14px;
+  font-size: 11px;
+  font-family: var(--font-mono, SFMono-Regular, Menlo, Consolas, monospace);
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  letter-spacing: 0.04em;
+  transition: background 0.15s, color 0.15s;
+}
+.prompt-lang-tab:hover {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+.prompt-lang-tab.active {
+  background: var(--accent-cyan, #00d4ff);
+  color: #000;
+  font-weight: 600;
+}
+[data-theme="warm"] .prompt-lang-tab.active {
+  background: var(--accent-gold, #c2691f);
+  color: #fff;
+}
+[data-theme="light"] .prompt-lang-tab.active {
+  background: var(--accent-blue, #2563eb);
+  color: #fff;
+}
+/* tabs 上方贴的 pre 取消上圆角，整体连成一块 */
+.prompt-lang-tabs + pre {
+  border-top-left-radius: 0 !important;
+  margin-top: 0 !important;
+}
+
 /* === 一键复制按钮（2026-04-29）=== */
 .copy-btn {
   position: absolute;

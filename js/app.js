@@ -748,6 +748,124 @@
   // 暴露给其他模块（chart-embed / inspiration 等如有需要）
   window.__addCopyButtons = addCopyButtons;
 
+  // ==================== Prompt 中英切换（2026-04-29）====================
+  // 数据：book/_shared/prompt-translations.json — { "section_id": { en, zh, title } }
+  // 位置：仅在 14_Prompt原文集 章节生效（其他章节不需要）
+  // 持久化：localStorage['cc-prompt-lang'] = 'en' | 'zh'
+  var __PROMPT_TRANSLATIONS = null;
+  var __PROMPT_TRANSLATIONS_PROMISE = null;
+
+  function loadPromptTranslations() {
+    if (__PROMPT_TRANSLATIONS) return Promise.resolve(__PROMPT_TRANSLATIONS);
+    if (__PROMPT_TRANSLATIONS_PROMISE) return __PROMPT_TRANSLATIONS_PROMISE;
+    __PROMPT_TRANSLATIONS_PROMISE = fetch('book/_shared/prompt-translations.json')
+      .then(function(r) { return r.ok ? r.json() : {}; })
+      .then(function(data) { __PROMPT_TRANSLATIONS = data; return data; })
+      .catch(function() { __PROMPT_TRANSLATIONS = {}; return {}; });
+    return __PROMPT_TRANSLATIONS_PROMISE;
+  }
+
+  function getPromptLang() {
+    try { return localStorage.getItem('cc-prompt-lang') || 'en'; } catch(e) { return 'en'; }
+  }
+  function setPromptLang(v) {
+    try { localStorage.setItem('cc-prompt-lang', v); } catch(e) {}
+  }
+
+  // 给每个 ### N.M 标题之后的第一个 <pre>（"原文" block）打 data-prompt-id 标签
+  // 并在其上方注入 [EN] [中] tab
+  function wirePromptLangToggles(root) {
+    if (!root) return;
+    // 仅当当前章节是 14_Prompt原文集（heading 文本里含"Prompt 原文集" / "Prompt Collection"）
+    var firstH1 = root.querySelector('h1');
+    var isPromptChapter = firstH1 && /Prompt\s*原文集|Prompt\s*Collection|Prompt\s*Library/i.test(firstH1.textContent);
+    if (!isPromptChapter) return;
+
+    var headings = root.querySelectorAll('h3');
+    headings.forEach(function(h3) {
+      var m = (h3.textContent || '').match(/^\s*(\d+(?:\.\d+)?)\s/);
+      if (!m) return;
+      var sid = m[1];
+      // 找它后面紧邻的第一个 pre（跨过 <p> 等）
+      var node = h3.nextElementSibling;
+      var firstPre = null;
+      while (node && node.tagName !== 'H3' && node.tagName !== 'H2') {
+        if (node.tagName === 'PRE' && !firstPre) {
+          firstPre = node;
+          break;
+        }
+        node = node.nextElementSibling;
+      }
+      if (!firstPre) return;
+      firstPre.setAttribute('data-prompt-id', sid);
+      // 保存原 EN 文本（用于切回）
+      var codeEl = firstPre.querySelector('code') || firstPre;
+      if (!firstPre.hasAttribute('data-prompt-en')) {
+        firstPre.setAttribute('data-prompt-en', codeEl.textContent || '');
+      }
+
+      // 注入 toolbar（如已存在则跳过）
+      if (firstPre.previousElementSibling && firstPre.previousElementSibling.classList.contains('prompt-lang-tabs')) return;
+      var tabs = document.createElement('div');
+      tabs.className = 'prompt-lang-tabs';
+      tabs.innerHTML =
+        '<button class="prompt-lang-tab" data-lang="en" type="button">EN</button>' +
+        '<button class="prompt-lang-tab" data-lang="zh" type="button">中</button>';
+      firstPre.parentNode.insertBefore(tabs, firstPre);
+      tabs.addEventListener('click', function(e) {
+        var btn = e.target.closest('.prompt-lang-tab');
+        if (!btn) return;
+        var lang = btn.dataset.lang;
+        setPromptLang(lang);
+        applyPromptLangAll(root);
+      });
+    });
+
+    // 应用当前 lang 一次
+    applyPromptLangAll(root);
+  }
+
+  function applyPromptLangAll(root) {
+    var lang = getPromptLang();
+    // 同步 tab active 态
+    root.querySelectorAll('.prompt-lang-tabs').forEach(function(tabs) {
+      tabs.querySelectorAll('.prompt-lang-tab').forEach(function(b) {
+        b.classList.toggle('active', b.dataset.lang === lang);
+      });
+    });
+    // 切换 pre 内容
+    var pres = root.querySelectorAll('pre[data-prompt-id]');
+    if (pres.length === 0) return;
+    if (lang === 'en') {
+      pres.forEach(function(pre) {
+        var code = pre.querySelector('code') || pre;
+        var en = pre.getAttribute('data-prompt-en') || '';
+        if (code.textContent !== en) code.textContent = en;
+      });
+      // 重新高亮
+      if (window.hljs) pres.forEach(function(p) { var c = p.querySelector('code'); if (c) hljs.highlightElement(c); });
+      return;
+    }
+    // zh：异步加载翻译数据
+    loadPromptTranslations().then(function(data) {
+      pres.forEach(function(pre) {
+        var sid = pre.getAttribute('data-prompt-id');
+        var code = pre.querySelector('code') || pre;
+        var entry = data[sid];
+        if (entry && entry.zh && entry.zh.trim()) {
+          code.textContent = entry.zh;
+        } else {
+          // 翻译尚未完成 — 显示占位 + 保留 EN
+          var en = pre.getAttribute('data-prompt-en') || '';
+          code.textContent = '【中文翻译进行中…暂显示英文原文】\n\n' + en;
+        }
+      });
+      if (window.hljs) pres.forEach(function(p) { var c = p.querySelector('code'); if (c) hljs.highlightElement(c); });
+    });
+  }
+  // ==================== END Prompt 中英切换 ====================
+
+
   function renderMarkdown(md) {
     if (window.marked) {
       // Use marked.parse (works across v4-v14+)
@@ -765,6 +883,8 @@
       }
       // 一键复制按钮注入（用户要求 2026-04-29）
       addCopyButtons(chapterBody);
+      // Prompt 中英切换 tab（仅 14_Prompt原文集 章节）— 见 wirePromptLangToggles()
+      wirePromptLangToggles(chapterBody);
       // 性能优化（2026-04-25）：所有章节内图片加 lazy + async decode，
       // 防止滚动到对应位置之前消耗带宽。images/ 目录有 33MB，多张大图，
       // 不 lazy 会拖慢章节切换。
