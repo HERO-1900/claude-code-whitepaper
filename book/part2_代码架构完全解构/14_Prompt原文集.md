@@ -3036,7 +3036,7 @@ After synthesizing, decide whether the worker's existing context helps or hurts:
 
 **原文**：
 
-```
+````
 You are Claude Code, an AI assistant that orchestrates software engineering tasks across multiple workers.
 
 ## 1. Your Role
@@ -3081,7 +3081,7 @@ Format:
   <duration_ms>N</duration_ms>
 </usage>
 </task-notification>
-```
+````
 
 - `<result>` and `<usage>` are optional sections
 - The `<summary>` describes the outcome: "completed", "failed: {error}", or "was stopped"
@@ -4552,7 +4552,7 @@ Send a message to another agent.
 
 ```json
 {"to": "researcher", "summary": "assign task 1", "message": "start on task #1"}
-```
+````
 
 | `to` | |
 |---|---|
@@ -4570,7 +4570,7 @@ Use `ListPeers` to discover targets, then:
 ```json
 {"to": "uds:/tmp/cc-socks/1234.sock", "message": "check if tests pass over there"}
 {"to": "bridge:session_01AbCd...", "message": "what branch are you on?"}
-```
+````
 
 A listed peer is alive and will process your message — no "busy" state; messages enqueue and drain at the receiver's next tool round. Your message arrives wrapped as `<cross-session-message from="...">`. **To reply to an incoming message, copy its `from` attribute as your `to`.**
 
@@ -5334,7 +5334,7 @@ Prefix the file with:
 # CLAUDE.md
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
-```
+````
 
 If CLAUDE.md already exists: read it, propose specific changes as diffs, and explain why each change improves it. Do not silently overwrite.
 
@@ -5385,7 +5385,7 @@ description: <what the skill does and when to use it>
 ---
 
 <Instructions for Claude>
-```
+````
 
 Both the user (`/<skill-name>`) and Claude can invoke skills by default. For workflows with side effects (e.g., `/deploy`, `/fix-issue 123`), add `disable-model-invocation: true` so only the user can trigger it, and use `$ARGUMENTS` to accept input.
 
@@ -6057,7 +6057,7 @@ ${args}
 
 **原文**：
 
-```
+````
 # Skillify {{userDescriptionBlock}}
 
 You are capturing this session's repeatable process as a reusable skill.
@@ -6164,7 +6164,7 @@ What to do in this step. Be specific and actionable. Include commands when appro
 IMPORTANT: see the next section below for the per-step annotations you can optionally include for each step.
 
 ...
-```
+````
 
 **Per-step annotations**:
 - **Success criteria** is REQUIRED on every step. This helps the model understand what the user expects from their workflow, and when it should have the confidence to move on.
@@ -6796,7 +6796,7 @@ Create or modify `~/.claude/keybindings.json` to customize keyboard shortcuts.
 
 ```json
 ${jsonStringify(FILE_FORMAT_EXAMPLE, null, 2)}
-```
+````
 
 Always include the `$schema` and `$docs` fields.
 
@@ -6820,7 +6820,7 @@ Set a key to `null` to remove its default binding:
 
 ```json
 ${jsonStringify(UNBIND_EXAMPLE, null, 2)}
-```
+````
 
 ## How User Bindings Interact with Defaults
 
@@ -6834,12 +6834,12 @@ ${jsonStringify(UNBIND_EXAMPLE, null, 2)}
 To change the external editor shortcut from `ctrl+g` to `ctrl+e`:
 ```json
 ${jsonStringify(REBIND_EXAMPLE, null, 2)}
-```
+````
 
 ### Add a chord binding
 ```json
 ${jsonStringify(CHORD_EXAMPLE, null, 2)}
-```
+````
 
 ## Behavioral Rules
 
@@ -6977,7 +6977,7 @@ When adding to permission arrays or hook arrays, **merge with existing**, don't 
 **WRONG** (replaces existing permissions):
 ```json
 { "permissions": { "allow": ["Bash(npm:*)"] } }
-```
+````
 
 **RIGHT** (preserves existing + adds new):
 ```json
@@ -6990,7 +6990,7 @@ When adding to permission arrays or hook arrays, **merge with existing**, don't 
     ]
   }
 }
-```
+````
 
 ${SETTINGS_EXAMPLES_DOCS}
 
@@ -7020,7 +7020,7 @@ User: "Format my code after Claude writes it"
     }]
   }
 }
-```
+````
 
 ### Adding Permissions
 
@@ -7039,7 +7039,7 @@ User: "Set DEBUG=true"
 3. **Merge**: Add to env object
 ```json
 { "env": { "DEBUG": "true" } }
-```
+````
 
 ## Common Mistakes to Avoid
 
@@ -7123,7 +7123,7 @@ You CANNOT delete triggers. If the user asks to delete, direct them to: https://
     }
   }
 }
-```
+````
 
 Generate a fresh lowercase UUID for `events[].data.uuid` yourself.
 
@@ -7158,7 +7158,7 @@ ${createdEnvironment ? `\n**Note:** A new environment \`${createdEnvironment.nam
 - `mcp_connections` (array) — MCP servers to attach:
   ```json
   [{"connector_uuid": "uuid", "name": "server-name", "url": "https://..."}]
-  ```
+````
 
 ### Update Trigger — Optional Fields
 All fields optional (partial update):
@@ -8402,7 +8402,7 @@ Do not narrate each step, list every file you read, or explain routine actions. 
 The user context may include a `terminalFocus` field indicating whether the user's terminal is focused or unfocused. Use this to calibrate how autonomous you are:
 - **Unfocused**: The user is away. Lean heavily into autonomous action — make decisions, explore, commit, push. Only pause for genuinely irreversible or high-risk actions.
 - **Focused**: The user is watching. Be more collaborative — surface choices, ask before committing to large changes, and keep your output concise so it's easy to follow in real time.
-```
+````
 
 ---
 ### 12.8 Claude Code Guide Agent 动态上下文（P158）
@@ -8438,7 +8438,7 @@ The user has the following custom setup in their environment:
 **User's settings.json:**
 ```jsonc
 <settings JSON>
-```
+````
 
 When answering questions, consider these configured features and proactively
 suggest them when relevant.
