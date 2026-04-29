@@ -6541,17 +6541,23 @@ body.cc-lang-switching .cc-lang-btn {
   max-width: 80ch;
 }
 
-/* ----- toolbar (sticky) ----- */
+/* ----- toolbar (sticky) -----
+   2026-04-30 修复用户反馈"上方漏一截"：top 从 48px 改 0，z-index 101 高于 topnav，
+   滚动时 toolbar 完全覆盖 topnav 没缝隙。同时 ::before 延伸顶部一段保险。 */
 .dict-toolbar {
   position: sticky;
-  top: 48px;
-  z-index: 10;
-  background: rgba(var(--cc-bg-primary-rgb), 0.94);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  top: 0;
+  z-index: 101;
+  background: rgba(var(--cc-bg-primary-rgb), 0.96);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
   margin: 0 -1.25rem 1rem;
   padding: .85rem 1.25rem .65rem;
   border-bottom: 1px solid var(--border);
+}
+/* 实色 fallback 防止极少数浏览器没 backdrop-filter */
+@supports not (backdrop-filter: blur(1px)) {
+  .dict-toolbar { background: var(--bg-primary); }
 }
 .dict-search-row {
   display: flex; gap: .75rem; align-items: center;
@@ -6834,7 +6840,7 @@ body.cc-lang-switching .cc-lang-btn {
     margin-bottom: .75rem;
   }
   .dict-index-letter { flex: 1 0 auto; min-width: 32px; }
-  .dict-toolbar { top: 48px; }
+  .dict-toolbar { top: 0; }
   .dict-section-grid {
     grid-template-columns: 1fr;
   }

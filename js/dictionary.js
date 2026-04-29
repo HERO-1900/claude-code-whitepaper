@@ -262,20 +262,58 @@
   }
 
   // ===== Chapter mapping =====
-  // dictionary.first_appearance.chapter 是相对 book/ 的 file path
-  // 与 BOOK_STRUCTURE[].chapters[].file 对应；返回 chapter id 或 null
-  function findChapterIdByFile(filePath) {
-    if (!filePath || !window.BOOK_STRUCTURE) return null;
-    for (const part of window.BOOK_STRUCTURE) {
-      for (const ch of part.chapters) {
-        if (ch.file === filePath) return ch.id;
+  // 兼容多种 first_appearance 格式（v2 增强 2026-04-30）：
+  //   1) 完整路径 'part2_xxx/06_xxx.md' → 直接匹配 ch.file
+  //   2) 短代号 'ch11' / 'ch07' → 匹配 chapter number
+  //   3) 章节关键词如 '20_PromptCache' → 模糊匹配 ch.file 或 ch.title
+  //   4) entry 也可基于 system_section 字段做兜底
+  function findChapterIdByFile(filePath, entry) {
+    if (!window.BOOK_STRUCTURE) return null;
+    if (filePath) {
+      // 1. 精确路径匹配
+      for (const part of window.BOOK_STRUCTURE) {
+        for (const ch of part.chapters) {
+          if (ch.file === filePath) return ch.id;
+        }
+      }
+      // 2. basename 匹配（不同 part 重命名时）
+      const basename = filePath.split('/').pop();
+      for (const part of window.BOOK_STRUCTURE) {
+        for (const ch of part.chapters) {
+          if (ch.file && ch.file.split('/').pop() === basename) return ch.id;
+        }
+      }
+      // 3. 短代号 'ch11' / 'ch07' → 匹配第 N 章（part2 / part3）
+      const chMatch = filePath.match(/^ch(\d+)$/i);
+      if (chMatch) {
+        const num = parseInt(chMatch[1], 10).toString().padStart(2, '0');
+        // 优先 part3 子系统 (id p4-{n}) 再 part2 (id p2-{n})
+        for (const part of window.BOOK_STRUCTURE) {
+          for (const ch of part.chapters) {
+            if (ch.file && new RegExp(`/${num}_`).test(ch.file)) return ch.id;
+          }
+        }
+      }
+      // 4. 关键词模糊匹配（如 '20_PromptCache' / 'Sandbox' / '权限'）
+      const keyword = filePath.replace(/\.md$/, '').replace(/^.*\//, '').toLowerCase();
+      for (const part of window.BOOK_STRUCTURE) {
+        for (const ch of part.chapters) {
+          if (!ch.file) continue;
+          const chLower = ch.file.toLowerCase();
+          const titleLower = (ch.title || '').toLowerCase();
+          if (chLower.includes(keyword) || titleLower.includes(keyword)) return ch.id;
+        }
       }
     }
-    // 基于 basename fallback（不同 part 重命名时）
-    const basename = filePath.split('/').pop();
-    for (const part of window.BOOK_STRUCTURE) {
-      for (const ch of part.chapters) {
-        if (ch.file && ch.file.split('/').pop() === basename) return ch.id;
+    // 5. entry.system_section 兜底
+    const sys = entry && (entry.system_section || '');
+    if (sys) {
+      // 比如 '20_PromptCache可观测性'
+      for (const part of window.BOOK_STRUCTURE) {
+        for (const ch of part.chapters) {
+          if (!ch.file) continue;
+          if (ch.file.includes(sys) || (ch.title || '').includes(sys.replace(/^\d+_/, ''))) return ch.id;
+        }
       }
     }
     return null;
@@ -426,10 +464,15 @@
     const wordbook = getWordbook();
     const inWordbook = wordbook.indexOf(entry.id) >= 0;
 
-    // 跳转章节
-    const fa = entry.first_appearance || {};
-    const chId = findChapterIdByFile(fa.chapter);
-    const chHTML = (fa.chapter || chId) ? `<button class="dict-jump" data-chapter="${escapeHtml(chId || '')}" data-file="${escapeHtml(fa.chapter || '')}" title="${escapeHtml(fa.chapter || '')}">${lab.jump_chapter}</button>` : '';
+    // 跳转章节（兼容 first_appearance 是字符串或对象）
+    let faChapter = '';
+    const fa = entry.first_appearance;
+    if (typeof fa === 'string') faChapter = fa;
+    else if (fa && typeof fa === 'object') faChapter = fa.chapter || '';
+    const chId = findChapterIdByFile(faChapter, entry);
+    const chHTML = chId
+      ? `<button class="dict-jump" data-chapter="${escapeHtml(chId)}" title="跳转到章节">${lab.jump_chapter}</button>`
+      : '';
 
     return `<article class="dict-card" data-id="${escapeHtml(entry.id)}" id="dict-${escapeHtml(entry.id)}">
       <header class="dict-card-head">
@@ -656,10 +699,13 @@
         const cat = e.category;
         const catLabel = (CAT_LABELS()[cat] || cat || '');
         const catColor = CAT_COLORS[cat] || '#888';
-        const fa = e.first_appearance || {};
-        const chId = findChapterIdByFile(fa.chapter);
-        const chLink = (fa.chapter || chId)
-          ? '<button class="vocabulary-jump" data-chapter="' + escapeHtml(chId || '') + '" data-file="' + escapeHtml(fa.chapter || '') + '">' + escapeHtml(lab.jump_chapter) + '</button>'
+        let faStr = '';
+        const fa = e.first_appearance;
+        if (typeof fa === 'string') faStr = fa;
+        else if (fa && typeof fa === 'object') faStr = fa.chapter || '';
+        const chId = findChapterIdByFile(faStr, e);
+        const chLink = chId
+          ? '<button class="vocabulary-jump" data-chapter="' + escapeHtml(chId) + '">' + escapeHtml(lab.jump_chapter) + '</button>'
           : '';
         const addedAtTxt = e.__addedAt ? new Date(e.__addedAt).toLocaleDateString(en ? 'en' : 'zh-CN') : '';
         const masteredCls = e.__mastered ? ' vocabulary-item--mastered' : '';
