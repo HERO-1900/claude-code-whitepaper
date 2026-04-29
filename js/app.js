@@ -128,6 +128,7 @@
     reader: document.getElementById('reader'),
     gallery: document.getElementById('gallery'),
     inspiration: document.getElementById('inspiration'),
+    dictionary: document.getElementById('dictionary'),
   };
   const navBtns = {
     guide: document.getElementById('nav-guide'),
@@ -135,6 +136,7 @@
     reader: document.getElementById('nav-reader'),
     gallery: document.getElementById('nav-gallery'),
     inspiration: document.getElementById('nav-inspiration'),
+    dictionary: document.getElementById('nav-dictionary'),
   };
   const breadcrumb = document.getElementById('breadcrumb');
   const panel = document.getElementById('detail-panel');
@@ -219,8 +221,8 @@
 
     const _isEn = (function(){ try { return (localStorage.getItem('cc-locale')||'zh')==='en'; } catch(e){ return false; } })();
     const BC = _isEn
-      ? { landing: 'System Overview', welcome: 'Welcome', gallery: 'Chart Gallery', inspiration: 'Inspiration Lab' }
-      : { landing: '架构全景', welcome: '欢迎', gallery: '图表画廊', inspiration: '灵感实验室' };
+      ? { landing: 'System Overview', welcome: 'Welcome', gallery: 'Chart Gallery', inspiration: 'Inspiration Lab', dictionary: 'Dictionary' }
+      : { landing: '架构全景', welcome: '欢迎', gallery: '图表画廊', inspiration: '灵感实验室', dictionary: '词典' };
     if (BC[name]) {
       breadcrumb.textContent = `Claude Code 2.1.88 · ${BC[name]}`;
     }
@@ -326,6 +328,16 @@
         });
       } else if (window.InspirationLab) {
         InspirationLab.render(container);
+      }
+    });
+  }
+
+  // Dictionary view
+  if (navBtns.dictionary) {
+    navBtns.dictionary.addEventListener('click', () => {
+      showView('dictionary');
+      if (window.Dictionary) {
+        window.Dictionary.render();
       }
     });
   }
@@ -924,6 +936,16 @@
     if (window.GlossarySystem && currentChapter) {
       GlossarySystem.annotate(chapterBody, currentChapter.file);
     }
+    // 章节内词典 term 自动标注（Phase D）
+    // —— 运行在 Glossary 之后避免双重包裹（dict-annotator 自己会跳 .glossary-term）
+    // —— 性能：用单一 union regex 一次扫描所有 textNode，500 term × 章节 < 100ms
+    if (window.DictAnnotator && currentChapter) {
+      // 异步执行不阻塞 chart embed / nav build
+      try { console.time('[dict-annotate]'); } catch(e) {}
+      window.DictAnnotator.annotate(chapterBody).then(stats => {
+        try { console.timeEnd('[dict-annotate]'); } catch(e) {}
+      }).catch(err => { console.warn('[DictAnnotator] annotate fail', err); });
+    }
     // 章节内 H2/H3 锚点导航（侧边栏第三级）
     buildChapterSectionNav();
     // Scroll to top
@@ -1256,6 +1278,10 @@
     if (e.key === '3' && !e.ctrlKey && !e.metaKey && !isInputFocused()) {
       showView('inspiration');
       if (window.InspirationLab) { InspirationLab.init().then(() => InspirationLab.render(document.getElementById('inspiration-container'))); }
+    }
+    if (e.key === '4' && !e.ctrlKey && !e.metaKey && !isInputFocused()) {
+      showView('dictionary');
+      if (window.Dictionary) { window.Dictionary.render(); }
     }
     // ? = shortcuts modal
     if (e.key === '?' && !isInputFocused() && shortcutsModal) {
@@ -1840,6 +1866,13 @@
       var inspContainer = document.getElementById('inspiration-container');
       if (window.InspirationLab && inspContainer && inspContainer.children.length > 0) {
         InspirationLab.render(inspContainer);
+      }
+      // 词典：切语言时重渲染（已加载过才刷）
+      if (window.Dictionary) {
+        var dictList = document.getElementById('dict-list');
+        if (dictList && dictList.children.length > 0) {
+          window.Dictionary.refresh();
+        }
       }
     } catch (e) { console.warn('[app] onLocaleChange partial fail', e); }
     // 通知图表 iframe 切换语言（Bug 3 修复链路侧）

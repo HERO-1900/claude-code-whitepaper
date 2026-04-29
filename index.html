@@ -10,15 +10,15 @@
   <meta name="keywords" content="Claude Code, Agent OS, AI Coding, Anthropic, Source Code Analysis, LLM Agent, Tool Use Loop, Prompt Engineering">
   <meta name="author" content="CC-Research Collective">
   <meta name="theme-color" content="#1c1917">
-  <link rel="canonical" href="https://insidecc.dev/">
+  <link rel="canonical" href="https://hero-1900.github.io/cc-whitepaper/">
 
   <!-- Open Graph -->
   <meta property="og:type" content="article">
   <meta property="og:site_name" content="Claude Code 白皮书">
   <meta property="og:title" content="Claude Code 2.1.88 — Agent OS 架构全景">
   <meta property="og:description" content="88 章 · 131 张图表 · 185 个 Prompt 全收录 · 中英双语。Agent OS 架构、算法和工程哲学全面拆解。">
-  <meta property="og:url" content="https://insidecc.dev/">
-  <meta property="og:image" content="https://insidecc.dev/images/generated/VIS-0-001_%E8%8B%B1%E9%9B%84%E6%9E%B6%E6%9E%84%E5%9B%BE.png">
+  <meta property="og:url" content="https://hero-1900.github.io/cc-whitepaper/">
+  <meta property="og:image" content="https://hero-1900.github.io/cc-whitepaper/images/generated/VIS-0-001_%E8%8B%B1%E9%9B%84%E6%9E%B6%E6%9E%84%E5%9B%BE.png">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:locale" content="zh_CN">
@@ -28,7 +28,7 @@
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Claude Code 2.1.88 — Agent OS 架构全景">
   <meta name="twitter:description" content="88 章 · 131 张图表 · 185 个 Prompt · 中英双语。AI Agent OS 深度拆解。">
-  <meta name="twitter:image" content="https://insidecc.dev/images/generated/VIS-0-001_%E8%8B%B1%E9%9B%84%E6%9E%B6%E6%9E%84%E5%9B%BE.png">
+  <meta name="twitter:image" content="https://hero-1900.github.io/cc-whitepaper/images/generated/VIS-0-001_%E8%8B%B1%E9%9B%84%E6%9E%B6%E6%9E%84%E5%9B%BE.png">
 
   <!-- Perf: preconnect to Google Fonts（可降级，慢网络自动走系统字体） -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -1103,6 +1103,51 @@
     <div id="inspiration-container"></div>
   </div>
 
+  <!-- ==================== DICTIONARY VIEW ==================== -->
+  <div id="dictionary" class="view">
+    <div id="dictionary-container">
+      <div class="dict-header">
+        <div class="dict-title-row">
+          <h1 class="dict-title" data-i18n="dict.title">📖 Claude Code 词典</h1>
+          <div class="dict-stats">
+            <div class="dict-stat"><span class="dict-stat-num" id="dict-total-count">374</span> <span data-i18n="dict.entries_unit">词条</span></div>
+            <div class="dict-stat"><span class="dict-stat-num" id="dict-shown-count">374</span> <span data-i18n="dict.shown_unit">显示</span></div>
+          </div>
+        </div>
+        <div class="dict-desc" data-i18n="dict.description">从 Claude Code 2.1.88 源码中萃取的核心术语词典——涵盖核心机制、工具、子系统、Prompt 模式、工程方法、协议、数据概念、基础设施、行业术语和领域语言。</div>
+      </div>
+
+      <div class="dict-toolbar">
+        <div class="dict-search-row">
+          <input type="text" id="dict-search" class="dict-search" data-i18n-attr="placeholder:dict.search_placeholder" placeholder="🔍 搜索词条 / 释义 / 通俗解释..." />
+          <select id="dict-sort" class="dict-sort" data-i18n-attr="title:dict.sort_title" title="排序方式">
+            <option value="alpha" data-i18n="dict.sort_alpha">A-Z 字母</option>
+            <option value="section" data-i18n="dict.sort_section">系统板块</option>
+            <option value="priority" data-i18n="dict.sort_priority">优先级</option>
+            <option value="mention" data-i18n="dict.sort_mention">出现次数</option>
+          </select>
+        </div>
+
+        <div class="dict-filter-row">
+          <div class="dict-filter-group" id="dict-cat-filters" aria-label="categories"></div>
+        </div>
+        <div class="dict-filter-row">
+          <div class="dict-filter-group" id="dict-prio-filters" aria-label="priorities"></div>
+        </div>
+      </div>
+
+      <div class="dict-body">
+        <aside class="dict-index" id="dict-index" aria-label="A-Z 字母索引"></aside>
+        <main class="dict-main">
+          <div id="dict-list"></div>
+          <div class="dict-empty hidden" id="dict-empty">
+            <p data-i18n="dict.empty">没有匹配的词条。</p>
+          </div>
+        </main>
+      </div>
+    </div>
+  </div>
+
   <!-- ==================== NAVIGATION BAR ==================== -->
   <nav id="topnav">
     <div class="nav-left">
@@ -1122,6 +1167,10 @@
       <button id="nav-inspiration" class="nav-btn" title="灵感实验室" data-i18n-attr="title:nav.inspiration_title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
         <span data-i18n="nav.inspiration">灵感</span>
+      </button>
+      <button id="nav-dictionary" class="nav-btn" title="词典" data-i18n-attr="title:nav.dictionary_title">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><line x1="9" y1="7" x2="15" y2="7"/><line x1="9" y1="11" x2="13" y2="11"/></svg>
+        <span data-i18n="nav.dictionary">词典</span>
       </button>
       <!-- 序章入口已移除，内容在阅读器 Part 0 -->
     </div>
@@ -1145,6 +1194,7 @@
       <div class="shortcut-row"><kbd>1</kbd> <span data-i18n="shortcuts.panorama_map">全景地图</span></div>
       <div class="shortcut-row"><kbd>2</kbd> <span data-i18n="shortcuts.chapter_reading">章节阅读</span></div>
       <div class="shortcut-row"><kbd>3</kbd> <span data-i18n="shortcuts.inspiration_lab">灵感实验室</span></div>
+      <div class="shortcut-row"><kbd>4</kbd> <span data-i18n="shortcuts.dictionary">词典</span></div>
       <div class="shortcut-row"><kbd>←</kbd> <kbd>→</kbd> <span data-i18n="shortcuts.prev_next_chapter">上/下一章</span></div>
       <div class="shortcut-row"><kbd>Esc</kbd> <span data-i18n="shortcuts.back_close">返回 / 关闭面板</span></div>
       <div class="shortcut-row"><kbd data-i18n="shortcuts.ctrl_scroll">Ctrl+滚轮</kbd> <span data-i18n="shortcuts.zoom_map">缩放地图</span></div>
@@ -1169,6 +1219,8 @@
   <script defer src="js/gallery.js"></script>
   <!-- review-mode.js 仅限开发环境，生产环境不加载 -->
   <script defer src="js/inspiration-lab.js"></script>
+  <script defer src="js/dictionary.js?v=20260429"></script>
+  <script defer src="js/dict-annotator.js?v=20260429"></script>
   <script defer src="js/i18n.js?v=20260414"></script>
   <script defer src="js/app.js?v=20260425"></script>
   <!-- SVG 构建时 bundle（6 张 panorama 流程图），svg-inline.js 优先查该 bundle -->
