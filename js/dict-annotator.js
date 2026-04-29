@@ -107,9 +107,11 @@
       try {
         const r = await fetch('book/_shared/dictionary.json');
         const data = await r.json();
-        entries = Array.isArray(data) ? data : [];
-        // 索引
-        entries.forEach(e => { if (e.id) entryById[e.id] = e; });
+        const all = Array.isArray(data) ? data : [];
+        // 过滤 _suppressed（mention=0 — LLM 编造的 term 在正文里不存在），不参与章节标注
+        // 但保留进 entryById 以便词典页面跳转和外部引用仍可用
+        all.forEach(e => { if (e.id) entryById[e.id] = e; });
+        entries = all.filter(e => !e._suppressed);
         loaded = true;
       } catch (e) {
         console.warn('[DictAnnotator] dictionary.json 加载失败', e);

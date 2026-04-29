@@ -474,7 +474,8 @@
       ? `<button class="dict-jump" data-chapter="${escapeHtml(chId)}" title="跳转到章节">${lab.jump_chapter}</button>`
       : '';
 
-    return `<article class="dict-card" data-id="${escapeHtml(entry.id)}" id="dict-${escapeHtml(entry.id)}">
+    const suppressed = !!entry._suppressed;
+    return `<article class="dict-card${suppressed ? ' dict-card-suppressed' : ''}" data-id="${escapeHtml(entry.id)}" id="dict-${escapeHtml(entry.id)}">
       <header class="dict-card-head">
         <div class="dict-card-titles">
           <div class="dict-term-primary">${escapeHtml(term1 || '')}</div>
@@ -484,6 +485,7 @@
           <span class="dict-badge dict-cat-badge" style="--chip-color:${catColor};">${escapeHtml(catLabel)}</span>
           <span class="dict-badge dict-prio-badge prio-${prio}">${escapeHtml(prioLabel)}</span>
           ${entry.mention_count ? `<span class="dict-badge dict-count-badge" title="${escapeHtml(lab.mention_count.replace('{n}', entry.mention_count))}">×${entry.mention_count}</span>` : ''}
+          ${suppressed ? `<span class="dict-badge dict-supp-badge" title="正文中未直接出现该字面术语，作概念条目保留">概念条</span>` : ''}
         </div>
       </header>
 

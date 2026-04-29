@@ -6541,6 +6541,15 @@ body.cc-lang-switching .cc-lang-btn {
   max-width: 80ch;
 }
 
+/* 概念条（_suppressed）—— 正文未出现字面但保留作概念解释 */
+.dict-card-suppressed { opacity: 0.85; border-style: dashed; }
+.dict-supp-badge {
+  background: rgba(120, 120, 120, 0.15);
+  color: var(--text-muted);
+  font-size: 0.7rem;
+  border: 1px dashed var(--border);
+}
+
 /* ----- toolbar (sticky) -----
    2026-04-30 修复用户反馈"上方漏一截"：top 从 48px 改 0，z-index 101 高于 topnav，
    滚动时 toolbar 完全覆盖 topnav 没缝隙。同时 ::before 延伸顶部一段保险。 */
