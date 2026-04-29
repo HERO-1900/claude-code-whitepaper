@@ -1854,6 +1854,81 @@
     }
   };
 
+  // ==================== 侧栏拖动调整宽度（2026-04-29）====================
+  // 在 #sidebar 右边缘 + .chapter-toc-panel 左边缘各加一根 4px 抓手
+  // 拖动时实时改 :root 的 CSS 变量；释放后存 localStorage
+  function setupResizableSidebars() {
+    var styleRoot = document.documentElement.style;
+
+    function loadSavedWidths() {
+      try {
+        var sw = localStorage.getItem('cc-sidebar-w');
+        var tw = localStorage.getItem('cc-toc-panel-w');
+        if (sw && /^\d+$/.test(sw)) styleRoot.setProperty('--sidebar-w', sw + 'px');
+        if (tw && /^\d+$/.test(tw)) styleRoot.setProperty('--toc-panel-w', tw + 'px');
+      } catch(e) {}
+    }
+
+    function makeHandle(id, side, varName, storageKey, target) {
+      var handle = document.createElement('div');
+      handle.className = 'resize-handle resize-handle--' + side;
+      handle.id = id;
+      handle.setAttribute('aria-hidden', 'true');
+      var startX = 0, startW = 0;
+      var dragging = false;
+
+      handle.addEventListener('mousedown', function(e) {
+        e.preventDefault();
+        dragging = true;
+        startX = e.clientX;
+        startW = target.getBoundingClientRect().width;
+        document.body.style.userSelect = 'none';
+        document.body.style.cursor = 'col-resize';
+        handle.classList.add('resize-handle--active');
+      });
+
+      window.addEventListener('mousemove', function(e) {
+        if (!dragging) return;
+        var dx = e.clientX - startX;
+        var newW = side === 'right' ? startW + dx : startW - dx;
+        // clamp 220-480 / 220-460
+        var min = 220;
+        var max = side === 'right' ? 480 : 460;
+        newW = Math.max(min, Math.min(max, newW));
+        styleRoot.setProperty(varName, newW + 'px');
+      });
+
+      window.addEventListener('mouseup', function() {
+        if (!dragging) return;
+        dragging = false;
+        document.body.style.userSelect = '';
+        document.body.style.cursor = '';
+        handle.classList.remove('resize-handle--active');
+        try {
+          var w = target.getBoundingClientRect().width | 0;
+          localStorage.setItem(storageKey, String(w));
+        } catch(e) {}
+      });
+
+      return handle;
+    }
+
+    loadSavedWidths();
+
+    var sidebar = document.getElementById('sidebar');
+    var tocPanel = document.getElementById('chapter-toc-panel');
+    if (sidebar && !sidebar.querySelector('.resize-handle')) {
+      sidebar.appendChild(makeHandle('sidebar-resize', 'right', '--sidebar-w', 'cc-sidebar-w', sidebar));
+    }
+    if (tocPanel && !tocPanel.querySelector('.resize-handle')) {
+      tocPanel.insertBefore(makeHandle('toc-panel-resize', 'left', '--toc-panel-w', 'cc-toc-panel-w', tocPanel), tocPanel.firstChild);
+    }
+  }
+
+  // 用 setTimeout 等 DOM 完全 ready
+  setTimeout(setupResizableSidebars, 100);
+  // ==================== END 侧栏拖动 ====================
+
   // Check URL hash for direct chapter link
   if (window.location.hash) {
     const hash = window.location.hash.slice(1);

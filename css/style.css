@@ -723,8 +723,11 @@ body:has(#welcome.active) {
 .giscus, .giscus-frame, #giscus-container { display: none !important; }
 
 #sidebar {
-  width: 260px;
+  /* 响应式：基础 260px，但宽屏下用 clamp 让它增长，避免侧栏文字 wrap 两行
+     用户拖动后写到 :root --sidebar-w（CSS variable），优先级高于 clamp */
+  width: var(--sidebar-w, clamp(240px, 17vw, 360px));
   min-width: 220px;
+  max-width: 480px;
   border-right: 1px solid var(--border);
   background: var(--bg-secondary);
   overflow-y: auto;
@@ -1026,6 +1029,38 @@ mark.search-highlight {
   margin: 16px 0;
   position: relative;  /* 给 .copy-btn 提供锚点 */
 }
+
+/* === 侧栏拖动调宽（2026-04-29）=== */
+.resize-handle {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 6px;
+  cursor: col-resize;
+  z-index: 10;
+  background: transparent;
+  transition: background 0.15s ease;
+}
+.resize-handle--right { right: -3px; }
+.resize-handle--left { left: -3px; }
+.resize-handle:hover,
+.resize-handle--active {
+  background: var(--accent-cyan, #00d4ff);
+  opacity: 0.5;
+}
+[data-theme="warm"] .resize-handle:hover,
+[data-theme="warm"] .resize-handle--active {
+  background: var(--accent-gold, #c2691f);
+  opacity: 0.55;
+}
+[data-theme="light"] .resize-handle:hover,
+[data-theme="light"] .resize-handle--active {
+  background: var(--accent-blue, #2563eb);
+  opacity: 0.4;
+}
+/* 让 #sidebar / .chapter-toc-panel 成为 handle 的相对锚点 */
+#sidebar { position: relative; }
+.chapter-toc-panel { position: relative; }
 
 /* === Prompt 中英切换 tab（2026-04-29）=== */
 .prompt-lang-tabs {
@@ -5745,8 +5780,10 @@ pre:hover .copy-btn,
    ============================================================ */
 
 .chapter-toc-panel {
-  width: 260px;
+  /* 响应式：基础 260px clamp 增长，用户拖动后写 --toc-panel-w 覆盖 */
+  width: var(--toc-panel-w, clamp(240px, 16vw, 340px));
   min-width: 220px;
+  max-width: 460px;
   flex-shrink: 0;
   flex-grow: 0;
   border-left: 1px solid var(--border);
@@ -6334,33 +6371,17 @@ pre:hover .copy-btn,
 
 /* ---------- ISS-02/04：宽屏居中 + 正文 max-width 响应式放大 ---------- */
 
-/* Bug 2 修复（2026-04-26）：超宽屏下 reader 不再死板 cap 1760px。
-   2400px viewport 上原方案两侧约 320px 黑边，改 min(1920px, 96vw) 后两侧
-   ~48px 留白，更接近现代信息密度阅读站点（Stripe / Linear / Vercel）。 */
-@media (min-width: 1600px) {
-  #reader {
-    max-width: min(1920px, 96vw);
-    margin: 0 auto;
-  }
-}
+/* Bug 修复（2026-04-29）：让 #reader 在超宽屏铺满，不再死板 1920 cap。
+   sidebar / toc-panel 各自 clamp 自适应增长，中间 chapter-content
+   flex:1 自然吃完剩余空间。 */
+/* 删除 #reader max-width cap 让它跟随 viewport */
 
-/* warm 模式下正文随屏宽微扩 —— 保持阅读舒适不伤眼 */
-@media (min-width: 1500px) {
-  [data-theme="warm"] #chapter-body {
-    max-width: 860px;
-  }
-}
-@media (min-width: 1800px) {
-  [data-theme="warm"] #chapter-body {
-    max-width: 900px;
-  }
-}
+/* warm 模式正文宽度也跟随 viewport（与 light/dark 一致），
+   原 860/900 死锁在 ≥1500/1800 viewport 上让 warm 主题在宽屏被压成窄列。
+   保留 5044 行 [data-theme="warm"] #chapter-body 的
+   max-width: clamp(800px, 92vw, 1800px) 作为唯一限制。 */
 
-/* 右栏略宽一点，应对较长的目录文字 */
-.chapter-toc-panel {
-  width: 280px;
-  min-width: 240px;
-}
+/* 右栏宽度由前面 .chapter-toc-panel 主规则的 clamp + var(--toc-panel-w) 接管 */
 
 /* ---------- ISS-03：正文呼吸感（仅 warm 模式） ---------- */
 
