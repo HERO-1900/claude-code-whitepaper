@@ -1962,13 +1962,56 @@
   setTimeout(setupResizableSidebars, 100);
   // ==================== END 侧栏拖动 ====================
 
-  // Check URL hash for direct chapter link
-  if (window.location.hash) {
-    const hash = window.location.hash.slice(1);
-    const match = hash.match(/^chapter-(.+)$/);
-    if (match) {
+  // ==================== URL hash routing ====================
+  function handleHashRoute() {
+    const hash = (window.location.hash || '').slice(1);
+    if (!hash) return;
+    // chapter-XXX → reader + load
+    const ch = hash.match(/^chapter-(.+)$/);
+    if (ch) {
       showView('reader');
-      loadChapterById(match[1]);
+      loadChapterById(ch[1]);
+      return;
+    }
+    // dict-XXX → dictionary + scroll to entry + flash
+    const dt = hash.match(/^dict-(.+)$/);
+    if (dt) {
+      const id = dt[1];
+      showView('dictionary');
+      // 等 dict render 完成后滚 + flash
+      const focusEntry = () => {
+        const el = document.getElementById('dict-' + id);
+        if (!el) {
+          // 等 100ms 再试，最多 3 次（render 异步）
+          if (focusEntry.tries == null) focusEntry.tries = 0;
+          if (focusEntry.tries < 5) {
+            focusEntry.tries++;
+            setTimeout(focusEntry, 200);
+          } else {
+            console.warn('[deep-link] dict entry not found:', id);
+          }
+          return;
+        }
+        try { el.scrollIntoView({ behavior: 'smooth', block: 'center' }); } catch(e) { el.scrollIntoView(); }
+        el.classList.remove('dict-card-flash');
+        // force reflow then re-add (重新触发动画)
+        void el.offsetWidth;
+        el.classList.add('dict-card-flash');
+        setTimeout(() => el.classList.remove('dict-card-flash'), 1800);
+      };
+      if (window.Dictionary) {
+        window.Dictionary.init().then(() => {
+          window.Dictionary.render();
+          setTimeout(focusEntry, 200);
+        }).catch(focusEntry);
+      } else {
+        setTimeout(focusEntry, 500);
+      }
+      return;
     }
   }
+  // 初次加载
+  handleHashRoute();
+  // 之后 hash 变化（用户点 deep-link）
+  window.addEventListener('hashchange', handleHashRoute);
 })();

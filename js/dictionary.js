@@ -107,7 +107,8 @@
       wb_plain_label: '通俗',
       wb_filter_all: '全部',
       wb_filter_pending: '待复习',
-      wb_filter_mastered: '已掌握'
+      wb_filter_mastered: '已掌握',
+      wb_review: '📅 复习模式'
     },
     en: {
       filter_all: 'All',
@@ -141,7 +142,8 @@
       wb_plain_label: 'Plain',
       wb_filter_all: 'All',
       wb_filter_pending: 'Pending',
-      wb_filter_mastered: 'Mastered'
+      wb_filter_mastered: 'Mastered',
+      wb_review: '📅 Review Mode'
     }
   };
   function L() { return isEn() ? UI.en : UI.zh; }
@@ -215,6 +217,7 @@
   // 内部统一返回 [{id, addedAt}]，回写时也用新格式（首次写入旧数据自动迁移）
   const WORDBOOK_KEY = 'cc-dict-wordbook';
   const MASTERED_KEY = 'cc-dict-mastered';
+  const SRS_KEY = 'cc-dict-srs';   // B7 · SRS 复习状态
 
   function getWordbookRaw() {
     try { return JSON.parse(localStorage.getItem(WORDBOOK_KEY) || '[]'); }
@@ -260,6 +263,50 @@
     else m[id] = Date.now();
     setMasteredMap(m);
     return !!m[id];
+  }
+
+  // ===== B7 · SRS（艾宾浩斯简化版 SM-2）=====
+  function getSrsMap() {
+    try { return JSON.parse(localStorage.getItem(SRS_KEY) || '{}'); }
+    catch (e) { return {}; }
+  }
+  function setSrsMap(m) {
+    try { localStorage.setItem(SRS_KEY, JSON.stringify(m)); } catch (e) {}
+  }
+  // 难度：'again'（忘了 / 重置）/ 'good'（会）/ 'easy'（简单）
+  // 返回更新后的 card state
+  function srsUpdate(id, grade) {
+    const map = getSrsMap();
+    const cur = map[id] || { ease: 2.5, interval: 0, reps: 0, lastReview: 0, nextReview: 0 };
+    let { ease, interval, reps } = cur;
+    if (grade === 'again') {
+      reps = 0;
+      interval = 0.04;       // ~1 hour
+      ease = Math.max(1.3, ease - 0.2);
+    } else if (grade === 'good') {
+      reps += 1;
+      interval = reps === 1 ? 1 : reps === 2 ? 3 : Math.round((interval || 1) * ease);
+    } else if (grade === 'easy') {
+      reps += 1;
+      interval = Math.round((interval || 1) * ease * 1.3);
+      ease = Math.min(3.0, ease + 0.15);
+    }
+    const now = Date.now();
+    const next = { ease, interval, reps, lastReview: now, nextReview: now + interval * 86400000 };
+    map[id] = next;
+    setSrsMap(map);
+    return next;
+  }
+  // 返回到期需复习的 entry id 列表（生词本范围内）
+  function getDueIds() {
+    const wb = getWordbookEntries();
+    const srs = getSrsMap();
+    const now = Date.now();
+    return wb.filter(w => {
+      const c = srs[w.id];
+      if (!c) return true;             // 从未复习过 → 到期
+      return c.nextReview <= now;
+    }).map(w => w.id);
   }
 
   // ===== Chapter mapping =====
@@ -395,6 +442,165 @@
     return list;
   }
 
+  // ===== B10 · Concept map（焦点 + 二级关联）=====
+  function showConceptMap(focalId) {
+    const en = isEn();
+    const focal = entries.find(e => e.id === focalId);
+    if (!focal) return;
+    // 一级邻居
+    const lvl1 = (focal.see_also || []).filter(id => entries.find(e => e.id === id && !e._suppressed));
+    // 二级邻居（去重 + 排除自身和一级）
+    const lvl2Set = new Set();
+    lvl1.forEach(id => {
+      const e = entries.find(x => x.id === id);
+      if (!e || !e.see_also) return;
+      e.see_also.forEach(id2 => {
+        if (id2 === focalId) return;
+        if (lvl1.indexOf(id2) >= 0) return;
+        if (!entries.find(x => x.id === id2 && !x._suppressed)) return;
+        lvl2Set.add(id2);
+      });
+    });
+    const lvl2 = Array.from(lvl2Set).slice(0, 12);  // 最多 12 个二级，避免视觉拥挤
+
+    // 移除已存在
+    let overlay = document.getElementById('dict-graph-overlay');
+    if (overlay) overlay.remove();
+    overlay = document.createElement('div');
+    overlay.id = 'dict-graph-overlay';
+    overlay.className = 'dict-graph-overlay';
+
+    const W = Math.min(720, window.innerWidth - 80);
+    const H = Math.min(560, window.innerHeight - 120);
+    const cx = W / 2;
+    const cy = H / 2;
+
+    const r1 = Math.min(W, H) * 0.30;   // 一级半径
+    const r2 = Math.min(W, H) * 0.46;   // 二级半径
+
+    // 节点位置
+    const nodes = [];
+    nodes.push({ id: focalId, x: cx, y: cy, ring: 0, label: en ? (focal.term_en || focal.term_zh) : (focal.term_zh || focal.term_en) });
+    lvl1.forEach((id, i) => {
+      const a = -Math.PI / 2 + (i * 2 * Math.PI / lvl1.length);
+      const e = entries.find(x => x.id === id);
+      nodes.push({
+        id, ring: 1,
+        x: cx + r1 * Math.cos(a),
+        y: cy + r1 * Math.sin(a),
+        label: e ? (en ? (e.term_en || e.term_zh) : (e.term_zh || e.term_en)) : id
+      });
+    });
+    lvl2.forEach((id, i) => {
+      const a = -Math.PI / 2 + (i * 2 * Math.PI / Math.max(lvl2.length, 1));
+      const e = entries.find(x => x.id === id);
+      nodes.push({
+        id, ring: 2,
+        x: cx + r2 * Math.cos(a),
+        y: cy + r2 * Math.sin(a),
+        label: e ? (en ? (e.term_en || e.term_zh) : (e.term_zh || e.term_en)) : id
+      });
+    });
+
+    // 边：focal → lvl1; lvl1 → lvl2 (only if related)
+    const edges = [];
+    lvl1.forEach(id => edges.push([focalId, id]));
+    lvl1.forEach(id => {
+      const e = entries.find(x => x.id === id);
+      if (!e || !e.see_also) return;
+      e.see_also.forEach(id2 => {
+        if (lvl2.indexOf(id2) >= 0) edges.push([id, id2]);
+      });
+    });
+
+    function findNode(id) { return nodes.find(n => n.id === id); }
+    const edgeSvg = edges.map(([a, b]) => {
+      const A = findNode(a); const B = findNode(b);
+      if (!A || !B) return '';
+      return `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" class="dict-graph-edge"/>`;
+    }).join('');
+
+    const nodeSvg = nodes.map(n => {
+      const cls = n.ring === 0 ? 'focal' : n.ring === 1 ? 'lvl1' : 'lvl2';
+      const r = n.ring === 0 ? 36 : n.ring === 1 ? 28 : 22;
+      const fontSize = n.ring === 0 ? 13 : n.ring === 1 ? 11 : 10;
+      // truncate label
+      let lab = n.label || '';
+      if (lab.length > 8) lab = lab.slice(0, 7) + '…';
+      return `<g class="dict-graph-node node-${cls}" data-id="${n.id}" style="cursor:pointer;">
+        <circle cx="${n.x}" cy="${n.y}" r="${r}" class="dict-graph-node-circle"/>
+        <text x="${n.x}" y="${n.y + 4}" text-anchor="middle" font-size="${fontSize}" class="dict-graph-node-label">${lab.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</text>
+      </g>`;
+    }).join('');
+
+    const headerLab = en ? `Concept map · ${focal.term_en || focal.term_zh}` : `关联词云 · ${focal.term_zh || focal.term_en}`;
+    const hint = en
+      ? 'Click any node to refocus · Click outside or press ESC to close'
+      : '点击任一节点重新聚焦 · 点外部或按 ESC 关闭';
+
+    overlay.innerHTML = `
+      <div class="dict-graph-modal" style="width:${W + 80}px;">
+        <div class="dict-graph-head">
+          <h3>${escapeHtml(headerLab)}</h3>
+          <button class="dict-graph-close" aria-label="close">✕</button>
+        </div>
+        <svg class="dict-graph-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+          ${edgeSvg}
+          ${nodeSvg}
+        </svg>
+        <p class="dict-graph-hint">${escapeHtml(hint)}</p>
+      </div>
+    `;
+    document.body.appendChild(overlay);
+
+    function close() { overlay.remove(); document.removeEventListener('keydown', onKey); }
+    function onKey(ev) { if (ev.key === 'Escape') close(); }
+    document.addEventListener('keydown', onKey);
+    overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
+    overlay.querySelector('.dict-graph-close').addEventListener('click', close);
+
+    // 点击节点重新聚焦
+    overlay.querySelectorAll('.dict-graph-node').forEach(g => {
+      g.addEventListener('click', () => {
+        const newId = g.dataset.id;
+        if (newId && newId !== focalId) {
+          close();
+          // 重新打开 focused on new id
+          showConceptMap(newId);
+          // 同时滚到对应卡片，加 hash
+          location.hash = 'dict-' + newId;
+        }
+      });
+    });
+  }
+
+  // ===== B9 helpers · 复制链接 + toast =====
+  function fallbackCopy(text) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+    } catch (e) {}
+  }
+  function showDictToast(msg) {
+    let t = document.getElementById('dict-toast');
+    if (!t) {
+      t = document.createElement('div');
+      t.id = 'dict-toast';
+      t.className = 'dict-toast';
+      document.body.appendChild(t);
+    }
+    t.textContent = msg;
+    t.classList.add('visible');
+    if (showDictToast.tmr) clearTimeout(showDictToast.tmr);
+    showDictToast.tmr = setTimeout(() => { t.classList.remove('visible'); }, 1200);
+  }
+
   // ===== Render =====
   function escapeHtml(s) {
     if (s == null) return '';
@@ -474,6 +680,22 @@
     });
   }
 
+  // B10 · see_also chips + 关系图按钮
+  function renderSeeAlsoChips(entry) {
+    const see = (entry.see_also || []).filter(id => entries.find(e => e.id === id && !e._suppressed));
+    if (!see.length) return '';
+    const en = isEn();
+    const label = en ? '🔗 Related' : '🔗 关联';
+    const chips = see.slice(0, 6).map(id => {
+      const e = entries.find(x => x.id === id);
+      const txt = e ? (en ? (e.term_en || e.term_zh) : (e.term_zh || e.term_en)) : id;
+      return `<a class="dict-seealso-chip" href="#dict-${escapeHtml(id)}" data-dict-id="${escapeHtml(id)}">${escapeHtml(txt || id)}</a>`;
+    }).join('');
+    const more = see.length > 6 ? `<span class="dict-seealso-more">+${see.length - 6}</span>` : '';
+    const graphBtn = `<button class="dict-graph-btn" data-id="${escapeHtml(entry.id)}" title="${en ? 'Show concept map' : '查看关联词云'}">🕸️</button>`;
+    return `<div class="dict-seealso"><span class="dict-seealso-label">${label}</span><div class="dict-seealso-chips">${chips}${more}${graphBtn}</div></div>`;
+  }
+
   function renderCard(entry) {
     const en = isEn();
     const lab = L();
@@ -500,7 +722,9 @@
       : '';
 
     const suppressed = !!entry._suppressed;
+    const copyTitle = en ? 'Copy link' : '复制链接';
     return `<article class="dict-card${suppressed ? ' dict-card-suppressed' : ''}" data-id="${escapeHtml(entry.id)}" id="dict-${escapeHtml(entry.id)}">
+      <button class="dict-link-btn" data-id="${escapeHtml(entry.id)}" title="${escapeHtml(copyTitle)}" aria-label="${escapeHtml(copyTitle)}">🔗</button>
       <header class="dict-card-head">
         <div class="dict-card-titles">
           <div class="dict-term-primary">${escapeHtml(term1 || '')}</div>
@@ -516,6 +740,7 @@
 
       ${def ? `<p class="dict-def">${escapeHtml(def)}</p>` : ''}
       ${plain ? `<div class="dict-plain">${escapeHtml(plain)}</div>` : ''}
+      ${renderSeeAlsoChips(entry)}
 
       <footer class="dict-card-foot">
         <button class="dict-fav ${inWordbook ? 'added' : ''}" data-id="${escapeHtml(entry.id)}">
@@ -570,6 +795,42 @@
     }
 
     renderIndex(list);
+
+    // wire up 关系图按钮（B10）
+    listEl.querySelectorAll('.dict-graph-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const id = btn.dataset.id;
+        if (id) showConceptMap(id);
+      });
+    });
+
+    // wire up 复制链接（B9 deep-link）
+    listEl.querySelectorAll('.dict-link-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = btn.dataset.id;
+        if (!id) return;
+        const url = (location.origin === 'https://insidecc.dev' || location.protocol === 'https:')
+          ? (location.origin + '/#dict-' + id)
+          : ('https://insidecc.dev/#dict-' + id);
+        const onCopied = () => {
+          showDictToast(isEn() ? 'Link copied ✓' : '链接已复制 ✓');
+        };
+        try {
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            navigator.clipboard.writeText(url).then(onCopied).catch(() => {
+              fallbackCopy(url); onCopied();
+            });
+          } else {
+            fallbackCopy(url); onCopied();
+          }
+        } catch (err) {
+          fallbackCopy(url); onCopied();
+        }
+      });
+    });
 
     // wire up jump chapter
     listEl.querySelectorAll('.dict-jump').forEach(btn => {
@@ -671,9 +932,16 @@
     const mainView = document.querySelector('#dictionary .dict-toolbar');
     const mainBody = document.querySelector('#dictionary .dict-body');
     let wb = document.getElementById('dict-wordbook-view');
-    if (activeSubView === 'wordbook') {
+    let rv = document.getElementById('dict-review-view');
+    if (activeSubView === 'wordbook' || activeSubView === 'review') {
       if (mainView) mainView.classList.add('hidden');
       if (mainBody) mainBody.classList.add('hidden');
+    } else {
+      if (mainView) mainView.classList.remove('hidden');
+      if (mainBody) mainBody.classList.remove('hidden');
+    }
+    if (activeSubView === 'wordbook') {
+      if (rv) rv.remove();
       if (!wb) {
         wb = document.createElement('div');
         wb.id = 'dict-wordbook-view';
@@ -682,12 +950,153 @@
         if (container) container.appendChild(wb);
       }
       renderWordbookView(wb);
-    } else {
-      if (mainView) mainView.classList.remove('hidden');
-      if (mainBody) mainBody.classList.remove('hidden');
+    } else if (activeSubView === 'review') {
       if (wb) wb.remove();
+      if (!rv) {
+        rv = document.createElement('div');
+        rv.id = 'dict-review-view';
+        rv.className = 'dict-review-view';
+        const container = document.getElementById('dictionary-container');
+        if (container) container.appendChild(rv);
+      }
+      renderReviewView(rv);
+    } else {
+      if (wb) wb.remove();
+      if (rv) rv.remove();
     }
     refreshWordbookBadge();
+  }
+
+  // ===== B7 · Review subview =====
+  let reviewQueue = null;     // 当前到期 id 列表
+  let reviewIdx = 0;
+  let reviewRevealed = false;
+  let reviewSummary = { again: 0, good: 0, easy: 0, total: 0 };
+
+  function renderReviewView(root) {
+    const lab = L();
+    const en = isEn();
+    if (reviewQueue == null) {
+      // 首次进入 → 计算到期队列 + 打乱顺序
+      reviewQueue = getDueIds();
+      // 简单打乱（避免每次同一顺序）
+      for (let i = reviewQueue.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [reviewQueue[i], reviewQueue[j]] = [reviewQueue[j], reviewQueue[i]];
+      }
+      reviewIdx = 0;
+      reviewRevealed = false;
+      reviewSummary = { again: 0, good: 0, easy: 0, total: reviewQueue.length };
+    }
+
+    const total = reviewSummary.total;
+    const back = '<button class="review-back" id="review-back">← ' + escapeHtml(en ? 'Back to Wordbook' : '返回生词本') + '</button>';
+
+    if (total === 0) {
+      root.innerHTML =
+        back +
+        '<div class="review-empty">' +
+        '  <div class="review-empty-icon">🎉</div>' +
+        '  <h2>' + escapeHtml(en ? 'Nothing due!' : '暂无到期复习') + '</h2>' +
+        '  <p>' + escapeHtml(en ? 'All caught up. Add more words or come back later.' : '都背过啦。加新词或稍后再来。') + '</p>' +
+        '</div>';
+      bindReviewBack(root);
+      return;
+    }
+
+    if (reviewIdx >= reviewQueue.length) {
+      // 全部完成 → summary
+      const dist = reviewSummary;
+      root.innerHTML =
+        back +
+        '<div class="review-done">' +
+        '  <div class="review-done-icon">✅</div>' +
+        '  <h2>' + escapeHtml(en ? 'Session complete' : '本轮完成') + '</h2>' +
+        '  <p class="review-done-stats">' +
+        '    <span class="review-stat-pill review-stat-again">' + dist.again + ' ' + escapeHtml(en ? 'forgot' : '忘了') + '</span>' +
+        '    <span class="review-stat-pill review-stat-good">' + dist.good + ' ' + escapeHtml(en ? 'good' : '会') + '</span>' +
+        '    <span class="review-stat-pill review-stat-easy">' + dist.easy + ' ' + escapeHtml(en ? 'easy' : '简单') + '</span>' +
+        '  </p>' +
+        '  <p class="review-done-tip">' + escapeHtml(en ? 'Next due cards will be scheduled per Ebbinghaus.' : '下一批到期会按艾宾浩斯曲线自动排期。') + '</p>' +
+        '  <button class="review-action review-action-primary" id="review-restart">' + escapeHtml(en ? 'Review again' : '再来一轮') + '</button>' +
+        '</div>';
+      bindReviewBack(root);
+      const restart = document.getElementById('review-restart');
+      if (restart) restart.addEventListener('click', () => {
+        reviewQueue = null;
+        renderReviewView(root);
+      });
+      return;
+    }
+
+    const id = reviewQueue[reviewIdx];
+    const e = entries.find(x => x.id === id);
+    if (!e) {
+      // 跳过坏数据
+      reviewIdx++;
+      renderReviewView(root);
+      return;
+    }
+    const term1 = en ? (e.term_en || e.term_zh) : (e.term_zh || e.term_en);
+    const term2 = en ? (e.term_zh || '') : (e.term_en || '');
+    const def = en ? (e.definition_en || e.definition_zh) : (e.definition_zh || e.definition_en);
+    const plain = en ? (e.plain_explanation_en || e.plain_explanation_zh) : (e.plain_explanation_zh || e.plain_explanation_en);
+    const progress = `${reviewIdx + 1} / ${reviewQueue.length}`;
+
+    const front =
+      '<div class="review-front">' +
+      '  <h2 class="review-term">' + escapeHtml(term1 || '') + '</h2>' +
+      (term2 ? '  <div class="review-term-alt">' + escapeHtml(term2) + '</div>' : '') +
+      '  <button class="review-action review-action-primary" id="review-reveal">' + escapeHtml(en ? 'Show answer' : '看释义') + '</button>' +
+      '</div>';
+
+    const back2 =
+      '<div class="review-back-card">' +
+      '  <h2 class="review-term">' + escapeHtml(term1 || '') + '</h2>' +
+      (term2 ? '  <div class="review-term-alt">' + escapeHtml(term2) + '</div>' : '') +
+      '  <hr class="review-sep">' +
+      (def ? '  <p class="review-def"><strong>' + escapeHtml(en ? 'Definition' : '定义') + ':</strong> ' + escapeHtml(def) + '</p>' : '') +
+      (plain ? '  <p class="review-plain">' + escapeHtml(plain) + '</p>' : '') +
+      '  <div class="review-grade-row">' +
+      '    <button class="review-grade review-grade-again" data-grade="again">' + escapeHtml(en ? '😵 Forgot' : '😵 忘了') + '</button>' +
+      '    <button class="review-grade review-grade-good"  data-grade="good">'  + escapeHtml(en ? '🙂 Good' : '🙂 会')   + '</button>' +
+      '    <button class="review-grade review-grade-easy"  data-grade="easy">'  + escapeHtml(en ? '😎 Easy' : '😎 简单') + '</button>' +
+      '  </div>' +
+      '</div>';
+
+    root.innerHTML =
+      back +
+      '<div class="review-progress"><span class="review-progress-num">' + progress + '</span></div>' +
+      '<div class="review-card">' +
+      (reviewRevealed ? back2 : front) +
+      '</div>';
+
+    bindReviewBack(root);
+    const reveal = document.getElementById('review-reveal');
+    if (reveal) reveal.addEventListener('click', () => {
+      reviewRevealed = true;
+      renderReviewView(root);
+    });
+    root.querySelectorAll('.review-grade').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const g = btn.dataset.grade;
+        if (!g) return;
+        srsUpdate(id, g);
+        reviewSummary[g] = (reviewSummary[g] || 0) + 1;
+        reviewIdx++;
+        reviewRevealed = false;
+        renderReviewView(root);
+      });
+    });
+  }
+
+  function bindReviewBack(root) {
+    const back = document.getElementById('review-back');
+    if (back) back.addEventListener('click', () => {
+      reviewQueue = null;
+      activeSubView = 'wordbook';
+      renderSubview();
+    });
   }
 
   function renderWordbookView(root) {
@@ -725,6 +1134,7 @@
       '  <div class="vocabulary-toolbar">' +
       '    <input type="search" id="vocab-search" class="vocabulary-search" placeholder="' + escapeHtml(lab.wb_search_ph) + '" value="' + escapeHtml(wbSearchQuery) + '">' +
       '    <div class="vocabulary-actions">' +
+      '      <button class="vocabulary-action vocabulary-action-primary" id="vocab-review">' + escapeHtml(lab.wb_review || '📅 复习模式') + ' <span class="vocab-due-badge" id="vocab-due-badge"></span></button>' +
       '      <button class="vocabulary-action" id="vocab-export-csv">' + escapeHtml(lab.wb_export_csv) + '</button>' +
       '      <button class="vocabulary-action" id="vocab-export-md">' + escapeHtml(lab.wb_export_md) + '</button>' +
       '      <button class="vocabulary-action" id="vocab-print">' + escapeHtml(lab.wb_print) + '</button>' +
@@ -797,6 +1207,19 @@
         }, 250);
       });
     }
+    // B7 · 复习按钮
+    const reviewBtn = document.getElementById('vocab-review');
+    if (reviewBtn) reviewBtn.addEventListener('click', () => {
+      activeSubView = 'review';
+      renderSubview();
+    });
+    // 到期数 badge
+    const badge = document.getElementById('vocab-due-badge');
+    if (badge) {
+      const due = getDueIds().length;
+      badge.textContent = due > 0 ? '(' + due + ')' : '';
+    }
+
     const csvBtn = document.getElementById('vocab-export-csv');
     if (csvBtn) csvBtn.addEventListener('click', () => exportCSV(resolved));
     const mdBtn = document.getElementById('vocab-export-md');

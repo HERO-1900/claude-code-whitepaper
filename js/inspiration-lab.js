@@ -155,9 +155,80 @@
         blueprints = blueprintsRes.ok ? await blueprintsRes.json() : [];
       } catch(e2) { blueprints = []; console.warn('Blueprints load failed:', e2); }
       loaded = true;
+      // B8 灵感↔词典：异步建立 cross-reference（不阻塞渲染）
+      buildDictCrossRef();
     } catch (e) {
       console.warn('Inspiration data not loaded:', e);
     }
+  }
+
+  // B8 · 灵感↔词典 cross-reference
+  // sparkId → [dict ids]，每个 spark 最多 5 个相关词条
+  let sparkDictRel = {};
+  async function buildDictCrossRef() {
+    try {
+      const r = await fetch('book/_shared/dictionary.json');
+      if (!r.ok) return;
+      const dict = await r.json();
+      // 建索引：term → id（去 _suppressed）+ 长度 ≥ 2 字
+      const idx = [];
+      dict.forEach(e => {
+        if (e._suppressed) return;
+        const id = e.id;
+        ['term_zh', 'term_en'].forEach(k => {
+          const t = (e[k] || '').trim();
+          if (t && t.length >= 2) idx.push({ term: t, id, len: t.length });
+        });
+      });
+      idx.sort((a, b) => b.len - a.len);  // 长 term 优先匹配，避免子串误命中
+      // 建 id → 中英标签 map（取最短 term 作显示）
+      sparkDictRel.__terms = {};
+      sparkDictRel.__termsEn = {};
+      dict.forEach(e => {
+        if (e._suppressed) return;
+        sparkDictRel.__terms[e.id] = e.term_zh || e.term_en || e.id;
+        sparkDictRel.__termsEn[e.id] = e.term_en || e.term_zh || e.id;
+      });
+      // 对每个 spark/blueprint 扫描
+      function scan(item) {
+        const text = [
+          pickL(item, 'spark') || '',
+          pickL(item, 'why_it_matters') || '',
+          pickL(item, 'cc_anchor') || '',
+          pickL(item, 'plain_explanation') || '',
+          (item.tags || []).join(' '),
+          (item.tags_en || []).join(' ')
+        ].join(' ').toLowerCase();
+        const hits = new Set();
+        for (const e of idx) {
+          if (hits.size >= 5) break;
+          const t = e.term.toLowerCase();
+          if (text.includes(t)) hits.add(e.id);
+        }
+        return Array.from(hits);
+      }
+      sparks.forEach(s => { sparkDictRel[s.id] = scan(s); });
+      blueprints.forEach(b => { sparkDictRel[b.id] = scan(b); });
+      // 渲染中的话，刷新一下（找到当前容器再 render）
+      try {
+        const c = document.getElementById('inspiration');
+        if (c && !c.classList.contains('hidden')) render(c);
+      } catch(e){}
+    } catch (e) {
+      console.warn('[B8] dict crossref build failed:', e);
+    }
+  }
+
+  function getDictRelHTML(itemId) {
+    const ids = sparkDictRel[itemId];
+    if (!ids || !ids.length) return '';
+    const label = isEn() ? '📖 Related Terms' : '📖 相关词条';
+    const map = isEn() ? sparkDictRel.__termsEn : sparkDictRel.__terms;
+    const chips = ids.map(id => {
+      const txt = (map && map[id]) || id;
+      return `<a class="spark-dict-chip" href="#dict-${id}" data-dict-id="${id}">${txt}</a>`;
+    }).join('');
+    return `<div class="spark-dict-rel"><strong>${label}</strong><div class="spark-dict-chips">${chips}</div></div>`;
   }
 
   function getStats() {
@@ -294,6 +365,7 @@
           ${sourceText ? `<div class="spark-source"><strong>${T('source')}</strong><p>${sourceText.startsWith('http') ? `<a href="${sourceText}" target="_blank">${sourceText.replace(/https?:\/\//, '').split('/')[0]}</a>` : sourceText}</p></div>` : ''}
           ${feedback.length ? `<div class="spark-feedback"><strong>${T('feedback')}</strong>${feedback.map(f => `<div class="spark-fb-item"><span class="spark-fb-persona">${pickPersona(f)}</span><p>${pickComment(f)}</p></div>`).join('')}</div>` : ''}
           <div class="spark-tags">${((isEn() && s.tags_en) ? s.tags_en : (s.tags || [])).map(t => `<span class="spark-tag">${t}</span>`).join('')}</div>
+          ${getDictRelHTML(s.id)}
         </div>
         <span class="spark-arrow" aria-hidden="true">→</span>
       </div>
@@ -354,6 +426,7 @@
           </div>
           ${sparkLinks ? `<div class="bp-sparks"><strong>${T('from_sparks')}</strong><p>${sparkLinks}</p></div>` : ''}
           ${ccAnchor ? `<div class="bp-anchor"><strong>${T('bp_anchor')}</strong><p>${ccAnchor}</p></div>` : ''}
+          ${getDictRelHTML(b.id)}
         </div>
         <span class="bp-arrow" aria-hidden="true">→</span>
       </div>
