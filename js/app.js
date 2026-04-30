@@ -242,50 +242,209 @@
     }
   });
 
-  // ===== Mobile TOC drawer =====
+  // ===== Mobile Nav Drawer (2026-05-01 改造，方案 A 毛玻璃) =====
   const mobileTocBtn = document.getElementById('mobile-toc-toggle');
   const sidebarEl = document.getElementById('sidebar');
-  let mobileBackdrop = null;
-  function openMobileTOC() {
-    if (!sidebarEl) return;
-    sidebarEl.classList.add('mobile-open');
+  const drawerEl = document.getElementById('mobile-nav-drawer');
+  const drawerBackdrop = document.getElementById('mobile-nav-backdrop');
+  const drawerNavList = document.getElementById('mnd-nav-list');
+  const drawerToolsList = document.getElementById('mnd-tools-list');
+  const drawerTocHost = document.getElementById('mnd-toc-host');
+  const drawerCloseBtn = drawerEl ? drawerEl.querySelector('.mnd-close') : null;
+
+  // 把 #topnav 中已存在的按钮"接管"到抽屉里：
+  // 用 cloneNode 复制一份，clone 的点击事件转发到原按钮 click()，
+  // 这样省去重写所有路由 / i18n / 主题切换的逻辑。
+  function rebuildDrawerLists() {
+    if (!drawerNavList || !drawerToolsList) return;
+    // ---- 主导航 ----
+    drawerNavList.innerHTML = '';
+    const navIds = ['nav-home', 'nav-reader', 'nav-inspiration', 'nav-dictionary'];
+    navIds.forEach(id => {
+      const orig = document.getElementById(id);
+      if (!orig) return;
+      const clone = orig.cloneNode(true);
+      clone.removeAttribute('id');
+      clone.setAttribute('data-mnd-target', id);
+      // active class 同步：原按钮有 .active 时 clone 也带
+      if (orig.classList.contains('active')) clone.classList.add('active');
+      clone.addEventListener('click', () => {
+        orig.click();
+        closeMobileDrawer();
+      });
+      drawerNavList.appendChild(clone);
+    });
+    // ---- 工具区（行式 label + 控件，比 cloneNode 更可控） ----
+    drawerToolsList.innerHTML = '';
+    const isEn = (document.documentElement.getAttribute('data-lang') === 'en');
+    const T = (zh, en) => isEn ? en : zh;
+    const mkRow = (label, control) => {
+      const row = document.createElement('div');
+      row.className = 'mnd-tool-row';
+      const lbl = document.createElement('span');
+      lbl.className = 'mnd-tool-label';
+      lbl.textContent = label;
+      row.appendChild(lbl);
+      row.appendChild(control);
+      return row;
+    };
+
+    // 元喻切换（City ↔ OS）
+    const metaphorOrig = document.getElementById('metaphor-toggle');
+    if (metaphorOrig) {
+      const metaBtn = document.createElement('button');
+      metaBtn.className = 'mnd-tool-control mnd-tool-pill';
+      metaBtn.innerHTML = metaphorOrig.innerHTML;
+      metaBtn.addEventListener('click', () => {
+        metaphorOrig.click();
+        // 同步抽屉内容
+        setTimeout(() => { metaBtn.innerHTML = metaphorOrig.innerHTML; }, 50);
+      });
+      drawerToolsList.appendChild(mkRow(T('比喻体系', 'Metaphor'), metaBtn));
+    }
+
+    // 词典高亮开关
+    const hiOrig = document.querySelector('.cc-dict-highlight-toggle');
+    if (hiOrig) {
+      const hiBtn = document.createElement('button');
+      hiBtn.className = 'mnd-tool-control mnd-tool-toggle';
+      const isOn = () => hiOrig.classList.contains('active');
+      const refresh = () => {
+        hiBtn.textContent = isOn() ? T('已开启', 'On') : T('已关闭', 'Off');
+        hiBtn.classList.toggle('on', isOn());
+      };
+      refresh();
+      hiBtn.addEventListener('click', () => {
+        hiOrig.click();
+        setTimeout(refresh, 50);
+      });
+      drawerToolsList.appendChild(mkRow(T('词典高亮', 'Dict Highlight'), hiBtn));
+    }
+
+    // 主题切换（3 选 1）
+    const themeOrig = document.querySelector('.cc-theme-switcher');
+    if (themeOrig) {
+      const segWrap = document.createElement('div');
+      segWrap.className = 'mnd-tool-control mnd-tool-segment';
+      const origBtns = themeOrig.querySelectorAll('button');
+      origBtns.forEach((origBtn) => {
+        const seg = document.createElement('button');
+        seg.className = 'mnd-seg-btn';
+        // 拷贝 svg + 在右边附 label（取自 aria-label / title / data-theme）
+        const themeKey = origBtn.dataset.theme || origBtn.getAttribute('aria-label') || '';
+        const labelMap = {
+          dark: T('暗色', 'Dark'),
+          light: T('浅色', 'Light'),
+          warm: T('暖色', 'Warm'),
+          auto: T('跟随', 'Auto')
+        };
+        seg.innerHTML = origBtn.innerHTML;
+        const labelText = labelMap[themeKey] || themeKey;
+        if (labelText) {
+          const labelSpan = document.createElement('span');
+          labelSpan.className = 'mnd-seg-label';
+          labelSpan.textContent = labelText;
+          seg.appendChild(labelSpan);
+        }
+        if (origBtn.getAttribute('aria-pressed') === 'true') seg.classList.add('on');
+        seg.addEventListener('click', () => {
+          origBtn.click();
+          // 同步 active 状态
+          setTimeout(() => {
+            segWrap.querySelectorAll('.mnd-seg-btn').forEach((s, i) => {
+              s.classList.toggle('on', origBtns[i] && origBtns[i].getAttribute('aria-pressed') === 'true');
+            });
+          }, 50);
+        });
+        segWrap.appendChild(seg);
+      });
+      drawerToolsList.appendChild(mkRow(T('主题', 'Theme'), segWrap));
+    }
+
+    // 键盘快捷键（点开模态，不关抽屉）
+    const shortcutsOrig = document.getElementById('shortcuts-hint');
+    if (shortcutsOrig) {
+      const sBtn = document.createElement('button');
+      sBtn.className = 'mnd-tool-control mnd-tool-pill';
+      sBtn.textContent = T('查看快捷键', 'Shortcuts');
+      sBtn.addEventListener('click', () => shortcutsOrig.click());
+      drawerToolsList.appendChild(mkRow(T('快捷键', 'Shortcuts'), sBtn));
+    }
+  }
+
+  // reader.active 时把 sidebar 的子节点临时迁入抽屉，关闭时还原
+  let tocMovedToDrawer = false;
+  function maybeMoveTocIntoDrawer() {
+    if (!drawerTocHost || !sidebarEl) return;
+    const reader = document.getElementById('reader');
+    const inReader = reader && reader.classList.contains('active');
+    if (inReader && sidebarEl.children.length) {
+      while (sidebarEl.firstChild) drawerTocHost.appendChild(sidebarEl.firstChild);
+      drawerTocHost.hidden = false;
+      tocMovedToDrawer = true;
+    } else {
+      drawerTocHost.hidden = true;
+    }
+  }
+  function restoreTocFromDrawer() {
+    if (!tocMovedToDrawer || !drawerTocHost || !sidebarEl) return;
+    while (drawerTocHost.firstChild) sidebarEl.appendChild(drawerTocHost.firstChild);
+    drawerTocHost.hidden = true;
+    tocMovedToDrawer = false;
+  }
+
+  function openMobileDrawer() {
+    if (!drawerEl) return;
+    rebuildDrawerLists();
+    maybeMoveTocIntoDrawer();
+    drawerEl.classList.add('open');
+    drawerEl.setAttribute('aria-hidden', 'false');
+    if (drawerBackdrop) {
+      drawerBackdrop.classList.add('visible');
+      drawerBackdrop.setAttribute('aria-hidden', 'false');
+    }
     if (mobileTocBtn) mobileTocBtn.setAttribute('aria-expanded', 'true');
-    if (!mobileBackdrop) {
-      mobileBackdrop = document.createElement('div');
-      mobileBackdrop.className = 'mobile-toc-backdrop';
-      mobileBackdrop.addEventListener('click', closeMobileTOC);
-      document.body.appendChild(mobileBackdrop);
-    }
-    requestAnimationFrame(() => mobileBackdrop.classList.add('visible'));
+    document.body.style.overflow = 'hidden';
   }
-  function closeMobileTOC() {
-    if (!sidebarEl) return;
-    sidebarEl.classList.remove('mobile-open');
+  function closeMobileDrawer() {
+    if (!drawerEl) return;
+    drawerEl.classList.remove('open');
+    drawerEl.setAttribute('aria-hidden', 'true');
+    if (drawerBackdrop) {
+      drawerBackdrop.classList.remove('visible');
+      drawerBackdrop.setAttribute('aria-hidden', 'true');
+    }
     if (mobileTocBtn) mobileTocBtn.setAttribute('aria-expanded', 'false');
-    if (mobileBackdrop) {
-      mobileBackdrop.classList.remove('visible');
-      setTimeout(() => { if (mobileBackdrop) { mobileBackdrop.remove(); mobileBackdrop = null; } }, 220);
-    }
+    // 等过渡结束再还原 TOC，避免视觉抖动
+    setTimeout(restoreTocFromDrawer, 280);
+    document.body.style.overflow = '';
   }
+  // 兼容老调用名（gallery 等地方可能仍触发）
+  function closeMobileTOC() { closeMobileDrawer(); }
+
   if (mobileTocBtn) {
     mobileTocBtn.addEventListener('click', () => {
-      if (sidebarEl && sidebarEl.classList.contains('mobile-open')) closeMobileTOC();
-      else openMobileTOC();
+      if (drawerEl && drawerEl.classList.contains('open')) closeMobileDrawer();
+      else openMobileDrawer();
     });
   }
-  // 点 TOC 章节后自动关闭 drawer（移动端才有此行为，桌面无效因为没 .mobile-open）
-  if (sidebarEl) {
-    sidebarEl.addEventListener('click', (e) => {
-      const tocChapter = e.target.closest('.toc-chapter');
-      if (tocChapter && sidebarEl.classList.contains('mobile-open')) {
-        setTimeout(closeMobileTOC, 100);
-      }
+  if (drawerCloseBtn) {
+    drawerCloseBtn.addEventListener('click', closeMobileDrawer);
+  }
+  if (drawerBackdrop) {
+    drawerBackdrop.addEventListener('click', closeMobileDrawer);
+  }
+  // 点抽屉里的章节后关闭
+  if (drawerEl) {
+    drawerEl.addEventListener('click', (e) => {
+      const chap = e.target.closest('.toc-chapter');
+      if (chap) setTimeout(closeMobileDrawer, 100);
     });
   }
-  // Esc 关闭 drawer
+  // Esc 关闭
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && sidebarEl && sidebarEl.classList.contains('mobile-open')) {
-      closeMobileTOC();
+    if (e.key === 'Escape' && drawerEl && drawerEl.classList.contains('open')) {
+      closeMobileDrawer();
     }
   });
   // Gallery view

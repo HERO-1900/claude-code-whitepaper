@@ -2890,21 +2890,132 @@ pre:hover .copy-btn,
   #command-grid { grid-template-columns: 1fr; padding: 0 12px; }
   #hidden-features-grid { grid-template-columns: 1fr; padding: 0 12px; }
 
-  /* Nav bar: icon-only mode */
-  #topnav { padding: 0 8px; height: 44px; }
-  .nav-left, .nav-right { gap: 4px; flex-wrap: nowrap; }
-  .nav-btn { padding: 6px; gap: 0; min-width: 44px; min-height: 44px; /* HIG tap target */ }
-  .nav-btn svg { width: 22px; height: 22px; }
-  /* Hide text labels inside nav buttons — show icon only */
-  .nav-btn { font-size: 0; }
-  .nav-btn svg { font-size: initial; }
-  /* 收窄 metaphor-toggle 和 cc-theme/lang 切换，保证 nav 不挤出 viewport */
-  .metaphor-toggle { padding: 4px 6px; font-size: 10px; gap: 4px; max-width: 90px; }
-  .metaphor-toggle #metaphor-label { display: none; }  /* mobile 下只剩 emoji icon */
-  .cc-lang-switcher { gap: 0; }
-  .cc-lang-btn, .cc-theme-btn { min-width: 36px; min-height: 36px; padding: 6px; }
-  .metaphor-toggle { padding: 4px 6px; font-size: 12px; }
-  #metaphor-label { display: none; }
+  /* ===== Mobile topbar · Variant A 毛玻璃 (2026-05-01) =====
+     主导航 + 元喻 + 版本 + 快捷键全部塞进抽屉，顶栏只留 hamburger / 标题 / 中-EN / 主题 */
+  #topnav {
+    padding: 0 12px;
+    height: 52px;
+    gap: 8px;
+    background: rgba(var(--cc-bg-primary-rgb), 0.72);
+    -webkit-backdrop-filter: blur(16px) saturate(160%);
+    backdrop-filter: blur(16px) saturate(160%);
+    border-bottom: 1px solid rgba(120, 90, 60, .10);
+  }
+  @supports not (backdrop-filter: blur(1px)) {
+    #topnav { background: var(--bg-primary); }
+  }
+  /* welcome 期间维持透明 */
+  #welcome.active ~ #topnav {
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border-bottom: none !important;
+  }
+  /* 主导航条目全部从顶栏移走（抽屉里再渲染） */
+  #topnav #nav-home,
+  #topnav #nav-reader,
+  #topnav #nav-inspiration,
+  #topnav #nav-dictionary { display: none !important; }
+  /* breadcrumb 移除，让标题位由 nav-center::before 提供 */
+  #topnav #breadcrumb { display: none !important; }
+  /* 元喻 / 版本 / 快捷键 / 词典高亮开关 / 主题切换 全部进抽屉 */
+  #topnav .metaphor-toggle,
+  #topnav .version-badge,
+  #topnav #shortcuts-hint,
+  #topnav .cc-dict-highlight-toggle,
+  #topnav .cc-theme-switcher { display: none !important; }
+  .nav-left, .nav-right { gap: 6px; flex-wrap: nowrap; }
+  /* hamburger（mobile-toc-toggle） */
+  #mobile-toc-toggle {
+    width: 38px; height: 38px; min-width: 38px; min-height: 38px;
+    padding: 0; gap: 0;
+    background: rgba(255,255,255,.55) !important;
+    border: 1px solid rgba(120,90,60,.18) !important;
+    border-radius: 10px !important;
+    display: inline-flex !important;
+    align-items: center; justify-content: center;
+    color: var(--text-primary) !important;
+  }
+  [data-theme="dark"] #mobile-toc-toggle {
+    background: rgba(255,255,255,.06) !important;
+    border-color: rgba(255,255,255,.14) !important;
+    color: var(--text-primary) !important;
+  }
+  #mobile-toc-toggle:active,
+  #mobile-toc-toggle[aria-expanded="true"] {
+    background: var(--gold-soft, rgba(199,125,46,.16)) !important;
+    border-color: rgba(199,125,46,.45) !important;
+  }
+  #mobile-toc-toggle svg { width: 20px; height: 20px; }
+  /* nav-center 显示移动端站点标题 */
+  .nav-center {
+    flex: 1; min-width: 0;
+    padding: 0 4px;
+    display: flex; flex-direction: column; justify-content: center;
+    gap: 1px;
+  }
+  .nav-center::before {
+    content: "Claude Code 白皮书";
+    display: block;
+    font-size: 13.5px;
+    font-weight: 600;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+    letter-spacing: -0.005em;
+  }
+  .nav-center::after {
+    content: "v2.1.88 · 88 章";
+    display: block;
+    font-size: 10.5px;
+    color: var(--text-muted);
+    font-family: var(--font-mono);
+    letter-spacing: .02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-align: left;
+  }
+  html[data-lang="en"] .nav-center::before { content: "Claude Code Whitepaper"; }
+  html[data-lang="en"] .nav-center::after { content: "v2.1.88 · 88 chapters"; }
+  /* 中-EN 切换在顶栏紧凑化 */
+  .cc-lang-switcher {
+    gap: 0; padding: 2px;
+    background: rgba(255,255,255,.55);
+    border: 1px solid rgba(120,90,60,.18);
+    border-radius: 10px;
+    height: 38px;
+  }
+  [data-theme="dark"] .cc-lang-switcher {
+    background: rgba(255,255,255,.06);
+    border-color: rgba(255,255,255,.14);
+  }
+  .cc-lang-btn {
+    min-width: 28px; min-height: 30px;
+    padding: 0 8px;
+    font-size: 12px; font-weight: 600;
+    border: none; background: transparent;
+    border-radius: 7px;
+  }
+  .cc-lang-btn[aria-pressed="true"] {
+    background: var(--gold-soft, rgba(199,125,46,.16));
+    color: var(--accent-gold);
+  }
+  /* 主题按钮（圆角图标键） */
+  .cc-theme-btn {
+    width: 38px; height: 38px; min-width: 38px; min-height: 38px;
+    padding: 0;
+    border: 1px solid rgba(120,90,60,.18);
+    background: rgba(255,255,255,.55);
+    border-radius: 10px;
+    display: inline-flex; align-items: center; justify-content: center;
+  }
+  [data-theme="dark"] .cc-theme-btn {
+    background: rgba(255,255,255,.06);
+    border-color: rgba(255,255,255,.14);
+  }
 
   /* Welcome page mobile */
   .welcome-title { font-size: 32px; }
@@ -8039,4 +8150,265 @@ body.cc-lang-switching .cc-lang-btn {
 /* Phase D/E：通用 .hidden 隐藏（用于 toolbar/body 切换）—— 高特异度 */
 #dictionary .dict-toolbar.hidden,
 #dictionary .dict-body.hidden { display: none !important; }
+
+/* ====================================================================
+   Mobile Nav Drawer · 配套方案 A 毛玻璃顶栏（2026-05-01）
+   ≤600px 可见；点 hamburger 唤出，含主导航 / 章节目录（reader 时）/ 工具
+   ==================================================================== */
+.mobile-nav-drawer { display: none; }
+.mobile-nav-backdrop { display: none; }
+
+@media (max-width: 600px) {
+  .mobile-nav-drawer {
+    display: flex !important;
+    flex-direction: column;
+    position: fixed;
+    top: 0; left: 0;
+    width: 88vw; max-width: 360px;
+    height: 100dvh;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    z-index: 1000;
+    transform: translateX(-100%);
+    transition: transform .26s cubic-bezier(.32,.72,.28,1);
+    overflow: hidden;
+    box-shadow: 6px 0 28px rgba(0,0,0,.18);
+    border-right: 1px solid var(--border);
+  }
+  .mobile-nav-drawer.open { transform: translateX(0); }
+
+  .mobile-nav-backdrop {
+    display: block;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.42);
+    z-index: 999;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .22s ease;
+  }
+  .mobile-nav-backdrop.visible {
+    opacity: 1;
+    pointer-events: auto;
+  }
+
+  .mnd-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 16px 14px 12px;
+    padding-top: calc(env(safe-area-inset-top, 0) + 16px);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+  .mnd-logo {
+    display: flex; align-items: center; gap: 9px;
+    font-weight: 600; font-size: 14px;
+    color: var(--text-primary);
+  }
+  .mnd-logo-dot {
+    width: 9px; height: 9px;
+    background: var(--accent-gold);
+    border-radius: 99px;
+    box-shadow: 0 0 8px rgba(199,125,46,.4);
+  }
+  .mnd-close {
+    width: 38px; height: 38px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .mnd-close:active {
+    background: var(--bg-hover);
+    border-color: var(--border);
+  }
+
+  .mnd-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0 calc(env(safe-area-inset-bottom, 0) + 24px);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mnd-section { padding: 10px 12px 4px; }
+  .mnd-section + .mnd-section { border-top: 1px solid var(--border); margin-top: 6px; padding-top: 14px; }
+  .mnd-section-title {
+    font-size: 11px; font-weight: 700;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--text-muted);
+    margin: 0 0 8px;
+    padding: 0 6px;
+  }
+
+  .mnd-nav-list,
+  .mnd-tools {
+    display: flex; flex-direction: column;
+    gap: 2px;
+  }
+  /* 工具区行式布局 */
+  .mnd-tool-row {
+    display: flex; align-items: center; justify-content: space-between;
+    gap: 12px;
+    padding: 9px 6px;
+    border-radius: 8px;
+  }
+  .mnd-tool-row + .mnd-tool-row { border-top: 1px solid rgba(120,90,60,.08); }
+  .mnd-tool-label {
+    font-size: 13.5px;
+    color: var(--text-secondary);
+    flex-shrink: 0;
+  }
+  .mnd-tool-control {
+    margin-left: auto;
+  }
+  .mnd-tool-pill {
+    padding: 6px 12px;
+    background: var(--bg-hover);
+    border: 1px solid var(--border);
+    border-radius: 99px;
+    font-size: 12.5px;
+    color: var(--text-primary);
+    display: inline-flex; align-items: center; gap: 6px;
+    cursor: pointer;
+  }
+  .mnd-tool-pill:active { background: var(--gold-soft, rgba(199,125,46,.16)); }
+  .mnd-tool-pill svg { width: 14px; height: 14px; }
+  .mnd-tool-pill #metaphor-icon,
+  .mnd-tool-pill span { font-size: 13px; }
+  .mnd-tool-toggle {
+    padding: 5px 14px;
+    background: rgba(120,90,60,.10);
+    border: 1px solid transparent;
+    border-radius: 99px;
+    font-size: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: background .15s, color .15s;
+  }
+  .mnd-tool-toggle.on {
+    background: var(--gold-soft, rgba(199,125,46,.18));
+    color: var(--accent-gold);
+    border-color: rgba(199,125,46,.35);
+    font-weight: 600;
+  }
+  /* segment（3 选 1 主题） */
+  .mnd-tool-segment {
+    display: inline-flex;
+    background: rgba(120,90,60,.08);
+    border-radius: 10px;
+    padding: 3px;
+    gap: 2px;
+  }
+  .mnd-seg-btn {
+    padding: 4px 8px;
+    background: transparent;
+    border: none;
+    border-radius: 7px;
+    font-size: 11.5px;
+    color: var(--text-secondary);
+    display: inline-flex; align-items: center; gap: 4px;
+    cursor: pointer;
+  }
+  .mnd-seg-btn svg { width: 14px; height: 14px; }
+  .mnd-seg-btn.on {
+    background: var(--bg-card);
+    color: var(--text-primary);
+    box-shadow: 0 1px 2px rgba(0,0,0,.06);
+  }
+  .mnd-seg-label {
+    font-size: 11.5px;
+    line-height: 1;
+  }
+
+  /* 抽屉内的导航按钮覆盖 .nav-btn 的桌面样式 */
+  .mnd-nav-list .nav-btn,
+  .mnd-tools button {
+    width: 100%;
+    height: 46px; min-height: 46px;
+    padding: 0 12px;
+    border: none;
+    background: transparent;
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    display: flex !important;
+    align-items: center;
+    gap: 12px;
+    border-radius: 10px;
+    text-align: left;
+    justify-content: flex-start;
+    cursor: pointer;
+    transition: background .15s ease;
+  }
+  .mnd-nav-list .nav-btn:active,
+  .mnd-tools button:active { background: var(--bg-hover); }
+  .mnd-nav-list .nav-btn.active {
+    background: var(--gold-soft, rgba(199,125,46,.12));
+    color: var(--accent-gold);
+  }
+  .mnd-nav-list .nav-btn.active::before {
+    content: "";
+    width: 3px;
+    background: var(--accent-gold);
+    border-radius: 2px;
+    margin-left: -10px;
+    align-self: stretch;
+  }
+  .mnd-nav-list .nav-btn span,
+  .mnd-tools button span {
+    display: inline !important;
+    font-size: 14px !important;
+    font-weight: 500;
+  }
+  .mnd-nav-list .nav-btn svg,
+  .mnd-tools button svg {
+    width: 20px; height: 20px;
+    flex-shrink: 0;
+    opacity: .85;
+  }
+
+  /* 元喻按钮 */
+  .mnd-tools .metaphor-toggle {
+    background: transparent !important;
+    border: none !important;
+    max-width: none !important;
+    color: var(--text-primary) !important;
+  }
+  .mnd-tools .metaphor-toggle #metaphor-label,
+  .mnd-tools .metaphor-toggle #metaphor-icon {
+    display: inline !important;
+    font-size: 14px !important;
+  }
+  .mnd-tools .version-badge {
+    align-self: flex-start;
+    margin-left: 10px;
+    margin-top: 6px;
+    border: none !important;
+    background: var(--gold-soft);
+    color: var(--accent-gold);
+    padding: 4px 10px;
+    border-radius: 99px;
+    font-size: 11px;
+    font-weight: 600;
+  }
+
+  /* TOC 嵌入抽屉的样式（接收来自 #sidebar 的子节点） */
+  .mnd-section-toc {
+    padding-bottom: 16px;
+  }
+  .mnd-section-toc .sidebar-header {
+    display: none; /* 抽屉已有 section-title，不重复 "目录" */
+  }
+  .mnd-section-toc .toc-list { padding: 0 4px; }
+  .mnd-section-toc .toc-chapter {
+    padding: 9px 10px;
+    font-size: 13.5px;
+    line-height: 1.4;
+  }
+  .mnd-section-toc .toc-part-title {
+    font-size: 11px;
+    margin: 12px 6px 6px;
+  }
+}
 

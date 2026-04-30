@@ -1196,6 +1196,38 @@
     </div>
   </nav>
 
+  <!-- ==================== Mobile Nav Drawer (≤600px 才显示) ==================== -->
+  <aside id="mobile-nav-drawer" class="mobile-nav-drawer" aria-hidden="true" aria-label="移动端导航抽屉">
+    <header class="mnd-header">
+      <div class="mnd-logo">
+        <span class="mnd-logo-dot"></span>
+        <span class="mnd-logo-text">Claude Code 白皮书</span>
+      </div>
+      <button class="mnd-close" aria-label="关闭" data-i18n-attr="aria-label:nav.drawer_close_aria">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+      </button>
+    </header>
+    <div class="mnd-body">
+      <div class="mnd-section mnd-section-nav">
+        <h4 class="mnd-section-title" data-i18n="nav.drawer_section_nav">导航</h4>
+        <div class="mnd-nav-list" id="mnd-nav-list">
+          <!-- JS clones #topnav main nav buttons here -->
+        </div>
+      </div>
+      <div class="mnd-section mnd-section-toc" id="mnd-toc-host" hidden>
+        <h4 class="mnd-section-title" data-i18n="nav.drawer_section_toc">章节目录</h4>
+        <!-- 进入 reader 时，#sidebar 子节点临时迁入这里；关闭抽屉再还原 -->
+      </div>
+      <div class="mnd-section mnd-section-tools">
+        <h4 class="mnd-section-title" data-i18n="nav.drawer_section_tools">工具</h4>
+        <div class="mnd-tools" id="mnd-tools-list">
+          <!-- JS clones metaphor / shortcuts / version into here -->
+        </div>
+      </div>
+    </div>
+  </aside>
+  <div id="mobile-nav-backdrop" class="mobile-nav-backdrop" aria-hidden="true"></div>
+
   <!-- Keyboard shortcuts modal -->
   <div id="shortcuts-modal" class="shortcuts-modal hidden">
     <div class="shortcuts-content">
