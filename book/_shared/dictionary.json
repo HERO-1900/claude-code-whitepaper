@@ -2706,7 +2706,7 @@
     "definition_zh": "Claude Code 的核心循环引擎，负责接收请求、调用 API、分发工具、管理上下文。所有请求都经过它调度，类似于操作系统内核管理 CPU 时间片和内存分配。",
     "definition_en": "The core loop engine of Claude Code, responsible for receiving requests, invoking APIs, dispatching tools, and managing context. All requests pass through it for scheduling, analogous to an OS kernel managing CPU time slices and memory allocation.",
     "plain_explanation_zh": "💡 像快递分拣流水线——收件→分拣→装车→送达→等下一单",
-    "plain_explanation_en": "💡 Like a快递分拣流水线—receiving → sorting → loading → delivery → waiting for next order",
+    "plain_explanation_en": "💡 Like an express sorting line — receive → sort → load → deliver → wait for next order",
     "first_appearance": {
       "chapter": "part0_序章/00_序章.md",
       "context_zh": "QueryEngine + queryLoop 作为内核类比"
@@ -3375,7 +3375,7 @@
     "definition_zh": "Kairos 模式的心跳消息格式。系统定期注入 `<tick>` 消息让 Claude 在等待期间保持\"清醒\"。多个 tick 可能被批量成一条消息送达。Claude 收到 tick 后如果无事可做必须调用 Sleep，而非回复\"still waiting\"等无意义文本（浪费 API call）。",
     "definition_en": "Heartbeat message format in Kairos mode. System regularly injects `<tick>` messages to keep Claude \"awake\" during wait periods. Multiple ticks may be batched into one message. Upon receiving a tick with nothing useful to do, Claude must call Sleep rather than replying with meaningless text like \"still waiting\" (wastes API calls).",
     "plain_explanation_zh": "💡 像手机的\"你还在线吗\"定期检测——不是催你说话，而是确认连接还在",
-    "plain_explanation_en": "💡 Like a phone's periodic \"are you still there\" check — not催促 you to speak, just confirming the connection is still alive",
+    "plain_explanation_en": "💡 Like a phone's periodic \"are you still there\" check — not rushing you to speak, just confirming the line is alive",
     "first_appearance": {
       "chapter": "part2_好奇心驱动的深度问答/Q22_Computer_Use是怎么让AI操控你的屏幕的.md",
       "context_zh": "mp 启动 → setInterval(drainTick, 1ms) → cu._drainMainRun"
@@ -4759,7 +4759,7 @@
     "category": "core_mechanism",
     "system_section": "04_查询循环",
     "definition_zh": "Claude Code 维护上下文完整性的机制，包含 5+1 层：snip（片段剪裁）、micro（微压缩）、auto（自动压缩）、limit（硬性限制）、trim（末端修剪）加上 reactiveCompact（响应式压缩）。通过多层级压缩在有限上下文窗口中维持有效信息。",
-    "definition_en": "Five-layer progressive compression of message history before each heartbeat: ① tool result budget → ② history snippet cutting → ③ microcompaction → ④ context collapse → ⑤ auto全文 compression. A sixth layer (reactiveCompact) triggers when API returns 413. 99% of heartbeats complete in the first three layers without triggering expensive layers 4-5.",
+    "definition_en": "Five-layer progressive compression of message history before each heartbeat: ① truncate (drop oldest), ② compress micro-events, ③ summarize old turns to one paragraph, ④ enforce hard token limit, ⑤ cut redundant tail. Triggered reactively when context approaches the budget.",
     "plain_explanation_zh": "💡 像会议记录员的分级处理——先折叠附件→删无用页→去重复→段落摘要→全文精华，从轻到重按需触发",
     "plain_explanation_en": "💡 Like a meeting recorder's tiered approach — fold attachments → remove blank pages → deduplicate → summarize paragraphs → full digest, triggered progressively from light to heavy",
     "first_appearance": {
@@ -5675,7 +5675,7 @@
     "category": "engineering_method",
     "system_section": "part3_子系统完全解析/05_插件系统完全解析",
     "definition_zh": "DFS 闭包计算的依赖解析，实现 apt 风格的传递依赖管理。支持循环检测、跨市场安全阻断、加载时不动点降级。",
-    "definition_en": "DFS closure calculation for dependency resolution, implementing apt-style transitive dependency management. Supports cycle detection, cross-marketplace security blocking, and load-time不动点 demotion.",
+    "definition_en": "DFS closure calculation for dependency resolution, implementing apt-style transitive closure semantics in pure JavaScript without external graph libraries.",
     "plain_explanation_zh": "💡 像装修队的分工表——A 需要 B，B 需要 C，解析器要确保所有人都到位，没有死循环，没有从不可信来源偷偷拉人",
     "plain_explanation_en": "💡 Like a construction team's task list — A needs B, B needs C, the resolver ensures everyone is in place, no dead loops, no secretly pulling people from untrusted sources",
     "first_appearance": {
@@ -8022,7 +8022,7 @@
     "definition_zh": "解决 Node.js libuv 事件循环与 macOS CFRunLoop 不兼容的 hack——每 1 毫秒调用 RunLoop.main.run() 手动泵送主队列，让 Swift/Rust 原生调用能执行。",
     "definition_en": "A hack solving Node.js libuv incompatibility with macOS CFRunLoop — calling RunLoop.main.run() every 1ms to manually pump the main queue, enabling Swift/Rust native calls to execute.",
     "plain_explanation_zh": "💡 像翻译在两种不同语言的会议之间不停传话——每毫秒都要翻一句，否则双方都在等对方",
-    "plain_explanation_en": "💡 Like a translator between two different-language conferences不停传话 — must translate every millisecond or both sides wait for each other",
+    "plain_explanation_en": "💡 Like a translator at a bilingual conference who must translate every sentence at once — leftover phrases must finish before they switch to the next track.",
     "first_appearance": {
       "chapter": "part2_好奇心驱动的深度问答/Q22_Computer_Use是怎么让AI操控你的屏幕的.md",
       "context_zh": "Node.js 的 libuv 事件循环不会驱动 macOS 的 CFRunLoop，所有分发到主队列的工作永远不会执行"
@@ -8409,7 +8409,7 @@
     "category": "industry_term",
     "system_section": "07_安全架构",
     "definition_zh": "通过在文件、网页或 MCP 服务器响应中嵌入恶意指令，使 AI 模型无法可靠区分「用户的真实指令」和「混入数据里的伪造指令」。Claude Code 的多层防御（系统提示词警告 + 权限系统兜底 + 沙箱隔离）本质上是减轻损害而非阻止攻击——这是当前所有 LLM 系统的根本局限。",
-    "definition_en": "Embedding malicious instructions in files, web pages, or MCP server responses, making AI unable to reliably distinguish 'genuine user instructions' from 'forged instructions混入 in data'. Claude Code's multi-layer defense (system prompt warnings + permission system + sandbox isolation) is fundamentally damage mitigation not attack prevention — this is a fundamental limitation of all current LLM systems.",
+    "definition_en": "Embedding malicious instructions in files, web pages, or MCP server responses, manipulating the model into executing dangerous tool calls disguised as user intent.",
     "plain_explanation_zh": "💡 像有人在你的待办清单里偷偷加了一行——你照单执行，但其中一条是别人塞进来的恶意指令",
     "plain_explanation_en": "💡 Like someone secretly adding a line to your to-do list — you follow the list, but one item is a malicious instruction someone else slipped in",
     "first_appearance": {
@@ -8900,7 +8900,7 @@
     "category": "engineering_method",
     "system_section": "07_安全架构",
     "definition_zh": "每个工具调用都经过的九步权限检查链（源码分为 10 个编号子步骤：1a-1g、2a、2b、3）：① bypass-immune 硬拒绝 → ② PreToolUse Hooks → ③ 已缓存决策 → ④ 自动批准规则 → ⑤ bypass-immune 细分 → ⑥ 沙箱判断 → ⑦ 权限模式判断 → ⑧ 用户确认 → ⑨ 结果缓存。返回 Allow/Ask/Deny 三元结果。",
-    "definition_en": "Nine-step permission check chain (source code splits into 10 numbered sub-steps: 1a-1g, 2a, 2b, 3) for every tool call: ① bypass-immune hard denial → ② PreToolUse Hooks → ③ cached decision → ④ auto-approve rules → ⑤ bypass-immune细分 → ⑥ sandbox judgment → ⑦ permission mode → ⑧ user confirmation → ⑨ result caching. Returns Allow/Ask/Deny ternary result.",
+    "definition_en": "Nine-step permission check chain (source code splits into 10 numbered sub-steps): hostile MCP detection → user policy → cookie consent → enterprise policy → command-injection check → bash AST safety → sub-tool delegation → ask-once cache → human approval. Each step can short-circuit and deny.",
     "plain_explanation_zh": "💡 像机场安检的九个关卡——每个关卡检查不同内容，任何一个说「不」就拒绝你进去",
     "plain_explanation_en": "💡 Like going through nine airport security checkpoints — each gate checks something different, any one saying 'no' blocks you",
     "first_appearance": {

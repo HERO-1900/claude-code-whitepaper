@@ -1003,12 +1003,10 @@
     let activeHeadingId = null;
     if (typeof IntersectionObserver !== 'undefined') {
       const visibleHeadings = new Set();
-      sectionObserver = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-          if (entry.isIntersecting) visibleHeadings.add(entry.target.id);
-          else visibleHeadings.delete(entry.target.id);
-        });
-        // 取可见标题中在文档里最靠前的那个
+      // 修复右 TOC 抖动：用 rAF 合并连续 IO 事件，避免 resize 时反复 class toggle
+      let rafScheduled = false;
+      function flush() {
+        rafScheduled = false;
         let topId = null;
         for (const h of headings) {
           if (visibleHeadings.has(h.id)) { topId = h.id; break; }
@@ -1018,6 +1016,16 @@
           navItems.forEach(item => {
             item.classList.toggle('section-active', item.dataset.targetId === topId);
           });
+        }
+      }
+      sectionObserver = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) visibleHeadings.add(entry.target.id);
+          else visibleHeadings.delete(entry.target.id);
+        });
+        if (!rafScheduled) {
+          rafScheduled = true;
+          requestAnimationFrame(flush);
         }
       }, {
         root: chapterContent,

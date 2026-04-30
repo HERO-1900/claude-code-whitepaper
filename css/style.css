@@ -933,7 +933,9 @@ mark.search-highlight {
   border-radius: 4px;
   line-height: 1.4;
   margin-bottom: 1px;
-  transition: background 0.12s, color 0.12s;
+  /* 关闭 transition：浏览器横向 resize 时鼓动 IO callback 反复切 active class，
+     transition 累积导致颜色 wobble。改为瞬切，更稳定。 */
+  transition: none;
   border-left: 2px solid transparent;
   cursor: pointer;
   white-space: nowrap;
@@ -6200,6 +6202,57 @@ pre:hover .copy-btn,
 @media (max-width: 768px) {
   .insp-modal { padding: 20px 22px; width: 94vw; }
 }
+/* 灵感弹窗顶部标题区 */
+.insp-modal-header {
+  position: sticky;
+  top: -28px;
+  margin: -28px -36px 18px;
+  padding: 18px 60px 14px 36px;
+  background: var(--cc-bg-elevated, var(--bg-elevated, #fff));
+  border-bottom: 1px solid var(--cc-border-default, var(--border, rgba(120,120,120,0.2)));
+  border-radius: 12px 12px 0 0;
+  z-index: 1;
+}
+[data-theme="warm"] .insp-modal-header { background: #fbf9f4; border-bottom-color: #d8cfbc; }
+.insp-modal-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-bottom: 6px;
+}
+.insp-modal-kind {
+  background: var(--accent-gold, #f5b843);
+  color: #2a2418;
+  font-size: 0.72rem;
+  padding: 2px 10px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+.insp-modal-id {
+  font-family: monospace;
+  font-size: 0.74rem;
+  color: var(--text-muted);
+  letter-spacing: 0.04em;
+}
+.insp-modal-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  color: var(--text);
+  line-height: 1.45;
+}
+.insp-modal .insp-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  background: transparent;
+  border: 0;
+  font-size: 1.4rem;
+  cursor: pointer;
+  color: var(--text-muted);
+  z-index: 2;
+}
+.insp-modal .insp-modal-close:hover { color: var(--accent); }
 
 [data-theme="warm"] .insp-modal {
   background: #fbf9f4;

@@ -205,8 +205,10 @@
       if (/[A-Za-z]/.test(c)) return c.toUpperCase();
       return '#';
     }
-    // 中文模式：去掉前导符号
-    const t = (entry.term_zh || '').replace(/^[\/\u002F\s]+/, '');
+    // 中文模式：去掉前导符号（含 @ # / 等），找第一个有意义字符
+    let t = (entry.term_zh || '').replace(/^[^\u4E00-\u9FFFA-Za-z0-9]+/, '');
+    // 如果整个名字都是符号（罕见），退到原始第一个字符
+    if (!t) t = entry.term_zh || '';
     return pinyinHead(t);
   }
 
@@ -685,9 +687,15 @@
     const prio = entry.priority || 2;
     const prioLabel = (PRIO_LABELS()[prio] || ('P' + prio));
     const term1 = en ? (entry.term_en || entry.term_zh) : (entry.term_zh || entry.term_en);
-    const term2 = en ? (entry.term_zh || '') : (entry.term_en || '');
-    const def = en ? (entry.definition_en || entry.definition_zh) : (entry.definition_zh || entry.definition_en);
-    const plain = en ? (entry.plain_explanation_en || entry.plain_explanation_zh) : (entry.plain_explanation_zh || entry.plain_explanation_en);
+    // EN 模式下不显示 term_zh 副标题（用户反馈：不希望中文出现）；ZH 模式下显示 term_en 作副标题
+    const term2 = en ? '' : (entry.term_en || '');
+    // 定义和通俗解释 EN 模式严格只用 EN，没有就显示 placeholder（不 fallback 中文）
+    const def = en
+      ? (entry.definition_en || (entry.definition_zh ? '— translation pending —' : ''))
+      : (entry.definition_zh || entry.definition_en);
+    const plain = en
+      ? (entry.plain_explanation_en || '')
+      : (entry.plain_explanation_zh || entry.plain_explanation_en);
     const wordbook = getWordbook();
     const inWordbook = wordbook.indexOf(entry.id) >= 0;
 
@@ -1138,9 +1146,14 @@
       // 列表
       const itemsHTML = resolved.map(e => {
         const term1 = en ? (e.term_en || e.term_zh) : (e.term_zh || e.term_en);
-        const term2 = en ? (e.term_zh || '') : (e.term_en || '');
-        const def = en ? (e.definition_en || e.definition_zh) : (e.definition_zh || e.definition_en);
-        const plain = en ? (e.plain_explanation_en || e.plain_explanation_zh) : (e.plain_explanation_zh || e.plain_explanation_en);
+        // EN 模式不显示中文副标题
+        const term2 = en ? '' : (e.term_en || '');
+        const def = en
+          ? (e.definition_en || (e.definition_zh ? '— translation pending —' : ''))
+          : (e.definition_zh || e.definition_en);
+        const plain = en
+          ? (e.plain_explanation_en || '')
+          : (e.plain_explanation_zh || e.plain_explanation_en);
         const cat = e.category;
         const catLabel = (CAT_LABELS()[cat] || cat || '');
         const catColor = CAT_COLORS[cat] || '#888';

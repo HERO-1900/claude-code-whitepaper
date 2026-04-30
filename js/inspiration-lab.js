@@ -433,12 +433,25 @@
     `;
   }
 
-  function showModal(detailEl) {
+  function showModal(detailEl, opts) {
+    opts = opts || {};
     var overlay = document.createElement('div');
     overlay.className = 'insp-modal-overlay';
     var modal = document.createElement('div');
     modal.className = 'insp-modal';
-    modal.innerHTML = '<button class="insp-modal-close" aria-label="' + (isEn() ? 'Close' : '关闭') + '">✕</button>';
+    // 顶部 header（标题 + 副标题/id + 关闭按钮）
+    var headerHTML = '<div class="insp-modal-header">';
+    if (opts.kind || opts.itemId) {
+      var tag = opts.kind ? '<span class="insp-modal-kind">' + opts.kind + '</span>' : '';
+      var idChip = opts.itemId ? '<span class="insp-modal-id">' + opts.itemId + '</span>' : '';
+      headerHTML += '<div class="insp-modal-meta">' + tag + idChip + '</div>';
+    }
+    if (opts.title) {
+      headerHTML += '<h2 class="insp-modal-title">' + opts.title + '</h2>';
+    }
+    headerHTML += '<button class="insp-modal-close" aria-label="' + (isEn() ? 'Close' : '关闭') + '">✕</button>';
+    headerHTML += '</div>';
+    modal.innerHTML = headerHTML;
     var content = detailEl.cloneNode(true);
     content.style.display = 'block';
     modal.appendChild(content);
@@ -488,12 +501,31 @@
       });
     }
 
-    // 卡片点击 → 弹窗
+    // 卡片点击 → 弹窗（带顶部标题）
     container.querySelectorAll('.spark-card, .blueprint-card').forEach(function(card) {
       card.addEventListener('click', function(e) {
         if (e.target.closest('a, button, input, textarea')) return;
-        var detail = card.querySelector('.spark-detail') || card.querySelector('.bp-detail');
-        if (detail) showModal(detail);
+        var isBlueprint = card.classList.contains('blueprint-card');
+        var detail = card.querySelector(isBlueprint ? '.bp-detail' : '.spark-detail');
+        if (!detail) return;
+        var itemId = card.dataset.id || '';
+        var titleText = '';
+        if (isBlueprint) {
+          var bpTitleEl = card.querySelector('.bp-title');
+          if (bpTitleEl) titleText = bpTitleEl.textContent.trim();
+        } else {
+          // spark：用 spark-text 内容作标题（第一行/截短）
+          var sparkTextEl = card.querySelector('.spark-text');
+          if (sparkTextEl) {
+            var raw = sparkTextEl.textContent.trim();
+            titleText = raw.length > 64 ? raw.slice(0, 62) + '…' : raw;
+          }
+        }
+        showModal(detail, {
+          title: titleText,
+          itemId: itemId,
+          kind: isBlueprint ? (isEn() ? 'Blueprint' : '蓝图') : (isEn() ? 'Spark' : '火花')
+        });
       });
     });
   }
