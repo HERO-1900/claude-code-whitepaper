@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh"><head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mobile v5 Mockup</title>
+<style>
+  :root {
+    --bg-page: #f5f1ea;
+    --bg-card: #ffffff;
+    --border: #e7dccd;
+    --text-primary: #2b2a27;
+    --text-muted: #8a7d6a;
+    --accent: #c77d2e;
+    --accent-soft: rgba(199,125,46,.16);
+    --shadow: 0 6px 20px rgba(0,0,0,.06);
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  body { background: #1a1a1a; padding: 30px; min-height: 100vh; color: #ddd;
+         font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", system-ui, sans-serif; }
+  .grid { display: flex; gap: 28px; flex-wrap: wrap; justify-content: center; }
+  .col { display: flex; flex-direction: column; align-items: center; }
+  .label { font-size: 13px; color: #aaa; margin-bottom: 10px; letter-spacing: .04em; }
+  .desc { font-size: 11px; color: #888; margin-top: 14px; max-width: 360px; line-height: 1.6; text-align: center; }
+  .frame {
+    width: 390px; height: 844px;
+    border: 8px solid #000; border-radius: 36px;
+    overflow: hidden;
+    background: var(--bg-page);
+    box-shadow: 0 12px 40px rgba(0,0,0,.5);
+    position: relative;
+  }
+
+  /* iPhone 状态栏 */
+  .ios-status {
+    height: 44px;
+    background: var(--bg-page);
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 0 22px;
+    font-weight: 600; font-size: 14px;
+    color: var(--text-primary);
+  }
+
+  /* ===== 顶栏 - 新布局 ===== */
+  .topbar {
+    height: 52px;
+    background: rgba(255,255,255,.78);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center;
+    padding: 0 12px;
+    gap: 8px;
+    position: relative;
+  }
+  .icon-btn {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: rgba(199,125,46,.10);
+    border: 1px solid rgba(199,125,46,.28);
+    display: inline-flex; align-items: center; justify-content: center;
+    color: var(--text-primary);
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .icon-btn:active { background: var(--accent-soft); }
+  .icon-btn svg { width: 20px; height: 20px; stroke-width: 2; }
+  .topbar-title {
+    flex: 1;
+    text-align: center;
+    font-size: 15px;
+    font-weight: 600;
+    color: var(--text-primary);
+    letter-spacing: .01em;
+  }
+
+  /* ===== 第二行 Tab Bar - 三个变体 ===== */
+
+  /* v1: 等宽撑满，下划线指示 */
+  .tabbar-v1 {
+    height: 44px;
+    background: var(--bg-page);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    padding: 0 4px;
+  }
+  .tabbar-v1 .tab {
+    flex: 1;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    position: relative;
+    gap: 5px;
+  }
+  .tabbar-v1 .tab.active {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .tabbar-v1 .tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 32px; height: 2px;
+    background: var(--accent);
+    border-radius: 1px;
+  }
+  .tabbar-v1 .tab svg { width: 14px; height: 14px; }
+
+  /* v2: pill segmented control 居中 */
+  .tabbar-v2 {
+    height: 50px;
+    background: var(--bg-page);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    padding: 0 12px;
+  }
+  .tabbar-v2 .seg {
+    display: flex;
+    background: rgba(199,125,46,.08);
+    border-radius: 999px;
+    padding: 3px;
+    gap: 2px;
+    width: 100%;
+    max-width: 360px;
+  }
+  .tabbar-v2 .seg .tab {
+    flex: 1;
+    height: 34px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px;
+    font-weight: 500;
+    color: var(--text-muted);
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .tabbar-v2 .seg .tab.active {
+    background: var(--bg-card);
+    color: var(--accent);
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0,0,0,.08);
+  }
+
+  /* v3: icon + 文字双行 */
+  .tabbar-v3 {
+    height: 56px;
+    background: var(--bg-page);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    padding: 0 4px;
+  }
+  .tabbar-v3 .tab {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    gap: 3px;
+    padding: 6px 0;
+    position: relative;
+  }
+  .tabbar-v3 .tab.active {
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .tabbar-v3 .tab.active::before {
+    content: '';
+    position: absolute;
+    top: 2px; left: 50%; transform: translateX(-50%);
+    width: 24px; height: 2px;
+    background: var(--accent);
+    border-radius: 1px;
+  }
+  .tabbar-v3 .tab svg { width: 18px; height: 18px; }
+
+  /* ===== 内容区（占位 ） ===== */
+  .body-mock {
+    padding: 28px 20px;
+    color: var(--text-primary);
+  }
+  .body-mock h1 {
+    font-size: 22px;
+    margin-bottom: 8px;
+  }
+  .body-mock p {
+    font-size: 14px;
+    color: var(--text-muted);
+    line-height: 1.7;
+  }
+  .placeholder-card {
+    margin-top: 18px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 16px;
+    box-shadow: var(--shadow);
+  }
+  .placeholder-card h3 { font-size: 15px; margin-bottom: 6px; }
+  .placeholder-card p { font-size: 13px; color: var(--text-muted); }
+
+  /* ===== 齿轮 popover （示意） ===== */
+  .gear-popover {
+    position: absolute;
+    top: 96px; right: 12px;
+    width: 260px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 14px 36px rgba(0,0,0,.18);
+    padding: 14px 14px;
+    z-index: 50;
+    display: flex; flex-direction: column;
+    gap: 14px;
+  }
+  .gear-row { display: flex; flex-direction: column; gap: 6px; }
+  .gear-label {
+    font-size: 11px; color: var(--text-muted);
+    text-transform: uppercase; letter-spacing: .06em;
+    font-weight: 600;
+  }
+  .gear-control { display: flex; gap: 5px; flex-wrap: wrap; }
+  .gear-pill {
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 12.5px;
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+  .gear-pill.is-on {
+    background: var(--accent-soft);
+    border-color: rgba(199,125,46,.45);
+    color: var(--accent);
+    font-weight: 600;
+  }
+  .gear-arrow {
+    position: absolute;
+    top: -7px; right: 14px;
+    width: 14px; height: 14px;
+    background: var(--bg-card);
+    border-left: 1px solid var(--border);
+    border-top: 1px solid var(--border);
+    transform: rotate(45deg);
+  }
+</style>
+</head>
+<body>
+  <h1 style="text-align:center; font-weight:500; margin-bottom:8px; font-size:22px;">移动端顶栏 v5 草图 — 3 个变体</h1>
+  <p style="text-align:center; color:#aaa; font-size:13px; margin-bottom:30px;">
+    顶栏：[☰目录] · Inside CC 白皮书 · [⚙齿轮]　／　第二行：4 个 tab　／　齿轮 popover：语言+主题+词典高亮+比喻
+  </p>
+
+  <div class="grid">
+    <!-- ===== 变体 A: 等宽 + 下划线 ===== -->
+    <div class="col">
+      <div class="label">变体 A · 等宽 tab + 下划线指示</div>
+      <div class="frame">
+        <div class="ios-status"><span>03:42</span><span>📶 📡 🔋</span></div>
+        <div class="topbar">
+          <button class="icon-btn" title="章节目录">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          </button>
+          <div class="topbar-title">Inside CC 白皮书</div>
+          <button class="icon-btn" title="设置">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          </button>
+        </div>
+        <div class="tabbar-v1">
+          <div class="tab">全景</div>
+          <div class="tab active">阅读</div>
+          <div class="tab">灵感</div>
+          <div class="tab">词典</div>
+        </div>
+        <div class="body-mock">
+          <h1>选择一个章节开始阅读</h1>
+          <p>从左上角 ☰ 打开章节目录</p>
+        </div>
+      </div>
+      <div class="desc">
+        最简、最规整。<br>
+        4 个 tab 等宽撑满，活动 tab 用下划线指示。<br>
+        类似 Notion / 知乎 顶部 tab。
+      </div>
+    </div>
+
+    <!-- ===== 变体 B: pill segmented ===== -->
+    <div class="col">
+      <div class="label">变体 B · iOS pill segmented control</div>
+      <div class="frame">
+        <div class="ios-status"><span>03:42</span><span>📶 📡 🔋</span></div>
+        <div class="topbar">
+          <button class="icon-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          </button>
+          <div class="topbar-title">Inside CC 白皮书</div>
+          <button class="icon-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          </button>
+        </div>
+        <div class="tabbar-v2">
+          <div class="seg">
+            <div class="tab">全景</div>
+            <div class="tab active">阅读</div>
+            <div class="tab">灵感</div>
+            <div class="tab">词典</div>
+          </div>
+        </div>
+        <div class="body-mock">
+          <h1>选择一个章节开始阅读</h1>
+          <p>从左上角 ☰ 打开章节目录</p>
+        </div>
+      </div>
+      <div class="desc">
+        iOS native 风格 pill 段控件。<br>
+        活动 tab 高亮卡片化，上下留呼吸。<br>
+        视觉上更"产品化"。
+      </div>
+    </div>
+
+    <!-- ===== 变体 C: icon + 文字双行 ===== -->
+    <div class="col">
+      <div class="label">变体 C · icon + 文字双行</div>
+      <div class="frame">
+        <div class="ios-status"><span>03:42</span><span>📶 📡 🔋</span></div>
+        <div class="topbar">
+          <button class="icon-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+          </button>
+          <div class="topbar-title">Inside CC 白皮书</div>
+          <button class="icon-btn" id="gear-trigger">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
+          </button>
+        </div>
+        <div class="tabbar-v3">
+          <div class="tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/></svg>
+            全景
+          </div>
+          <div class="tab active">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M2 3h6a4 4 0 014 4v14a3 3 0 00-3-3H2z"/><path d="M22 3h-6a4 4 0 00-4 4v14a3 3 0 013-3h7z"/></svg>
+            阅读
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M9.663 17h4.673M12 3v1m0 14v3M5 12H4m4.343-5.657l-.707-.707M9.34 6.343a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+            灵感
+          </div>
+          <div class="tab">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/><line x1="9" y1="7" x2="15" y2="7"/></svg>
+            词典
+          </div>
+        </div>
+
+        <!-- 齿轮 popover 示意（始终显示便于看效果）-->
+        <div class="gear-popover">
+          <div class="gear-arrow"></div>
+          <div class="gear-row">
+            <div class="gear-label">语言 / Language</div>
+            <div class="gear-control">
+              <button class="gear-pill is-on">中文</button>
+              <button class="gear-pill">English</button>
+            </div>
+          </div>
+          <div class="gear-row">
+            <div class="gear-label">主题</div>
+            <div class="gear-control">
+              <button class="gear-pill is-on">📖 暖色</button>
+              <button class="gear-pill">🌙 暗色</button>
+              <button class="gear-pill">☀️ 浅色</button>
+              <button class="gear-pill">⚙️ 跟系统</button>
+            </div>
+          </div>
+          <div class="gear-row">
+            <div class="gear-label">比喻体系</div>
+            <div class="gear-control">
+              <button class="gear-pill is-on">🏙 城市</button>
+              <button class="gear-pill">🍳 厨房</button>
+            </div>
+          </div>
+          <div class="gear-row">
+            <div class="gear-label">词典高亮</div>
+            <div class="gear-control">
+              <button class="gear-pill is-on">已开启</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="body-mock"></div>
+      </div>
+      <div class="desc">
+        信息密度最高 — icon + 文字。<br>
+        右侧示意齿轮 popover：语言 + 主题 + 比喻 + 词典高亮 全收纳。<br>
+        类似微信／淘宝底部 tab 风格放在顶部。
+      </div>
+    </div>
+  </div>
+
+  <p style="text-align:center; color:#888; font-size:12px; margin-top:36px; line-height:1.7;">
+    我推荐 <strong style="color:#fff;">变体 B (pill segmented)</strong>：iOS 原生感强，呼吸足，适合手机阅读。<br>
+    A 最规整但容易被误以为是普通分类标签；C 信息密度高但占顶 ~152px 太多了。<br>
+    你拍板，我立刻按选定方案改 production。
+  </p>
+</body></html>
