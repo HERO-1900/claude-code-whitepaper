@@ -224,11 +224,17 @@
     if (reviewGallery) reviewGallery.classList.remove('active');
 
     const _isEn = (function(){ try { return (localStorage.getItem('cc-locale')||'zh')==='en'; } catch(e){ return false; } })();
-    const BC = _isEn
-      ? { landing: 'System Overview', welcome: 'Welcome', gallery: 'Chart Gallery', inspiration: 'Inspiration Lab', dictionary: 'Dictionary' }
-      : { landing: '架构全景', welcome: '欢迎', gallery: '图表画廊', inspiration: '灵感实验室', dictionary: '词典' };
-    if (BC[name]) {
-      breadcrumb.textContent = `Claude Code 2.1.88 · ${BC[name]}`;
+    // v5 移动端：breadcrumb 一律显示静态品牌名（不展示动态视图名）
+    const _isMobile = window.matchMedia('(max-width: 600px)').matches;
+    if (_isMobile) {
+      breadcrumb.textContent = _isEn ? 'Inside CC Whitepaper' : 'Inside CC 白皮书';
+    } else {
+      const BC = _isEn
+        ? { landing: 'System Overview', welcome: 'Welcome', gallery: 'Chart Gallery', inspiration: 'Inspiration Lab', dictionary: 'Dictionary' }
+        : { landing: '架构全景', welcome: '欢迎', gallery: '图表画廊', inspiration: '灵感实验室', dictionary: '词典' };
+      if (BC[name]) {
+        breadcrumb.textContent = `Claude Code 2.1.88 · ${BC[name]}`;
+      }
     }
   }
 
@@ -374,10 +380,18 @@
     // 键盘快捷键 — 手机端无键盘，已隐藏，不渲染入口
   }
 
+  // v5：reader 视图打开抽屉时，把 sidebar 章节目录临时迁入抽屉内 mnd-toc-body
+  let tocMovedToDrawer = false;
   function openMobileDrawer() {
     if (!drawerEl) return;
     rebuildDrawerNav();
-    rebuildToolBar();
+    // v5: 工具栏已迁入齿轮 popover；这里不再调 rebuildToolBar()
+    // reader 视图：把 sidebar 子节点迁入 mnd-toc-body
+    const drawerToc = document.getElementById('mnd-toc-body');
+    if (drawerToc && currentView === 'reader' && sidebarEl && sidebarEl.children.length) {
+      while (sidebarEl.firstChild) drawerToc.appendChild(sidebarEl.firstChild);
+      tocMovedToDrawer = true;
+    }
     drawerEl.classList.add('open');
     drawerEl.setAttribute('aria-hidden', 'false');
     if (drawerBackdrop) {
@@ -389,6 +403,14 @@
   }
   function closeMobileDrawer() {
     if (!drawerEl) return;
+    // 把章节目录迁回 sidebar
+    if (tocMovedToDrawer && sidebarEl) {
+      const drawerToc = document.getElementById('mnd-toc-body');
+      if (drawerToc) {
+        while (drawerToc.firstChild) sidebarEl.appendChild(drawerToc.firstChild);
+      }
+      tocMovedToDrawer = false;
+    }
     drawerEl.classList.remove('open');
     drawerEl.setAttribute('aria-hidden', 'true');
     if (drawerBackdrop) {
@@ -462,6 +484,15 @@
     sheetEl.addEventListener('click', (e) => {
       const chap = e.target.closest('.toc-chapter');
       if (chap) setTimeout(closeTocSheet, 100);
+    });
+  }
+  // v5：点抽屉内章节目录里的章节也自动关抽屉
+  if (drawerEl) {
+    drawerEl.addEventListener('click', (e) => {
+      const chap = e.target.closest('.toc-chapter, .chapter-link, .toc-link');
+      if (chap && drawerEl.classList.contains('open')) {
+        setTimeout(closeMobileDrawer, 100);
+      }
     });
   }
   // Esc 关
@@ -555,10 +586,22 @@
   }
   function syncSettingsPopoverState() {
     if (!settingsPopover) return;
+    // language pills
+    let curLocale = 'zh';
+    try { curLocale = localStorage.getItem('cc-locale') || 'zh'; } catch(e){}
+    settingsPopover.querySelectorAll('.msp-pill[data-locale]').forEach(p => {
+      p.classList.toggle('is-on', p.dataset.locale === curLocale);
+    });
+    // theme pills
+    let curTheme = 'warm';
+    try { curTheme = localStorage.getItem('cc-theme') || 'warm'; } catch(e){}
+    settingsPopover.querySelectorAll('.msp-pill[data-theme]').forEach(p => {
+      p.classList.toggle('is-on', p.dataset.theme === curTheme);
+    });
     // metaphor pills
     let curMeta = 'city';
     try { curMeta = localStorage.getItem('cc-metaphor') || 'city'; } catch(e){}
-    settingsPopover.querySelectorAll('.msp-pill').forEach(p => {
+    settingsPopover.querySelectorAll('.msp-pill[data-metaphor]').forEach(p => {
       p.classList.toggle('is-on', p.dataset.metaphor === curMeta);
     });
     // dict-highlight toggle（对齐 dict-annotator.js 的 'on'/'off' key）
@@ -567,11 +610,10 @@
     const dictBtn = document.getElementById('msp-dict-toggle');
     if (dictBtn) {
       dictBtn.setAttribute('aria-pressed', curDictOn ? 'true' : 'false');
-      const lbl = dictBtn.querySelector('span');
-      if (lbl) {
-        const isEn = (function(){ try { return (localStorage.getItem('cc-locale')||'zh')==='en'; } catch(e){ return false; } })();
-        lbl.textContent = curDictOn ? (isEn ? 'On' : '已开启') : (isEn ? 'Off' : '已关闭');
-      }
+      const zhSpan = dictBtn.querySelector('.msp-toggle-zh');
+      const enSpan = dictBtn.querySelector('.msp-toggle-en');
+      if (zhSpan) zhSpan.textContent = curDictOn ? '已开启' : '已关闭';
+      if (enSpan) enSpan.textContent = curDictOn ? 'On' : 'Off';
     }
   }
   if (settingsBtn) {
@@ -581,27 +623,47 @@
       else openSettingsPopover();
     });
   }
+  // 语言切换后：刷新 breadcrumb（移动端静态品牌文字 → 中/英）+ 同步 popover 状态
+  window.addEventListener('cc-locale-change', () => {
+    if (typeof showView === 'function' && currentView) showView(currentView);
+    syncSettingsPopoverState();
+  });
   if (settingsPopover) {
     settingsPopover.addEventListener('click', (e) => {
-      const pill = e.target.closest('.msp-pill');
-      if (pill && pill.dataset.metaphor) {
-        try { setMetaphor(pill.dataset.metaphor); } catch(err) {}
+      // 1. 语言切换
+      const langPill = e.target.closest('.msp-pill[data-locale]');
+      if (langPill) {
+        const realBtn = document.querySelector('.cc-lang-btn[data-locale="' + langPill.dataset.locale + '"]');
+        if (realBtn) realBtn.click();
+        setTimeout(syncSettingsPopoverState, 80);
+        return;
+      }
+      // 2. 主题切换
+      const themePill = e.target.closest('.msp-pill[data-theme]');
+      if (themePill) {
+        const realBtn = document.querySelector('.cc-theme-btn[data-theme="' + themePill.dataset.theme + '"]');
+        if (realBtn) realBtn.click();
+        setTimeout(syncSettingsPopoverState, 80);
+        return;
+      }
+      // 3. 比喻切换
+      const metaPill = e.target.closest('.msp-pill[data-metaphor]');
+      if (metaPill) {
+        try { setMetaphor(metaPill.dataset.metaphor); } catch(err) {}
         syncSettingsPopoverState();
         return;
       }
+      // 4. 词典高亮 toggle
       const dictBtn = e.target.closest('#msp-dict-toggle');
       if (dictBtn) {
-        // 触发现有的 dict-highlight toggle（保持单一事实源）
         const realToggle = document.querySelector('.cc-dict-highlight-toggle');
         if (realToggle) realToggle.click();
         else if (window.DictAnnotator && typeof window.DictAnnotator.setEnabled === 'function') {
-          // fallback：直接调用 DictAnnotator API（toggle 元素未注入时可能发生）
           try {
             const cur = window.DictAnnotator.isEnabled();
             window.DictAnnotator.setEnabled(!cur);
           } catch(err) {}
         }
-        // 延迟同步以等 toggle 处理完
         setTimeout(syncSettingsPopoverState, 50);
       }
     });

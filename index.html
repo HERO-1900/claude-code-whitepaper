@@ -1224,20 +1224,40 @@
   </div>
   <div id="title-view-backdrop" class="title-view-backdrop" aria-hidden="true"></div>
 
-  <!-- ==================== 移动端设置 popover（齿轮唤出：词典高亮 + 比喻体系）==================== -->
-  <div id="mobile-settings-popover" class="mobile-settings-popover" aria-hidden="true" role="dialog" aria-label="设置">
-    <div class="msp-row" id="msp-metaphor-row">
-      <span class="msp-label" data-i18n="metaphor.label_full">比喻体系</span>
+  <!-- ==================== 移动端设置 popover（齿轮唤出：所有设置全收纳）==================== -->
+  <div id="mobile-settings-popover" class="mobile-settings-popover" aria-hidden="true" role="dialog" aria-label="设置 / Settings">
+    <!-- 1. 语言 / Language -->
+    <div class="msp-row" id="msp-lang-row">
+      <span class="msp-label">语言 <span class="msp-label-en">Language</span></span>
       <div class="msp-control">
-        <button class="msp-pill" data-metaphor="city">🏙 <span data-i18n="metaphor.label_city">城市</span></button>
-        <button class="msp-pill" data-metaphor="kitchen">🍳 <span data-i18n="metaphor.label_kitchen">厨房</span></button>
+        <button class="msp-pill" data-locale="zh">中文</button>
+        <button class="msp-pill" data-locale="en">English</button>
       </div>
     </div>
+    <!-- 2. 主题 / Theme -->
+    <div class="msp-row" id="msp-theme-row">
+      <span class="msp-label">主题 <span class="msp-label-en">Theme</span></span>
+      <div class="msp-control">
+        <button class="msp-pill" data-theme="warm">📖 <span class="msp-pill-zh">暖色</span> <span class="msp-pill-en">Warm</span></button>
+        <button class="msp-pill" data-theme="dark">🌙 <span class="msp-pill-zh">暗色</span> <span class="msp-pill-en">Dark</span></button>
+        <button class="msp-pill" data-theme="light">☀️ <span class="msp-pill-zh">浅色</span> <span class="msp-pill-en">Light</span></button>
+        <button class="msp-pill" data-theme="auto">⚙️ <span class="msp-pill-zh">跟系统</span> <span class="msp-pill-en">Auto</span></button>
+      </div>
+    </div>
+    <!-- 3. 比喻体系 / Metaphor -->
+    <div class="msp-row" id="msp-metaphor-row">
+      <span class="msp-label">比喻体系 <span class="msp-label-en">Metaphor</span></span>
+      <div class="msp-control">
+        <button class="msp-pill" data-metaphor="city">🏙 <span class="msp-pill-zh">城市</span> <span class="msp-pill-en">City</span></button>
+        <button class="msp-pill" data-metaphor="kitchen">🍳 <span class="msp-pill-zh">厨房</span> <span class="msp-pill-en">Kitchen</span></button>
+      </div>
+    </div>
+    <!-- 4. 词典高亮 / Term Highlight -->
     <div class="msp-row" id="msp-dict-row">
-      <span class="msp-label" data-i18n="dict.highlight_label">词典高亮</span>
+      <span class="msp-label">词典高亮 <span class="msp-label-en">Term Highlight</span></span>
       <div class="msp-control">
         <button class="msp-toggle" id="msp-dict-toggle" aria-pressed="false">
-          <span data-i18n="dict.highlight_off">已关闭</span>
+          <span class="msp-toggle-zh">已关闭</span> <span class="msp-toggle-en">Off</span>
         </button>
       </div>
     </div>
@@ -1250,7 +1270,7 @@
     <header class="mnd-header">
       <div class="mnd-logo">
         <span class="mnd-logo-dot"></span>
-        <span class="mnd-logo-text">Claude Code</span>
+        <span class="mnd-logo-text">Inside CC</span>
         <span class="mnd-logo-ver">v2.1.88</span>
       </div>
       <button class="mnd-close" aria-label="关闭" data-i18n-attr="aria-label:nav.drawer_close_aria">
@@ -1261,12 +1281,15 @@
       <div class="mnd-nav-list" id="mnd-nav-list">
         <!-- JS clones #topnav main nav buttons here -->
       </div>
-    </div>
-    <footer class="mnd-footer">
-      <div class="mnd-tool-bar" id="mnd-tools-list" role="toolbar" aria-label="工具">
-        <!-- JS injects icon-only tool buttons -->
+      <!-- reader 视图：4 视图下方追加章节目录段（CSS 仅 reader 时显示） -->
+      <div class="mnd-toc-section" id="mnd-toc-section">
+        <div class="mnd-toc-divider"></div>
+        <div class="mnd-toc-title" data-i18n="reader.toc_title">章节目录</div>
+        <div class="mnd-toc-body" id="mnd-toc-body">
+          <!-- 打开抽屉 + 当前 reader 视图时：sidebar 内容临时迁入；关闭还原 -->
+        </div>
       </div>
-    </footer>
+    </div>
   </aside>
   <div id="mobile-nav-backdrop" class="mobile-nav-backdrop" aria-hidden="true"></div>
 

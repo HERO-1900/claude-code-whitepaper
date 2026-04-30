@@ -2917,68 +2917,41 @@ pre:hover .copy-btn,
   #topnav #nav-inspiration,
   #topnav #nav-dictionary { display: none !important; }
   /* breadcrumb 移除，让标题位由 nav-center::before 提供 */
-  /* 移动端：breadcrumb 改为视图标题，可点击展开 4 视图下拉菜单 */
+  /* v5（2026-05-01 凌晨）顶栏化简：只剩 ☰ + "Inside CC 白皮书" 静态 + ⚙
+     breadcrumb 不再可点；动态视图名/版本号文字一律不显示。
+     i18n 通过 data-lang 切换静态文案 "Inside CC 白皮书" → "Inside CC Whitepaper"。 */
+  /* v5：breadcrumb 在移动端是静态品牌文字（JS showView 控制内容），CSS 只负责样式 */
   #topnav #breadcrumb {
     display: inline-flex !important;
     align-items: center;
-    gap: 4px;
-    font-size: 13px;
+    font-size: 14.5px;
     line-height: 1;
     font-weight: 600;
     color: var(--text-primary);
-    cursor: pointer;
     user-select: none;
-    padding: 6px 10px;
-    border-radius: 8px;
+    padding: 0;
     background: transparent;
-    transition: background .15s;
-    max-width: 56vw;
+    pointer-events: none;
+    letter-spacing: .005em;
     white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
   }
-  #topnav #breadcrumb:active { background: var(--bg-hover, rgba(0,0,0,.05)); }
-  #topnav #breadcrumb::after {
-    content: '▾';
-    font-size: 10px;
-    margin-left: 2px;
-    opacity: .6;
-  }
-  /* 元喻 / 版本 / 快捷键 / 词典高亮开关 都进齿轮 popover；主题切换上顶栏 */
+  /* 主题切换 / 中英切换 / 元喻 / 版本 / 快捷键 / 词典高亮开关 全部进齿轮 popover，顶栏不暴露 */
   #topnav .metaphor-toggle,
   #topnav .version-badge,
   #topnav #shortcuts-hint,
-  #topnav .cc-dict-highlight-toggle { display: none !important; }
-  /* 主题切换器手机端可见，紧凑布局 */
-  #topnav .cc-theme-switcher {
-    display: inline-flex !important;
-    gap: 0;
-    padding: 2px;
-    background: var(--bg-hover, rgba(0,0,0,.05));
-    border-radius: 8px;
-  }
-  #topnav .cc-theme-switcher .cc-theme-btn {
-    width: 26px; height: 26px;
-    min-width: 26px;
-    padding: 0;
-    font-size: 13px;
-    line-height: 1;
-    border: 0;
-    background: transparent;
-  }
-  #topnav .cc-theme-switcher .cc-theme-btn.active {
-    background: var(--bg-card, #fff);
-    box-shadow: 0 1px 2px rgba(0,0,0,.08);
-  }
+  #topnav .cc-dict-highlight-toggle,
+  #topnav .cc-theme-switcher,
+  #topnav .cc-lang-switcher { display: none !important; }
+  /* 章节目录 📚 独立按钮也撤掉：章节目录回到主抽屉里 */
+  #topnav #mobile-chapter-toc-btn { display: none !important; }
+  /* 旧 title-view-menu 已不需要 */
+  #title-view-menu, #title-view-backdrop { display: none !important; }
   /* 手机端无键盘 → 整个 shortcuts 系统隐藏 */
   #shortcuts-hint,
   #shortcuts-modal { display: none !important; }
   .nav-left, .nav-right { gap: 6px; flex-wrap: nowrap; }
-  /* 旧 hamburger（主菜单抽屉入口）—— 已被标题下拉菜单取代，移动端隐藏。
-     specificity 必须 ≥ #topnav .mobile-only (0,2,1) 才能赢；用 #topnav .mobile-only#mobile-toc-toggle */
-  #topnav .mobile-only#mobile-toc-toggle { display: none !important; }
-  /* 旧规则保留以备 fallback：若需 re-enable 把上面 display:none 删掉 */
-  #mobile-toc-toggle.legacy-on {
+  /* v5：☰ hamburger 重新启用 — 抽屉收纳 4 视图 + reader 章节目录 */
+  #topnav #mobile-toc-toggle {
     width: 38px; height: 38px; min-width: 38px; min-height: 38px;
     padding: 0; gap: 0;
     background: rgba(255,255,255,.55) !important;
@@ -8601,8 +8574,56 @@ body.cc-lang-switching .cc-lang-btn {
     opacity: .85;
   }
 
-  /* ----- 抽屉底部工具栏（行式 label : control） ----- */
-  .mnd-footer {
+  /* v5：抽屉底部工具栏整体隐藏（工具移到齿轮 popover） */
+  .mnd-footer { display: none !important; }
+  /* mobile-toc-sheet 隐藏（章节目录回归主抽屉里） */
+  .mobile-toc-sheet, .mobile-toc-backdrop { display: none !important; }
+
+  /* ----- v5：抽屉内章节目录段（仅 reader 视图显示） ----- */
+  .mnd-toc-section { display: none; }
+  body[data-active-view="reader"] .mnd-toc-section { display: block; }
+  .mnd-toc-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 14px 12px 14px;
+  }
+  .mnd-toc-title {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .08em;
+    font-weight: 700;
+    margin: 0 16px 10px;
+  }
+  .mnd-toc-body {
+    padding: 0 4px 12px;
+  }
+  /* sidebar 内容迁入抽屉时的 reader 章节列表样式调整 — 紧凑 */
+  .mnd-toc-body .toc-chapter,
+  .mnd-toc-body .chapter-link,
+  .mnd-toc-body .toc-link {
+    padding: 7px 14px;
+    font-size: 13px;
+    line-height: 1.4;
+    border-radius: 6px;
+    margin: 1px 6px;
+    color: var(--text-primary);
+  }
+  .mnd-toc-body .toc-chapter:active,
+  .mnd-toc-body .chapter-link:active,
+  .mnd-toc-body .toc-link:active {
+    background: var(--gold-soft, rgba(199,125,46,.16));
+  }
+  .mnd-toc-body h3, .mnd-toc-body h4 {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    margin: 12px 16px 6px;
+  }
+
+  /* 旧的 .mnd-footer 兜底（保留旧规则做老 markup fallback；v5 已不再渲染） */
+  .mnd-footer.legacy-on {
     flex-shrink: 0;
     border-top: 1px solid var(--border);
     padding: 8px 12px calc(env(safe-area-inset-bottom, 0) + 12px);
@@ -8866,34 +8887,70 @@ body.cc-lang-switching .cc-lang-btn {
   .msp-label {
     font-size: 11px;
     color: var(--text-muted);
+    letter-spacing: .04em;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: baseline;
+    gap: 6px;
+  }
+  /* bilingual 行标签：英文小字次级 */
+  .msp-label-en {
+    font-size: 9.5px;
+    color: var(--text-muted);
+    opacity: .7;
+    font-weight: 500;
+    letter-spacing: .04em;
     text-transform: uppercase;
-    letter-spacing: .06em;
-    font-weight: 600;
   }
   .msp-control { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
   .msp-pill {
     display: inline-flex; align-items: center; gap: 4px;
-    padding: 6px 12px;
+    padding: 7px 11px;
     background: transparent;
     border: 1px solid var(--border);
     border-radius: 999px;
-    font-size: 13px;
+    font-size: 12.5px;
     color: var(--text-primary);
     cursor: pointer;
     transition: all .12s;
+    line-height: 1.1;
   }
   .msp-pill.is-on {
     background: var(--gold-soft, rgba(199,125,46,.16));
     border-color: rgba(199,125,46,.45);
     color: var(--accent-gold);
+    font-weight: 600;
   }
+  /* bilingual pill 内容：中文 + 英文小字 */
+  .msp-pill .msp-pill-zh { font-size: 12.5px; line-height: 1.1; }
+  .msp-pill .msp-pill-en {
+    font-size: 9.5px;
+    opacity: .55;
+    margin-left: 1px;
+    text-transform: lowercase;
+    line-height: 1.1;
+  }
+  .msp-pill.is-on .msp-pill-en { opacity: .75; }
+  /* theme 行 4 个 pill 改 grid 排列保证整齐 */
+  #msp-theme-row .msp-control {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+  }
+  #msp-theme-row .msp-pill { justify-content: center; padding: 8px 6px; }
+  /* lang 行只 2 项，并排撑满 */
+  #msp-lang-row .msp-control { gap: 6px; }
+  #msp-lang-row .msp-pill { flex: 1; justify-content: center; padding: 8px 14px; font-weight: 600; }
+  /* metaphor 行 2 项 */
+  #msp-metaphor-row .msp-pill { flex: 1; justify-content: center; }
+
   .msp-toggle {
-    display: inline-flex; align-items: center; gap: 6px;
-    padding: 6px 14px;
+    display: inline-flex; align-items: center; gap: 5px;
+    padding: 7px 14px;
     background: var(--bg-hover, rgba(0,0,0,.04));
     border: 1px solid var(--border);
     border-radius: 999px;
-    font-size: 13px;
+    font-size: 12.5px;
     color: var(--text-primary);
     cursor: pointer;
   }
@@ -8901,6 +8958,20 @@ body.cc-lang-switching .cc-lang-btn {
     background: var(--gold-soft, rgba(199,125,46,.16));
     border-color: rgba(199,125,46,.45);
     color: var(--accent-gold);
+    font-weight: 600;
+  }
+  .msp-toggle .msp-toggle-en {
+    font-size: 9.5px;
+    opacity: .55;
+    text-transform: lowercase;
+  }
+  .msp-toggle[aria-pressed="true"] .msp-toggle-en { opacity: .75; }
+  /* popover 整体加宽（4 行内容需要更多空间） */
+  .mobile-settings-popover {
+    min-width: 280px !important;
+    max-width: calc(100vw - 16px) !important;
+    padding: 14px 16px !important;
+    gap: 14px !important;
   }
 }
 
