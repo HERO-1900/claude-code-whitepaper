@@ -282,119 +282,92 @@
     });
   }
 
-  // ---------- 抽屉底部工具图标栏（无文字 label） ----------
+  // ---------- 抽屉底部工具栏（行式 label : control，每行可读） ----------
   function rebuildToolBar() {
     if (!drawerToolsList) return;
     drawerToolsList.innerHTML = '';
 
-    const mkIconBtn = ({ svg, emoji, label, badgeText, onClick, getOn }) => {
-      const btn = document.createElement('button');
-      btn.className = 'mnd-tool-icon';
-      btn.setAttribute('aria-label', label);
-      btn.title = label;
-      if (svg) btn.innerHTML = svg;
-      else if (emoji) {
-        const span = document.createElement('span');
-        span.className = 'mnd-tool-emoji';
-        span.textContent = emoji;
-        btn.appendChild(span);
-      }
-      if (badgeText) {
-        const b = document.createElement('span');
-        b.className = 'mnd-tool-badge';
-        b.textContent = badgeText;
-        btn.appendChild(b);
-      }
-      const refresh = () => {
-        if (typeof getOn === 'function') btn.classList.toggle('on', !!getOn());
-      };
-      refresh();
-      btn.addEventListener('click', () => {
-        onClick();
-        setTimeout(refresh, 60);
-      });
-      btn.refresh = refresh;
-      return btn;
+    const mkRow = (label, control) => {
+      const row = document.createElement('div');
+      row.className = 'mnd-tool-row';
+      const lbl = document.createElement('span');
+      lbl.className = 'mnd-tool-label';
+      lbl.textContent = label;
+      row.appendChild(lbl);
+      row.appendChild(control);
+      return row;
     };
 
-    // 1. 比喻切换 — emoji 同步原按钮内容
+    // 1. 比喻切换：[ 🏙 城市 ] 胶囊按钮，点击切换城市/操作系统
     const metaphorOrig = document.getElementById('metaphor-toggle');
     if (metaphorOrig) {
-      const iconEl = metaphorOrig.querySelector('#metaphor-icon');
-      const labelEl = metaphorOrig.querySelector('#metaphor-label');
-      const btn = mkIconBtn({
-        emoji: iconEl ? iconEl.textContent : '🏙',
-        label: _T('比喻：', 'Metaphor: ') + (labelEl ? labelEl.textContent : ''),
-        onClick: () => {
-          metaphorOrig.click();
-          // 同步显示
-          setTimeout(() => {
-            const newIcon = metaphorOrig.querySelector('#metaphor-icon');
-            const span = btn.querySelector('.mnd-tool-emoji');
-            if (newIcon && span) span.textContent = newIcon.textContent;
-          }, 80);
-        }
-      });
-      drawerToolsList.appendChild(btn);
+      const btn = document.createElement('button');
+      btn.className = 'mnd-pill-btn';
+      const sync = () => {
+        const ic = metaphorOrig.querySelector('#metaphor-icon');
+        const tx = metaphorOrig.querySelector('#metaphor-label');
+        btn.innerHTML = '';
+        const e = document.createElement('span');
+        e.className = 'mnd-pill-emoji';
+        e.textContent = ic ? ic.textContent : '🏙';
+        btn.appendChild(e);
+        const t = document.createElement('span');
+        t.textContent = tx ? tx.textContent : (_T('城市', 'City'));
+        btn.appendChild(t);
+      };
+      sync();
+      btn.addEventListener('click', () => { metaphorOrig.click(); setTimeout(sync, 60); });
+      drawerToolsList.appendChild(mkRow(_T('比喻体系', 'Metaphor'), btn));
     }
 
-    // 2. 词典高亮 — toggle，badge ON/OFF
-    const hiOrig = document.querySelector('.cc-dict-highlight-toggle');
-    if (hiOrig) {
-      const btn = mkIconBtn({
-        svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>',
-        label: _T('词典高亮', 'Dict highlight'),
-        onClick: () => hiOrig.click(),
-        getOn: () => hiOrig.classList.contains('active')
-      });
-      drawerToolsList.appendChild(btn);
-    }
-
-    // 3. 主题切换 — 单按钮循环（warm → dark → light → warm）
+    // 2. 主题切换：三段（暖 / 暗 / 浅）—— segment 控件，最直观
     const themeOrig = document.querySelector('.cc-theme-switcher');
     if (themeOrig) {
-      const themeIcons = {
-        warm: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>',
-        light: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>',
-        dark:  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>'
-      };
-      const labelMap = { warm: _T('暖色', 'Warm'), light: _T('浅色', 'Light'), dark: _T('暗色', 'Dark') };
-      const getCurrent = () => {
-        const active = themeOrig.querySelector('button[aria-pressed="true"]');
-        return (active && active.dataset.theme) || 'warm';
-      };
-      const btn = mkIconBtn({
-        svg: themeIcons[getCurrent()] || themeIcons.warm,
-        label: _T('主题：', 'Theme: ') + labelMap[getCurrent()],
-        onClick: () => {
-          // 循环到下一个主题
-          const cur = getCurrent();
-          const order = ['warm', 'dark', 'light'];
-          const next = order[(order.indexOf(cur) + 1) % order.length];
-          const nextBtn = themeOrig.querySelector('button[data-theme="' + next + '"]');
-          if (nextBtn) nextBtn.click();
-          // 同步图标
-          setTimeout(() => {
-            const c = getCurrent();
-            btn.innerHTML = themeIcons[c] || themeIcons.warm;
-            btn.setAttribute('aria-label', _T('主题：', 'Theme: ') + labelMap[c]);
-            btn.title = btn.getAttribute('aria-label');
-          }, 80);
-        }
+      const wrap = document.createElement('div');
+      wrap.className = 'mnd-segment';
+      const labelMap = { warm: _T('暖', 'Warm'), dark: _T('暗', 'Dark'), light: _T('浅', 'Light') };
+      const order = ['warm', 'dark', 'light'];
+      const origBtns = {};
+      themeOrig.querySelectorAll('button').forEach(b => {
+        if (b.dataset.theme) origBtns[b.dataset.theme] = b;
       });
-      drawerToolsList.appendChild(btn);
+      order.forEach(key => {
+        if (!origBtns[key]) return;
+        const seg = document.createElement('button');
+        seg.className = 'mnd-seg-btn';
+        seg.textContent = labelMap[key];
+        seg.dataset.theme = key;
+        if (origBtns[key].getAttribute('aria-pressed') === 'true') seg.classList.add('is-on');
+        seg.addEventListener('click', () => {
+          origBtns[key].click();
+          setTimeout(() => {
+            wrap.querySelectorAll('.mnd-seg-btn').forEach(s => {
+              const k = s.dataset.theme;
+              s.classList.toggle('is-on', origBtns[k] && origBtns[k].getAttribute('aria-pressed') === 'true');
+            });
+          }, 60);
+        });
+        wrap.appendChild(seg);
+      });
+      drawerToolsList.appendChild(mkRow(_T('主题', 'Theme'), wrap));
     }
 
-    // 4. 键盘快捷键（点开模态，不关抽屉）
-    const shortcutsOrig = document.getElementById('shortcuts-hint');
-    if (shortcutsOrig) {
-      const btn = mkIconBtn({
-        svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>',
-        label: _T('键盘快捷键', 'Keyboard shortcuts'),
-        onClick: () => shortcutsOrig.click()
-      });
-      drawerToolsList.appendChild(btn);
+    // 3. 词典高亮：[ 关闭 / 已开启 ] toggle 胶囊
+    const hiOrig = document.querySelector('.cc-dict-highlight-toggle');
+    if (hiOrig) {
+      const btn = document.createElement('button');
+      btn.className = 'mnd-pill-btn';
+      const sync = () => {
+        const on = hiOrig.classList.contains('active');
+        btn.classList.toggle('is-on', on);
+        btn.textContent = on ? _T('已开启', 'On') : _T('已关闭', 'Off');
+      };
+      sync();
+      btn.addEventListener('click', () => { hiOrig.click(); setTimeout(sync, 60); });
+      drawerToolsList.appendChild(mkRow(_T('词典高亮', 'Dict highlight'), btn));
     }
+
+    // 键盘快捷键 — 手机端无键盘，已隐藏，不渲染入口
   }
 
   function openMobileDrawer() {
