@@ -3538,15 +3538,49 @@ pre:hover .copy-btn,
 }
 
 .qa-answer {
-  padding: 0 20px 16px 20px;
-  font-size: 13px;
-  line-height: 1.8;
+  padding: 12px 20px 16px 20px;
+  font-size: 14px;
+  line-height: 1.75;
   color: var(--text-secondary);
   border-left: 3px solid var(--accent-cyan);
   margin: 0 20px 12px 20px;
-  padding-left: 16px;
+  padding-left: 18px;
   animation: qa-answer-in 0.2s ease;
 }
+.qa-answer p { margin: 0 0 0.85em; }
+.qa-answer p:last-child { margin-bottom: 0; }
+.qa-answer ul, .qa-answer ol { margin: 0.4em 0 0.85em; padding-left: 1.4em; }
+.qa-answer li { margin-bottom: 0.3em; line-height: 1.65; }
+.qa-answer h1, .qa-answer h2, .qa-answer h3, .qa-answer h4 {
+  font-size: 0.96rem;
+  margin: 1em 0 0.4em;
+  color: var(--text-primary);
+  font-weight: 600;
+}
+.qa-answer pre {
+  background: var(--bg-hover, rgba(120,120,120,0.08));
+  padding: 10px 14px;
+  border-radius: 6px;
+  overflow-x: auto;
+  font-size: 0.84em;
+  line-height: 1.55;
+  margin: 0.6em 0;
+}
+.qa-answer code {
+  background: var(--bg-hover, rgba(120,120,120,0.1));
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-family: ui-monospace, SFMono-Regular, monospace;
+  font-size: 0.88em;
+}
+.qa-answer pre code { background: transparent; padding: 0; }
+.qa-answer blockquote {
+  border-left: 2px solid var(--border, rgba(120,120,120,0.3));
+  margin: 0.6em 0;
+  padding: 0.2em 0 0.2em 0.9em;
+  color: var(--text-muted);
+}
+.qa-answer strong { color: var(--text-primary); }
 
 @keyframes qa-answer-in {
   from { opacity: 0; max-height: 0; }
@@ -7305,7 +7339,7 @@ body.cc-lang-switching .cc-lang-btn {
 .dict-card-foot-right { justify-content: flex-end; }
 .dict-card { display: flex; flex-direction: column; }   /* 让 margin-top:auto 生效 */
 .dict-fav, .dict-jump {
-  background: var(--bg-hover);
+  background: transparent;
   border: 1px solid var(--border);
   color: var(--text-secondary);
   font-size: .78rem;
@@ -7319,11 +7353,12 @@ body.cc-lang-switching .cc-lang-btn {
 .dict-fav:hover {
   color: var(--accent-gold);
   border-color: var(--accent-gold);
+  background: rgba(245, 184, 67, 0.08);
 }
 .dict-fav.added {
   color: var(--accent-gold);
   border-color: var(--accent-gold);
-  background: color-mix(in srgb, var(--accent-gold) 12%, transparent);
+  background: color-mix(in srgb, var(--accent-gold) 14%, transparent);
 }
 .dict-jump {
   color: var(--accent-cyan);

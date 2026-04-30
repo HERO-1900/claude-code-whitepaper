@@ -721,7 +721,7 @@
           <span class="dict-badge dict-cat-badge" style="--chip-color:${catColor};">${escapeHtml(catLabel)}</span>
           <span class="dict-badge dict-prio-badge prio-${prio}">${escapeHtml(prioLabel)}</span>
           ${entry.mention_count ? `<span class="dict-badge dict-count-badge" title="${escapeHtml(lab.mention_count.replace('{n}', entry.mention_count))}">×${entry.mention_count}</span>` : ''}
-          ${suppressed ? `<span class="dict-badge dict-supp-badge" title="正文中未直接出现该字面术语，作概念条目保留">概念条</span>` : ''}
+          ${suppressed ? `<span class="dict-badge dict-supp-badge" title="${en ? 'Conceptual entry — term may not appear verbatim in text' : '正文中未直接出现该字面术语，作概念条目保留'}">${en ? 'Concept' : '概念条'}</span>` : ''}
         </div>
       </header>
 

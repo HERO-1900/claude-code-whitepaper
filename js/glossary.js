@@ -332,6 +332,19 @@
     return null;
   }
 
+  // 用 marked 渲染 Q&A 答案，使段落/换行/列表/代码块都正确显示
+  function formatQAAnswer(text) {
+    if (!text) return '';
+    if (typeof window.marked !== 'undefined') {
+      try { return window.marked.parse(text); } catch(e) { /* fall through */ }
+    }
+    // Fallback：手动段落化（escape + \n\n → </p><p> + \n → <br>）
+    const paras = String(text).split(/\n{2,}/).map(p => {
+      return '<p>' + escapeHTML(p).replace(/\n/g, '<br>') + '</p>';
+    });
+    return paras.join('');
+  }
+
   function renderQAPanel(container, filePath) {
     const key = fileToQAKey(filePath);
     if (!key || !qaIndex[key] || !qaIndex[key].qa.length) return;
@@ -380,7 +393,7 @@
             <span class="qa-expand-icon">▶</span>
           </div>
           <div class="qa-answer" style="display:none">
-            ${escapeHTML(aText)}
+            ${formatQAAnswer(aText)}
           </div>
         </div>
       `;

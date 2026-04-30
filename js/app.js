@@ -1003,10 +1003,18 @@
     let activeHeadingId = null;
     if (typeof IntersectionObserver !== 'undefined') {
       const visibleHeadings = new Set();
-      // 修复右 TOC 抖动：用 rAF 合并连续 IO 事件，避免 resize 时反复 class toggle
+      // 修复右 TOC 抖动：rAF 合并 + window resize 期间暂停 active 切换
       let rafScheduled = false;
+      let resizing = false;
+      let resizeTimer = null;
+      window.addEventListener('resize', () => {
+        resizing = true;
+        if (resizeTimer) clearTimeout(resizeTimer);
+        resizeTimer = setTimeout(() => { resizing = false; flush(); }, 250);
+      }, { passive: true });
       function flush() {
         rafScheduled = false;
+        if (resizing) return;     // 浏览器 resize 期间不切换 active，避免 wobble
         let topId = null;
         for (const h of headings) {
           if (visibleHeadings.has(h.id)) { topId = h.id; break; }
