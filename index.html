@@ -1161,8 +1161,11 @@
   <nav id="topnav">
     <div class="nav-left">
       <!-- Mobile TOC drawer 开关（<=600px 下显示；其他时候隐藏） -->
-      <button id="mobile-toc-toggle" class="nav-btn mobile-only" title="章节目录" aria-label="打开目录" aria-expanded="false" aria-controls="sidebar" data-i18n-attr="title:nav.mobile_toc_title;aria-label:nav.mobile_toc_aria">
+      <button id="mobile-toc-toggle" class="nav-btn mobile-only" title="主菜单" aria-label="打开主菜单" aria-expanded="false" aria-controls="mobile-nav-drawer" data-i18n-attr="title:nav.menu_title;aria-label:nav.menu_aria">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <button id="mobile-chapter-toc-btn" class="nav-btn mobile-only mobile-reader-only" title="章节目录" aria-label="打开章节目录" aria-expanded="false" aria-controls="mobile-toc-sheet" data-i18n-attr="title:nav.mobile_toc_title;aria-label:nav.mobile_toc_aria">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
       </button>
       <button id="nav-home" class="nav-btn" title="全景地图" data-i18n-attr="title:nav.panorama_title">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
@@ -1196,37 +1199,47 @@
     </div>
   </nav>
 
-  <!-- ==================== Mobile Nav Drawer (≤600px 才显示) ==================== -->
-  <aside id="mobile-nav-drawer" class="mobile-nav-drawer" aria-hidden="true" aria-label="移动端导航抽屉">
+  <!-- ==================== Mobile Nav Drawer (≤600px 才显示) ====================
+       v2 (2026-05-01): 精简版 — 只 4 个大视图 + 底部一行工具图标栏。
+       章节目录不在这里！章节目录是 reader 视图内的二级结构，独立入口。 -->
+  <aside id="mobile-nav-drawer" class="mobile-nav-drawer" aria-hidden="true" aria-label="移动端主菜单">
     <header class="mnd-header">
       <div class="mnd-logo">
         <span class="mnd-logo-dot"></span>
-        <span class="mnd-logo-text">Claude Code 白皮书</span>
+        <span class="mnd-logo-text">Claude Code</span>
+        <span class="mnd-logo-ver">v2.1.88</span>
       </div>
       <button class="mnd-close" aria-label="关闭" data-i18n-attr="aria-label:nav.drawer_close_aria">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
       </button>
     </header>
     <div class="mnd-body">
-      <div class="mnd-section mnd-section-nav">
-        <h4 class="mnd-section-title" data-i18n="nav.drawer_section_nav">导航</h4>
-        <div class="mnd-nav-list" id="mnd-nav-list">
-          <!-- JS clones #topnav main nav buttons here -->
-        </div>
-      </div>
-      <div class="mnd-section mnd-section-toc" id="mnd-toc-host" hidden>
-        <h4 class="mnd-section-title" data-i18n="nav.drawer_section_toc">章节目录</h4>
-        <!-- 进入 reader 时，#sidebar 子节点临时迁入这里；关闭抽屉再还原 -->
-      </div>
-      <div class="mnd-section mnd-section-tools">
-        <h4 class="mnd-section-title" data-i18n="nav.drawer_section_tools">工具</h4>
-        <div class="mnd-tools" id="mnd-tools-list">
-          <!-- JS clones metaphor / shortcuts / version into here -->
-        </div>
+      <div class="mnd-nav-list" id="mnd-nav-list">
+        <!-- JS clones #topnav main nav buttons here -->
       </div>
     </div>
+    <footer class="mnd-footer">
+      <div class="mnd-tool-bar" id="mnd-tools-list" role="toolbar" aria-label="工具">
+        <!-- JS injects icon-only tool buttons -->
+      </div>
+    </footer>
   </aside>
   <div id="mobile-nav-backdrop" class="mobile-nav-backdrop" aria-hidden="true"></div>
+
+  <!-- ==================== Mobile Chapter TOC Sheet (≤600px · 仅 reader 视图) ====================
+       reader 视图独有的章节目录入口；与主菜单分离 -->
+  <div id="mobile-toc-sheet" class="mobile-toc-sheet" aria-hidden="true" aria-label="章节目录">
+    <header class="mts-header">
+      <h3 class="mts-title" data-i18n="reader.toc_title">章节目录</h3>
+      <button class="mts-close" aria-label="关闭" data-i18n-attr="aria-label:nav.drawer_close_aria">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
+      </button>
+    </header>
+    <div class="mts-body" id="mts-body">
+      <!-- 打开时 sidebar 内容临时迁入；关闭还原 -->
+    </div>
+  </div>
+  <div id="mobile-toc-backdrop" class="mobile-toc-backdrop" aria-hidden="true"></div>
 
   <!-- Keyboard shortcuts modal -->
   <div id="shortcuts-modal" class="shortcuts-modal hidden">

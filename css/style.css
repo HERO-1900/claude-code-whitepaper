@@ -5803,11 +5803,33 @@ pre:hover .copy-btn,
   }
   .v4h-pillar-label { font-size: 12px; }
   .v4h-pillar-cn { font-size: 10px; }
+  /* Skip Animation 按钮 · 手机端右下角悬浮胶囊（毛玻璃）
+     2026-05-01 重做：原来挂在容器顶部右侧，被 hero 内容挤成竖排丑陋条 */
   .v4h-skip-btn {
-    top: 16px;
-    right: 16px;
-    font-size: 11px;
-    padding: 6px 10px;
+    position: fixed !important;
+    top: auto !important;
+    right: 16px !important;
+    bottom: calc(env(safe-area-inset-bottom, 0px) + 18px) !important;
+    z-index: 220;
+    padding: 9px 16px !important;
+    font-size: 12px !important;
+    font-weight: 500;
+    color: rgba(255,255,255,0.92) !important;
+    background: rgba(20, 16, 12, 0.55) !important;
+    border: 1px solid rgba(255,255,255,0.16) !important;
+    border-radius: 999px !important;
+    -webkit-backdrop-filter: blur(14px) saturate(160%);
+    backdrop-filter: blur(14px) saturate(160%);
+    box-shadow: 0 4px 14px rgba(0,0,0,.18), 0 1px 3px rgba(0,0,0,.10);
+    letter-spacing: .03em;
+    white-space: nowrap;
+  }
+  /* 浅色 / 暖色主题下保持高对比 */
+  [data-theme="light"] .v4h-skip-btn,
+  [data-theme="warm"] .v4h-skip-btn {
+    color: rgba(40,28,16,.92) !important;
+    background: rgba(254,250,242,.78) !important;
+    border-color: rgba(120,90,60,.22) !important;
   }
 }
 
@@ -8152,19 +8174,201 @@ body.cc-lang-switching .cc-lang-btn {
 #dictionary .dict-body.hidden { display: none !important; }
 
 /* ====================================================================
-   Mobile Nav Drawer · 配套方案 A 毛玻璃顶栏（2026-05-01）
-   ≤600px 可见；点 hamburger 唤出，含主导航 / 章节目录（reader 时）/ 工具
+   Mobile Fixes Bundle (2026-05-01) · IMG 6112 / 6113 / 6114 / 6115 / 6116
    ==================================================================== */
-.mobile-nav-drawer { display: none; }
-.mobile-nav-backdrop { display: none; }
+@media (max-width: 600px) {
+
+  /* ---- IMG_6112 灵感实验室排版 ---- */
+  .insp-grid {
+    gap: .65rem !important;
+    grid-template-columns: 1fr !important;
+  }
+  .insp-card,
+  .spark-card,
+  .blueprint-card {
+    padding: .85rem .85rem .75rem !important;
+  }
+  .insp-tabs,
+  .insp-controls {
+    flex-wrap: wrap !important;
+    gap: .35rem !important;
+  }
+  .insp-tab,
+  .insp-tabs button {
+    font-size: 12.5px !important;
+    padding: 6px 11px !important;
+  }
+  .insp-modal {
+    width: min(94vw, 540px) !important;
+    max-width: 94vw !important;
+    max-height: 88dvh !important;
+    padding: 16px 16px 14px !important;
+    overflow-y: auto;
+  }
+  .insp-modal-header {
+    padding: 8px 0 10px !important;
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+  .insp-modal-title { font-size: 16px !important; line-height: 1.4 !important; }
+  .insp-modal .insp-modal-close {
+    width: 32px !important; height: 32px !important;
+    top: 8px !important; right: 8px !important;
+  }
+
+  /* ---- IMG_6113 词典 toolbar + A-Z ---- */
+  /* 收紧 toolbar */
+  #dictionary-container .dict-toolbar {
+    padding: .55rem .75rem .45rem !important;
+    margin: 0 -.75rem .65rem !important;
+  }
+  .dict-search-row {
+    margin-bottom: .5rem !important;
+    gap: .5rem !important;
+  }
+  .dict-search { font-size: 14px !important; padding: .5rem .7rem !important; }
+  .dict-sort,
+  .dict-prio-select,
+  .dict-scope-select { font-size: 12px !important; padding: .35rem .55rem !important; }
+  /* 难度筛选：横滑而非换行，节省垂直空间 */
+  .dict-filter-row,
+  .dict-difficulty-row {
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .dict-filter-row::-webkit-scrollbar,
+  .dict-difficulty-row::-webkit-scrollbar { display: none; }
+  /* A-Z 索引：横滑紧凑（从全屏排到一行） */
+  .dict-index {
+    position: static !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+    margin: 0 -.75rem .65rem !important;
+    padding: .35rem .5rem !important;
+    background: transparent !important;
+    border: none !important;
+    gap: 1px !important;
+    scrollbar-width: none;
+  }
+  .dict-index::-webkit-scrollbar { display: none; }
+  .dict-index-letter {
+    flex: 0 0 auto !important;
+    min-width: 30px !important;
+    padding: 4px 6px !important;
+    font-size: 12px !important;
+  }
+
+  /* ---- IMG_6114 卡片展开占满屏 ---- */
+  /* 卡片本体：手机端不让整张卡占满整屏，限制高度 + 滚动 */
+  .dict-card {
+    max-height: none;
+  }
+  .dict-card.expanded,
+  .dict-card[aria-expanded="true"] {
+    max-height: 70dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  /* dict-modal（点卡片弹的关联图谱等）手机端贴边 */
+  .dict-modal-card {
+    width: calc(100vw - 20px) !important;
+    max-width: calc(100vw - 20px) !important;
+    max-height: 88dvh !important;
+    padding: 18px 18px 16px !important;
+    border-radius: 14px !important;
+  }
+  .dict-modal-term { font-size: 18px !important; }
+  .dict-modal-close { top: 8px !important; right: 10px !important; font-size: 22px !important; }
+  /* dict-graph-modal-v2（概念关联图谱）也压窄 */
+  .dict-graph-modal-v2 {
+    padding: 12px 14px 10px !important;
+    width: calc(100vw - 16px) !important;
+    max-width: calc(100vw - 16px) !important;
+    max-height: 88dvh !important;
+  }
+
+  /* ---- IMG_6115 弹窗自适应（通用） ---- */
+  .gallery-modal,
+  #shortcuts-modal .shortcuts-content {
+    width: 94vw !important;
+    max-width: 94vw !important;
+    max-height: 88dvh !important;
+    overflow-y: auto !important;
+    padding: 18px 18px 16px !important;
+  }
+  /* shortcuts row 在手机上单列 */
+  .shortcut-row {
+    font-size: 12.5px !important;
+    padding: 4px 0 !important;
+  }
+
+  /* ---- IMG_6116 暖色主题手机字号/间距过大 ---- */
+  /* warm/light 主题在手机上整体收紧（dark 主题已经较紧） */
+  [data-theme="warm"] #chapter-body,
+  [data-theme="light"] #chapter-body {
+    font-size: 14px !important;
+    line-height: 1.7 !important;
+  }
+  [data-theme="warm"] #chapter-body h1,
+  [data-theme="light"] #chapter-body h1 {
+    font-size: 21px !important;
+    margin-bottom: 14px !important;
+    padding-bottom: 8px !important;
+  }
+  [data-theme="warm"] #chapter-body h2,
+  [data-theme="light"] #chapter-body h2 {
+    font-size: 17px !important;
+    margin-top: 22px !important;
+    margin-bottom: 9px !important;
+  }
+  [data-theme="warm"] #chapter-body h3,
+  [data-theme="light"] #chapter-body h3 {
+    font-size: 15.5px !important;
+    margin-top: 18px !important;
+    margin-bottom: 8px !important;
+  }
+  [data-theme="warm"] #chapter-body p,
+  [data-theme="light"] #chapter-body p {
+    margin-bottom: 12px !important;
+  }
+  [data-theme="warm"] #chapter-content,
+  [data-theme="light"] #chapter-content {
+    padding: 12px 12px 28px !important;
+  }
+  /* landing / panorama 类卡片在手机上收紧 */
+  [data-theme="warm"] .highlight-card,
+  [data-theme="light"] .highlight-card {
+    padding: 14px !important;
+  }
+  [data-theme="warm"] .cover-story,
+  [data-theme="light"] .cover-story {
+    padding: 14px !important;
+  }
+}
+
+/* ====================================================================
+   Mobile Nav System v2 (2026-05-01)
+   - 主菜单抽屉 (.mobile-nav-drawer) — 仅 4 个大视图 + 底部工具图标栏
+   - 章节目录 sheet (.mobile-toc-sheet) — 仅 reader 视图，独立入口
+   ==================================================================== */
+.mobile-nav-drawer,
+.mobile-nav-backdrop,
+.mobile-toc-sheet,
+.mobile-toc-backdrop { display: none; }
 
 @media (max-width: 600px) {
+
+  /* ----- 主菜单抽屉 ----- */
   .mobile-nav-drawer {
     display: flex !important;
     flex-direction: column;
     position: fixed;
     top: 0; left: 0;
-    width: 88vw; max-width: 360px;
+    width: 82vw; max-width: 320px;
     height: 100dvh;
     background: var(--bg-card);
     color: var(--text-primary);
@@ -8182,14 +8386,10 @@ body.cc-lang-switching .cc-lang-btn {
     position: fixed; inset: 0;
     background: rgba(0,0,0,.42);
     z-index: 999;
-    opacity: 0;
-    pointer-events: none;
+    opacity: 0; pointer-events: none;
     transition: opacity .22s ease;
   }
-  .mobile-nav-backdrop.visible {
-    opacity: 1;
-    pointer-events: auto;
-  }
+  .mobile-nav-backdrop.visible { opacity: 1; pointer-events: auto; }
 
   .mnd-header {
     display: flex; align-items: center; justify-content: space-between;
@@ -8199,18 +8399,25 @@ body.cc-lang-switching .cc-lang-btn {
     flex-shrink: 0;
   }
   .mnd-logo {
-    display: flex; align-items: center; gap: 9px;
+    display: flex; align-items: center; gap: 8px;
     font-weight: 600; font-size: 14px;
     color: var(--text-primary);
   }
   .mnd-logo-dot {
-    width: 9px; height: 9px;
+    width: 8px; height: 8px;
     background: var(--accent-gold);
     border-radius: 99px;
     box-shadow: 0 0 8px rgba(199,125,46,.4);
   }
+  .mnd-logo-ver {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    color: var(--text-muted);
+    font-weight: 500;
+    letter-spacing: .02em;
+  }
   .mnd-close {
-    width: 38px; height: 38px;
+    width: 36px; height: 36px;
     background: transparent;
     border: 1px solid transparent;
     color: var(--text-secondary);
@@ -8222,127 +8429,36 @@ body.cc-lang-switching .cc-lang-btn {
     background: var(--bg-hover);
     border-color: var(--border);
   }
-
   .mnd-body {
     flex: 1;
     overflow-y: auto;
-    padding: 4px 0 calc(env(safe-area-inset-bottom, 0) + 24px);
+    padding: 14px 10px 10px;
     -webkit-overflow-scrolling: touch;
   }
-
-  .mnd-section { padding: 10px 12px 4px; }
-  .mnd-section + .mnd-section { border-top: 1px solid var(--border); margin-top: 6px; padding-top: 14px; }
-  .mnd-section-title {
-    font-size: 11px; font-weight: 700;
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    color: var(--text-muted);
-    margin: 0 0 8px;
-    padding: 0 6px;
-  }
-
-  .mnd-nav-list,
-  .mnd-tools {
+  .mnd-nav-list {
     display: flex; flex-direction: column;
-    gap: 2px;
+    gap: 4px;
   }
-  /* 工具区行式布局 */
-  .mnd-tool-row {
-    display: flex; align-items: center; justify-content: space-between;
-    gap: 12px;
-    padding: 9px 6px;
-    border-radius: 8px;
-  }
-  .mnd-tool-row + .mnd-tool-row { border-top: 1px solid rgba(120,90,60,.08); }
-  .mnd-tool-label {
-    font-size: 13.5px;
-    color: var(--text-secondary);
-    flex-shrink: 0;
-  }
-  .mnd-tool-control {
-    margin-left: auto;
-  }
-  .mnd-tool-pill {
-    padding: 6px 12px;
-    background: var(--bg-hover);
-    border: 1px solid var(--border);
-    border-radius: 99px;
-    font-size: 12.5px;
-    color: var(--text-primary);
-    display: inline-flex; align-items: center; gap: 6px;
-    cursor: pointer;
-  }
-  .mnd-tool-pill:active { background: var(--gold-soft, rgba(199,125,46,.16)); }
-  .mnd-tool-pill svg { width: 14px; height: 14px; }
-  .mnd-tool-pill #metaphor-icon,
-  .mnd-tool-pill span { font-size: 13px; }
-  .mnd-tool-toggle {
-    padding: 5px 14px;
-    background: rgba(120,90,60,.10);
-    border: 1px solid transparent;
-    border-radius: 99px;
-    font-size: 12px;
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: background .15s, color .15s;
-  }
-  .mnd-tool-toggle.on {
-    background: var(--gold-soft, rgba(199,125,46,.18));
-    color: var(--accent-gold);
-    border-color: rgba(199,125,46,.35);
-    font-weight: 600;
-  }
-  /* segment（3 选 1 主题） */
-  .mnd-tool-segment {
-    display: inline-flex;
-    background: rgba(120,90,60,.08);
-    border-radius: 10px;
-    padding: 3px;
-    gap: 2px;
-  }
-  .mnd-seg-btn {
-    padding: 4px 8px;
-    background: transparent;
-    border: none;
-    border-radius: 7px;
-    font-size: 11.5px;
-    color: var(--text-secondary);
-    display: inline-flex; align-items: center; gap: 4px;
-    cursor: pointer;
-  }
-  .mnd-seg-btn svg { width: 14px; height: 14px; }
-  .mnd-seg-btn.on {
-    background: var(--bg-card);
-    color: var(--text-primary);
-    box-shadow: 0 1px 2px rgba(0,0,0,.06);
-  }
-  .mnd-seg-label {
-    font-size: 11.5px;
-    line-height: 1;
-  }
-
   /* 抽屉内的导航按钮覆盖 .nav-btn 的桌面样式 */
-  .mnd-nav-list .nav-btn,
-  .mnd-tools button {
+  .mnd-nav-list .nav-btn {
     width: 100%;
-    height: 46px; min-height: 46px;
-    padding: 0 12px;
+    height: 50px; min-height: 50px;
+    padding: 0 14px;
     border: none;
     background: transparent;
     color: var(--text-primary);
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 500;
     display: flex !important;
     align-items: center;
-    gap: 12px;
+    gap: 14px;
     border-radius: 10px;
     text-align: left;
     justify-content: flex-start;
     cursor: pointer;
     transition: background .15s ease;
   }
-  .mnd-nav-list .nav-btn:active,
-  .mnd-tools button:active { background: var(--bg-hover); }
+  .mnd-nav-list .nav-btn:active { background: var(--bg-hover); }
   .mnd-nav-list .nav-btn.active {
     background: var(--gold-soft, rgba(199,125,46,.12));
     color: var(--accent-gold);
@@ -8352,63 +8468,148 @@ body.cc-lang-switching .cc-lang-btn {
     width: 3px;
     background: var(--accent-gold);
     border-radius: 2px;
-    margin-left: -10px;
+    margin-left: -12px;
     align-self: stretch;
   }
-  .mnd-nav-list .nav-btn span,
-  .mnd-tools button span {
+  .mnd-nav-list .nav-btn span {
     display: inline !important;
-    font-size: 14px !important;
+    font-size: 15px !important;
     font-weight: 500;
   }
-  .mnd-nav-list .nav-btn svg,
-  .mnd-tools button svg {
-    width: 20px; height: 20px;
+  .mnd-nav-list .nav-btn svg {
+    width: 22px; height: 22px;
     flex-shrink: 0;
     opacity: .85;
   }
 
-  /* 元喻按钮 */
-  .mnd-tools .metaphor-toggle {
-    background: transparent !important;
-    border: none !important;
-    max-width: none !important;
-    color: var(--text-primary) !important;
+  /* ----- 抽屉底部工具图标栏（无文字 label） ----- */
+  .mnd-footer {
+    flex-shrink: 0;
+    border-top: 1px solid var(--border);
+    padding: 10px 12px calc(env(safe-area-inset-bottom, 0) + 12px);
+    background: var(--bg-card);
   }
-  .mnd-tools .metaphor-toggle #metaphor-label,
-  .mnd-tools .metaphor-toggle #metaphor-icon {
-    display: inline !important;
-    font-size: 14px !important;
+  .mnd-tool-bar {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    justify-content: space-between;
   }
-  .mnd-tools .version-badge {
-    align-self: flex-start;
-    margin-left: 10px;
-    margin-top: 6px;
-    border: none !important;
-    background: var(--gold-soft);
+  .mnd-tool-icon {
+    flex: 1;
+    height: 44px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 10px;
+    color: var(--text-secondary);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    position: relative;
+    transition: background .15s, color .15s;
+  }
+  .mnd-tool-icon:active { background: var(--bg-hover); }
+  .mnd-tool-icon.on {
     color: var(--accent-gold);
-    padding: 4px 10px;
+    background: var(--gold-soft, rgba(199,125,46,.12));
+  }
+  .mnd-tool-icon svg { width: 20px; height: 20px; }
+  .mnd-tool-icon .mnd-tool-emoji { font-size: 18px; line-height: 1; }
+  .mnd-tool-icon .mnd-tool-badge {
+    position: absolute;
+    top: 4px; right: 6px;
+    font-size: 8.5px;
+    font-weight: 700;
+    background: var(--accent-gold);
+    color: #fff;
+    padding: 1px 4px;
     border-radius: 99px;
-    font-size: 11px;
-    font-weight: 600;
+    min-width: 14px;
+    text-align: center;
+    letter-spacing: 0;
   }
 
-  /* TOC 嵌入抽屉的样式（接收来自 #sidebar 的子节点） */
-  .mnd-section-toc {
-    padding-bottom: 16px;
+  /* ====================================================================
+     章节目录 sheet · reader 视图独有
+     ==================================================================== */
+  .mobile-toc-sheet {
+    display: flex !important;
+    flex-direction: column;
+    position: fixed;
+    top: 0; right: 0;
+    width: 88vw; max-width: 380px;
+    height: 100dvh;
+    background: var(--bg-card);
+    color: var(--text-primary);
+    z-index: 1000;
+    transform: translateX(100%);
+    transition: transform .26s cubic-bezier(.32,.72,.28,1);
+    overflow: hidden;
+    box-shadow: -6px 0 28px rgba(0,0,0,.18);
+    border-left: 1px solid var(--border);
   }
-  .mnd-section-toc .sidebar-header {
-    display: none; /* 抽屉已有 section-title，不重复 "目录" */
+  .mobile-toc-sheet.open { transform: translateX(0); }
+
+  .mobile-toc-backdrop {
+    display: block;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.42);
+    z-index: 999;
+    opacity: 0; pointer-events: none;
+    transition: opacity .22s ease;
   }
-  .mnd-section-toc .toc-list { padding: 0 4px; }
-  .mnd-section-toc .toc-chapter {
-    padding: 9px 10px;
-    font-size: 13.5px;
-    line-height: 1.4;
+  .mobile-toc-backdrop.visible { opacity: 1; pointer-events: auto; }
+
+  .mts-header {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 14px 14px 12px;
+    padding-top: calc(env(safe-area-inset-top, 0) + 14px);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
   }
-  .mnd-section-toc .toc-part-title {
+  .mts-title {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--text-primary);
+  }
+  .mts-close {
+    width: 36px; height: 36px;
+    background: transparent;
+    border: 1px solid transparent;
+    color: var(--text-secondary);
+    border-radius: 8px;
+    display: inline-flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .mts-close:active { background: var(--bg-hover); border-color: var(--border); }
+  .mts-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 8px 6px calc(env(safe-area-inset-bottom, 0) + 16px);
+    -webkit-overflow-scrolling: touch;
+  }
+  /* sidebar 子节点临时迁入时的样式 */
+  .mts-body .sidebar-header { display: none; }
+  .mts-body .toc-list { padding: 0 6px; }
+  .mts-body .toc-chapter {
+    padding: 10px 12px;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+  .mts-body .toc-part-title {
     font-size: 11px;
-    margin: 12px 6px 6px;
+    letter-spacing: .04em;
+    margin: 12px 8px 6px;
+  }
+  /* 章节目录按钮 (reader-only)：默认隐藏，reader.active 时显示
+     特异性必须 ≥ #topnav .mobile-only 否则被 inline-flex !important 强行显示 */
+  #topnav .mobile-reader-only,
+  .mobile-reader-only { display: none !important; }
+  body[data-active-view="reader"] #topnav .mobile-reader-only,
+  body[data-active-view="reader"] .mobile-reader-only {
+    display: inline-flex !important;
   }
 }
 

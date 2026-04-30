@@ -242,22 +242,29 @@
     }
   });
 
-  // ===== Mobile Nav Drawer (2026-05-01 改造，方案 A 毛玻璃) =====
-  const mobileTocBtn = document.getElementById('mobile-toc-toggle');
+  // ===== Mobile Nav System v2 (2026-05-01) =====
+  // - 主菜单抽屉 (#mobile-nav-drawer)：4 大视图 + 底部工具图标栏
+  // - 章节目录 sheet (#mobile-toc-sheet)：reader 视图独有
+  const mobileTocBtn = document.getElementById('mobile-toc-toggle');         // ☰ 主菜单
+  const chapterTocBtn = document.getElementById('mobile-chapter-toc-btn');   // 📚 章节目录（reader-only）
   const sidebarEl = document.getElementById('sidebar');
   const drawerEl = document.getElementById('mobile-nav-drawer');
   const drawerBackdrop = document.getElementById('mobile-nav-backdrop');
   const drawerNavList = document.getElementById('mnd-nav-list');
   const drawerToolsList = document.getElementById('mnd-tools-list');
-  const drawerTocHost = document.getElementById('mnd-toc-host');
   const drawerCloseBtn = drawerEl ? drawerEl.querySelector('.mnd-close') : null;
+  // Sheet
+  const sheetEl = document.getElementById('mobile-toc-sheet');
+  const sheetBackdrop = document.getElementById('mobile-toc-backdrop');
+  const sheetBody = document.getElementById('mts-body');
+  const sheetCloseBtn = sheetEl ? sheetEl.querySelector('.mts-close') : null;
 
-  // 把 #topnav 中已存在的按钮"接管"到抽屉里：
-  // 用 cloneNode 复制一份，clone 的点击事件转发到原按钮 click()，
-  // 这样省去重写所有路由 / i18n / 主题切换的逻辑。
-  function rebuildDrawerLists() {
-    if (!drawerNavList || !drawerToolsList) return;
-    // ---- 主导航 ----
+  const isEnLocale = () => document.documentElement.getAttribute('data-lang') === 'en';
+  const _T = (zh, en) => isEnLocale() ? en : zh;
+
+  // ---------- 主菜单抽屉：只渲染 4 大视图 ----------
+  function rebuildDrawerNav() {
+    if (!drawerNavList) return;
     drawerNavList.innerHTML = '';
     const navIds = ['nav-home', 'nav-reader', 'nav-inspiration', 'nav-dictionary'];
     navIds.forEach(id => {
@@ -266,7 +273,6 @@
       const clone = orig.cloneNode(true);
       clone.removeAttribute('id');
       clone.setAttribute('data-mnd-target', id);
-      // active class 同步：原按钮有 .active 时 clone 也带
       if (orig.classList.contains('active')) clone.classList.add('active');
       clone.addEventListener('click', () => {
         orig.click();
@@ -274,129 +280,127 @@
       });
       drawerNavList.appendChild(clone);
     });
-    // ---- 工具区（行式 label + 控件，比 cloneNode 更可控） ----
+  }
+
+  // ---------- 抽屉底部工具图标栏（无文字 label） ----------
+  function rebuildToolBar() {
+    if (!drawerToolsList) return;
     drawerToolsList.innerHTML = '';
-    const isEn = (document.documentElement.getAttribute('data-lang') === 'en');
-    const T = (zh, en) => isEn ? en : zh;
-    const mkRow = (label, control) => {
-      const row = document.createElement('div');
-      row.className = 'mnd-tool-row';
-      const lbl = document.createElement('span');
-      lbl.className = 'mnd-tool-label';
-      lbl.textContent = label;
-      row.appendChild(lbl);
-      row.appendChild(control);
-      return row;
-    };
 
-    // 元喻切换（City ↔ OS）
-    const metaphorOrig = document.getElementById('metaphor-toggle');
-    if (metaphorOrig) {
-      const metaBtn = document.createElement('button');
-      metaBtn.className = 'mnd-tool-control mnd-tool-pill';
-      metaBtn.innerHTML = metaphorOrig.innerHTML;
-      metaBtn.addEventListener('click', () => {
-        metaphorOrig.click();
-        // 同步抽屉内容
-        setTimeout(() => { metaBtn.innerHTML = metaphorOrig.innerHTML; }, 50);
-      });
-      drawerToolsList.appendChild(mkRow(T('比喻体系', 'Metaphor'), metaBtn));
-    }
-
-    // 词典高亮开关
-    const hiOrig = document.querySelector('.cc-dict-highlight-toggle');
-    if (hiOrig) {
-      const hiBtn = document.createElement('button');
-      hiBtn.className = 'mnd-tool-control mnd-tool-toggle';
-      const isOn = () => hiOrig.classList.contains('active');
+    const mkIconBtn = ({ svg, emoji, label, badgeText, onClick, getOn }) => {
+      const btn = document.createElement('button');
+      btn.className = 'mnd-tool-icon';
+      btn.setAttribute('aria-label', label);
+      btn.title = label;
+      if (svg) btn.innerHTML = svg;
+      else if (emoji) {
+        const span = document.createElement('span');
+        span.className = 'mnd-tool-emoji';
+        span.textContent = emoji;
+        btn.appendChild(span);
+      }
+      if (badgeText) {
+        const b = document.createElement('span');
+        b.className = 'mnd-tool-badge';
+        b.textContent = badgeText;
+        btn.appendChild(b);
+      }
       const refresh = () => {
-        hiBtn.textContent = isOn() ? T('已开启', 'On') : T('已关闭', 'Off');
-        hiBtn.classList.toggle('on', isOn());
+        if (typeof getOn === 'function') btn.classList.toggle('on', !!getOn());
       };
       refresh();
-      hiBtn.addEventListener('click', () => {
-        hiOrig.click();
-        setTimeout(refresh, 50);
+      btn.addEventListener('click', () => {
+        onClick();
+        setTimeout(refresh, 60);
       });
-      drawerToolsList.appendChild(mkRow(T('词典高亮', 'Dict Highlight'), hiBtn));
+      btn.refresh = refresh;
+      return btn;
+    };
+
+    // 1. 比喻切换 — emoji 同步原按钮内容
+    const metaphorOrig = document.getElementById('metaphor-toggle');
+    if (metaphorOrig) {
+      const iconEl = metaphorOrig.querySelector('#metaphor-icon');
+      const labelEl = metaphorOrig.querySelector('#metaphor-label');
+      const btn = mkIconBtn({
+        emoji: iconEl ? iconEl.textContent : '🏙',
+        label: _T('比喻：', 'Metaphor: ') + (labelEl ? labelEl.textContent : ''),
+        onClick: () => {
+          metaphorOrig.click();
+          // 同步显示
+          setTimeout(() => {
+            const newIcon = metaphorOrig.querySelector('#metaphor-icon');
+            const span = btn.querySelector('.mnd-tool-emoji');
+            if (newIcon && span) span.textContent = newIcon.textContent;
+          }, 80);
+        }
+      });
+      drawerToolsList.appendChild(btn);
     }
 
-    // 主题切换（3 选 1）
+    // 2. 词典高亮 — toggle，badge ON/OFF
+    const hiOrig = document.querySelector('.cc-dict-highlight-toggle');
+    if (hiOrig) {
+      const btn = mkIconBtn({
+        svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19l7-7 3 3-7 7-3-3z"/><path d="M18 13l-1.5-7.5L2 2l3.5 14.5L13 18l5-5z"/><path d="M2 2l7.586 7.586"/><circle cx="11" cy="11" r="2"/></svg>',
+        label: _T('词典高亮', 'Dict highlight'),
+        onClick: () => hiOrig.click(),
+        getOn: () => hiOrig.classList.contains('active')
+      });
+      drawerToolsList.appendChild(btn);
+    }
+
+    // 3. 主题切换 — 单按钮循环（warm → dark → light → warm）
     const themeOrig = document.querySelector('.cc-theme-switcher');
     if (themeOrig) {
-      const segWrap = document.createElement('div');
-      segWrap.className = 'mnd-tool-control mnd-tool-segment';
-      const origBtns = themeOrig.querySelectorAll('button');
-      origBtns.forEach((origBtn) => {
-        const seg = document.createElement('button');
-        seg.className = 'mnd-seg-btn';
-        // 拷贝 svg + 在右边附 label（取自 aria-label / title / data-theme）
-        const themeKey = origBtn.dataset.theme || origBtn.getAttribute('aria-label') || '';
-        const labelMap = {
-          dark: T('暗色', 'Dark'),
-          light: T('浅色', 'Light'),
-          warm: T('暖色', 'Warm'),
-          auto: T('跟随', 'Auto')
-        };
-        seg.innerHTML = origBtn.innerHTML;
-        const labelText = labelMap[themeKey] || themeKey;
-        if (labelText) {
-          const labelSpan = document.createElement('span');
-          labelSpan.className = 'mnd-seg-label';
-          labelSpan.textContent = labelText;
-          seg.appendChild(labelSpan);
-        }
-        if (origBtn.getAttribute('aria-pressed') === 'true') seg.classList.add('on');
-        seg.addEventListener('click', () => {
-          origBtn.click();
-          // 同步 active 状态
+      const themeIcons = {
+        warm: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>',
+        light: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="5"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41"/></svg>',
+        dark:  '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>'
+      };
+      const labelMap = { warm: _T('暖色', 'Warm'), light: _T('浅色', 'Light'), dark: _T('暗色', 'Dark') };
+      const getCurrent = () => {
+        const active = themeOrig.querySelector('button[aria-pressed="true"]');
+        return (active && active.dataset.theme) || 'warm';
+      };
+      const btn = mkIconBtn({
+        svg: themeIcons[getCurrent()] || themeIcons.warm,
+        label: _T('主题：', 'Theme: ') + labelMap[getCurrent()],
+        onClick: () => {
+          // 循环到下一个主题
+          const cur = getCurrent();
+          const order = ['warm', 'dark', 'light'];
+          const next = order[(order.indexOf(cur) + 1) % order.length];
+          const nextBtn = themeOrig.querySelector('button[data-theme="' + next + '"]');
+          if (nextBtn) nextBtn.click();
+          // 同步图标
           setTimeout(() => {
-            segWrap.querySelectorAll('.mnd-seg-btn').forEach((s, i) => {
-              s.classList.toggle('on', origBtns[i] && origBtns[i].getAttribute('aria-pressed') === 'true');
-            });
-          }, 50);
-        });
-        segWrap.appendChild(seg);
+            const c = getCurrent();
+            btn.innerHTML = themeIcons[c] || themeIcons.warm;
+            btn.setAttribute('aria-label', _T('主题：', 'Theme: ') + labelMap[c]);
+            btn.title = btn.getAttribute('aria-label');
+          }, 80);
+        }
       });
-      drawerToolsList.appendChild(mkRow(T('主题', 'Theme'), segWrap));
+      drawerToolsList.appendChild(btn);
     }
 
-    // 键盘快捷键（点开模态，不关抽屉）
+    // 4. 键盘快捷键（点开模态，不关抽屉）
     const shortcutsOrig = document.getElementById('shortcuts-hint');
     if (shortcutsOrig) {
-      const sBtn = document.createElement('button');
-      sBtn.className = 'mnd-tool-control mnd-tool-pill';
-      sBtn.textContent = T('查看快捷键', 'Shortcuts');
-      sBtn.addEventListener('click', () => shortcutsOrig.click());
-      drawerToolsList.appendChild(mkRow(T('快捷键', 'Shortcuts'), sBtn));
+      const btn = mkIconBtn({
+        svg: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="6" width="20" height="13" rx="2"/><path d="M6 10h.01M10 10h.01M14 10h.01M18 10h.01M7 14h10"/></svg>',
+        label: _T('键盘快捷键', 'Keyboard shortcuts'),
+        onClick: () => shortcutsOrig.click()
+      });
+      drawerToolsList.appendChild(btn);
     }
-  }
-
-  // reader.active 时把 sidebar 的子节点临时迁入抽屉，关闭时还原
-  let tocMovedToDrawer = false;
-  function maybeMoveTocIntoDrawer() {
-    if (!drawerTocHost || !sidebarEl) return;
-    const reader = document.getElementById('reader');
-    const inReader = reader && reader.classList.contains('active');
-    if (inReader && sidebarEl.children.length) {
-      while (sidebarEl.firstChild) drawerTocHost.appendChild(sidebarEl.firstChild);
-      drawerTocHost.hidden = false;
-      tocMovedToDrawer = true;
-    } else {
-      drawerTocHost.hidden = true;
-    }
-  }
-  function restoreTocFromDrawer() {
-    if (!tocMovedToDrawer || !drawerTocHost || !sidebarEl) return;
-    while (drawerTocHost.firstChild) sidebarEl.appendChild(drawerTocHost.firstChild);
-    drawerTocHost.hidden = true;
-    tocMovedToDrawer = false;
   }
 
   function openMobileDrawer() {
     if (!drawerEl) return;
-    rebuildDrawerLists();
-    maybeMoveTocIntoDrawer();
+    rebuildDrawerNav();
+    rebuildToolBar();
     drawerEl.classList.add('open');
     drawerEl.setAttribute('aria-hidden', 'false');
     if (drawerBackdrop) {
@@ -415,38 +419,90 @@
       drawerBackdrop.setAttribute('aria-hidden', 'true');
     }
     if (mobileTocBtn) mobileTocBtn.setAttribute('aria-expanded', 'false');
-    // 等过渡结束再还原 TOC，避免视觉抖动
-    setTimeout(restoreTocFromDrawer, 280);
-    document.body.style.overflow = '';
+    // 仅当当前没有 sheet 打开时才解锁 body
+    if (!sheetEl || !sheetEl.classList.contains('open')) document.body.style.overflow = '';
   }
-  // 兼容老调用名（gallery 等地方可能仍触发）
-  function closeMobileTOC() { closeMobileDrawer(); }
 
+  // ---------- 章节目录 sheet：仅 reader 视图 ----------
+  let tocMovedToSheet = false;
+  function openTocSheet() {
+    if (!sheetEl || !sidebarEl || !sheetBody) return;
+    // 把 sidebar 子节点迁入 sheet body
+    if (sidebarEl.children.length) {
+      while (sidebarEl.firstChild) sheetBody.appendChild(sidebarEl.firstChild);
+      tocMovedToSheet = true;
+    }
+    sheetEl.classList.add('open');
+    sheetEl.setAttribute('aria-hidden', 'false');
+    if (sheetBackdrop) {
+      sheetBackdrop.classList.add('visible');
+      sheetBackdrop.setAttribute('aria-hidden', 'false');
+    }
+    if (chapterTocBtn) chapterTocBtn.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeTocSheet() {
+    if (!sheetEl) return;
+    sheetEl.classList.remove('open');
+    sheetEl.setAttribute('aria-hidden', 'true');
+    if (sheetBackdrop) {
+      sheetBackdrop.classList.remove('visible');
+      sheetBackdrop.setAttribute('aria-hidden', 'true');
+    }
+    if (chapterTocBtn) chapterTocBtn.setAttribute('aria-expanded', 'false');
+    // 还原 sidebar 内容
+    setTimeout(() => {
+      if (tocMovedToSheet && sheetBody && sidebarEl) {
+        while (sheetBody.firstChild) sidebarEl.appendChild(sheetBody.firstChild);
+        tocMovedToSheet = false;
+      }
+      if (!drawerEl || !drawerEl.classList.contains('open')) document.body.style.overflow = '';
+    }, 280);
+  }
+  // 兼容老调用名（旧代码可能仍引用）
+  function closeMobileTOC() { closeMobileDrawer(); closeTocSheet(); }
+
+  // ---------- 入口绑定 ----------
   if (mobileTocBtn) {
     mobileTocBtn.addEventListener('click', () => {
       if (drawerEl && drawerEl.classList.contains('open')) closeMobileDrawer();
       else openMobileDrawer();
     });
   }
-  if (drawerCloseBtn) {
-    drawerCloseBtn.addEventListener('click', closeMobileDrawer);
-  }
-  if (drawerBackdrop) {
-    drawerBackdrop.addEventListener('click', closeMobileDrawer);
-  }
-  // 点抽屉里的章节后关闭
-  if (drawerEl) {
-    drawerEl.addEventListener('click', (e) => {
-      const chap = e.target.closest('.toc-chapter');
-      if (chap) setTimeout(closeMobileDrawer, 100);
+  if (chapterTocBtn) {
+    chapterTocBtn.addEventListener('click', () => {
+      if (sheetEl && sheetEl.classList.contains('open')) closeTocSheet();
+      else openTocSheet();
     });
   }
-  // Esc 关闭
+  if (drawerCloseBtn) drawerCloseBtn.addEventListener('click', closeMobileDrawer);
+  if (drawerBackdrop) drawerBackdrop.addEventListener('click', closeMobileDrawer);
+  if (sheetCloseBtn) sheetCloseBtn.addEventListener('click', closeTocSheet);
+  if (sheetBackdrop) sheetBackdrop.addEventListener('click', closeTocSheet);
+
+  // 点 sheet 里的章节自动关
+  if (sheetEl) {
+    sheetEl.addEventListener('click', (e) => {
+      const chap = e.target.closest('.toc-chapter');
+      if (chap) setTimeout(closeTocSheet, 100);
+    });
+  }
+  // Esc 关
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape' && drawerEl && drawerEl.classList.contains('open')) {
-      closeMobileDrawer();
-    }
+    if (e.key !== 'Escape') return;
+    if (drawerEl && drawerEl.classList.contains('open')) closeMobileDrawer();
+    if (sheetEl && sheetEl.classList.contains('open')) closeTocSheet();
   });
+
+  // ---------- body[data-active-view] 同步（CSS 用它驱动 reader-only 按钮可见性） ----------
+  function syncActiveViewAttr() {
+    const active = document.querySelector('.view.active');
+    document.body.setAttribute('data-active-view', active ? active.id : '');
+  }
+  // 初次 + 后续路由切换都跑
+  syncActiveViewAttr();
+  // 监听 .view.active 变化（轻量 polling，每 400ms；不会卡）
+  setInterval(syncActiveViewAttr, 400);
   // Gallery view
   if (navBtns.gallery) {
     let galleryInited = false;
