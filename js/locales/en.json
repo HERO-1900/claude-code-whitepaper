@@ -32,7 +32,9 @@
     "section_nav_tools": "Tool System",
     "section_nav_commands": "Command Catalog",
     "section_nav_hidden": "Hidden Features",
-    "section_nav_dataflow": "Deep Dive"
+    "section_nav_dataflow": "Deep Dive",
+    "settings_title": "Settings",
+    "settings_aria": "Settings"
   },
   "hero": {
     "badge": "A Source-Code Deep Dive",
@@ -109,7 +111,9 @@
     "city": "City",
     "os": "Operating System",
     "toggle_title": "Toggle metaphor system",
-    "label_city": "City"
+    "label_city": "City",
+    "label_full": "Metaphor",
+    "label_kitchen": "Kitchen"
   },
   "search": {
     "toc_placeholder": "Search chapters and content...",
@@ -286,7 +290,7 @@
   "dict": {
     "title": "📖 Claude Code Glossary",
     "description": "Core terminology distilled from the Claude Code 2.1.88 source code — covering core mechanisms, tools, subsystems, prompt patterns, engineering methods, protocols, data concepts, infrastructure, industry terms, and domain language.",
-    "search_placeholder": "🔍 Search terms / definitions / explanations (full-text)...",
+    "search_placeholder": "🔍 Search terms / definitions (auto-ranked by relevance)...",
     "search": "Search",
     "entries_unit": "entries",
     "shown_unit": "shown",
@@ -305,8 +309,8 @@
     "see_also": "See also",
     "empty": "No matching entries.",
     "tooltip_more": "Click for full entry",
-    "highlight_on": "Term highlighting: on",
-    "highlight_off": "Term highlighting: off",
+    "highlight_on": "On",
+    "highlight_off": "Off",
     "highlight_aria": "Toggle term highlighting",
     "priority_title": "Filter by priority",
     "prio_all": "All Priority",
@@ -317,7 +321,7 @@
     "search_scope_all": "Full search",
     "search_scope_term": "Term match",
     "search_scope_def": "Definition only (no term match)",
-    "search_placeholder": "🔍 Search terms / definitions (auto-ranked by relevance)..."
+    "highlight_label": "Term Highlight"
   },
   "vocab": {
     "btn": "⭐ My Wordbook",

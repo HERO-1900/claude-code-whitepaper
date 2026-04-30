@@ -2917,19 +2917,68 @@ pre:hover .copy-btn,
   #topnav #nav-inspiration,
   #topnav #nav-dictionary { display: none !important; }
   /* breadcrumb 移除，让标题位由 nav-center::before 提供 */
-  #topnav #breadcrumb { display: none !important; }
-  /* 元喻 / 版本 / 快捷键 / 词典高亮开关 / 主题切换 全部进抽屉 */
+  /* 移动端：breadcrumb 改为视图标题，可点击展开 4 视图下拉菜单 */
+  #topnav #breadcrumb {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 4px;
+    font-size: 13px;
+    line-height: 1;
+    font-weight: 600;
+    color: var(--text-primary);
+    cursor: pointer;
+    user-select: none;
+    padding: 6px 10px;
+    border-radius: 8px;
+    background: transparent;
+    transition: background .15s;
+    max-width: 56vw;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #topnav #breadcrumb:active { background: var(--bg-hover, rgba(0,0,0,.05)); }
+  #topnav #breadcrumb::after {
+    content: '▾';
+    font-size: 10px;
+    margin-left: 2px;
+    opacity: .6;
+  }
+  /* 元喻 / 版本 / 快捷键 / 词典高亮开关 都进齿轮 popover；主题切换上顶栏 */
   #topnav .metaphor-toggle,
   #topnav .version-badge,
   #topnav #shortcuts-hint,
-  #topnav .cc-dict-highlight-toggle,
-  #topnav .cc-theme-switcher { display: none !important; }
+  #topnav .cc-dict-highlight-toggle { display: none !important; }
+  /* 主题切换器手机端可见，紧凑布局 */
+  #topnav .cc-theme-switcher {
+    display: inline-flex !important;
+    gap: 0;
+    padding: 2px;
+    background: var(--bg-hover, rgba(0,0,0,.05));
+    border-radius: 8px;
+  }
+  #topnav .cc-theme-switcher .cc-theme-btn {
+    width: 26px; height: 26px;
+    min-width: 26px;
+    padding: 0;
+    font-size: 13px;
+    line-height: 1;
+    border: 0;
+    background: transparent;
+  }
+  #topnav .cc-theme-switcher .cc-theme-btn.active {
+    background: var(--bg-card, #fff);
+    box-shadow: 0 1px 2px rgba(0,0,0,.08);
+  }
   /* 手机端无键盘 → 整个 shortcuts 系统隐藏 */
   #shortcuts-hint,
   #shortcuts-modal { display: none !important; }
   .nav-left, .nav-right { gap: 6px; flex-wrap: nowrap; }
-  /* hamburger（mobile-toc-toggle） */
-  #mobile-toc-toggle {
+  /* 旧 hamburger（主菜单抽屉入口）—— 已被标题下拉菜单取代，移动端隐藏。
+     specificity 必须 ≥ #topnav .mobile-only (0,2,1) 才能赢；用 #topnav .mobile-only#mobile-toc-toggle */
+  #topnav .mobile-only#mobile-toc-toggle { display: none !important; }
+  /* 旧规则保留以备 fallback：若需 re-enable 把上面 display:none 删掉 */
+  #mobile-toc-toggle.legacy-on {
     width: 38px; height: 38px; min-width: 38px; min-height: 38px;
     padding: 0; gap: 0;
     background: rgba(255,255,255,.55) !important;
@@ -2950,39 +2999,18 @@ pre:hover .copy-btn,
     border-color: rgba(199,125,46,.45) !important;
   }
   #mobile-toc-toggle svg { width: 20px; height: 20px; }
-  /* nav-center 显示移动端站点标题 */
+  /* nav-center 显示移动端站点标题 — 覆盖前面 .nav-center{display:none} 的旧规则 */
   .nav-center {
     flex: 1; min-width: 0;
     padding: 0 4px;
-    display: flex; flex-direction: column; justify-content: center;
+    display: flex !important;
+    flex-direction: column; justify-content: center;
+    align-items: center;  /* breadcrumb 居中 */
     gap: 1px;
   }
-  .nav-center::before {
-    content: "Claude Code 白皮书";
-    display: block;
-    font-size: 13.5px;
-    font-weight: 600;
-    color: var(--text-primary);
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-align: left;
-    letter-spacing: -0.005em;
-  }
-  .nav-center::after {
-    content: "v2.1.88 · 88 章";
-    display: block;
-    font-size: 10.5px;
-    color: var(--text-muted);
-    font-family: var(--font-mono);
-    letter-spacing: .02em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-    text-align: left;
-  }
-  html[data-lang="en"] .nav-center::before { content: "Claude Code Whitepaper"; }
-  html[data-lang="en"] .nav-center::after { content: "v2.1.88 · 88 chapters"; }
+  /* 旧的 ::before / ::after 站点标题改为隐藏 — breadcrumb 接管标题位 + 下拉菜单触发器 */
+  .nav-center::before,
+  .nav-center::after { display: none !important; content: none !important; }
   /* 中-EN 切换在顶栏紧凑化 */
   .cc-lang-switcher {
     gap: 0; padding: 2px;
@@ -6527,6 +6555,55 @@ pre:hover .copy-btn,
   .insp-modal { padding: 20px 16px; margin: 16px; max-height: 90vh; }
 }
 
+/* 解决用户反馈：灵感词条弹窗手机端标题被 X 按钮挤压、不自适应（截图 022122）
+   重写 header：column 布局 + 给 X 让出足够空间；title 字号下调防止溢出 */
+@media (max-width: 600px) {
+  .insp-modal {
+    padding: 14px 14px !important;
+    margin: 14px !important;
+    max-height: 88vh;
+    width: auto !important;
+    max-width: calc(100vw - 28px) !important;
+    border-radius: 14px;
+  }
+  .insp-modal-header {
+    position: relative !important;
+    top: 0 !important;
+    margin: 0 0 12px !important;
+    padding: 8px 44px 12px 4px !important;  /* 右侧 44px 给 X 让位 */
+    border-radius: 0;
+    border-bottom: 1px solid var(--cc-border-default, var(--border, rgba(120,120,120,.18)));
+  }
+  .insp-modal-meta {
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+  .insp-modal-kind { font-size: .68rem; padding: 2px 8px; }
+  .insp-modal-id { font-size: .68rem; }
+  .insp-modal-title {
+    font-size: .98rem;
+    line-height: 1.42;
+    word-break: break-word;
+  }
+  .insp-modal .insp-modal-close {
+    top: 6px !important;
+    right: 6px !important;
+    font-size: 1.25rem !important;
+    width: 32px;
+    height: 32px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 !important;
+  }
+  .insp-modal .spark-detail,
+  .insp-modal .bp-detail {
+    font-size: 13.5px;
+    line-height: 1.65;
+  }
+}
+
 /* 灵感卡片箭头 → 右下角 */
 .spark-arrow, .bp-arrow {
   position: absolute;
@@ -7550,12 +7627,31 @@ body.cc-lang-switching .cc-lang-btn {
 }
 @media (max-width: 600px) {
   #dictionary-container { padding: 1rem .75rem 3rem; }
-  .dict-toolbar { margin: 0 -.75rem 1rem; padding: .65rem .75rem .5rem; }
+  /* 解决用户反馈：toolbar 一直挂在上面挡阅读 — 手机端取消 sticky，让它跟随滚动 */
+  .dict-toolbar {
+    position: relative;
+    top: auto;
+    z-index: 1;
+    margin: 0 -.75rem 1rem;
+    padding: .65rem .75rem .5rem;
+    backdrop-filter: none;
+    -webkit-backdrop-filter: none;
+  }
   .dict-title { font-size: 1.4rem; }
   .dict-stats { gap: 1rem; }
   .dict-card { padding: .75rem .85rem; }
   .dict-card-foot { flex-direction: column; align-items: stretch; }
   .dict-fav, .dict-jump { text-align: center; }
+  /* 解决用户反馈：卡片右上角标签竖排太占纵向 — 改成横排 wrap */
+  .dict-card-head { flex-direction: column; align-items: stretch; gap: .35rem; }
+  .dict-card-badges {
+    flex-direction: row !important;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: .3rem;
+  }
+  .dict-badge { font-size: .62rem; padding: .12rem .42rem; }
 }
 
 /* ----- 主题适配：light / warm 微调 ----- */
@@ -8385,13 +8481,13 @@ body.cc-lang-switching .cc-lang-btn {
 
 @media (max-width: 600px) {
 
-  /* ----- 主菜单抽屉 ----- */
+  /* ----- 主菜单抽屉（已被标题下拉菜单取代，仅作 fallback；缩窄到 64vw / 240px）----- */
   .mobile-nav-drawer {
     display: flex !important;
     flex-direction: column;
     position: fixed;
     top: 0; left: 0;
-    width: 76vw; max-width: 290px;
+    width: 64vw; max-width: 240px;
     height: 100dvh;
     background: var(--bg-card);
     color: var(--text-primary);
@@ -8586,7 +8682,8 @@ body.cc-lang-switching .cc-lang-btn {
     flex-direction: column;
     position: fixed;
     top: 0; left: 0;
-    width: 84vw; max-width: 340px;
+    /* 用户反馈："伸出来的宽度甚至达到了屏幕的三分之二，太夸张了" — 收到 50vw / max 220px */
+    width: 50vw; max-width: 220px;
     height: 100dvh;
     background: var(--bg-card);
     color: var(--text-primary);
@@ -8659,5 +8756,158 @@ body.cc-lang-switching .cc-lang-btn {
   body[data-active-view="reader"] .mobile-reader-only {
     display: inline-flex !important;
   }
+
+  /* ==================== 标题下拉菜单（点击 breadcrumb 唤出 4 视图）==================== */
+  .title-view-menu {
+    position: fixed;
+    top: 56px;  /* topbar 下方 */
+    left: 50%;
+    transform: translateX(-50%) translateY(-6px);
+    min-width: 220px;
+    max-width: 80vw;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 14px 36px rgba(0,0,0,.18);
+    padding: 6px;
+    z-index: 1100;
+    display: flex !important;
+    flex-direction: column;
+    gap: 2px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s, transform .18s;
+  }
+  .title-view-menu.open {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: auto;
+  }
+  .title-view-menu .tvm-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 11px 14px;
+    border: 0;
+    background: transparent;
+    font-size: 14.5px;
+    color: var(--text-primary);
+    border-radius: 10px;
+    cursor: pointer;
+    text-align: left;
+    width: 100%;
+    transition: background .12s;
+  }
+  .title-view-menu .tvm-item:active,
+  .title-view-menu .tvm-item.active {
+    background: var(--gold-soft, rgba(199,125,46,.16));
+    color: var(--accent-gold);
+  }
+  .title-view-menu .tvm-item svg { flex: 0 0 auto; opacity: .85; }
+
+  .title-view-backdrop {
+    display: none;
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,.18);
+    z-index: 1090;
+  }
+  .title-view-backdrop.open { display: block; }
+
+  /* ==================== 齿轮设置 popover（手机端右上）==================== */
+  #mobile-settings-btn {
+    width: 38px; height: 38px; min-width: 38px;
+    padding: 0;
+    background: rgba(255,255,255,.55) !important;
+    border: 1px solid rgba(120,90,60,.18) !important;
+    border-radius: 10px !important;
+    display: inline-flex !important;
+    align-items: center; justify-content: center;
+    color: var(--text-primary) !important;
+    order: 99;  /* 把齿轮按钮放在最右侧（lang / theme 之后） */
+  }
+  #topnav .cc-lang-switcher { order: 1; }
+  #topnav .cc-theme-switcher { order: 2; }
+  [data-theme="dark"] #mobile-settings-btn {
+    background: rgba(255,255,255,.06) !important;
+    border-color: rgba(255,255,255,.14) !important;
+  }
+  #mobile-settings-btn[aria-expanded="true"] {
+    background: var(--gold-soft, rgba(199,125,46,.16)) !important;
+    border-color: rgba(199,125,46,.45) !important;
+  }
+  #mobile-settings-btn svg { width: 18px; height: 18px; }
+
+  .mobile-settings-popover {
+    position: fixed;
+    top: 56px;
+    right: 8px;
+    min-width: 240px;
+    max-width: 90vw;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    box-shadow: 0 14px 36px rgba(0,0,0,.18);
+    padding: 12px 14px;
+    z-index: 1100;
+    display: flex !important;
+    flex-direction: column;
+    gap: 10px;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity .18s, transform .18s;
+    transform: translateY(-6px);
+  }
+  .mobile-settings-popover.open {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translateY(0);
+  }
+  .msp-row {
+    display: flex; flex-direction: column; gap: 6px;
+  }
+  .msp-label {
+    font-size: 11px;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: .06em;
+    font-weight: 600;
+  }
+  .msp-control { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+  .msp-pill {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 6px 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 13px;
+    color: var(--text-primary);
+    cursor: pointer;
+    transition: all .12s;
+  }
+  .msp-pill.is-on {
+    background: var(--gold-soft, rgba(199,125,46,.16));
+    border-color: rgba(199,125,46,.45);
+    color: var(--accent-gold);
+  }
+  .msp-toggle {
+    display: inline-flex; align-items: center; gap: 6px;
+    padding: 6px 14px;
+    background: var(--bg-hover, rgba(0,0,0,.04));
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 13px;
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+  .msp-toggle[aria-pressed="true"] {
+    background: var(--gold-soft, rgba(199,125,46,.16));
+    border-color: rgba(199,125,46,.45);
+    color: var(--accent-gold);
+  }
+}
+
+/* 桌面端这些元素隐藏 */
+@media (min-width: 601px) {
+  #title-view-menu,
+  #title-view-backdrop,
+  #mobile-settings-popover { display: none !important; }
 }
 

@@ -32,7 +32,9 @@
     "section_nav_tools": "工具系统",
     "section_nav_commands": "命令目录",
     "section_nav_hidden": "隐藏功能",
-    "section_nav_dataflow": "深度解析"
+    "section_nav_dataflow": "深度解析",
+    "settings_title": "设置",
+    "settings_aria": "设置"
   },
   "hero": {
     "badge": "深度源码研究",
@@ -109,7 +111,9 @@
     "city": "城市",
     "os": "操作系统",
     "toggle_title": "切换比喻体系",
-    "label_city": "城市"
+    "label_city": "城市",
+    "label_full": "比喻体系",
+    "label_kitchen": "厨房"
   },
   "search": {
     "toc_placeholder": "搜索章节和正文内容...",
@@ -286,7 +290,7 @@
   "dict": {
     "title": "📖 Claude Code 词典",
     "description": "从 Claude Code 2.1.88 源码中萃取的核心术语词典——涵盖核心机制、工具、子系统、Prompt 模式、工程方法、协议、数据概念、基础设施、行业术语和领域语言。",
-    "search_placeholder": "🔍 搜索词条 / 释义 / 通俗解释（全文匹配）...",
+    "search_placeholder": "🔍 搜索词条 / 释义（自动按相关度排序）...",
     "search": "搜索",
     "entries_unit": "词条",
     "shown_unit": "显示",
@@ -305,8 +309,8 @@
     "see_also": "相关",
     "empty": "没有匹配的词条。",
     "tooltip_more": "点击查看完整释义",
-    "highlight_on": "术语高亮：开",
-    "highlight_off": "术语高亮：关",
+    "highlight_on": "已开启",
+    "highlight_off": "已关闭",
     "highlight_aria": "术语高亮开关",
     "priority_title": "按优先级筛选",
     "prio_all": "全部优先级",
@@ -317,7 +321,7 @@
     "search_scope_all": "全文搜索",
     "search_scope_term": "搜词条",
     "search_scope_def": "搜释义（不在词条中）",
-    "search_placeholder": "🔍 搜索词条 / 释义（自动按相关度排序）..."
+    "highlight_label": "词典高亮"
   },
   "vocab": {
     "btn": "⭐ 我的生词本",

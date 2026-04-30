@@ -211,6 +211,10 @@
       if (btn) btn.classList.toggle('active', k === name);
     });
     currentView = name;
+    // 同步 body[data-active-view]（取代 400ms 轮询，避免重复 setAttribute 触发 backdrop-filter 重绘闪烁）
+    if (document.body.getAttribute('data-active-view') !== name) {
+      document.body.setAttribute('data-active-view', name);
+    }
     closePanel();
     // 切视图时关闭所有 overlay（修复 ISS-01）
     document.body.classList.remove('review-mode-active');
@@ -465,17 +469,166 @@
     if (e.key !== 'Escape') return;
     if (drawerEl && drawerEl.classList.contains('open')) closeMobileDrawer();
     if (sheetEl && sheetEl.classList.contains('open')) closeTocSheet();
+    closeTitleViewMenu();
+    closeSettingsPopover();
+  });
+
+  // ===== Title-view dropdown（点击 breadcrumb 唤出 4 视图）+ 设置 popover =====
+  const titleViewMenu = document.getElementById('title-view-menu');
+  const titleViewBackdrop = document.getElementById('title-view-backdrop');
+  const breadcrumbEl = document.getElementById('breadcrumb');
+  const settingsBtn = document.getElementById('mobile-settings-btn');
+  const settingsPopover = document.getElementById('mobile-settings-popover');
+
+  function openTitleViewMenu() {
+    if (!titleViewMenu) return;
+    closeSettingsPopover();
+    titleViewMenu.classList.add('open');
+    titleViewMenu.setAttribute('aria-hidden', 'false');
+    if (titleViewBackdrop) titleViewBackdrop.classList.add('open');
+    if (breadcrumbEl) breadcrumbEl.setAttribute('aria-expanded', 'true');
+    syncTitleViewActiveState();
+  }
+  function closeTitleViewMenu() {
+    if (!titleViewMenu) return;
+    titleViewMenu.classList.remove('open');
+    titleViewMenu.setAttribute('aria-hidden', 'true');
+    if (titleViewBackdrop) titleViewBackdrop.classList.remove('open');
+    if (breadcrumbEl) breadcrumbEl.setAttribute('aria-expanded', 'false');
+  }
+  function syncTitleViewActiveState() {
+    if (!titleViewMenu) return;
+    const cur = currentView || 'landing';
+    titleViewMenu.querySelectorAll('.tvm-item').forEach(btn => {
+      btn.classList.toggle('active', btn.dataset.view === cur);
+    });
+  }
+  if (breadcrumbEl) {
+    // 仅在移动端可点（CSS 在桌面端也保留 breadcrumb 但不变样式）
+    breadcrumbEl.setAttribute('role', 'button');
+    breadcrumbEl.setAttribute('tabindex', '0');
+    breadcrumbEl.setAttribute('aria-expanded', 'false');
+    breadcrumbEl.setAttribute('aria-haspopup', 'menu');
+    breadcrumbEl.setAttribute('aria-controls', 'title-view-menu');
+    breadcrumbEl.addEventListener('click', () => {
+      // 仅手机端拦截；桌面端无视觉反馈不影响
+      if (window.matchMedia('(max-width: 600px)').matches) {
+        if (titleViewMenu && titleViewMenu.classList.contains('open')) closeTitleViewMenu();
+        else openTitleViewMenu();
+      }
+    });
+  }
+  if (titleViewBackdrop) titleViewBackdrop.addEventListener('click', closeTitleViewMenu);
+  if (titleViewMenu) {
+    titleViewMenu.addEventListener('click', (e) => {
+      const btn = e.target.closest('.tvm-item');
+      if (!btn) return;
+      const view = btn.dataset.view;
+      if (!view) return;
+      // 触发对应 nav 按钮的原有逻辑（保持 init / breadcrumb 同步）
+      const navBtn = (
+        view === 'landing' ? navBtns.home :
+        view === 'reader' ? navBtns.reader :
+        view === 'inspiration' ? navBtns.inspiration :
+        view === 'dictionary' ? navBtns.dictionary : null
+      );
+      if (navBtn) navBtn.click();
+      else showView(view);
+      closeTitleViewMenu();
+    });
+  }
+
+  // 设置 popover
+  function openSettingsPopover() {
+    if (!settingsPopover) return;
+    closeTitleViewMenu();
+    settingsPopover.classList.add('open');
+    settingsPopover.setAttribute('aria-hidden', 'false');
+    if (settingsBtn) settingsBtn.setAttribute('aria-expanded', 'true');
+    syncSettingsPopoverState();
+  }
+  function closeSettingsPopover() {
+    if (!settingsPopover) return;
+    settingsPopover.classList.remove('open');
+    settingsPopover.setAttribute('aria-hidden', 'true');
+    if (settingsBtn) settingsBtn.setAttribute('aria-expanded', 'false');
+  }
+  function syncSettingsPopoverState() {
+    if (!settingsPopover) return;
+    // metaphor pills
+    let curMeta = 'city';
+    try { curMeta = localStorage.getItem('cc-metaphor') || 'city'; } catch(e){}
+    settingsPopover.querySelectorAll('.msp-pill').forEach(p => {
+      p.classList.toggle('is-on', p.dataset.metaphor === curMeta);
+    });
+    // dict-highlight toggle（对齐 dict-annotator.js 的 'on'/'off' key）
+    let curDictOn = false;
+    try { curDictOn = localStorage.getItem('cc-dict-highlight') === 'on'; } catch(e){}
+    const dictBtn = document.getElementById('msp-dict-toggle');
+    if (dictBtn) {
+      dictBtn.setAttribute('aria-pressed', curDictOn ? 'true' : 'false');
+      const lbl = dictBtn.querySelector('span');
+      if (lbl) {
+        const isEn = (function(){ try { return (localStorage.getItem('cc-locale')||'zh')==='en'; } catch(e){ return false; } })();
+        lbl.textContent = curDictOn ? (isEn ? 'On' : '已开启') : (isEn ? 'Off' : '已关闭');
+      }
+    }
+  }
+  if (settingsBtn) {
+    settingsBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (settingsPopover && settingsPopover.classList.contains('open')) closeSettingsPopover();
+      else openSettingsPopover();
+    });
+  }
+  if (settingsPopover) {
+    settingsPopover.addEventListener('click', (e) => {
+      const pill = e.target.closest('.msp-pill');
+      if (pill && pill.dataset.metaphor) {
+        try { setMetaphor(pill.dataset.metaphor); } catch(err) {}
+        syncSettingsPopoverState();
+        return;
+      }
+      const dictBtn = e.target.closest('#msp-dict-toggle');
+      if (dictBtn) {
+        // 触发现有的 dict-highlight toggle（保持单一事实源）
+        const realToggle = document.querySelector('.cc-dict-highlight-toggle');
+        if (realToggle) realToggle.click();
+        else if (window.DictAnnotator && typeof window.DictAnnotator.setEnabled === 'function') {
+          // fallback：直接调用 DictAnnotator API（toggle 元素未注入时可能发生）
+          try {
+            const cur = window.DictAnnotator.isEnabled();
+            window.DictAnnotator.setEnabled(!cur);
+          } catch(err) {}
+        }
+        // 延迟同步以等 toggle 处理完
+        setTimeout(syncSettingsPopoverState, 50);
+      }
+    });
+  }
+  // 外部点击关闭 popover / title-view-menu
+  document.addEventListener('click', (e) => {
+    if (settingsPopover && settingsPopover.classList.contains('open')) {
+      if (!e.target.closest('#mobile-settings-popover') && !e.target.closest('#mobile-settings-btn')) {
+        closeSettingsPopover();
+      }
+    }
+    if (titleViewMenu && titleViewMenu.classList.contains('open')) {
+      if (!e.target.closest('#title-view-menu') && !e.target.closest('#breadcrumb')) {
+        closeTitleViewMenu();
+      }
+    }
   });
 
   // ---------- body[data-active-view] 同步（CSS 用它驱动 reader-only 按钮可见性） ----------
-  function syncActiveViewAttr() {
+  // 主路径：showView() 内部已经 set。这里只跑一次 init，避免 400ms 轮询触发 topbar backdrop-filter 重绘闪烁
+  (function initActiveViewAttr() {
     const active = document.querySelector('.view.active');
-    document.body.setAttribute('data-active-view', active ? active.id : '');
-  }
-  // 初次 + 后续路由切换都跑
-  syncActiveViewAttr();
-  // 监听 .view.active 变化（轻量 polling，每 400ms；不会卡）
-  setInterval(syncActiveViewAttr, 400);
+    const id = active ? active.id : '';
+    if (document.body.getAttribute('data-active-view') !== id) {
+      document.body.setAttribute('data-active-view', id);
+    }
+  })();
   // Gallery view
   if (navBtns.gallery) {
     let galleryInited = false;
