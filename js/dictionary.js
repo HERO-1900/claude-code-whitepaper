@@ -722,11 +722,15 @@
       ${renderSeeAlsoChips(entry)}
 
       <footer class="dict-card-foot">
-        <button class="dict-fav ${inWordbook ? 'added' : ''}" data-id="${escapeHtml(entry.id)}">
-          ${inWordbook ? lab.added_wordbook : lab.add_wordbook}
-        </button>
-        ${chHTML}
-        <button class="dict-link-btn" data-id="${escapeHtml(entry.id)}" title="${escapeHtml(en ? 'Copy share link' : '复制此词条的分享链接')}" aria-label="${escapeHtml(copyTitle)}">🔗 ${escapeHtml(copyTitle)}</button>
+        <div class="dict-card-foot-left">
+          ${chHTML}
+        </div>
+        <div class="dict-card-foot-right">
+          <button class="dict-link-btn" data-id="${escapeHtml(entry.id)}" title="${escapeHtml(en ? 'Copy share link' : '复制此词条的分享链接')}" aria-label="${escapeHtml(copyTitle)}">🔗 ${escapeHtml(copyTitle)}</button>
+          <button class="dict-fav ${inWordbook ? 'added' : ''}" data-id="${escapeHtml(entry.id)}">
+            ${inWordbook ? lab.added_wordbook : lab.add_wordbook}
+          </button>
+        </div>
       </footer>
     </article>`;
   }
@@ -1177,16 +1181,18 @@
           '    <div class="vocabulary-item-meta">' +
           (catLabel ? '      <span class="vocabulary-item-cat" style="--chip-color:' + catColor + ';">' + escapeHtml(catLabel) + '</span>' : '') +
           (addedAtTxt ? '      <span class="vocabulary-item-date">' + escapeHtml(lab.wb_added_at) + ': ' + escapeHtml(addedAtTxt) + '</span>' : '') +
-          srsBadge +
           '    </div>' +
           '  </header>' +
           (def ? '  <p class="vocabulary-item-def"><span class="vocabulary-item-label">' + escapeHtml(lab.wb_def_label) + '：</span>' + escapeHtml(def) + '</p>' : '') +
           (plain ? '  <div class="vocabulary-item-plain">' + escapeHtml(plain) + '</div>' : '') +
           '  <footer class="vocabulary-item-foot">' +
-          '    <button class="vocabulary-master ' + (e.__mastered ? 'active' : '') + '" data-id="' + escapeHtml(e.id) + '">' +
-          escapeHtml(e.__mastered ? lab.wb_master_active : lab.wb_master) + '</button>' +
+          '    <div class="vocabulary-item-foot-left">' + srsBadge + '</div>' +
+          '    <div class="vocabulary-item-foot-right">' +
           chLink +
-          '    <button class="vocabulary-remove" data-id="' + escapeHtml(e.id) + '">' + escapeHtml(lab.wb_remove) + '</button>' +
+          '      <button class="vocabulary-master ' + (e.__mastered ? 'active' : '') + '" data-id="' + escapeHtml(e.id) + '">' +
+          escapeHtml(e.__mastered ? lab.wb_master_active : lab.wb_master) + '</button>' +
+          '      <button class="vocabulary-remove" data-id="' + escapeHtml(e.id) + '">' + escapeHtml(lab.wb_remove) + '</button>' +
+          '    </div>' +
           '  </footer>' +
           '</article>';
       }).join('');
@@ -1353,12 +1359,14 @@
     }
   }
 
-  // 切语言时重渲染（修复 select option 还是旧语言的问题）
-  if (window.i18n && typeof window.i18n.switch === 'function' && !window.i18n.__dictLocaleHooked) {
+  // 切语言时重渲染（修复 select option / 卡片按钮 切语言后还是旧语言）
+  // dictionary.js 在 i18n.js 之前加载，所以 hook 必须 deferred 到 i18n 就绪后
+  function hookLocaleSwitch() {
+    if (!window.i18n || typeof window.i18n.switch !== 'function') return false;
+    if (window.i18n.__dictLocaleHooked) return true;
     const _origSwitch = window.i18n.switch;
     window.i18n.switch = function(newLocale) {
       const ret = _origSwitch.call(window.i18n, newLocale);
-      // i18n.apply 之后再刷新词典 + 生词本/复习
       Promise.resolve(ret).then(() => {
         try {
           if (loaded) {
@@ -1378,6 +1386,20 @@
       return ret;
     };
     window.i18n.__dictLocaleHooked = true;
+    return true;
+  }
+  // 立即试一次（如果 i18n 已加载）
+  if (!hookLocaleSwitch()) {
+    // 再 DOMContentLoaded 试
+    document.addEventListener('DOMContentLoaded', function tryHook() {
+      if (hookLocaleSwitch()) return;
+      // 再失败：轮询 5 秒（兜底）
+      let attempts = 0;
+      const t = setInterval(() => {
+        attempts++;
+        if (hookLocaleSwitch() || attempts > 20) clearInterval(t);
+      }, 250);
+    });
   }
 
   // 暴露

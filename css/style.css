@@ -733,6 +733,9 @@ body:has(#welcome.active) {
   overflow-y: auto;
   padding: 12px;
   flex-shrink: 0;
+  /* 浏览器横向 resize 时减少抖动 + 隔离内部布局重排 */
+  contain: layout style;
+  transition: none;
 }
 .sidebar-header { margin-bottom: 16px; }
 .sidebar-header h2 { font-size: 16px; color: var(--text-primary); margin-top: 10px; }
@@ -5817,6 +5820,9 @@ pre:hover .copy-btn,
   padding: 16px 14px 16px 14px;
   display: none;
   margin-right: 0;
+  /* 浏览器横向 resize 时减少抖动 + 隔离内部布局重排 */
+  contain: layout style;
+  transition: none;
 }
 
 /* 有内容时才显示 */
@@ -6182,13 +6188,17 @@ pre:hover .copy-btn,
   color: var(--cc-text-primary, #1a2035);
   border: 1px solid var(--cc-border-default, transparent);
   border-radius: 12px;
-  max-width: 640px;
-  width: 100%;
-  max-height: 80vh;
+  /* 加宽 + 自适应：小屏 92vw，中屏 760，大屏可到 920 */
+  width: min(92vw, 920px);
+  max-width: 92vw;
+  max-height: 88vh;
   overflow-y: auto;
-  padding: 28px 32px;
+  padding: 28px 36px;
   position: relative;
   box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+}
+@media (max-width: 768px) {
+  .insp-modal { padding: 20px 22px; width: 94vw; }
 }
 
 [data-theme="warm"] .insp-modal {
@@ -7232,10 +7242,15 @@ body.cc-lang-switching .cc-lang-btn {
 .dict-card-foot {
   display: flex; justify-content: space-between; align-items: center;
   gap: .5rem;
-  margin-top: .15rem;
+  margin-top: auto;   /* 把 footer 推到卡片底部，对齐齐整 */
   padding-top: .55rem;
   border-top: 1px dashed var(--border);
 }
+.dict-card-foot-left, .dict-card-foot-right {
+  display: flex; align-items: center; gap: .35rem; flex-wrap: wrap;
+}
+.dict-card-foot-right { justify-content: flex-end; }
+.dict-card { display: flex; flex-direction: column; }   /* 让 margin-top:auto 生效 */
 .dict-fav, .dict-jump {
   background: var(--bg-hover);
   border: 1px solid var(--border);
@@ -7827,12 +7842,20 @@ body.cc-lang-switching .cc-lang-btn {
 }
 .vocabulary-item-foot {
   display: flex;
+  justify-content: space-between;
+  align-items: center;
   flex-wrap: wrap;
   gap: .4rem;
-  margin-top: .65rem;
+  margin-top: auto;
   padding-top: .65rem;
   border-top: 1px dashed var(--border);
 }
+.vocabulary-item-foot-left,
+.vocabulary-item-foot-right {
+  display: flex; align-items: center; gap: .35rem; flex-wrap: wrap;
+}
+.vocabulary-item-foot-right { justify-content: flex-end; }
+.vocabulary-item { display: flex; flex-direction: column; }   /* margin-top:auto on footer */
 .vocabulary-master,
 .vocabulary-remove,
 .vocabulary-jump {
