@@ -308,8 +308,8 @@
     "prio_3": "P3 细分",
     "search_scope_title": "搜索范围",
     "search_scope_all": "全文搜索",
-    "search_scope_term": "仅搜词条",
-    "search_scope_def": "仅搜释义",
+    "search_scope_term": "搜词条",
+    "search_scope_def": "搜释义（不在词条中）",
     "search_placeholder": "🔍 搜索词条 / 释义（自动按相关度排序）..."
   },
   "vocab": {

@@ -1978,6 +1978,8 @@
     if (dt) {
       const id = dt[1];
       showView('dictionary');
+      // 修复：deep-link 必须切回 main subview（避免停在 wordbook/review）
+      try { if (window.Dictionary && window.Dictionary.showMain) window.Dictionary.showMain(); } catch(err){}
       // 等 dict render 完成后滚 + flash
       const focusEntry = () => {
         const el = document.getElementById('dict-' + id);

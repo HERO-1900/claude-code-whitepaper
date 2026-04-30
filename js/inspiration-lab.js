@@ -448,6 +448,15 @@
     function close() { overlay.classList.remove('visible'); setTimeout(function() { overlay.remove(); }, 200); }
     overlay.addEventListener('click', function(e) { if (e.target === overlay) close(); });
     modal.querySelector('.insp-modal-close').addEventListener('click', close);
+    // B8 v2 修复：点击词条 chip 时先关闭灵感 modal + 切到词典 main subview
+    modal.querySelectorAll('.spark-dict-chip').forEach(function(chip) {
+      chip.addEventListener('click', function(e) {
+        // 先把词典切回 main subview（不要停在 wordbook）
+        try { if (window.Dictionary && window.Dictionary.showMain) window.Dictionary.showMain(); } catch(err){}
+        close();
+        // <a href="#dict-XXX"> 默认行为继续触发 handleHashRoute
+      });
+    });
     document.addEventListener('keydown', function handler(e) { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', handler); } });
   }
 

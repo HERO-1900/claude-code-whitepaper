@@ -308,8 +308,8 @@
     "prio_3": "P3 Specialized",
     "search_scope_title": "Search scope",
     "search_scope_all": "Full search",
-    "search_scope_term": "Term only",
-    "search_scope_def": "Definition only",
+    "search_scope_term": "Term match",
+    "search_scope_def": "Definition only (no term match)",
     "search_placeholder": "🔍 Search terms / definitions (auto-ranked by relevance)..."
   },
   "vocab": {

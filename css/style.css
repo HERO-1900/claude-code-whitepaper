@@ -3909,8 +3909,12 @@ pre:hover .copy-btn,
 }
 
 /* ===== INSPIRATION LAB ===== */
-#inspiration { overflow-y: auto; padding-top: 48px; }
+#inspiration { overflow-y: auto; padding-top: 48px; padding-left: 24px; padding-right: 24px; box-sizing: border-box; }
+/* 修复：左右 24px 内边距给视觉呼吸空间 */
 #inspiration-container { max-width: min(1600px, 94vw); margin: 0 auto; padding: 2rem 1.5rem; }
+@media (min-width: 1100px) {
+  #inspiration { padding-left: 48px; padding-right: 48px; }
+}
 .insp-header { margin-bottom: 2rem; }
 .insp-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: .5rem; }
 .insp-title { font-size: 1.8rem; color: var(--accent-gold); font-weight: 700; }
@@ -6576,24 +6580,24 @@ body.cc-lang-switching .cc-lang-btn {
   z-index: 2;
 }
 .dict-card { position: relative; }
+/* 复制链接按钮（B9 v2：移到 footer 跟其他动作并列，加文字说明）*/
 .dict-link-btn {
-  position: absolute;
-  top: 8px;
-  right: 8px;
   background: transparent;
-  border: 0;
-  padding: 4px 6px;
-  font-size: 0.95rem;
+  border: 1px solid var(--border, rgba(120,120,120,0.3));
+  padding: 4px 10px;
+  font-size: 0.78rem;
   cursor: pointer;
   color: var(--text-muted);
-  opacity: 0;
-  transition: opacity 0.18s ease, transform 0.12s ease;
-  z-index: 5;
-  line-height: 1;
+  border-radius: 999px;
+  transition: all 0.14s ease;
+  white-space: nowrap;
+  line-height: 1.4;
 }
-.dict-card:hover .dict-link-btn,
-.dict-link-btn:focus-visible { opacity: 0.85; }
-.dict-link-btn:hover { color: var(--accent); transform: scale(1.12); }
+.dict-link-btn:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+  background: rgba(245, 184, 67, 0.08);
+}
 .dict-toast {
   position: fixed;
   left: 50%;
@@ -6746,6 +6750,22 @@ body.cc-lang-switching .cc-lang-btn {
   font-weight: 600;
   opacity: 0.9;
 }
+.vocabulary-item-srs {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 0.72rem;
+  color: var(--accent, #c9844f);
+  background: rgba(245, 184, 67, 0.1);
+  padding: 1px 8px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 184, 67, 0.25);
+}
+.vocabulary-item-srs-new {
+  color: var(--text-muted);
+  background: var(--bg-hover, rgba(120,120,120,0.08));
+  border-color: var(--border, rgba(120,120,120,0.2));
+}
 
 /* ===== B10 · see_also chips + concept map overlay ===== */
 .dict-seealso {
@@ -6818,66 +6838,145 @@ body.cc-lang-switching .cc-lang-btn {
   animation: dictOverlayFade 0.18s ease-out;
 }
 @keyframes dictOverlayFade { from { opacity: 0; } to { opacity: 1; } }
-.dict-graph-modal {
+/* B10 v2 · 关系图（卡片层级布局，替代 SVG 圆圈） */
+.dict-graph-modal-v2 {
   background: var(--bg-card, #fff);
   border-radius: 14px;
   padding: 20px 28px 16px;
   box-shadow: 0 12px 48px rgba(0, 0, 0, 0.25);
-  max-height: 90vh;
-  overflow: auto;
+  max-height: 88vh;
+  width: min(720px, 92vw);
+  overflow-y: auto;
+  box-sizing: border-box;
 }
 .dict-graph-head {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 12px;
+  margin-bottom: 16px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid var(--border, rgba(120,120,120,0.2));
 }
-.dict-graph-head h3 { margin: 0; font-size: 1.1rem; color: var(--text); font-weight: 600; }
+.dict-graph-head h3 { margin: 0; font-size: 1.05rem; color: var(--text); font-weight: 600; }
 .dict-graph-close {
-  background: transparent;
-  border: 0;
-  font-size: 1.4rem;
-  cursor: pointer;
-  color: var(--text-muted);
-  padding: 0 6px;
+  background: transparent; border: 0; font-size: 1.4rem;
+  cursor: pointer; color: var(--text-muted); padding: 0 6px;
 }
 .dict-graph-close:hover { color: var(--accent); }
-.dict-graph-svg { display: block; margin: 0 auto; }
-.dict-graph-edge {
-  stroke: rgba(120, 120, 120, 0.4);
-  stroke-width: 1.4;
-  fill: none;
+
+.dict-graph-focal {
+  background: linear-gradient(135deg, rgba(245, 184, 67, 0.12), rgba(245, 184, 67, 0.04));
+  border: 1px solid rgba(245, 184, 67, 0.4);
+  border-radius: 12px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
 }
-.dict-graph-node-circle {
-  fill: rgba(245, 184, 67, 0.15);
-  stroke: var(--accent, #c9844f);
-  stroke-width: 1.6;
-  transition: fill 0.15s ease;
+.dict-graph-focal-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--accent, #c9844f);
+  font-weight: 600;
+  margin-bottom: 4px;
 }
-.node-focal .dict-graph-node-circle {
-  fill: rgba(245, 184, 67, 0.55);
-  stroke-width: 2.4;
+.dict-graph-focal-term {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: var(--text);
+  margin-bottom: 6px;
 }
-.node-lvl1 .dict-graph-node-circle { fill: rgba(46, 108, 182, 0.18); stroke: #2e6cb6; }
-.node-lvl2 .dict-graph-node-circle { fill: rgba(120, 120, 120, 0.15); stroke: #888; stroke-dasharray: 3 3; }
-.dict-graph-node:hover .dict-graph-node-circle {
-  fill: rgba(245, 184, 67, 0.45);
+.dict-graph-focal-def {
+  font-size: 0.85rem;
+  line-height: 1.5;
+  color: var(--text-muted);
 }
-.dict-graph-node-label {
-  fill: var(--text, #2a2418);
-  font-weight: 500;
-  pointer-events: none;
-  user-select: none;
+
+.dict-graph-section { margin-bottom: 18px; }
+.dict-graph-section-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+.dict-graph-bullet {
+  width: 8px; height: 8px; border-radius: 50%; display: inline-block;
+}
+.bullet-lvl1 { background: #2e6cb6; }
+.bullet-lvl2 { background: #888; }
+.dict-graph-section-title { font-size: 0.86rem; color: var(--text); font-weight: 500; }
+.dict-graph-section-count {
+  font-size: 0.74rem; color: var(--text-muted);
+  background: var(--bg-hover, rgba(120,120,120,0.1));
+  padding: 1px 8px; border-radius: 999px;
+}
+
+.dict-graph-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+.dict-graph-card {
+  border: 1px solid var(--border, rgba(120,120,120,0.25));
+  border-radius: 10px;
+  padding: 10px 14px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: var(--bg-card, #fff);
+}
+.dict-graph-card:hover {
+  border-color: #2e6cb6;
+  background: rgba(46, 108, 182, 0.05);
+  transform: translateY(-1px);
+}
+.dict-graph-card-term {
+  font-weight: 600;
+  color: var(--text);
+  font-size: 0.92rem;
+  margin-bottom: 3px;
+}
+.dict-graph-card-def {
+  font-size: 0.76rem;
+  color: var(--text-muted);
+  line-height: 1.45;
+}
+
+.dict-graph-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.dict-graph-chip {
+  background: var(--bg-hover, rgba(120,120,120,0.1));
+  color: var(--text-muted) !important;
+  border: 1px solid var(--border, rgba(120,120,120,0.25));
+  padding: 3px 10px;
+  border-radius: 999px;
+  text-decoration: none !important;
+  font-size: 0.78rem;
+  transition: all 0.12s ease;
+}
+.dict-graph-chip:hover {
+  background: rgba(245, 184, 67, 0.15);
+  color: var(--accent) !important;
+  border-color: var(--accent);
+  text-decoration: none !important;
+}
+
+.dict-graph-empty {
+  text-align: center;
+  color: var(--text-muted);
+  font-size: 0.85rem;
+  padding: 24px;
+  font-style: italic;
 }
 .dict-graph-hint {
   text-align: center;
   color: var(--text-muted);
-  font-size: 0.78rem;
-  margin: 8px 0 0;
+  font-size: 0.74rem;
+  margin: 12px 0 0;
+  padding-top: 12px;
+  border-top: 1px dashed var(--border, rgba(120,120,120,0.2));
 }
 @media (max-width: 600px) {
-  .dict-graph-modal { padding: 14px 16px 12px; }
+  .dict-graph-modal-v2 { padding: 14px 16px 12px; }
   .dict-graph-head h3 { font-size: 0.95rem; }
+  .dict-graph-cards { grid-template-columns: 1fr; }
 }
 .dict-supp-badge {
   background: rgba(120, 120, 120, 0.15);

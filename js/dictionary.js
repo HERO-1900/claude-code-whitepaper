@@ -415,7 +415,8 @@
       });
       list = list.filter(e => {
         if (searchScope === 'term') return e.__inTerm;
-        if (searchScope === 'definition') return e.__inDef;
+        // 修复：仅释义 = 在释义/通俗里命中 但词条不命中（互斥语义，三档真正不同）
+        if (searchScope === 'definition') return e.__inDef && !e.__inTerm;
         return e.__searchScore > 0;  // all
       });
     }
@@ -470,84 +471,61 @@
     overlay.id = 'dict-graph-overlay';
     overlay.className = 'dict-graph-overlay';
 
-    const W = Math.min(720, window.innerWidth - 80);
-    const H = Math.min(560, window.innerHeight - 120);
-    const cx = W / 2;
-    const cy = H / 2;
+    // 重设计：放弃圆圈 SVG → 改用纯 HTML/CSS 卡片层级布局，避免文字溢出 + 提升可读性
+    const focalLabel = en ? (focal.term_en || focal.term_zh) : (focal.term_zh || focal.term_en);
+    const focalDef = en ? (focal.definition_en || focal.definition_zh) : (focal.definition_zh || focal.definition_en);
 
-    const r1 = Math.min(W, H) * 0.30;   // 一级半径
-    const r2 = Math.min(W, H) * 0.46;   // 二级半径
-
-    // 节点位置
-    const nodes = [];
-    nodes.push({ id: focalId, x: cx, y: cy, ring: 0, label: en ? (focal.term_en || focal.term_zh) : (focal.term_zh || focal.term_en) });
-    lvl1.forEach((id, i) => {
-      const a = -Math.PI / 2 + (i * 2 * Math.PI / lvl1.length);
+    const lvl1Cards = lvl1.map(id => {
       const e = entries.find(x => x.id === id);
-      nodes.push({
-        id, ring: 1,
-        x: cx + r1 * Math.cos(a),
-        y: cy + r1 * Math.sin(a),
-        label: e ? (en ? (e.term_en || e.term_zh) : (e.term_zh || e.term_en)) : id
-      });
-    });
-    lvl2.forEach((id, i) => {
-      const a = -Math.PI / 2 + (i * 2 * Math.PI / Math.max(lvl2.length, 1));
-      const e = entries.find(x => x.id === id);
-      nodes.push({
-        id, ring: 2,
-        x: cx + r2 * Math.cos(a),
-        y: cy + r2 * Math.sin(a),
-        label: e ? (en ? (e.term_en || e.term_zh) : (e.term_zh || e.term_en)) : id
-      });
-    });
-
-    // 边：focal → lvl1; lvl1 → lvl2 (only if related)
-    const edges = [];
-    lvl1.forEach(id => edges.push([focalId, id]));
-    lvl1.forEach(id => {
-      const e = entries.find(x => x.id === id);
-      if (!e || !e.see_also) return;
-      e.see_also.forEach(id2 => {
-        if (lvl2.indexOf(id2) >= 0) edges.push([id, id2]);
-      });
-    });
-
-    function findNode(id) { return nodes.find(n => n.id === id); }
-    const edgeSvg = edges.map(([a, b]) => {
-      const A = findNode(a); const B = findNode(b);
-      if (!A || !B) return '';
-      return `<line x1="${A.x}" y1="${A.y}" x2="${B.x}" y2="${B.y}" class="dict-graph-edge"/>`;
+      const lab = e ? (en ? (e.term_en || e.term_zh) : (e.term_zh || e.term_en)) : id;
+      const def = e ? (en ? (e.definition_en || e.definition_zh) : (e.definition_zh || e.definition_en)) : '';
+      const def0 = def ? (def.length > 60 ? def.slice(0, 58) + '…' : def) : '';
+      return `<div class="dict-graph-card lvl1" data-id="${escapeHtml(id)}">
+        <div class="dict-graph-card-term">${escapeHtml(lab || id)}</div>
+        ${def0 ? `<div class="dict-graph-card-def">${escapeHtml(def0)}</div>` : ''}
+      </div>`;
     }).join('');
 
-    const nodeSvg = nodes.map(n => {
-      const cls = n.ring === 0 ? 'focal' : n.ring === 1 ? 'lvl1' : 'lvl2';
-      const r = n.ring === 0 ? 36 : n.ring === 1 ? 28 : 22;
-      const fontSize = n.ring === 0 ? 13 : n.ring === 1 ? 11 : 10;
-      // truncate label
-      let lab = n.label || '';
-      if (lab.length > 8) lab = lab.slice(0, 7) + '…';
-      return `<g class="dict-graph-node node-${cls}" data-id="${n.id}" style="cursor:pointer;">
-        <circle cx="${n.x}" cy="${n.y}" r="${r}" class="dict-graph-node-circle"/>
-        <text x="${n.x}" y="${n.y + 4}" text-anchor="middle" font-size="${fontSize}" class="dict-graph-node-label">${lab.replace(/&/g,'&amp;').replace(/</g,'&lt;')}</text>
-      </g>`;
+    const lvl2Cards = lvl2.map(id => {
+      const e = entries.find(x => x.id === id);
+      const lab = e ? (en ? (e.term_en || e.term_zh) : (e.term_zh || e.term_en)) : id;
+      return `<a class="dict-graph-chip lvl2" data-id="${escapeHtml(id)}" href="#dict-${escapeHtml(id)}">${escapeHtml(lab || id)}</a>`;
     }).join('');
 
-    const headerLab = en ? `Concept map · ${focal.term_en || focal.term_zh}` : `关联词云 · ${focal.term_zh || focal.term_en}`;
+    const headerLab = en ? `Related Concepts` : `关系图`;
     const hint = en
-      ? 'Click any node to refocus · Click outside or press ESC to close'
-      : '点击任一节点重新聚焦 · 点外部或按 ESC 关闭';
+      ? 'Click direct links to refocus · ESC to close'
+      : '点击直接关联可重新聚焦 · ESC 关闭';
 
     overlay.innerHTML = `
-      <div class="dict-graph-modal" style="width:${W + 80}px;">
+      <div class="dict-graph-modal-v2">
         <div class="dict-graph-head">
           <h3>${escapeHtml(headerLab)}</h3>
           <button class="dict-graph-close" aria-label="close">✕</button>
         </div>
-        <svg class="dict-graph-svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
-          ${edgeSvg}
-          ${nodeSvg}
-        </svg>
+        <div class="dict-graph-focal">
+          <div class="dict-graph-focal-label">${escapeHtml(en ? 'Focus' : '当前词条')}</div>
+          <div class="dict-graph-focal-term">${escapeHtml(focalLabel || focalId)}</div>
+          ${focalDef ? `<div class="dict-graph-focal-def">${escapeHtml(focalDef.length > 120 ? focalDef.slice(0, 118) + '…' : focalDef)}</div>` : ''}
+        </div>
+        ${lvl1Cards ? `
+          <div class="dict-graph-section">
+            <div class="dict-graph-section-head">
+              <span class="dict-graph-bullet bullet-lvl1"></span>
+              <span class="dict-graph-section-title">${escapeHtml(en ? 'Direct (1st level)' : '直接关联（一级）')}</span>
+              <span class="dict-graph-section-count">${lvl1.length}</span>
+            </div>
+            <div class="dict-graph-cards">${lvl1Cards}</div>
+          </div>` : `<p class="dict-graph-empty">${escapeHtml(en ? 'No direct relations.' : '暂无直接关联词条。')}</p>`}
+        ${lvl2Cards ? `
+          <div class="dict-graph-section">
+            <div class="dict-graph-section-head">
+              <span class="dict-graph-bullet bullet-lvl2"></span>
+              <span class="dict-graph-section-title">${escapeHtml(en ? 'Indirect (2nd level)' : '间接关联（二级）')}</span>
+              <span class="dict-graph-section-count">${lvl2.length}</span>
+            </div>
+            <div class="dict-graph-chips">${lvl2Cards}</div>
+          </div>` : ''}
         <p class="dict-graph-hint">${escapeHtml(hint)}</p>
       </div>
     `;
@@ -559,18 +537,19 @@
     overlay.addEventListener('click', (e) => { if (e.target === overlay) close(); });
     overlay.querySelector('.dict-graph-close').addEventListener('click', close);
 
-    // 点击节点重新聚焦
-    overlay.querySelectorAll('.dict-graph-node').forEach(g => {
+    // 点 lvl1 card → 重新聚焦 + 不关闭模态
+    overlay.querySelectorAll('.dict-graph-card.lvl1').forEach(g => {
       g.addEventListener('click', () => {
         const newId = g.dataset.id;
         if (newId && newId !== focalId) {
           close();
-          // 重新打开 focused on new id
           showConceptMap(newId);
-          // 同时滚到对应卡片，加 hash
-          location.hash = 'dict-' + newId;
         }
       });
+    });
+    // 点 lvl2 chip → 关闭 + 跳词典 deep-link
+    overlay.querySelectorAll('.dict-graph-chip.lvl2').forEach(g => {
+      g.addEventListener('click', () => { close(); /* href 默认行为继续 */ });
     });
   }
 
@@ -644,10 +623,11 @@
       // 更新 option 标签上的计数（如果不需要可去掉这步）
       const pcounts = { all: entries.length, 1: 0, 2: 0, 3: 0 };
       entries.forEach(e => { pcounts[e.priority] = (pcounts[e.priority] || 0) + 1; });
+      // 不缓存 baseLab：i18n.apply 之后 textContent 已是当前语言，直接 strip 末尾计数
+      // 修复 EN 模式 select 还是中文（旧 dataset.label 缓存了 ZH 文案）
       Array.from(prioSelect.options).forEach(opt => {
         const v = opt.value;
-        const baseLab = opt.dataset.label || opt.textContent.replace(/\s*\(\d+\)\s*$/, '');
-        if (!opt.dataset.label) opt.dataset.label = baseLab;
+        const baseLab = opt.textContent.replace(/\s*\(\d+\)\s*$/, '');
         const n = v === 'all' ? pcounts.all : (pcounts[v] || 0);
         opt.textContent = baseLab + ' (' + n + ')';
       });
@@ -692,7 +672,7 @@
       return `<a class="dict-seealso-chip" href="#dict-${escapeHtml(id)}" data-dict-id="${escapeHtml(id)}">${escapeHtml(txt || id)}</a>`;
     }).join('');
     const more = see.length > 6 ? `<span class="dict-seealso-more">+${see.length - 6}</span>` : '';
-    const graphBtn = `<button class="dict-graph-btn" data-id="${escapeHtml(entry.id)}" title="${en ? 'Show concept map' : '查看关联词云'}">🕸️</button>`;
+    const graphBtn = `<button class="dict-graph-btn" data-id="${escapeHtml(entry.id)}" title="${en ? 'Show concept map' : '展开关系图'}">🕸️ ${escapeHtml(en ? 'Map' : '关系图')}</button>`;
     return `<div class="dict-seealso"><span class="dict-seealso-label">${label}</span><div class="dict-seealso-chips">${chips}${more}${graphBtn}</div></div>`;
   }
 
@@ -724,7 +704,6 @@
     const suppressed = !!entry._suppressed;
     const copyTitle = en ? 'Copy link' : '复制链接';
     return `<article class="dict-card${suppressed ? ' dict-card-suppressed' : ''}" data-id="${escapeHtml(entry.id)}" id="dict-${escapeHtml(entry.id)}">
-      <button class="dict-link-btn" data-id="${escapeHtml(entry.id)}" title="${escapeHtml(copyTitle)}" aria-label="${escapeHtml(copyTitle)}">🔗</button>
       <header class="dict-card-head">
         <div class="dict-card-titles">
           <div class="dict-term-primary">${escapeHtml(term1 || '')}</div>
@@ -747,6 +726,7 @@
           ${inWordbook ? lab.added_wordbook : lab.add_wordbook}
         </button>
         ${chHTML}
+        <button class="dict-link-btn" data-id="${escapeHtml(entry.id)}" title="${escapeHtml(en ? 'Copy share link' : '复制此词条的分享链接')}" aria-label="${escapeHtml(copyTitle)}">🔗 ${escapeHtml(copyTitle)}</button>
       </footer>
     </article>`;
   }
@@ -959,6 +939,8 @@
         const container = document.getElementById('dictionary-container');
         if (container) container.appendChild(rv);
       }
+      // B7 v2 修复：每次进入复习都重算 due 队列（防止用户加新词后看不到）
+      reviewQueue = null;
       renderReviewView(rv);
     } else {
       if (wb) wb.remove();
@@ -1168,6 +1150,22 @@
           : '';
         const addedAtTxt = e.__addedAt ? new Date(e.__addedAt).toLocaleDateString(en ? 'en' : 'zh-CN') : '';
         const masteredCls = e.__mastered ? ' vocabulary-item--mastered' : '';
+        // B7 v2 · SRS 历史 + 下次到期
+        const _srs = (getSrsMap()[e.id] || null);
+        let srsBadge = '';
+        if (_srs) {
+          const dueIn = _srs.nextReview - Date.now();
+          const dueDays = Math.round(dueIn / 86400000);
+          let dueTxt;
+          if (dueIn <= 0) dueTxt = en ? 'due now' : '今天到期';
+          else if (dueDays === 0) dueTxt = en ? 'due today' : '今天到期';
+          else if (dueDays === 1) dueTxt = en ? '1 day' : '1 天后';
+          else if (dueDays < 30) dueTxt = en ? (dueDays + ' days') : (dueDays + ' 天后');
+          else dueTxt = en ? (Math.round(dueDays/30) + ' months') : (Math.round(dueDays/30) + ' 月后');
+          srsBadge = `<span class="vocabulary-item-srs" title="${en ? 'Reviewed' : '已复习'}: ${_srs.reps} ${en ? 'times' : '次'}">📅 ${dueTxt} · ${_srs.reps}×</span>`;
+        } else {
+          srsBadge = `<span class="vocabulary-item-srs vocabulary-item-srs-new">${en ? 'never reviewed' : '未复习'}</span>`;
+        }
 
         return '' +
           '<article class="vocabulary-item' + masteredCls + '" data-id="' + escapeHtml(e.id) + '">' +
@@ -1179,6 +1177,7 @@
           '    <div class="vocabulary-item-meta">' +
           (catLabel ? '      <span class="vocabulary-item-cat" style="--chip-color:' + catColor + ';">' + escapeHtml(catLabel) + '</span>' : '') +
           (addedAtTxt ? '      <span class="vocabulary-item-date">' + escapeHtml(lab.wb_added_at) + ': ' + escapeHtml(addedAtTxt) + '</span>' : '') +
+          srsBadge +
           '    </div>' +
           '  </header>' +
           (def ? '  <p class="vocabulary-item-def"><span class="vocabulary-item-label">' + escapeHtml(lab.wb_def_label) + '：</span>' + escapeHtml(def) + '</p>' : '') +
@@ -1213,11 +1212,13 @@
       activeSubView = 'review';
       renderSubview();
     });
-    // 到期数 badge
+    // 到期数 badge — 显示 "(N due / M total)"
     const badge = document.getElementById('vocab-due-badge');
     if (badge) {
       const due = getDueIds().length;
-      badge.textContent = due > 0 ? '(' + due + ')' : '';
+      const total = getWordbookEntries().length;
+      const lbl = isEn() ? `(${due} due / ${total})` : `(${due} 到期 / 共 ${total})`;
+      badge.textContent = total > 0 ? lbl : '';
     }
 
     const csvBtn = document.getElementById('vocab-export-csv');
@@ -1350,6 +1351,33 @@
       renderFilters();
       renderList();
     }
+  }
+
+  // 切语言时重渲染（修复 select option 还是旧语言的问题）
+  if (window.i18n && typeof window.i18n.switch === 'function' && !window.i18n.__dictLocaleHooked) {
+    const _origSwitch = window.i18n.switch;
+    window.i18n.switch = function(newLocale) {
+      const ret = _origSwitch.call(window.i18n, newLocale);
+      // i18n.apply 之后再刷新词典 + 生词本/复习
+      Promise.resolve(ret).then(() => {
+        try {
+          if (loaded) {
+            renderFilters();
+            renderList();
+            refreshWordbookBadge();
+            if (activeSubView === 'wordbook') {
+              const wb = document.getElementById('dict-wordbook-view');
+              if (wb) renderWordbookView(wb);
+            } else if (activeSubView === 'review') {
+              const rv = document.getElementById('dict-review-view');
+              if (rv) renderReviewView(rv);
+            }
+          }
+        } catch (e) { console.warn('[Dictionary] locale-switch reflow failed:', e); }
+      });
+      return ret;
+    };
+    window.i18n.__dictLocaleHooked = true;
   }
 
   // 暴露
