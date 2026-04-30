@@ -245,11 +245,11 @@ Let us begin.
 The core source entry points analyzed in this book:
 
 ```
-src/main.tsx          — 启动入口（4,684 行的巨型文件）
-src/services/api/claude.ts — 查询循环核心（query 函数）
-src/tools/            — 40 个内置工具目录
-src/utils/permissions/ — 权限系统（约 1,500 行）
-src/memdir/           — 记忆系统
+src/main.tsx          — boot entry (4,684-line giant file)
+src/services/api/claude.ts — query loop core (query function)
+src/tools/            — 40 built-in tool directories
+src/utils/permissions/ — permission system (~1,500 lines)
+src/memdir/           — memory system
 ```
 
 ---

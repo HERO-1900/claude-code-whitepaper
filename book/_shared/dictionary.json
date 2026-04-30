@@ -86,7 +86,7 @@
     "definition_zh": "对 Bash 命令 AST 执行的 23 项安全检查——包括命令注入、变量劫持、IFS 注入、Unicode 混淆、Zsh 危险命令等。",
     "definition_en": "23 security checks performed on Bash command AST—includes command injection, variable hijacking, IFS injection, Unicode obfuscation, Zsh dangerous commands, etc.",
     "plain_explanation_zh": "💡 像机场安检的 24 类违禁品清单——刀具、液体、打火机各专项检测",
-    "plain_explanation_en": "💡 Like airport security's 24-category prohibited items list—knives, liquids, lighters each have specific checks",
+    "plain_explanation_en": "💡 Like airport security bins—shoes, liquids, laptops, each gets its own check",
     "first_appearance": {
       "chapter": "part3_子系统完全解析/18_Bash_AST解析器完全解析.md",
       "context_zh": "23 项安全检查 + 1 个预留位（ID 24）"
@@ -141,7 +141,7 @@
     "definition_zh": "CLAUDE.md 文件引用其他文件的指令，支持 @path、@./relative、@~/home、@/absolute 四种路径格式，被引用文件作为独立条目插入引用者之后。",
     "definition_en": "Directive in CLAUDE.md to reference other files, supports four path formats (@path, @./relative, @~/home, @/absolute), referenced files inserted as independent entries after the referencing file.",
     "plain_explanation_zh": "💡 像手册里写\"详见附件 A\"——自动展开，不用手动复制粘贴",
-    "plain_explanation_en": "💡 Like manual saying \"see Attachment A\"—automatically expanded, no manual copy-paste",
+    "plain_explanation_en": "💡 Like a doc saying \"see Appendix A\"—auto-expanded, no copy-paste needed",
     "first_appearance": {
       "chapter": "part2_好奇心驱动的深度问答/Q07_CLAUDE_md是怎么被找到和组装的.md",
       "context_zh": "@include 支持四种路径格式，有循环引用检测和深度限制"
@@ -168,7 +168,7 @@
     "definition_zh": "auto 模式下用独立 AI 分类器判断操作是否应该被允许的系统。包含两阶段快速路径设计（acceptEdits 模拟+安全白名单）避免不必要的 API 调用。",
     "definition_en": "A system using an independent AI classifier to judge whether operations should be allowed in auto mode. Includes a two-stage fast-path design (acceptEdits simulation + security allowlist) to avoid unnecessary API calls.",
     "plain_explanation_zh": "💡 像 ATM 的自动风险评估——先检查是否在白名单里、是否日常交易模式，都不像才呼叫人工审核",
-    "plain_explanation_en": "💡 Like ATM's automatic risk assessment — first checks if on whitelist, if routine transaction pattern, only calls human review if something seems off",
+    "plain_explanation_en": "💡 Like an ATM safety check—routine withdrawals pass, odd ones need approval",
     "first_appearance": {
       "chapter": "part4_工程哲学/04_多层防线不是偏执是必要.md",
       "context_zh": "两阶段分类器先做快速判断，只有不确定时才进入深度分析，大幅减少 API 调用成本"
@@ -266,7 +266,7 @@
     ],
     "first_appearance": {
       "chapter": "part1_认识这个系统/01_这不是聊天机器人.md",
-      "context_zh": ""
+      "context_zh": "**模型 A（错误的）**：用户输入消息 → API 调用 → AI 输出 → 显示给用户  **模型 B（"
     }
   },
   {
@@ -278,7 +278,7 @@
     "definition_zh": "在用户实际请求 API 之前提前完成 TCP 握手 + TLS 握手，建立可复用的 keep-alive 连接。后续真实请求直接复用，省 100-200ms 握手延迟。",
     "definition_en": "Pre-establish TCP + TLS handshake before actual API requests, building a reusable keep-alive connection. Real requests later reuse the connection, saving 100-200ms of handshake latency.",
     "plain_explanation_zh": "💡 像打电话前先拨号——别等急用时才听拨号音",
-    "plain_explanation_en": "💡 Like dialing before you need to talk—don't wait for the dial tone in a hurry",
+    "plain_explanation_en": "💡 Like pre-dialing a number—no waiting for the tone when you're rushed",
     "priority": 2,
     "see_also": [
       "tcp-handshake",
@@ -296,7 +296,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/02_启动序列.md",
-      "context_zh": ""
+      "context_zh": "个文件的依赖树），同时需要在启动阶段完成凭据读取、API 预连接等 I/O 密集操作。因此它在 Pre-impor"
     }
   },
   {
@@ -329,7 +329,7 @@
     ],
     "first_appearance": {
       "chapter": "part0_序章/00_序章.md",
-      "context_zh": ""
+      "context_zh": "P、Hooks、插件、沙箱、遥测、记忆、Bash AST、Cron、团队同步、Prompt Cache 可"
     }
   },
   {
@@ -366,7 +366,7 @@
     ],
     "first_appearance": {
       "chapter": "part1_认识这个系统/02_五分钟看懂系统架构.md",
-      "context_zh": ""
+      "context_zh": "前会话历史   abortController: AbortController // 可以被取消   readFileState"
     }
   },
   {
@@ -378,7 +378,7 @@
     "definition_zh": "Web/Node 标准 API：用 AbortController 信号化中止异步任务。Claude Code 在工具执行、流式 API、子进程都通过 AbortSignal 实现可中断性。",
     "definition_en": "Web/Node standard API: signaling async task abort via AbortController. Claude Code uses AbortSignal in tool execution, streaming API, subprocess for cancellability.",
     "plain_explanation_zh": "💡 红绿灯紧急按钮比喻好，但加：AbortController 是发起者，AbortSignal 是取消信号本身",
-    "plain_explanation_en": "💡 Like an emergency stop button—press once, everything halts immediately",
+    "plain_explanation_en": "💡 Like a red traffic light—when it turns on, everything stops moving",
     "priority": 2,
     "see_also": [
       "sibling-abort-controller",
@@ -400,8 +400,8 @@
       "part3_子系统完全解析/记忆系统完全解析.md"
     ],
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q16_如何从浏览器远程驾驶你的终端AI.md",
-      "context_zh": ""
+      "chapter": "part3_子系统完全解析/任务执行管道完全解析.md",
+      "context_zh": "Id: string; abortSignal: AbortSignal } {   const taskId = gen"
     }
   },
   {
@@ -435,7 +435,7 @@
     ],
     "first_appearance": {
       "chapter": "part0_序章/00_序章.md",
-      "context_zh": ""
+      "context_zh": "ed.dev** 构建了一个英文可视化导览站，将 Agent Loop 的多步流程做成交互动画，成为非中文社区理解 CC"
     }
   },
   {
@@ -447,10 +447,10 @@
     "definition_zh": "Claude Code 的元 Agent 架构——一个 Claude 实例生成另一个 Claude 实例的系统提示词。通过 `/agents` 命令触发，输出为结构化 JSON（`identifier`/`whenToUse`/`systemPrompt`），直接写入 `.claude/agents/<name>.md` 文件。当内存功能开启时，还会追加 `AGENT_MEMORY_INSTRUCTIONS`。",
     "definition_en": "Claude Code's meta-agent architecture — one Claude instance generates another Claude instance's system prompt. Triggered via `/agents` command, outputting structured JSON (`identifier`/`whenToUse`/`systemPrompt`), written directly to `.claude/agents/<name>.md`. When memory is enabled, also appends `AGENT_MEMORY_INSTRUCTIONS`.",
     "plain_explanation_zh": "💡 像培训师设计新课程——不自己上课，而是编写课程大纲和教学材料",
-    "plain_explanation_en": "💡 Like an instructor designing a new course — doesn't teach the class personally but creates the syllabus and teaching materials",
+    "plain_explanation_en": "💡 Like writing a course syllabus—not teaching class, just laying out the plan",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": "Agent Creation System 是元 Agent 架构，用于生成自定义 Agent"
+      "chapter": "part4_工程哲学/06_Prompt的八大设计智慧.md",
+      "context_zh": "eAgent.ts` 第 26-96 行，完整的 Agent 创建系统 Prompt：  ``` You are an"
     },
     "see_also": [
       "agent-tool",
@@ -503,7 +503,7 @@
     "definition_zh": "7 种任务类型、Coordinator 编排模式——管理多个并发 AI 实例的优先级和资源分配，类似于操作系统的进程调度器。",
     "definition_en": "7 task types with Coordinator orchestration pattern—managing priority and resource allocation across multiple concurrent AI instances, analogous to OS process scheduler.",
     "plain_explanation_zh": "💡 像外卖调度中心派出骑手——主 Claude 是调度中心，每个 Agent 是一个骑手，独立送不同订单",
-    "plain_explanation_en": "💡 Like a delivery dispatch center sending out riders—the main Claude is the dispatcher, each Agent is a rider delivering different orders",
+    "plain_explanation_en": "💡 Like a delivery hub dispatching drivers—Claude routes, agents deliver",
     "first_appearance": {
       "chapter": "part0_序章/00_序章.md",
       "context_zh": "进程调度器类比"
@@ -530,7 +530,7 @@
     "definition_zh": "子 Agent 的唯一标识——一个对话 session 中可以创建多个 AgentId，各自独立生命周期",
     "definition_en": "Unique identifier for sub-agents — multiple AgentIds can be created in one session, each with independent lifecycle",
     "plain_explanation_zh": "💡 像会议室的临时门牌——开哪个会贴哪个，开完就摘掉",
-    "plain_explanation_en": "💡 Like a temporary conference room sign — up while the meeting runs, gone after",
+    "plain_explanation_en": "💡 Like a temp conference room sign—up for the meeting, gone when it's over",
     "priority": 2,
     "see_also": [],
     "mention_count": 14,
@@ -551,8 +551,8 @@
       "part3_子系统完全解析/任务执行管道完全解析.md"
     ],
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md",
-      "context_zh": ""
+      "chapter": "part3_子系统完全解析/04_Hooks子系统完全解析.md",
+      "context_zh": "`query()` 循环，创建独立的 `hookAgentId`、注册工具集、管理多轮对话。分离这两种类型是成本"
     }
   },
   {
@@ -591,10 +591,10 @@
     "definition_zh": "Claude Code 记忆系统的核心——跨会话持久化记忆，自动积累用户偏好、项目上下文、外部引用，分四种类型（user/feedback/project/reference）。",
     "definition_en": "Core of Claude Code's memory system—cross-session persistent memory, automatically accumulating user preferences, project context, external references, divided into four types (user/feedback/project/reference).",
     "plain_explanation_zh": "💡 像私人秘书的笔记——会前翻看、会中记录、周末整理",
-    "plain_explanation_en": "💡 Like a private secretary's notes—review before meeting, take notes during, organize on weekends",
+    "plain_explanation_en": "💡 Like a PA's notebook—skim before, jot during, file after the meeting",
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/记忆系统完全解析.md",
-      "context_zh": "Auto Memory 是整个记忆系统的核心"
+      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
+      "context_zh": "local.md / Team Memory / Auto Memory）的\"升级路径\"可视化。`Do NOT apply"
     },
     "see_also": [
       "memory-types",
@@ -625,7 +625,7 @@
     "definition_zh": "纯 TypeScript 实现的 Bash 命令解析器（约 12,306 行），将命令字符串转换为兼容 tree-sitter-bash 的 AST 节点树，用于安全分析。",
     "definition_en": "Pure TypeScript Bash command parser (~12,306 lines), converts command strings to tree-sitter-bash compatible AST node tree for security analysis.",
     "plain_explanation_zh": "💡 像海关 X 光机——看穿行李内部结构，发现可疑物品",
-    "plain_explanation_en": "💡 Like customs X-ray machine—sees through luggage internal structure, discovers suspicious items",
+    "plain_explanation_en": "💡 Like an airport X-ray—sees inside your bag, flags anything sketchy",
     "first_appearance": {
       "chapter": "part3_子系统完全解析/18_Bash_AST解析器完全解析.md",
       "context_zh": "Bash AST 解析器是 Claude Code 代码量最大的单一子系统"
@@ -654,7 +654,7 @@
     "definition_zh": "Claude Code 执行 shell 命令的核心工具，包含完整的 Git Safety Protocol。强制专用工具优先规则（Read/Edit/Write/Glob/Grep 优先于 cat/sed/find）、 Git 操作安全协议（禁止 force push、禁止 amend 等），以及 sleep 命令的特殊限制（避免不必要的 sleep）。",
     "definition_en": "The core tool for Claude Code to execute shell commands, containing the complete Git Safety Protocol. Enforces the dedicated-tool-first rule (Read/Edit/Write/Glob/Grep preferred over cat/sed/find), Git operation safety protocol (prohibiting force push, amend, etc.), and special restrictions on sleep commands.",
     "plain_explanation_zh": "💡 像万能遥控器——可以操作一切，但每个按钮都有安全锁，防止按错造成不可逆后果",
-    "plain_explanation_en": "💡 Like a universal remote control — can operate everything, but each button has a safety lock to prevent irreversible mistakes",
+    "plain_explanation_en": "💡 Like a universal remote—works on everything, but dangerous buttons are locked",
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
       "context_zh": "BashTool 强制专用工具优先规则，包含 Git Safety Protocol 防止误操作"
@@ -707,7 +707,7 @@
     "definition_zh": "从浏览器或 IDE 远程控制本地 Claude Code 的完整会话管理系统，包含环境注册、工作分派、JWT 认证刷新、git worktree 隔离和断线重连。",
     "definition_en": "A complete session management system for remotely controlling local Claude Code from a browser or IDE, including environment registration, work dispatch, JWT auth refresh, git worktree isolation, and reconnection after disconnection.",
     "plain_explanation_zh": "💡 像远程桌面/向日葵——在另一台设备上控制你的开发环境\n注：大写 Bridge 是 CC 远程控制子系统；小写 bridge 才是设计模式",
-    "plain_explanation_en": "💡 Like remote desktop/AnyDesk — controlling your dev environment from another device",
+    "plain_explanation_en": "💡 Like remote desktop software—control your dev machine from anywhere",
     "priority": 1,
     "mention_count": 244,
     "mention_count_zh": 1,
@@ -724,7 +724,7 @@
     ],
     "first_appearance": {
       "chapter": "part3_子系统完全解析/22_PromptCache可观测性完全解析.md",
-      "context_zh": ""
+      "context_zh": "）  > 💡 **通俗理解**：第 12 章讲了 Bridge 远程控制的\"大楼蓝图\"——从 v1 环境层到 v2 直连的"
     }
   },
   {
@@ -803,7 +803,7 @@
     ],
     "first_appearance": {
       "chapter": "part3_子系统完全解析/07_Sandbox沙箱系统完全解析.md",
-      "context_zh": ""
+      "context_zh": "dbox-adapter.ts:597-642`：Bubblewrap 不支持 glob 文件系统规则。系统需要将 gl"
     }
   },
   {
@@ -815,10 +815,10 @@
     "definition_zh": "项目目录下 gitignored 的私有配置文件——存放个人项目偏好（如函数式风格、vim 键位）但不提交到团队仓库。",
     "definition_en": "gitignored private config file in project directory—stores personal project preferences (like functional style, vim keybindings) but not committed to team repository.",
     "plain_explanation_zh": "💡 像办公室的私人便签——只有你自己能看到，不会在团队共享文档里",
-    "plain_explanation_en": "💡 Like private sticky notes in office—only you can see them, won't appear in team shared documents",
+    "plain_explanation_en": "💡 Like sticky notes on your desk—yours alone, never in shared docs",
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/06_CLAUDE_md加载系统完全解析.md",
-      "context_zh": "CLAUDE.local.md 被 gitignore，不进入版本控制"
+      "chapter": "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "context_zh": "| 中 | | Local | `.claude/CLAUDE.local.md` | ❌ | 中 | | User | `~/."
     },
     "see_also": [
       "memory-types",
@@ -912,10 +912,10 @@
     "definition_zh": "封装 forked agent 必须与父请求保持一致的 API 参数的类型——systemPrompt/userContext/systemContext/toolUseContext/forkContextMessages，防止参数不一致破坏缓存命中。",
     "definition_en": "Type encapsulating API parameters forked agent must keep consistent with parent—systemPrompt/userContext/systemContext/toolUseContext/forkContextMessages, prevents parameter inconsistency breaking cache hits.",
     "plain_explanation_zh": "💡 像必须用同一批食材才能保证口味一致——换了食材就是另一道菜",
-    "plain_explanation_en": "💡 Like needing same ingredients to ensure consistent taste—changing ingredients makes it a different dish",
+    "plain_explanation_en": "💡 Like a recipe—same ingredients every time, or it's a different dish",
     "first_appearance": {
-      "chapter": "part4_工程哲学/02_token是一等公民.md",
-      "context_zh": "CacheSafeParams 把缓存安全约束编码进 TypeScript 类型系统"
+      "chapter": "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "context_zh": "加载 | 只读子 Agent 的优化 | | `CacheSafeParams` | 保证缓存命中的参数约束 | 编译时类型检查"
     },
     "see_also": [
       "prompt-cache",
@@ -949,10 +949,10 @@
     "definition_zh": "通过 MCP channel 服务器（如 Telegram）将权限请求中继到手机的机制——用户在外可通过手机回复批准 Claude 的权限请求。",
     "definition_en": "Mechanism that relays permission requests to phone via MCP channel server (e.g., Telegram)—users can approve Claude's permission requests via phone when away.",
     "plain_explanation_zh": "💡 像银行远程开户——身份证照片通过手机传给银行审核",
-    "plain_explanation_en": "💡 Like remote bank account opening—ID photo sent to bank for review via phone",
+    "plain_explanation_en": "💡 Like mobile check deposit—snap a photo, sent for instant verification",
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/03_MCP平台完全解析.md",
-      "context_zh": "Channel Permission Relay 是 MCP 子系统最精巧的功能之一"
+      "chapter": "part2_代码架构完全解构/09_扩展生态.md",
+      "context_zh": "ills）——多数竞品只实现了其中一两个 - **Channel Permission Relay 远程审批**——跨设备的权限确认流程  ###"
     },
     "see_also": [
       "mcp-protocol",
@@ -996,7 +996,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": ""
+      "context_zh": "oal_category ```  **原文**（Chunk Summarizer）：  ``` Summar"
     }
   },
   {
@@ -1008,7 +1008,7 @@
     "definition_zh": "Claude Code 的内置文档助手 Agent（`subagent_type` 未在主代码中调用，但存在于 `claudeCodeGuideAgent.ts`），用于回答 Claude Code 功能、API 使用或 Agent SDK 问题。使用 haiku 模型（低成本快速响应），`permissionMode: 'dontAsk'`。动态注入用户的 settings.json、已安装 MCP 服务器和自定义 skill 列表。",
     "definition_en": "Claude Code's built-in documentation assistant agent (not called in main code but exists in `claudeCodeGuideAgent.ts`), used for answering questions about Claude Code features, API usage, or Agent SDK. Uses haiku model (low-cost fast response), `permissionMode: 'dontAsk'`. Dynamically injects user's settings.json, installed MCP servers, and custom skill lists.",
     "plain_explanation_zh": "💡 像商场的客服机器人——能回答产品功能问题，但不能帮你下单",
-    "plain_explanation_en": "💡 Like a shopping mall's customer service robot — can answer product feature questions but can't help you place orders",
+    "plain_explanation_en": "💡 Like a store info kiosk—answers questions, but can't ring up your purchase",
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
       "context_zh": "Claude Code Guide Agent 是内置文档助手，回答功能使用问题"
@@ -1051,7 +1051,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/07_安全架构.md",
-      "context_zh": ""
+      "context_zh": "unsanitized user input - Command injection in system calls or subpr"
     }
   },
   {
@@ -1063,10 +1063,10 @@
     "definition_zh": "主 Claude 实例作为项目经理的编排模式——通过 AgentTool 派生 Worker、通过 SendMessageTool 发续篇、通过 TaskStopTool 终止走错方向的 Worker。",
     "definition_en": "Main Claude instance acts as project manager orchestration mode—uses AgentTool to fork Workers, SendMessageTool to send continuations, TaskStopTool to terminate Workers going off track.",
     "plain_explanation_zh": "💡 像建筑项目总指挥——派施工队、给施工队发补充指令、叫停走错方向的队伍",
-    "plain_explanation_en": "💡 Like a construction project general director—dispatches construction teams, sends supplementary instructions, calls off teams going wrong direction",
+    "plain_explanation_en": "💡 Like a construction foreman—sends crews, redirects stragglers, stops bad work",
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md",
-      "context_zh": "Coordinator 模式约 260 行提示词实现"
+      "chapter": "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "context_zh": "是一个骑手，各自独立送不同订单，完成后回报结果。Coordinator 模式就是调度中心自己不送餐，只负责分配订单和汇总反馈。"
     },
     "see_also": [
       "sub-agent",
@@ -1122,7 +1122,7 @@
     "definition_zh": "Claude Code 内置的定时任务调度系统。解析自然语言（/loop 30m 检查部署）生成 cron 表达式，任务通过 .claude/scheduled_tasks.json 持久化（durable=true 时），多会话间用文件锁协调防重复触发，支持 7 天自动过期和 jitter 机制防止雷群效应。",
     "definition_en": "Claude Code's built-in scheduled task system. Parses natural language (/loop 30m check deployment) into cron expressions, tasks persisted to .claude/scheduled_tasks.json (when durable=true), multi-session coordination via file locks prevents duplicate triggers, supports 7-day auto-expiry and jitter to prevent thundering herd effects.",
     "plain_explanation_zh": "💡 像手机闹钟——设好时间，到点就响，区别是闹钟响了不是响铃而是让 AI 执行一段工作",
-    "plain_explanation_en": "💡 Like a phone alarm clock — set the time, it rings when due, difference is when it rings instead of a sound it makes AI execute a task",
+    "plain_explanation_en": "💡 Like a phone alarm—but it triggers an AI task instead of making noise",
     "first_appearance": {
       "chapter": "part3_子系统完全解析/19_Cron调度系统完全解析.md",
       "context_zh": "内置定时任务调度，1,601行代码"
@@ -1152,7 +1152,7 @@
     "definition_zh": "从浏览器点击 claude-cli:// 协议 URL 唤起终端 Claude Code 并预填指令的机制，包含 URI 安全验证、协议注册和三平台终端适配。",
     "definition_en": "A mechanism to invoke terminal Claude Code from a browser via claude-cli:// protocol URL with pre-filled instructions, including URI security verification, protocol registration, and three-platform terminal adaptation.",
     "plain_explanation_zh": "💡 像餐厅的预约链接——点一下就预订好座位、点好菜，到店就能吃",
-    "plain_explanation_en": "💡 Like a restaurant reservation link — one click books the seat and orders the food, you eat when you arrive",
+    "plain_explanation_en": "💡 Like a reservation link—one click books your table and order, ready when you arrive",
     "priority": 1,
     "mention_count": 19,
     "mention_count_zh": 19,
@@ -1166,8 +1166,8 @@
       "part3_子系统完全解析/17_遥测与分析系统完全解析.md"
     ],
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q23_Deep_Link和Teleport是怎么跨设备连接的.md",
-      "context_zh": ""
+      "chapter": "part3_子系统完全解析/17_遥测与分析系统完全解析.md",
+      "context_zh": "ngu_lodestone_enabled` | Deep Link 注册开关 | `CACHED_MAY_BE_ST"
     }
   },
   {
@@ -1195,7 +1195,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/07_安全架构.md",
-      "context_zh": ""
+      "context_zh": "对安全机制本身进行安全分析）值得学习 9. **`DeepImmutable` 类型在 `ToolPermissionCont"
     }
   },
   {
@@ -1207,7 +1207,7 @@
     "definition_zh": "记忆系统的整理归档环节——定期将散落的会话记忆整合成结构化的主题文件，四阶段（Orient/Gather/Consolidate/Prune）模拟人类睡眠记忆巩固过程。",
     "definition_en": "Memory system's organization/archive phase—regularly synthesizes scattered conversation memories into structured topic files, four phases (Orient/Gather/Consolidate/Prune) simulating human sleep memory consolidation.",
     "plain_explanation_zh": "💡 像周末整理本周笔记——把散乱的整理成分类文件夹",
-    "plain_explanation_en": "💡 Like organizing this week's notes on weekend—sorting scattered notes into categorized folders",
+    "plain_explanation_en": "💡 Like weekend filing—scattered notes sorted into labeled folders",
     "first_appearance": {
       "chapter": "part3_子系统完全解析/记忆系统完全解析.md",
       "context_zh": "Dream 四阶段借鉴认知科学记忆巩固理论"
@@ -1257,8 +1257,8 @@
     "plain_explanation_zh": "💡 像做化学实验——每次只换一个变量，看反应结果",
     "plain_explanation_en": "💡 Like doing chemistry experiments—change only one variable each time, observe reaction results",
     "first_appearance": {
-      "chapter": "part4_工程哲学/06_Prompt的八大设计智慧.md",
-      "context_zh": "Eval 数据消灭直觉，H1 实验 0/3→3/3 是代表案例"
+      "chapter": "part2_代码架构完全解构/03_提示词工厂.md",
+      "context_zh": "执行规范、Feature Flag A/B 测试、Eval 驱动迭代、类型系统守护缓存、Prompt 作为编译器、元提"
     },
     "see_also": [
       "prompt-engineering-wisdom"
@@ -1295,7 +1295,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": ""
+      "context_zh": "pport, and citations   - Extended thinking and structured outputs"
     }
   },
   {
@@ -1346,7 +1346,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": ""
+      "context_zh": "Tool 和 AgentTool），其中大量是**Few-shot 示例**——4 个正例教模型何时用、4 个反例教何时不"
     }
   },
   {
@@ -1399,8 +1399,8 @@
     ],
     "chapters_en": [],
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q23_Deep_Link和Teleport是怎么跨设备连接的.md",
-      "context_zh": ""
+      "chapter": "part3_子系统完全解析/远程Agent管理完全解析.md",
+      "context_zh": "在\"代码传输\"环节（GitHub Clone + Git Bundle 三级降级）和\"断线恢复\"环节（sidecar 元数据 +"
     }
   },
   {
@@ -1489,7 +1489,7 @@
     ],
     "first_appearance": {
       "chapter": "part0_序章/00_序章.md",
-      "context_zh": ""
+      "context_zh": "变。这个领域有多热闹？简单列几个名字你就能感受到：GitHub Copilot、Cursor、Kimi Code"
     }
   },
   {
@@ -1538,8 +1538,8 @@
     ],
     "chapters_en": [],
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q09_Session里那个默默记笔记的AI是谁.md",
-      "context_zh": ""
+      "chapter": "part3_子系统完全解析/记忆系统完全解析.md",
+      "context_zh": "*5. 门控标志的不透明性**  系统中大量使用 GrowthBook 特性门控（如 `tengu_passport_quail`"
     }
   },
   {
@@ -1631,7 +1631,7 @@
     ],
     "first_appearance": {
       "chapter": "part1_认识这个系统/04_八个子系统的全景地图.md",
-      "context_zh": ""
+      "context_zh": "类型（shell 命令/提示词/AI Agent/HTTP） - 可以阻断操作、修改输入、监听事件  **P"
     }
   },
   {
@@ -1684,7 +1684,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part2_好奇心驱动的深度问答/Q24_用户输入是怎么一步步变成AI请求的.md",
-      "context_zh": ""
+      "context_zh": "、三路分发（bash/斜杠命令/文本）、安全过滤、Hook 拦截等多个阶段，每一步都可能改变管道走向或终止处理。本"
     }
   },
   {
@@ -1800,7 +1800,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/02_启动序列.md",
-      "context_zh": ""
+      "context_zh": "阶段**——在大量模块加载之前，穿插启动关键的 I/O 操作 2. **初始化阶段**——加载配置、连接 AP"
     }
   },
   {
@@ -1865,7 +1865,7 @@
     ],
     "first_appearance": {
       "chapter": "part0_序章/00_序章.md",
-      "context_zh": ""
+      "context_zh": "形态**存在（string → object → JSON → SSE → ReactNode）。\"10 个"
     }
   },
   {
@@ -1879,8 +1879,8 @@
     "plain_explanation_zh": "💡 像记账的流水账本——每笔交易写一行，永远往后写不涂改，出了问题只看最后几行就能定位",
     "plain_explanation_en": "💡 Like a transaction ledger — each trade written on a new line, always appending never erasing, if something goes wrong just check the last few lines",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/08_状态与持久化.md",
-      "context_zh": "追加写入的会话文件，每行一个 JSON 对象"
+      "chapter": "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "context_zh": "| | 文件系统 (Filesystem) | JSONL 会话 + File History | 持久化存储 |"
     },
     "see_also": [
       "app-state",
@@ -1934,7 +1934,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/05_工具运行时.md",
-      "context_zh": ""
+      "context_zh": "al decisions (session vs JWT, where to store tokens,"
     }
   },
   {
@@ -1974,8 +1974,8 @@
     "plain_explanation_zh": "💡 像某个项目的内部代号——不是产品名，是开发团队用的内部名称",
     "plain_explanation_en": "💡 Like an internal project code name—not the product name, but the internal name used by development team",
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/24_Assistant等于Viewer完全解析.md",
-      "context_zh": "KAIROS 是顶级 feature flag，遍布整个 codebase"
+      "chapter": "part2_代码架构完全解构/13_横切关注点.md",
+      "context_zh": "plover`） 2. **非特殊模式**：不在 KAIROS 模式、不在远程模式 3. **时间门控**：距离上次整"
     },
     "see_also": [
       "viewer-only",
@@ -2051,8 +2051,8 @@
     "plain_explanation_zh": "💡 像乐团指挥——所有乐器演奏听从指挥协调",
     "plain_explanation_en": "💡 Like an orchestra conductor—all instrument performances follow conductor's coordination",
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q14_多个Claude实例是怎么协同工作的.md",
-      "context_zh": "Leader 是主 Claude 实例，汇聚所有权限决策"
+      "chapter": "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "context_zh": "，`Swarm` 模式 = 分布式系统课中的 **Leader-Worker 架构**。  **七种 Agent"
     },
     "see_also": [
       "swarm-mode",
@@ -2162,8 +2162,8 @@
     "plain_explanation_zh": "💡 像 USB 协议——统一接口连接各种外设",
     "plain_explanation_en": "💡 Like USB protocol—unified interface connecting various peripherals",
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/03_MCP平台完全解析.md",
-      "context_zh": "MCP 协议类似 USB 统一外设接口"
+      "chapter": "part1_认识这个系统/02_五分钟看懂系统架构.md",
+      "context_zh": "）、\"权限系统\"（十步检查链）、\"设备驱动接口\"（MCP 协议）。本章用 5 分钟给你一个全局视图，后面的 Pa"
     },
     "see_also": [
       "mcp_github",
@@ -2256,7 +2256,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/02_启动序列.md",
-      "context_zh": ""
+      "context_zh": "// 启动 MDM 配置读取  import { startKeyc"
     }
   },
   {
@@ -2420,7 +2420,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/01_代码地图.md",
-      "context_zh": ""
+      "context_zh": "数据分析事件收集 | | `oauth/` | OAuth 认证流程 | | `plugins/` | 插件"
     }
   },
   {
@@ -2535,7 +2535,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/07_安全架构.md",
-      "context_zh": ""
+      "context_zh": "on in database queries - Path traversal in file operations  **Au"
     }
   },
   {
@@ -2549,8 +2549,8 @@
     "plain_explanation_zh": "💡 像电影院持续营业——普通店关门结账，perpetual 店暂停营业但门不锁",
     "plain_explanation_en": "💡 Like cinema staying open—normal shop closes and settles accounts, perpetual shop pauses but doesn't lock door",
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/24_Assistant等于Viewer完全解析.md",
-      "context_zh": "Perpetual 实现真正的长驻观察"
+      "chapter": "part3_子系统完全解析/12_Bridge远程架构完全解析.md",
+      "context_zh": "），而不是重新开房间。  ---  ## 10. Perpetual Bridge 与 KAIROS  ### assistant"
     },
     "see_also": [
       "kairos",
@@ -2623,7 +2623,7 @@
     ],
     "first_appearance": {
       "chapter": "part0_序章/00_序章.md",
-      "context_zh": ""
+      "context_zh": "系统的认知经历了三个阶段的演进：**提示工程**（Prompt Engineering, 2023-24）→ *"
     }
   },
   {
@@ -2768,7 +2768,7 @@
     ],
     "first_appearance": {
       "chapter": "part0_序章/00_序章.md",
-      "context_zh": ""
+      "context_zh": "种方式的适用场景。  | **Shell** | REPL 终端界面（Ink/React——用网页技术 Re"
     }
   },
   {
@@ -2794,7 +2794,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/07_安全架构.md",
-      "context_zh": ""
+      "context_zh": "上类似于 Web 安全中的 **SQL 注入**（SQL Injection）——两者都利用了\"指令与数据共用同一通道\"的根本"
     }
   },
   {
@@ -2828,7 +2828,7 @@
     ],
     "first_appearance": {
       "chapter": "part0_序章/00_序章.md",
-      "context_zh": ""
+      "context_zh": "string → object → JSON → SSE → ReactNode）。\"10 个阶段\"与\"5"
     }
   },
   {
@@ -2854,7 +2854,7 @@
     ],
     "first_appearance": {
       "chapter": "part0_序章/00_序章.md",
-      "context_zh": ""
+      "context_zh": "语言层（TypeScript）到 L8 沙箱层（Seatbelt/Namespace）的 8 层技术栈分布，一张图"
     }
   },
   {
@@ -2887,8 +2887,8 @@
     "plain_explanation_zh": "💡 像项目经理的追加指令——不是\"你看着办\"，而是写清楚\"在哪一行改什么、为什么\"",
     "plain_explanation_en": "💡 Like a PM's follow-up instructions — not \"do as you see fit\" but clearly stating \"change what on which line and why\"",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": "SendMessage 工具用于继续 Worker 或向团队发广播"
+      "chapter": "part2_代码架构完全解构/01_代码地图.md",
+      "context_zh": "← 创建子 Agent │   ├── SendMessageTool/  ← 向已有 Agent 发消息 │"
     },
     "see_also": [
       "coordinator",
@@ -3078,7 +3078,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part2_好奇心驱动的深度问答/Q16_如何从浏览器远程驾驶你的终端AI.md",
-      "context_zh": ""
+      "context_zh": "）、spawn 模式。  ### 小节 2：三种 Spawn 模式——多个会话怎么共存  > 📚 **课程关联**："
     }
   },
   {
@@ -3143,8 +3143,8 @@
     "plain_explanation_zh": "💡 像无人机编队飞行——一架遥控器（Leader）协调多架无人机（Teammates），通过信号链路通信",
     "plain_explanation_en": "💡 Like drone formation flying—one remote controller (Leader) coordinates multiple drones (Teammates), communicating via signal links",
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q14_多个Claude实例是怎么协同工作的.md",
-      "context_zh": "Swarm 模式星型拓扑，Leader 是协调中心"
+      "chapter": "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "context_zh": "`tungsten` | tmux 集成代号 | Swarm 模式后端 | | `bagel` | Web 浏览器工"
     },
     "see_also": [
       "leader",
@@ -3206,7 +3206,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/02_启动序列.md",
-      "context_zh": ""
+      "context_zh": "ertsFromConfig()`——必须在首次 TLS 握手前完成（Bun 的 BoringSSL 缓存机制）"
     }
   },
   {
@@ -3220,8 +3220,8 @@
     "plain_explanation_zh": "💡 像紧急停止按钮——发现流水线出问题，立刻按下暂停，再重新调整参数",
     "plain_explanation_en": "💡 Like an emergency stop button — discovering a problem on the assembly line, immediately press pause, then recalibrate",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": "TaskStop 用于停止方向错误的 Worker，避免无效工作"
+      "chapter": "part2_代码架构完全解构/01_代码地图.md",
+      "context_zh": "TaskUpdateTool/ │   └── TaskStopTool/ │ ├── 扩展工具 │   ├──"
     },
     "see_also": [
       "coordinator",
@@ -3258,8 +3258,8 @@
     "plain_explanation_zh": "💡 像施工队——接受队长指令、独立完成工作、完成后汇报",
     "plain_explanation_en": "💡 Like a construction team—receives instructions from leader, completes work independently, reports when done",
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q14_多个Claude实例是怎么协同工作的.md",
-      "context_zh": "Teammate 有三种 backend，idle 时通知 Leader"
+      "chapter": "part1_认识这个系统/04_八个子系统的全景地图.md",
+      "context_zh": "同一进程内运行，共享文件系统 | | Swarm/Teammate | 多个 Claude 实例协同工作（tmux/"
     },
     "see_also": [
       "swarm-mode",
@@ -3336,8 +3336,8 @@
       "part3_子系统完全解析/远程Agent管理完全解析.md"
     ],
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q23_Deep_Link和Teleport是怎么跨设备连接的.md",
-      "context_zh": ""
+      "chapter": "part3_子系统完全解析/远程Agent管理完全解析.md",
+      "context_zh": "几乎不可能丢失审查结果。  ---  ## 7. Teleport API 层  ### 7.1 重试与容错  `a"
     }
   },
   {
@@ -3363,7 +3363,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/04_查询循环.md",
-      "context_zh": ""
+      "context_zh": "he 就是这个\"邮局的记忆\"。  ### 6.3 Temperature=1 的设计决策  源码中一个令人意外的细节：Cl"
     }
   },
   {
@@ -3377,8 +3377,8 @@
     "plain_explanation_zh": "💡 像手机的\"你还在线吗\"定期检测——不是催你说话，而是确认连接还在",
     "plain_explanation_en": "💡 Like a phone's periodic \"are you still there\" check — not催促 you to speak, just confirming the connection is still alive",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": "tick 是保持 Claude 在等待期间清醒的心跳消息"
+      "chapter": "part2_好奇心驱动的深度问答/Q22_Computer_Use是怎么让AI操控你的屏幕的.md",
+      "context_zh": "mp 启动 → setInterval(drainTick, 1ms) → cu._drainMainRun"
     },
     "see_also": [
       "kairos-mode",
@@ -3482,8 +3482,8 @@
     "plain_explanation_zh": "💡 马拉松补给站比喻好，但要加：用户加 +500k 让 AI 多干活的触发方式",
     "plain_explanation_en": "💡 Like marathon aid stations — after each segment the system checks if you have energy, hands you water to keep going, but forces you to stop if you're running in place",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/04_查询循环.md",
-      "context_zh": "+500k 续命机制：注入 meta message 让模型继续工作"
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": "的很多概念（投机执行、提示词缓存边界、权限状态机、Token 预算）本身就很抽象。**好的比喻不是降低精度，是提供另"
     },
     "see_also": [
       "query-loop",
@@ -3551,8 +3551,8 @@
     "plain_explanation_zh": "💡 像办公楼内部的气动传送管——不用出大楼就送到，比快递（网络 socket）快得多",
     "plain_explanation_en": "💡 Like a building's pneumatic tube system — delivers items without leaving the building, much faster than courier (network socket)",
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/23_Peer与Session发现层完全解析.md",
-      "context_zh": "本地进程间通信通道，比网络 socket 快"
+      "chapter": "part2_代码架构完全解构/13_横切关注点.md",
+      "context_zh": "up.ts` | | `UDS_INBOX` | Unix 域套接字消息 | `setup.ts` | | `QUIC"
     },
     "see_also": [
       "peer-discovery",
@@ -3612,7 +3612,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part3_子系统完全解析/Vim模式完全解析.md",
-      "context_zh": ""
+      "context_zh": "A（确定性有限自动机）：DFA 没有辅助存储，而 Vim 状态机依赖 `PersistentState` 保持跨命"
     }
   },
   {
@@ -3677,8 +3677,8 @@
     "plain_explanation_zh": "💡 像项目组的开发人员——收到任务分配后独立工作，定期向项目经理汇报进展",
     "plain_explanation_en": "💡 Like developers in a project team — work independently after receiving task assignments and periodically report progress to the project manager",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": "Worker 通过 subagent_type worker 调用，执行 Coordinator 分配的任务"
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": "话 + 若干 forked agent + 若干 Worker 子任务，具体数量取决于场景，见 Part 4\"A"
     },
     "see_also": [
       "coordinator",
@@ -3760,7 +3760,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/01_代码地图.md",
-      "context_zh": ""
+      "context_zh": "nputSchema: Input     // Zod schema（一种\"表格模板\"，规定每个字段的类型和格式），严"
     }
   },
   {
@@ -3788,7 +3788,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/04_查询循环.md",
-      "context_zh": ""
+      "context_zh": "t 成功后：messagesForQuery = buildPostCompactMessages(compactionResult)     //"
     }
   },
   {
@@ -3934,7 +3934,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/07_安全架构.md",
-      "context_zh": ""
+      "context_zh": "做了什么别人没做的事  **1. 工具白名单前置（frontmatter `allowed-tools`）**  ```"
     }
   },
   {
@@ -3988,7 +3988,7 @@
     ],
     "first_appearance": {
       "chapter": "part3_子系统完全解析/02_投机执行子系统完全解析.md",
-      "context_zh": ""
+      "context_zh": "基于时间局部性假设，提前加载即将需要的数据。  `generatePipelinedSuggestion()`（`speculation.ts:345-3"
     }
   },
   {
@@ -4013,7 +4013,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part1_认识这个系统/03_读懂本书需要的全部概念.md",
-      "context_zh": ""
+      "context_zh": "rm Leader 分配 | | 通信 | 通过 generator 链返回结果（generator = 生成器，结果像流"
     }
   },
   {
@@ -4146,7 +4146,7 @@
     ],
     "first_appearance": {
       "chapter": "part4_工程哲学/01_在等待时间里藏工作.md",
-      "context_zh": ""
+      "context_zh": "// 立即执行：并行读取 macOS 钥匙串中的认证凭据 ```  Node.js（Claud"
     }
   },
   {
@@ -4179,7 +4179,7 @@
     ],
     "first_appearance": {
       "chapter": "part0_序章/00_序章.md",
-      "context_zh": ""
+      "context_zh": "注参数与典型用途。  | **包管理器 (apt/npm)** | 插件系统 + Skills | 第三方"
     }
   },
   {
@@ -4193,8 +4193,8 @@
     "plain_explanation_zh": "💡 像图书馆只办借书证不进办公室——借书不需要了解图书馆的工作规范",
     "plain_explanation_en": "💡 Like getting a library card without entering the office—borrowing books doesn't require knowing library work rules",
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md",
-      "context_zh": "omitClaudeMd 节省约 token 成本"
+      "chapter": "part2_代码架构完全解构/10_Token经济学.md",
+      "context_zh": "oadAgentsDir.ts` 附近注释提到的 omitClaudeMd 优化**较大规模**节省（每周数十亿到上百亿 toke"
     },
     "see_also": [
       "sub-agent",
@@ -4259,7 +4259,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/04_查询循环.md",
-      "context_zh": ""
+      "context_zh": "捕获——当工具参数的 JSON 拼接完整后（即 `partial_json` 积累成有效 JSON），立即开始执行，不等 A"
     }
   },
   {
@@ -4319,8 +4319,8 @@
     "plain_explanation_zh": "💡 像骑手接单系统——接收任务指令、启动配送流程、每到一个节点汇报进度",
     "plain_explanation_en": "💡 Like rider order system—receives task instructions, starts delivery process, reports progress at each checkpoint",
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md",
-      "context_zh": "runAgent() 是 AsyncGenerator，驱动子 Agent 完整生命周期"
+      "chapter": "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "context_zh": "m/fork/remote/local 分流 → runAgent()/runForkedAgent() → query"
     },
     "see_also": [
       "sub-agent",
@@ -4362,7 +4362,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/07_安全架构.md",
-      "context_zh": ""
+      "context_zh": "绑定，不让修改）   └── 不存在 → 记录到 scrubPaths         └── 命令执行后检查"
     }
   },
   {
@@ -4389,8 +4389,8 @@
       "part3_子系统完全解析/10_Agent与任务系统完全解析.md"
     ],
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md",
-      "context_zh": ""
+      "chapter": "part3_子系统完全解析/10_Agent与任务系统完全解析.md",
+      "context_zh": "gent 不能修改父进程的 UI 状态 - **`setAppStateForTasks`**：绕过 no-op 的特例——用于任务注册等"
     }
   },
   {
@@ -4423,7 +4423,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/05_工具运行时.md",
-      "context_zh": ""
+      "context_zh": "ort 传播**：当一个 Bash 工具出错时，`siblingAbortController` 终止同批次其他工具的子进程（但不终止父级 qu"
     }
   },
   {
@@ -4455,7 +4455,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/04_查询循环.md",
-      "context_zh": ""
+      "context_zh": "模型参数（model, max_tokens, temperature=1）   + 缓存控制标记（cache_cont"
     }
   },
   {
@@ -4482,8 +4482,8 @@
       "part2_代码架构完全解构/04_查询循环.md"
     ],
     "first_appearance": {
-      "chapter": "part2_\\345\\245\\275\\345\\245\\207\\345\\277\\203\\351\\251\\261\\345\\212\\250\\347\\232\\204\\346\\267\\261\\345\\272\\246\\351\\227\\256\\347\\255\\224/Q10_\\347\\224\\250\\346\\210\\267\\350\\203\\275\\345\\234\\250Claude\\347\\232\\204\\347\\256\\241\\347\\220\\206\\345\\267\\245\\345\\216\\202/02_VIS-2A-010_queryLoop\\345\\277\\253\\350\\210\\252\\345\\272\\246\\345\\210\\266\\345\\275\\224.md",
-      "context_zh": ""
+      "chapter": "part2_代码架构完全解构/04_查询循环.md",
+      "context_zh": "│ │       ├── text_delta → 实时显示给用户"
     }
   },
   {
@@ -4543,7 +4543,7 @@
     ],
     "first_appearance": {
       "chapter": "part1_认识这个系统/02_五分钟看懂系统架构.md",
-      "context_zh": ""
+      "context_zh": "│    │    └── tool_use block"
     }
   },
   {
@@ -4584,8 +4584,8 @@
     "plain_explanation_zh": "💡 像在独立试衣间里试衣服——试穿效果不影响外面衣柜里的衣服，试完可以买下或放弃",
     "plain_explanation_en": "💡 Like trying on clothes in a separate fitting room—try-on effects don't affect clothes in the outside closet, can buy or abandon after trying",
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md",
-      "context_zh": "worktree 隔离是子 Agent 三种文件系统隔离选项之一"
+      "chapter": "part2_代码架构完全解构/06_Agent编排.md",
+      "context_zh": "码开发\"这个具体场景量身优化（Agent 专业化、worktree 隔离、MCP 连接共享等） > > 简单说：CrewA"
     },
     "see_also": [
       "sub-agent",
@@ -4633,7 +4633,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/04_查询循环.md",
-      "context_zh": ""
+      "context_zh": "rator<Event, Result> {   yield progressEvent;  // \"传送带送"
     }
   },
   {
@@ -4684,7 +4684,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/06_Agent编排.md",
-      "context_zh": ""
+      "context_zh": "献在于两点： > 1. **隔离级别的精细度**：三种隔离模式（in_process / local_agent"
     }
   },
   {
@@ -4707,7 +4707,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part2_好奇心驱动的深度问答/Q24_用户输入是怎么一步步变成AI请求的.md",
-      "context_zh": ""
+      "context_zh": "发给 API\"。用户输入要经过图片缩放、附件提取、三路分发（bash/斜杠命令/文本）、安全过滤、Hook"
     }
   },
   {
@@ -4731,7 +4731,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part3_子系统完全解析/17_遥测与分析系统完全解析.md",
-      "context_zh": ""
+      "context_zh": "──┐ │                    三通道遥测架构"
     }
   },
   {
@@ -4763,8 +4763,8 @@
     "plain_explanation_zh": "💡 像会议记录员的分级处理——先折叠附件→删无用页→去重复→段落摘要→全文精华，从轻到重按需触发",
     "plain_explanation_en": "💡 Like a meeting recorder's tiered approach — fold attachments → remove blank pages → deduplicate → summarize paragraphs → full digest, triggered progressively from light to heavy",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/04_查询循环.md",
-      "context_zh": "五层渐进压缩：裁剪→剪裁→微压缩→折叠→自动全文压缩"
+      "chapter": "part1_认识这个系统/01_这不是聊天机器人.md",
+      "context_zh": "→ AI 继续...       → [上下文压缩] token 快满时，用另一个 AI 来总结对话"
     },
     "see_also": [
       "context_window",
@@ -4811,7 +4811,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part5_批判与超越/01_这个系统的代价.md",
-      "context_zh": ""
+      "context_zh": "本会随规模指数增长。  ---  ## 代价 4：上下文压缩是有损的  > 💡 **通俗理解**：上下文压缩就像**会"
     }
   },
   {
@@ -4839,7 +4839,7 @@
     ],
     "first_appearance": {
       "chapter": "part0_序章/00_序章.md",
-      "context_zh": ""
+      "context_zh": "Engineering, 2023-24）→ **上下文工程**（Context Engineering, 2"
     }
   },
   {
@@ -4895,7 +4895,7 @@
     ],
     "first_appearance": {
       "chapter": "part1_认识这个系统/03_读懂本书需要的全部概念.md",
-      "context_zh": ""
+      "context_zh": "-  ### 5. Context Window（上下文窗口）  **最短定义**：Claude 在单次 AP"
     }
   },
   {
@@ -4986,8 +4986,8 @@
     "plain_explanation_zh": "💡 像会议室的发言权——同一时间只有一个人能说话，等前一个人说完下一个人才能发言",
     "plain_explanation_en": "💡 Like speaking rights in a meeting — only one person can speak at a time, next person waits until the previous one finishes",
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q09_Session里那个默默记笔记的AI是谁.md",
-      "context_zh": "sequential() 解决的是异步操作的逻辑串行化问题，而非文件锁"
+      "chapter": "part3_子系统完全解析/任务执行管道完全解析.md",
+      "context_zh": "更新实现原子性，但这依赖于 React 状态更新的串行化保证。如果底层调度模型改变，可能出现竞态条件。"
     },
     "see_also": [
       "session-memory",
@@ -5166,7 +5166,7 @@
     ],
     "first_appearance": {
       "chapter": "part1_认识这个系统/01_这不是聊天机器人.md",
-      "context_zh": ""
+      "context_zh": "Code 的架构覆盖了教科书里几乎所有经典模式——事件循环（Event Loop）、责任链（Chain of"
     }
   },
   {
@@ -5207,7 +5207,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/01_代码地图.md",
-      "context_zh": ""
+      "context_zh": "评估 | | `settings/` | 多 | 五层设置系统 | | `sandbox/` | 多 | 沙箱适"
     }
   },
   {
@@ -5221,8 +5221,8 @@
     "plain_explanation_zh": "💡 像火车票——进站（registered）→在车上（running）→到站了（completed/failed/killed）→广播通知（notified）→检票出站（eviction）",
     "plain_explanation_en": "💡 Like a train ticket — boarding (registered) → on train (running) → arrived (completed/failed/killed) → announcement (notified) → exit (eviction)",
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/任务执行管道完全解析.md",
-      "context_zh": "7种任务类型共享的统一生命周期状态机"
+      "chapter": "part2_代码架构完全解构/08_状态与持久化.md",
+      "context_zh": ": string]: TaskState }（统一任务状态表）   │   ├── UI 状态   │"
     },
     "see_also": [
       "task_type",
@@ -5334,8 +5334,8 @@
     "plain_explanation_zh": "💡 像公司内部的任务报告系统——用标准表格汇报工作成果，不用口头转述",
     "plain_explanation_en": "💡 Like an internal task reporting system in a company — work results in standardized forms, no need for verbal relay",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": "Worker 结果通过 task-notification XML 格式返回给 Coordinator"
+      "chapter": "part3_子系统完全解析/协调器模式完全解析.md",
+      "context_zh": "Worker 完成前编造结果  ### 3.4 任务通知格式  Worker 的结果以特殊的 XML 格式"
     },
     "see_also": [
       "coordinator",
@@ -5382,8 +5382,8 @@
     "system_section": "11_配置治理",
     "definition_zh": "多来源配置合并时的优先级语义：按优先级顺序扫描，找到第一个非空值就停止，不用后面的来源。这和军事命令链一致——上级命令不可被下级覆盖。用于 policySettings 内部的四个子来源（remote→MDM→file→HKCU）合并。",
     "definition_en": "Priority semantics in multi-source config merging: scan in priority order, stop at first non-empty value, ignoring subsequent sources. Consistent with military command chain — superior orders cannot be overridden by subordinates. Used for policySettings internal four sub-source merging (remote→MDM→file→HKCU).",
-    "plain_explanation_zh": "💡 像医院的分级诊疗——转诊单上一级医院看过了，下级医院不能再开不同的药",
-    "plain_explanation_en": "💡 Like a hospital's tiered treatment system — if the top-tier hospital already prescribed something, lower-tier hospitals can't prescribe differently",
+    "plain_explanation_zh": "💡 像接力赛——前一棒选手抢到交接棒就跑，后面的人就算空着手也只能等下一个交接区",
+    "plain_explanation_en": "💡 Like a relay — the first runner who grabs the baton runs with it; late handovers are ignored",
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/11_配置治理.md",
       "context_zh": "policy 内部四层子来源的合并语义"
@@ -5433,8 +5433,8 @@
     ],
     "chapters_en": [],
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q22_Computer_Use是怎么让AI操控你的屏幕的.md",
-      "context_zh": ""
+      "chapter": "part3_子系统完全解析/09_设置系统完全解析.md",
+      "context_zh": "ility.test.ts`。  ### 3.3 优雅降级  > 📚 **课程关联（软件工程）**：以下代码"
     }
   },
   {
@@ -5470,8 +5470,8 @@
     "plain_explanation_zh": "💡 像一本流水账本——每笔交易写一行，关掉终端后账本还在，下次打开能接着记",
     "plain_explanation_en": "💡 Like a ledger — each transaction gets a line, and the book persists after closing the terminal, ready for the next session",
     "first_appearance": {
-      "chapter": "part1_认识这个系统/03_读懂本书需要的全部概念.md",
-      "context_zh": "Session 包含消息历史、权限决策历史、文件变更记录"
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": "（JSON Lines——每行一条记录的日志格式）会话 | 快照、版本号、rewind 回滚——比 OS"
     },
     "see_also": [
       "context-window",
@@ -5528,8 +5528,8 @@
     "plain_explanation_zh": "💡 像游戏的存档系统——自动存档、快照存档、断点续传",
     "plain_explanation_en": "💡 Like game save system—auto save, snapshot save, checkpoint resume",
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q27_为什么Agent工作台必须有权限压缩和恢复.md",
-      "context_zh": "多层恢复机制：JSONL + File History + Bridge Pointer + --continue"
+      "chapter": "part2_代码架构完全解构/08_状态与持久化.md",
+      "context_zh": "ory 系统。它们各自服务不同的目的（运行时状态、会话恢复、文件回滚、长期记忆），而非层次化缓存。本章解析每"
     },
     "see_also": [
       "jsonl-session",
@@ -5560,8 +5560,8 @@
     "plain_explanation_zh": "💡 像每次会议用的标准议程表——议题、决议、待办事项各一栏，会后自动填好存档\n注：不是浏览器的 sessionStorage，是 CC 后台 AI 自动维护的项目记忆",
     "plain_explanation_en": "💡 Like a standard agenda form for each meeting — agenda, decisions, and action items each have their own column, filled in and archived after the meeting automatically",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": "会话记忆使用斜体描述行作为结构锚点，每次更新都遵循固定格式"
+      "chapter": "part1_认识这个系统/04_八个子系统的全景地图.md",
+      "context_zh": "AI 任务：  **SessionMemory（会话记忆）**： - 提取本次对话的关键信息 - 写入 `"
     },
     "see_also": [
       "memory-type-taxonomy",
@@ -5665,7 +5665,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part3_子系统完全解析/04_Hooks子系统完全解析.md",
-      "context_zh": ""
+      "context_zh": "方接口**，其安全含义需要严肃对待： > > **供应链攻击向量**：供应链攻击（supply chain att"
     }
   },
   {
@@ -5679,8 +5679,8 @@
     "plain_explanation_zh": "💡 像装修队的分工表——A 需要 B，B 需要 C，解析器要确保所有人都到位，没有死循环，没有从不可信来源偷偷拉人",
     "plain_explanation_en": "💡 Like a construction team's task list — A needs B, B needs C, the resolver ensures everyone is in place, no dead loops, no secretly pulling people from untrusted sources",
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/05_插件系统完全解析.md",
-      "context_zh": "跨市场安全阻断确保安装受信 marketplace 的插件不会静默拉取不受信 marketplace 的依赖"
+      "chapter": "part3_子系统完全解析/18_Bash_AST解析器完全解析.md",
+      "context_zh": "/Windsurf）**：更灵活、离线可用，但安全依赖解析器的正确性 - **vs OS 级控制（Codex）"
     },
     "see_also": [
       "plugin",
@@ -5754,7 +5754,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/07_安全架构.md",
-      "context_zh": ""
+      "context_zh": "# 免疫系统：安全模型与信任边界  Claude Code 的安全模型由四层防御纵"
     }
   },
   {
@@ -5794,8 +5794,8 @@
     "plain_explanation_zh": "💡 像烹饪学校请大厨来教厨师培训课程，同时大厨还能根据客人需求设计新菜系——知识在 AI 实例之间流动而非停留在人类工程师手里",
     "plain_explanation_en": "💡 Like a culinary school where a master chef teaches chef training courses, and the same chef can also design new dishes based on customer needs — knowledge flows between AI instances rather than staying with human engineers",
     "first_appearance": {
-      "chapter": "part4_工程哲学/03_把AI当乐高积木.md",
-      "context_zh": "元提示词是用提示词来生产提示词——Claude 生产供 Claude 消费的提示词，实现了能力的自我扩展"
+      "chapter": "part2_代码架构完全解构/03_提示词工厂.md",
+      "context_zh": "迭代、类型系统守护缓存、Prompt 作为编译器、元提示词、认知科学映射）详见 **Part 4「Promp"
     },
     "see_also": [
       "prompt",
@@ -5965,8 +5965,8 @@
     "plain_explanation_zh": "💡 像整理电脑内存——关闭不用的程序，但保留当前正在处理的任务窗口",
     "plain_explanation_en": "💡 Like organizing computer memory — closing unused programs but keeping the active task windows",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": "Function Result Clearing 是微压缩机制，自动清理旧工具结果"
+      "chapter": "part2_代码架构完全解构/03_提示词工厂.md",
+      "context_zh": "nction result clearing — 函数结果清理   15. Token budget — Tok"
     },
     "see_also": [
       "context-compression",
@@ -6011,7 +6011,7 @@
     ],
     "first_appearance": {
       "chapter": "part3_子系统完全解析/02_投机执行子系统完全解析.md",
-      "context_zh": ""
+      "context_zh": "**。  `CacheSafeParams` 确保分叉 Agent 的请求与父请求共享 prompt cache。不"
     }
   },
   {
@@ -6107,8 +6107,8 @@
     "plain_explanation_zh": "💡 像搬家时先暂停收发快递——等新地址确定好了再恢复收发，不然送到旧地址就丢了",
     "plain_explanation_en": "💡 Like pausing courier deliveries during a move — wait until new address is confirmed before resuming deliveries, otherwise packages go to the old address and get lost",
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/22_PromptCache可观测性完全解析.md",
-      "context_zh": "Transport Rebuild 时暂停写入的缓冲队列机制"
+      "chapter": "part3_子系统完全解析/24_Assistant等于Viewer完全解析.md",
+      "context_zh": "\"电话线\" > - **flush gate**：刷新闸门——暂存待发送事件的缓冲区，清空它意味着\"所有未发"
     },
     "see_also": [
       "transport-rebuild",
@@ -6179,7 +6179,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/01_代码地图.md",
-      "context_zh": ""
+      "context_zh": "sx` | :1-20 | Pre-import 副作用 + 模块加载起点，4,684 行 | | 工具基"
     }
   },
   {
@@ -6257,7 +6257,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/05_工具运行时.md",
-      "context_zh": ""
+      "context_zh": "gent。这是一个通过 feature flag 动态注入行为规范的典型案例。 4. **并发指令**：描述"
     }
   },
   {
@@ -6384,7 +6384,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part5_批判与超越/01_这个系统的代价.md",
-      "context_zh": ""
+      "context_zh": "|-----------------| | 7. 单一供应商锁定 | **极高** — 影响所有用户的长期风险 |"
     }
   },
   {
@@ -6437,7 +6437,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": ""
+      "context_zh": "lan mode ```  **设计要点**：**双变体 Prompt 设计**——外部版鼓励\"有疑问就规划\"，ant"
     }
   },
   {
@@ -6478,8 +6478,8 @@
     "plain_explanation_zh": "💡 像心理咨询——先承认人会偷懒的冲动，再提前设防",
     "plain_explanation_en": "💡 Like psychological counseling—first admit the urge to be lazy, then set up defenses in advance",
     "first_appearance": {
-      "chapter": "part4_工程哲学/06_Prompt的八大设计智慧.md",
-      "context_zh": "反惰性工程学是八大智慧的第一条"
+      "chapter": "part2_代码架构完全解构/03_提示词工厂.md",
+      "context_zh": "4+ 个提示词模板中提炼的 8 大跨系统设计哲学（反惰性工程学、Prompt 即可执行规范、Feature Fl"
     },
     "see_also": [
       "prompt-engineering-wisdom"
@@ -6519,7 +6519,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/13_横切关注点.md",
-      "context_zh": ""
+      "context_zh": "> 📚 **课程关联**：这 34 行代码是**发布-订阅模式**（Pub-Sub pattern）的教科书级实"
     }
   },
   {
@@ -6548,7 +6548,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part3_子系统完全解析/04_Hooks子系统完全解析.md",
-      "context_zh": ""
+      "context_zh": "OpenClaw 作为对比参考，该项目是社区内对\"可观测性优先的 Agent 框架\"的代表性讨论对象。由于它未形"
     }
   },
   {
@@ -6572,7 +6572,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/09_扩展生态.md",
-      "context_zh": ""
+      "context_zh": "考虑了供应链攻击——不是理论威胁，Unicode 同形字攻击已在 npm 生态中被真实利用 5. **四个机制"
     }
   },
   {
@@ -6586,8 +6586,8 @@
     "plain_explanation_zh": "💡 像机场护照检查——只接受英文护照，简单粗暴，绝对不会漏过冒牌货，但非英文国家的合法用户也进不来",
     "plain_explanation_en": "💡 Like airport passport control — only accepting English passports, brutally simple, never misses imposters but legitimate users from non-English countries also can't get in",
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/05_插件系统完全解析.md",
-      "context_zh": "Claude Code 的方案比 Chrome ICU 方案误报率高但实现复杂度极低，适用于 CLI 插件生态"
+      "chapter": "part2_代码架构完全解构/09_扩展生态.md",
+      "context_zh": "hropic 官方白名单 → 插件名正则验证 → 同形字检测。任何一环断裂（未审批、名称不匹配、检测到仿冒字符"
     },
     "see_also": [
       "plugin",
@@ -6692,8 +6692,8 @@
     "plain_explanation_zh": "💡 紧急心肺复苏——所有常规手段都失败了，最后try一次电击除颤，再不行就宣告失败\n注：不是 React 响应式，是 API 报错后的紧急心肺复苏式压缩",
     "plain_explanation_en": "💡 Like emergency CPR — when all conventional methods fail, one last attempt at defibrillation, then calls it if it doesn't work",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/04_查询循环.md",
-      "context_zh": "五层压缩之后的第六道防线，API 413 时触发"
+      "chapter": "part1_认识这个系统/03_读懂本书需要的全部概念.md",
+      "context_zh": "| 用真空袋把所有行李重新打包 | | 6 | 响应式紧急压缩 (reactiveCompact) | 行李箱超"
     },
     "see_also": [
       "death-spiral",
@@ -6759,7 +6759,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/08_状态与持久化.md",
-      "context_zh": ""
+      "context_zh": "中记住，而是**永久记住**。  ### 5.1 四种记忆类型  | 类型 | 用途 | 例子 | |-----"
     }
   },
   {
@@ -6804,8 +6804,8 @@
     "plain_explanation_zh": "💡 像办公室白板——私人笔记锁自己抽屉，团队共享内容贴白板大家都能看",
     "plain_explanation_en": "💡 Like an office whiteboard — private notes lock in your drawer, team-shared content posts on the whiteboard for everyone to see",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": "双目录架构（autoDir 私人 / teamDir 共享）支持团队协作记忆"
+      "chapter": "part2_代码架构完全解构/13_横切关注点.md",
+      "context_zh": "---------| | `TEAMMEM` | 团队记忆功能 | `watcher.ts`, `extra"
     },
     "see_also": [
       "auto-memory",
@@ -6852,7 +6852,7 @@
     ],
     "first_appearance": {
       "chapter": "part3_子系统完全解析/Vim模式完全解析.md",
-      "context_zh": ""
+      "context_zh": "e 数组。对于长文本可能有性能影响。  3. **图像引用吸附**：`snapOutOfImageRef` 是对"
     }
   },
   {
@@ -6907,7 +6907,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/07_安全架构.md",
-      "context_zh": ""
+      "context_zh": "溢出 / 连续拒绝）见 Part 4 第 4 章「多层防线不是偏执是必要」。  这是两种完全不同的安全哲学："
     }
   },
   {
@@ -6944,8 +6944,8 @@
     "plain_explanation_zh": "💡 像天气预报系统坏了——降级到显示\"天气未知请带伞\"而不是完全不显示天气信息",
     "plain_explanation_en": "💡 Like a weather forecast system failing — degrade to showing \"weather unknown, bring umbrella\" rather than showing nothing at all",
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/07_Sandbox沙箱系统完全解析.md",
-      "context_zh": "fail-open 适用于可用性优先的场景如消防通道断电自动打开"
+      "chapter": "part4_工程哲学/04_多层防线不是偏执是必要.md",
+      "context_zh": "Closed（失效关闭）vs Fail Open（失效开放）是**计算机网络**和**操作系统**课程中安全"
     },
     "see_also": [
       "fail-closed",
@@ -7040,8 +7040,8 @@
     "plain_explanation_zh": "💡 像外卖调度中心派出的骑手——有自己导航、电动车、订单，独立完成送餐后汇报",
     "plain_explanation_en": "💡 Like a rider dispatched by the delivery center—with own navigation, scooter, and order, completes delivery and reports independently",
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md",
-      "context_zh": "子 Agent 不是简单 API 调用，而是完整 AI 主循环实例"
+      "chapter": "part1_认识这个系统/01_这不是聊天机器人.md",
+      "context_zh": "事后压缩 | | Agent 系统 | 创建并管理子 Agent 实例 | 见 Part 4 \"多 Agent 编"
     },
     "see_also": [
       "fork-context-messages",
@@ -7074,8 +7074,8 @@
     "plain_explanation_zh": "💡 像公司的岗位名称——工程师、设计师、质检员各有专业技能和工作范围",
     "plain_explanation_en": "💡 Like job titles in a company — engineers, designers, and QC inspectors each have their own expertise and scope of work",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": "subagent_type 决定子 Agent 的行为模式和可用工具"
+      "chapter": "part3_子系统完全解析/15_Skill加载基础设施完全解析.md",
+      "context_zh": "high`）或整数值。  **agent 字段——子 Agent 类型指定**：  frontmatter 支持 `ag"
     },
     "see_also": [
       "agent-tool",
@@ -7199,7 +7199,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/13_横切关注点.md",
-      "context_zh": ""
+      "context_zh": "cretScanner.ts` 在上传前进行客户端密钥扫描。它内嵌了一套精选的 gitleaks 规则（源自"
     }
   },
   {
@@ -7353,8 +7353,8 @@
       "part3_子系统完全解析/05_插件系统完全解析.md"
     ],
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q10_用户能在Claude的生命周期里插多少个钩子.md",
-      "context_zh": ""
+      "chapter": "part4_工程哲学/04_多层防线不是偏执是必要.md",
+      "context_zh": "周期守卫），两套分层服务于不同问题：  1. **工作区信任**：插件 hooks 在信任建立前不执行 2."
     }
   },
   {
@@ -7421,8 +7421,8 @@
     "plain_explanation_zh": "💡 像员工的工作技能证书——读文件证书、写代码证书、搜索证书。想做事必须先出示证书，再经过考核才能动手",
     "plain_explanation_en": "💡 Like an employee's work skill certificates — read, write, search. You must show the certificate before getting permission to act",
     "first_appearance": {
-      "chapter": "part1_认识这个系统/03_读懂本书需要的全部概念.md",
-      "context_zh": "系统内置 40 个内置工具目录，外加无限数量的 MCP 外部工具"
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": "odex、Devin、Google 的 AI 编程工具（产品名以官方为准）……每家都在做自己的 AI 编"
     },
     "see_also": [
       "query-loop",
@@ -7549,7 +7549,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_好奇心驱动的深度问答/Q03_子Agent是怎么被创建和管理的.md",
-      "context_zh": ""
+      "context_zh": "构建独立的 **ToolUseContext**（工具执行上下文），但其中的 `setAppState` 被设计为"
     }
   },
   {
@@ -7580,7 +7580,7 @@
     ],
     "first_appearance": {
       "chapter": "part1_认识这个系统/01_这不是聊天机器人.md",
-      "context_zh": ""
+      "context_zh": "*1,479 行**（`wc -l` 核实） - 工具接口 `Tool.ts`：约 25+ 方法/属性（以"
     }
   },
   {
@@ -7594,8 +7594,8 @@
     "plain_explanation_zh": "💡 像每件工具的操作卡——挂在工具墙上，标明这把改锥怎么用、什么场合用它",
     "plain_explanation_en": "💡 Like an instruction card for each tool — hung on the tool wall, showing how to use this screwdriver and when to use it",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": "40个工具各有独立 getPrompt()，构成模型调用工具的完整使用说明书"
+      "chapter": "part1_认识这个系统/02_五分钟看懂系统架构.md",
+      "context_zh": "不是一个字符串，而是一个结构化对象，包括： - 工具描述列表 - 用户上下文（CLAUDE.md、当前日期"
     },
     "see_also": [
       "system-prompt",
@@ -7679,8 +7679,8 @@
     "plain_explanation_zh": "💡 像图书馆和打印店的规则——多人可以同时看书（只读），但打印店一次只让一个人用打印机（写操作串行）",
     "plain_explanation_en": "💡 Like library rules — multiple people can read simultaneously, but only one person uses the printer at a time",
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q04_工具为什么能在模型还没停止说话时就开始执行.md",
-      "context_zh": "Bash 并非一刀切串行，只读 Bash 命令也可以进入并发批次"
+      "chapter": "part1_认识这个系统/02_五分钟看懂系统架构.md",
+      "context_zh": "ools`）**： 等 AI 完全停止输出 → 按并发安全性分批 → 执行（只读工具并行，写操作串行）  *"
     },
     "see_also": [
       "streaming-tool-executor",
@@ -7821,7 +7821,7 @@
     ],
     "first_appearance": {
       "chapter": "part1_认识这个系统/03_读懂本书需要的全部概念.md",
-      "context_zh": ""
+      "context_zh": "层压缩、token 预算控制、工具描述字符限制、延迟加载工具）都是在管理这个有限资源。  > 📚 **课程关联"
     }
   },
   {
@@ -7850,7 +7850,7 @@
     ],
     "first_appearance": {
       "chapter": "part4_工程哲学/01_在等待时间里藏工作.md",
-      "context_zh": ""
+      "context_zh": "de Code 发明的模式——它是计算机科学中**延迟隐藏（Latency Hiding）**这一经典技术的"
     }
   },
   {
@@ -7890,8 +7890,8 @@
     "plain_explanation_zh": "💡 像自助火锅传送带——厨房一盘盘往上传送带上放，你吃完一盘它再送下一盘，你可以随时喊停\n注：不是普通 async 函数，是 async+generator 组合体，支持边产生边消费",
     "plain_explanation_en": "💡 Like a conveyor belt sushi restaurant — the kitchen puts plates on the belt continuously, you eat one then it brings the next, and you can stop anytime",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/04_查询循环.md",
-      "context_zh": "queryLoop 是 AsyncGenerator，持续输出事件流"
+      "chapter": "part1_认识这个系统/01_这不是聊天机器人.md",
+      "context_zh": "(true)` 的 AsyncGenerator（异步生成器——像水龙头一样持续输出事件流），接收用户输入，调"
     },
     "see_also": [
       "query-loop",
@@ -8165,7 +8165,7 @@
     ],
     "first_appearance": {
       "chapter": "part0_序章/00_序章.md",
-      "context_zh": ""
+      "context_zh": "能优化全景——Prompt Cache、流式执行、投机执行等五大加速策略的 Before/After 对比，"
     }
   },
   {
@@ -8199,7 +8199,7 @@
     ],
     "first_appearance": {
       "chapter": "part0_序章/00_序章.md",
-      "context_zh": ""
+      "context_zh": "能优化全景——Prompt Cache、流式执行、投机执行等五大加速策略的 Before/After 对比，"
     }
   },
   {
@@ -8213,8 +8213,8 @@
     "plain_explanation_zh": "💡 像学校放学错峰——每个班按班级编号固定晚几分钟，不同班不会同时冲出校门",
     "plain_explanation_en": "💡 Like staggered school dismissal — each class fixed delay by class number, different classes don't rush out the gate together",
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/19_Cron调度系统完全解析.md",
-      "context_zh": "基于 taskId 哈希的确定性偏移防雷群效应"
+      "chapter": "part2_代码架构完全解构/13_横切关注点.md",
+      "context_zh": "```  > 📚 **课程关联**：指数退避 + 抖动（exponential backoff with"
     },
     "see_also": [
       "scheduler-lock",
@@ -8265,7 +8265,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/09_扩展生态.md",
-      "context_zh": ""
+      "context_zh": "tsx`：MCP 连接管理器——多种传输协议的统一抽象层 - `src/services/mcp/type"
     }
   },
   {
@@ -8309,8 +8309,8 @@
     ],
     "chapters_en": [],
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/14_语音系统完全解析.md",
-      "context_zh": ""
+      "chapter": "part3_子系统完全解析/键绑定系统完全解析.md",
+      "context_zh": "a+k）',     })   } } ```  按住说话（push-to-talk）需要检测按键持续按住。"
     }
   },
   {
@@ -8376,7 +8376,7 @@
     ],
     "first_appearance": {
       "chapter": "part0_序章/00_序章.md",
-      "context_zh": ""
+      "context_zh": "Claude Code 涉及的很多概念（投机执行、提示词缓存边界、权限状态机、Token 预算）本身就很抽"
     }
   },
   {
@@ -8413,8 +8413,8 @@
     "plain_explanation_zh": "💡 像有人在你的待办清单里偷偷加了一行——你照单执行，但其中一条是别人塞进来的恶意指令",
     "plain_explanation_en": "💡 Like someone secretly adding a line to your to-do list — you follow the list, but one item is a malicious instruction someone else slipped in",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/07_安全架构.md",
-      "context_zh": "权限系统无法区分被注入后的工具调用和正常工具调用"
+      "chapter": "part2_代码架构完全解构/03_提示词工厂.md",
+      "context_zh": "--  ## 6. Coordinator 模式的提示词注入  当在 Coordinator 模式下，`get"
     },
     "see_also": [
       "sandbox",
@@ -8448,8 +8448,8 @@
     "plain_explanation_zh": "💡 像快递公司用集装厢运输——标准货物打包一次，后面多个客户共用同一个箱子，省去重复打包的力气",
     "plain_explanation_en": "💡 Like a shipping company using containers — standard goods are packed once, then multiple customers share the same container, saving repacking effort",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": "静态部分通过 scope: 'global' 跨用户缓存，节省约 20K token/次"
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": "Claude Code 涉及的很多概念（投机执行、提示词缓存边界、权限状态机、Token 预算）本身就很抽象。"
     },
     "see_also": [
       "cache_break",
@@ -8486,8 +8486,8 @@
     "plain_explanation_zh": "💡 像城市的商业街管理——每家店铺开业前要审核，装修时要申报用途，经营时只能在自己店面范围内活动",
     "plain_explanation_en": "💡 Like city commercial street management — each shop needs approval before opening, must declare use during renovation, can only operate within its allocated space",
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/05_插件系统完全解析.md",
-      "context_zh": "插件可以注册带 whenToUse 描述的 Skills，让 AI 能主动触发而非仅响应斜杠命令"
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": "Code 选择了一条独特的道路——不做 IDE 插件（IDE 是程序员写代码的专用编辑器，类似于设计师"
     },
     "see_also": [
       "mcp",
@@ -8533,7 +8533,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part2_好奇心驱动的深度问答/Q12_插件系统是怎么防止你被恶意扩展攻击的.md",
-      "context_zh": ""
+      "context_zh": "区信任 → Marketplace 名称保护 → 插件黑名单 → 企业管控 → hooks 源标记 → 优先级"
     }
   },
   {
@@ -8556,7 +8556,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part3_子系统完全解析/Vim模式完全解析.md",
-      "context_zh": ""
+      "context_zh": "无法直接使用 readline。这个自研实现覆盖了操作符+动作组合语法、文本对象、dot-repeat 等核心功能，"
     }
   },
   {
@@ -8632,8 +8632,8 @@
     "plain_explanation_zh": "💡 像游戏存档——每个剧情节点自动存档，可以随时读档，但最多保留100个",
     "plain_explanation_en": "💡 Like game save points — auto-saves at each story milestone, you can load any save, but max 100 saves",
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/11_文件历史系统完全解析.md",
-      "context_zh": "按对话轮次组织快照，支持 /rewind 回退"
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": "方固定部分、个性化配料…… - **游戏存档**（文件历史）：自动存档、存档点、读档回滚……  每个比喻第一"
     },
     "see_also": [
       "snapshot",
@@ -8821,7 +8821,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part3_子系统完全解析/20_团队记忆同步完全解析.md",
-      "context_zh": ""
+      "context_zh": "pt // pullTeamMemory() — 服务器权威模式 async function pullTea"
     }
   },
   {
@@ -8904,8 +8904,8 @@
     "plain_explanation_zh": "💡 像机场安检的九个关卡——每个关卡检查不同内容，任何一个说「不」就拒绝你进去",
     "plain_explanation_en": "💡 Like going through nine airport security checkpoints — each gate checks something different, any one saying 'no' blocks you",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/07_安全架构.md",
-      "context_zh": "九步检查链：bypass-immune → Hooks → 缓存 → 规则 → 沙箱 → 模式 → 确认 → 缓存"
+      "chapter": "part2_代码架构完全解构/05_工具运行时.md",
+      "context_zh": "ite 分离、并发安全声明）；**(2)** 十步权限检查链的粒度远超同类产品（对比 Cursor 的二元允许"
     },
     "see_also": [
       "check_point",
@@ -8939,8 +8939,8 @@
     "plain_explanation_zh": "💡 像门禁卡的不同权限等级——普通卡要刷卡，VIP 卡直接进，管理员卡连禁区都能进",
     "plain_explanation_en": "💡 Like different access levels on key cards — regular card needs swipe, VIP card walks right in, admin card opens even restricted areas",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/07_安全架构.md",
-      "context_zh": "六种权限模式：default / plan / auto-approve / bypass / apiServer / headless"
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": "表预留 0.3-C]**：权限模型对照表——6 种权限模式（plan / default / acceptE"
     },
     "see_also": [
       "permission_chain",
@@ -8973,8 +8973,8 @@
     "plain_explanation_zh": "💡 像机场安检流程——值机台查护照、安检门金属探测、X光扫描行李、人工开包检查、登机口二次核验，每层查不同东西",
     "plain_explanation_en": "💡 Like airport security — check-in passport, metal detector, X-ray baggage, manual inspection, gate re-check, each layer examines different threats",
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q05_权限系统是怎么在灵活性和安全性之间走钢丝的.md",
-      "context_zh": "10 步权限状态机，不同的安全等级在不同步骤被处理，bypass 模式只能影响步骤 2a 之后的逻辑"
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": "* | 权限系统 + 沙箱 + 企业策略 | 十步权限状态机、seatbelt/bwrap 进程隔离、bypa"
     },
     "see_also": [
       "permission",
@@ -9093,8 +9093,8 @@
     "plain_explanation_zh": "💡 像快递分拣流水线——收件→分拣→装车→送达→签收→等下一单，流水线不停直到所有快递送完\n注：不是 SQL 查询，是 AI Agent 的心跳——调用模型→执行工具→再调用",
     "plain_explanation_en": "💡 Like an assembly line: receive → sort → load → deliver → sign → wait for next batch, running until all packages are delivered",
     "first_appearance": {
-      "chapter": "part1_认识这个系统/02_五分钟看懂系统架构.md",
-      "context_zh": "核心 while(true) 循环，调用 API、执行工具、反复执行"
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": "src/query.ts          — 查询循环核心（queryEngine AsyncGener"
     },
     "see_also": [
       "async-generator",
@@ -9183,8 +9183,8 @@
     "plain_explanation_zh": "💡 像万能转接头——有了它 AI 能连各种外部设备（数据库、API、文件系统），不用为每个设备单独造一个接口",
     "plain_explanation_en": "💡 Like a universal adapter — with it AI can connect to various external devices (databases, APIs, file systems) without building a separate interface for each device",
     "first_appearance": {
-      "chapter": "part1_认识这个系统/02_五分钟看懂系统架构.md",
-      "context_zh": "Anthropic 推出的开放协议，77处源码提及"
+      "chapter": "part2_代码架构完全解构/02_启动序列.md",
+      "context_zh": "P（Model Context Protocol，模型上下文协议）服务器模式   │   └── 无特殊参数 →"
     },
     "see_also": [
       "tool",
@@ -9268,8 +9268,8 @@
     "plain_explanation_zh": "💡 像小区围墙和铁门——把危险操作限定在隔离区里，就算出问题也影响不到核心系统",
     "plain_explanation_en": "💡 Like a compound wall and iron gate — isolating dangerous operations in a contained area so even if something goes wrong, the core system is protected",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/07_安全架构.md",
-      "context_zh": "macOS seatbelt + Linux bwrap + seccomp 的三层沙箱架构"
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": "章节） - 一个\"编辑文件\"操作如何穿越权限检查、沙箱隔离、文件快照三道关卡 - Token（词元）如何像货"
     },
     "see_also": [
       "can-use-tool",
@@ -9327,8 +9327,8 @@
     "plain_explanation_zh": "💡 像边下载边看电影——下载器在后台搬运，播放器同时在播放，两件事互不等待\n注：不是等 AI 说完再执行，是边听边干——检测到 tool_use 就立即启动",
     "plain_explanation_en": "💡 Like watching a movie while downloading — the downloader runs in the background while the player plays simultaneously, without waiting for each other",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/04_查询循环.md",
-      "context_zh": "流式工具执行：不等模型说完就开始干活"
+      "chapter": "part4_工程哲学/01_在等待时间里藏工作.md",
+      "context_zh": "treamingToolExecutor.ts`：流式工具执行器——管理工具的并发执行、有序缓冲和错误传播 - `"
     },
     "see_also": [
       "is-concurrency-safe",
@@ -9456,7 +9456,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part2_好奇心驱动的深度问答/Q08_设置系统为什么需要五层优先级.md",
-      "context_zh": ""
+      "context_zh": "stomizer`。规则是：  **对象字段**：深度合并（嵌套对象的键分别覆盖） ```jsonc //"
     }
   },
   {
@@ -9632,7 +9632,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/08_状态与持久化.md",
-      "context_zh": ""
+      "context_zh": "移植层——它不依赖任何内部模块（无日志、无实验、无特性开关），可在 CLI 和 VS Code 扩展之间共享"
     }
   },
   {
@@ -9883,7 +9883,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part3_子系统完全解析/17_遥测与分析系统完全解析.md",
-      "context_zh": ""
+      "context_zh": "集。Claude Code 的遥测设计在技术层面（类型级 PII 防护、双管线隔离、远程采样控制）处于行业领先水平，但在"
     }
   },
   {
@@ -9918,8 +9918,8 @@
     "plain_explanation_zh": "💡 像新员工入职时领到的员工手册——包含公司政策、工作流程、行为规范，是所有工作的基础依据",
     "plain_explanation_en": "💡 Like an employee handbook given on day one — contains company policies, workflows, and conduct standards that govern all work",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": "系统提示词是每次会话开始时注入的基础指令集"
+      "chapter": "part1_认识这个系统/02_五分钟看懂系统架构.md",
+      "context_zh": "yEngine` 实例，持有： - 消息历史 - 系统提示词（包括工具列表、git 状态、CLAUDE.md）"
     },
     "see_also": [
       "prompt_factory",
@@ -10118,7 +10118,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/05_工具运行时.md",
-      "context_zh": ""
+      "context_zh": "izeChars: number      // 结果大小上限    // ── UI ──   renderT"
     }
   },
   {
@@ -10143,7 +10143,7 @@
     ],
     "first_appearance": {
       "chapter": "part3_子系统完全解析/25_Brief通信家族与Viewer结构化通道完全解析.md",
-      "context_zh": ""
+      "context_zh": "息投递）和 **Viewer 结构化通道**（工具结果渲染）。  > 🎯 **为什么这是 Agent 工作台"
     }
   },
   {
@@ -10157,8 +10157,8 @@
     "plain_explanation_zh": "💡 像分配工作时看人手——如果人已经在正确的位置继续干，如果换工作了就要重新培训",
     "plain_explanation_en": "💡 Like assigning work by checking who's available — if someone's already in the right position continue, if they're switching jobs retraining is needed",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": "Continue vs Spawn 根据上下文重叠程度决定"
+      "chapter": "part3_子系统完全解析/协调器模式完全解析.md",
+      "context_zh": "、变量名、修改策略、完成标志。  ### 4.4 继续 vs 新建 Worker  何时继续已有 Worker、何时"
     },
     "see_also": [
       "coordinator",
@@ -10189,8 +10189,8 @@
     "plain_explanation_zh": "💡 像项目经理拿到调查报告后不是直接转发，而是自己消化理解，写出\"第几号楼的第几层第几根柱子用什么方法加固\"这样精确的施工指令",
     "plain_explanation_en": "💡 Like a project manager receiving a research report then understanding it themselves, writing precise construction instructions like \"which building, which floor, which column, with what method to reinforce\"",
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/协调器模式完全解析.md",
-      "context_zh": "综合是最重要的工作，禁止说\"based on your findings\"，协调器必须自己理解后才能指令下一步"
+      "chapter": "part3_子系统完全解析/10_Agent与任务系统完全解析.md",
+      "context_zh": "LM 的一个已知弱点：**懒惰委托**。模型在需要综合理解的地方容易用一句\"基于你的发现\"来回避真正的思考。"
     },
     "see_also": [
       "coordinator",
@@ -10292,7 +10292,7 @@
     ],
     "first_appearance": {
       "chapter": "part0_序章/00_序章.md",
-      "context_zh": ""
+      "context_zh": "- Token（词元）如何像货币一样被精打细算，缓存命中率如何像汇率一样影响所有决策 - 企业管理员如何通"
     }
   },
   {
@@ -10306,8 +10306,8 @@
     "plain_explanation_zh": "💡 像积分对账员——告诉你「你的积分在3月5日失效了，原因是你的手机号换了」",
     "plain_explanation_en": "💡 Like a loyalty points auditor — tells you 'your points expired on March 5, because you changed your phone number'",
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/22_PromptCache可观测性完全解析.md",
-      "context_zh": "精确定位哪个工具的 schema 变化导致了缓存失效"
+      "chapter": "part2_代码架构完全解构/10_Token经济学.md",
+      "context_zh": "ion.ts`（700+ 行）实际追踪了**十余个缓存失效检测维度**（本书正文以 \"14\" 作为概数引用；源码"
     },
     "see_also": [
       "prompt_cache",
@@ -10349,7 +10349,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_好奇心驱动的深度问答/Q02_上下文压缩为什么需要六套机制.md",
-      "context_zh": ""
+      "context_zh": "pt.ts`） - microcompact 的\"缓存编辑\"是如何工作的？Anthropic API 真的支"
     }
   },
   {
@@ -10460,7 +10460,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/04_查询循环.md",
-      "context_zh": ""
+      "context_zh": "erator，实现 Ctrl+C 中断 3. **背压控制**（通俗说：消费跟不上时自动减速）：调用者处理慢"
     }
   },
   {
@@ -10507,8 +10507,8 @@
     "plain_explanation_zh": "💡 像图书馆换新书——新书上架不立即下架旧书，保留一段时间让还没还书的人能续借",
     "plain_explanation_en": "💡 Like library new book rollout — new books shelved without immediately removing old ones, keeping them available for a period for late returners",
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/05_插件系统完全解析.md",
-      "context_zh": "非就地更新（non-inplace）确保其他正在运行的 Claude Code 会话仍引用旧版本，不会因更新而中断"
+      "chapter": "part2_代码架构完全解构/13_横切关注点.md",
+      "context_zh": ".cursorrules` 只是静态配置文件，不会自动更新；**Windsurf** 有 \"Cascade"
     },
     "see_also": [
       "plugin",
@@ -10721,8 +10721,8 @@
     "plain_explanation_zh": "💡 像空调的「只开一次」设定——第一次制冷运转起来，之后只是维持温度不再重新启动压缩机",
     "plain_explanation_en": "💡 Like setting an air conditioner to 'only cool once' — the first time it runs the compressor, after that it just maintains temperature without restarting the compressor",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/02_启动序列.md",
-      "context_zh": "init() 用 memoize 确保只执行一次"
+      "chapter": "part3_子系统完全解析/15_Skill加载基础设施完全解析.md",
+      "context_zh": "} } ```  这里使用了 Promise 记忆化（`extractionPromise ??= ."
     },
     "see_also": [
       "pre-import",
@@ -10773,8 +10773,8 @@
     "plain_explanation_zh": "💡 像睡前在脑中整理一天的经历——强化重要的，忘掉不重要的，让明天脑子更清醒",
     "plain_explanation_en": "💡 Like sorting through the day's experiences before sleep — strengthening what matters, forgetting what's trivial, waking up with a clearer mind tomorrow",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": "Dream/Memory Consolidation 四阶段流程模仿人类记忆整理过程"
+      "chapter": "part2_代码架构完全解构/13_横切关注点.md",
+      "context_zh": "ent 特有的创新：**Dream Mode（睡眠记忆整合）** 和 **Auto-Memory（对话实时提"
     },
     "see_also": [
       "memory-types",
@@ -10807,8 +10807,8 @@
     "plain_explanation_zh": "💡 像永久成就系统——跨存档的全局记录，换个游戏档也带着走",
     "plain_explanation_en": "💡 Like a permanent achievement system — global records across save files, carried over even when you start a new game",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/08_状态与持久化.md",
-      "context_zh": "跨会话持久记忆，四种类型：user / feedback / project / reference"
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": "src/memdir/           — 记忆系统 ```  ---  *→ 翻到 Part 1 第"
     },
     "see_also": [
       "app-state",
@@ -10839,8 +10839,8 @@
     "plain_explanation_zh": "💡 像法律体系——中央法、地方条例、部门规定，逐层细化",
     "plain_explanation_en": "💡 Like legal system—central law, local regulations, departmental rules, layered refinement",
     "first_appearance": {
-      "chapter": "part3_子系统完全解析/09_设置系统完全解析.md",
-      "context_zh": "设置系统 5+4 层架构是全章核心"
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": "染在终端里 | | **/etc/ 配置** | 设置系统（5 层 + 4 子层） | 从企业策略到用户偏好"
     },
     "see_also": [
       "memory-types",
@@ -10870,8 +10870,8 @@
     "plain_explanation_zh": "💡 像手机话费——打电话=输出 token（贵），接电话=输入 token（便宜），套餐内通话=缓存读取（最便宜）\n注：不是 JWT 认证令牌，不是区块链代币，是 AI 处理文本的基本单位",
     "plain_explanation_en": "💡 Like mobile phone bills — making calls = output tokens (expensive), receiving = input tokens (cheap), in-plan = cache hits (cheapest)",
     "first_appearance": {
-      "chapter": "part1_认识这个系统/03_读懂本书需要的全部概念.md",
-      "context_zh": "Token 是 AI 处理文本的基本单位，缓存命中比普通 token 便宜 10 倍"
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": "检查、沙箱隔离、文件快照三道关卡 - Token（词元）如何像货币一样被精打细算，缓存命中率如何像汇率一"
     },
     "see_also": [
       "context-window",
@@ -10954,7 +10954,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part2_好奇心驱动的深度问答/Q17_你的声音是怎么变成代码指令的.md",
-      "context_zh": ""
+      "context_zh": "ogle Gemini Live 都使用 VAD（语音活动检测）自动判断用户说完——但它们运行在有回声消除的移动"
     }
   },
   {
@@ -11044,7 +11044,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/04_查询循环.md",
-      "context_zh": ""
+      "context_zh": "**设计模式关联**：这个十步检查链是经典的**责任链模式**（Chain of Responsibilit"
     }
   },
   {
@@ -11106,8 +11106,8 @@
     "plain_explanation_zh": "💡 像手机的语音助手模式——可以选择\"播报员腔调\"或\"朋友聊天腔调\"",
     "plain_explanation_en": "💡 Like phone voice assistant modes — you can choose between \"announcer tone\" or \"friend chat tone\"",
     "first_appearance": {
-      "chapter": "part2_代码架构完全解构/14_Prompt原文集.md",
-      "context_zh": "Output Style 是输出风格注入段，插入在系统提示词中"
+      "chapter": "part2_代码架构完全解构/03_提示词工厂.md",
+      "context_zh": "比说\"合理使用\"更不容易产生歧义。 > 6. **输出风格分两层**：结构层（Output efficien"
     },
     "see_also": [
       "system-prompt",
@@ -11398,7 +11398,7 @@
     ],
     "first_appearance": {
       "chapter": "part2_代码架构完全解构/04_查询循环.md",
-      "context_zh": ""
+      "context_zh": "。  > 📚 **设计模式关联**：这是经典的**适配器模式**（Adapter Pattern）——tool"
     }
   },
   {
@@ -11462,8 +11462,8 @@
     "plain_explanation_zh": "💡 像快递柜的通知设置——快递到了发短信，被签收了发短信，你还可以自定义通知方式",
     "plain_explanation_en": "💡 Like a parcel locker notification settings — text when package arrives, text when signed for, you can customize the notification",
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q10_用户能在Claude的生命周期里插多少个钩子.md",
-      "context_zh": "27 个事件节点、4 种执行方式的 hook 系统"
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": "递柜的短信通知**——快递到了自动通知你 = 事件钩子。你可以设置\"到了通知我\"或\"直接放门口\" = 自"
     },
     "see_also": [
       "pre-tool-use",
@@ -11607,7 +11607,7 @@
     "chapters_en": [],
     "first_appearance": {
       "chapter": "part3_子系统完全解析/10_Agent与任务系统完全解析.md",
-      "context_zh": ""
+      "context_zh": "法 | Spawn | 避免锚定效应 |  **\"锚定效应规避\"——最精妙的 LLM 工程洞察**  决策矩阵中"
     }
   },
   {
@@ -11839,8 +11839,8 @@
     "plain_explanation_zh": "💡 像早上起床按下热水壶开关（启动异步 I/O），趁烧水的时间洗漱穿衣（模块加载），等穿好衣服水也开了",
     "plain_explanation_en": "💡 Like morning routine — press the kettle button (start async I/O) while getting dressed (module loading), by the time you're dressed the water is boiled",
     "first_appearance": {
-      "chapter": "part2_好奇心驱动的深度问答/Q01_那三行在import之前的代码是什么把戏.md",
-      "context_zh": "startMdmRawRead() 和 startKeychainPrefetch() 在 import 之间启动，利用 135ms 的模块加载时间并行执行"
+      "chapter": "part0_序章/00_序章.md",
+      "context_zh": "aunchRepl | 三阶段启动：性能 I/O 预取、系统初始化、UI 渲染——和 BIOS → Bo"
     },
     "see_also": [
       "side-effect",

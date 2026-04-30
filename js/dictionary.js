@@ -13,6 +13,7 @@
   let activePriority = 'all';
   let activeSort = 'alpha';
   let searchQuery = '';
+  let searchScope = 'all';   // 'all' | 'term' | 'definition'
   let searchTimer = null;
   // Phase E：当前 sub-view（main 词典 / wordbook 生词本）
   let activeSubView = 'main';
@@ -343,14 +344,38 @@
     }
     if (searchQuery) {
       const q = searchQuery.toLowerCase();
-      list = list.filter(e => {
-        return (e.term_zh && e.term_zh.toLowerCase().includes(q)) ||
-               (e.term_en && e.term_en.toLowerCase().includes(q)) ||
-               (e.definition_zh && e.definition_zh.toLowerCase().includes(q)) ||
-               (e.definition_en && e.definition_en.toLowerCase().includes(q)) ||
-               (e.plain_explanation_zh && e.plain_explanation_zh.toLowerCase().includes(q)) ||
-               (e.plain_explanation_en && e.plain_explanation_en.toLowerCase().includes(q));
+      // 计算每条 entry 的匹配分（用于相关度排序），同时根据 scope 过滤
+      list.forEach(e => {
+        const tZ = (e.term_zh || '').toLowerCase();
+        const tE = (e.term_en || '').toLowerCase();
+        const dZ = (e.definition_zh || '').toLowerCase();
+        const dE = (e.definition_en || '').toLowerCase();
+        const pZ = (e.plain_explanation_zh || '').toLowerCase();
+        const pE = (e.plain_explanation_en || '').toLowerCase();
+        let score = 0;
+        // term 完全等于 → 1000；以 q 开头 → 500；包含 → 200
+        if (tZ === q || tE === q) score = 1000;
+        else if (tZ.startsWith(q) || tE.startsWith(q)) score = 500;
+        else if (tZ.includes(q) || tE.includes(q)) score = 200;
+        // definition 含 → 50；plain 含 → 30
+        const inDef = dZ.includes(q) || dE.includes(q);
+        const inPlain = pZ.includes(q) || pE.includes(q);
+        if (inDef) score += 50;
+        if (inPlain) score += 30;
+        e.__searchScore = score;
+        e.__inTerm = score >= 200;
+        e.__inDef = inDef || inPlain;
       });
+      list = list.filter(e => {
+        if (searchScope === 'term') return e.__inTerm;
+        if (searchScope === 'definition') return e.__inDef;
+        return e.__searchScore > 0;  // all
+      });
+    }
+    // 有搜索时优先按相关度排序（覆盖 activeSort），命中 term 的排在前面
+    if (searchQuery) {
+      list.sort((a, b) => (b.__searchScore || 0) - (a.__searchScore || 0));
+      return list;
     }
     // 排序
     if (activeSort === 'alpha') {
@@ -586,6 +611,14 @@
           searchQuery = search.value.trim();
           renderList();
         }, 300);
+      });
+    }
+    const scope = document.getElementById('dict-search-scope');
+    if (scope && !scope.__bound) {
+      scope.__bound = true;
+      scope.addEventListener('change', () => {
+        searchScope = scope.value;
+        renderList();
       });
     }
     const sort = document.getElementById('dict-sort');

@@ -305,7 +305,12 @@
     "prio_all": "All Priority",
     "prio_1": "P1 Essential",
     "prio_2": "P2 Advanced",
-    "prio_3": "P3 Specialized"
+    "prio_3": "P3 Specialized",
+    "search_scope_title": "Search scope",
+    "search_scope_all": "Full search",
+    "search_scope_term": "Term only",
+    "search_scope_def": "Definition only",
+    "search_placeholder": "🔍 Search terms / definitions (auto-ranked by relevance)..."
   },
   "vocab": {
     "btn": "⭐ My Wordbook",

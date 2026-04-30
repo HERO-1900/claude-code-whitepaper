@@ -1921,7 +1921,7 @@ than broad keywords.
 
 
 
-## Four、Built-in Agent System Prompts
+## IV. Built-in Agent System Prompts
 
 Claude Code includes seven specialized agents, each with its own system prompt.
 
