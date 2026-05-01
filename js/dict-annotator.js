@@ -237,6 +237,9 @@
     while (walker.nextNode()) textNodes.push(walker.currentNode);
 
     // 2. 对每个 textNode 跑 union regex；匹配到则切片重建
+    //    v15.2：每个 term ID 只标注首次出现（per-chapter 去重，避免"工具"等高频词
+    //    满屏 ° 标记），仿 Wikipedia first-occurrence rule
+    const seenTerms = new Set();
     let matched = 0;
     for (const node of textNodes) {
       const text = node.nodeValue;
@@ -248,6 +251,7 @@
       const frag = document.createDocumentFragment();
       let lastIdx = 0;
       let m;
+      let touched = false;
       while ((m = re.exec(text)) !== null) {
         const start = m.index;
         const matchedStr = m[1];
@@ -255,21 +259,29 @@
         if (start > lastIdx) {
           frag.appendChild(document.createTextNode(text.substring(lastIdx, start)));
         }
-        const span = document.createElement('span');
-        span.className = 'dict-term';
-        span.dataset.termId = id || '';
-        span.textContent = matchedStr;
-        frag.appendChild(span);
+        // 已标注过的 term：保留原文，不再加 dict-term span
+        if (!id || seenTerms.has(id)) {
+          frag.appendChild(document.createTextNode(matchedStr));
+        } else {
+          seenTerms.add(id);
+          const span = document.createElement('span');
+          span.className = 'dict-term';
+          span.dataset.termId = id;
+          span.textContent = matchedStr;
+          frag.appendChild(span);
+          matched++;
+          touched = true;
+        }
         lastIdx = start + matchedStr.length;
-        matched++;
         // 防止零宽匹配死循环
         if (m.index === re.lastIndex) re.lastIndex++;
       }
       if (lastIdx < text.length) {
         frag.appendChild(document.createTextNode(text.substring(lastIdx)));
       }
+      // 只在确实有新增 dict-term 时才替换节点（避免无谓 DOM 重写）
       const parent = node.parentNode;
-      if (parent) parent.replaceChild(frag, node);
+      if (parent && touched) parent.replaceChild(frag, node);
     }
 
     const t1 = (typeof performance !== 'undefined' ? performance.now() : Date.now());

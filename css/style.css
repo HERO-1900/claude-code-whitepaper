@@ -4177,8 +4177,9 @@ pre:hover .copy-btn,
 .insp-filter.active { background: var(--accent-cyan); color: var(--cc-text-primary); border-color: var(--accent-cyan); }
 .insp-filter-count { opacity: .6; margin-left: .3rem; }
 
-/* Spark Cards */
-.insp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 1rem; }
+/* Spark Cards
+   v15.2：minmax 340px 在 1400px 屏只能挤 3 列；降到 300 让 4+ 列可达；超宽屏自动溢出更多列 */
+.insp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
 .spark-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: .75rem; padding: 1rem 1.2rem; transition: all .2s; }
 .spark-card:hover { border-color: var(--accent-cyan); }
 .spark-card.expanded { border-color: var(--accent-gold); }
