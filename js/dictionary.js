@@ -662,8 +662,8 @@
     });
   }
 
-  // B10 · 关联段：v14 三行布局 — Label / Chips / Graph button 各自独占一行
-  //   用户最后一次机会：label 不再和 chips 同一行；graph 按钮固定在底部右
+  // B10 · 关联段：v14.1 移除 graph row（按钮上提到 header 与 share/star 并列）
+  //   底部只剩 label + chips 两行
   function renderSeeAlsoChips(entry) {
     const see = (entry.see_also || []).filter(id => entries.find(e => e.id === id && !e._suppressed));
     const en = isEn();
@@ -675,13 +675,14 @@
       return `<a class="dict-seealso-chip" href="#dict-${escapeHtml(id)}" data-dict-id="${escapeHtml(id)}">${escapeHtml(txt || id)}</a>`;
     }).join('');
     const more = see.length > 8 ? `<span class="dict-seealso-more">+${see.length - 8}</span>` : '';
-    const graphIcon = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><line x1="7.5" y1="7.5" x2="11" y2="16"/><line x1="16.5" y1="7.5" x2="13" y2="16"/></svg>';
-    const graphBtn = `<button class="dict-graph-btn" data-id="${escapeHtml(entry.id)}" title="${en ? 'Show concept map' : '展开关系图'}">${graphIcon}<span>${escapeHtml(en ? 'View map' : '查看关系图')}</span></button>`;
     return `<section class="dict-seealso">
       <div class="dict-seealso-label">${labelText}</div>
       <div class="dict-seealso-chips">${chips}${more}</div>
-      <div class="dict-seealso-graph-row">${graphBtn}</div>
     </section>`;
+  }
+  // helper：检查 entry 是否有 see_also（用于 header 是否渲染关系图按钮）
+  function hasSeeAlso(entry) {
+    return (entry.see_also || []).some(id => entries.find(e => e.id === id && !e._suppressed));
   }
 
   function renderCard(entry) {
@@ -732,6 +733,9 @@
           ${term2 ? `<div class="dict-term-secondary">${escapeHtml(term2)}</div>` : ''}
         </div>
         <div class="dict-card-actions">
+          ${hasSeeAlso(entry) ? `<button class="dict-graph-btn" data-id="${escapeHtml(entry.id)}" title="${en ? 'Concept map' : '关系图'}" aria-label="${en ? 'Concept map' : '关系图'}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><line x1="7.5" y1="7.5" x2="11" y2="16"/><line x1="16.5" y1="7.5" x2="13" y2="16"/></svg>
+          </button>` : ''}
           <button class="dict-share-btn" data-id="${escapeHtml(entry.id)}" title="${escapeHtml(shareTitle)}" aria-label="${escapeHtml(shareLabel)}">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
           </button>
@@ -877,6 +881,10 @@
           // 兼容：旧 .dict-fav 文字按钮（如生词本视图） — 仍刷新文本
           btn.textContent = added ? L().added_wordbook : L().add_wordbook;
         }
+        // v14.1：与"链接已复制"对等，加入/移除生词本也弹 toast
+        showDictToast(added
+          ? (en ? 'Added to wordbook ✓' : '已加入生词本 ✓')
+          : (en ? 'Removed from wordbook' : '已从生词本移除'));
         refreshWordbookBadge();
         try { window.dispatchEvent(new CustomEvent('cc-wordbook-changed', { detail: { id, added }})); } catch(e){}
       });

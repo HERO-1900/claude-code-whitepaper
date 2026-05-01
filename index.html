@@ -1679,6 +1679,11 @@
         if (theme === 'auto') {
           resolved = window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'warm';
         }
+        // v14.1 BUG FIX 主题疯狂切换：图表 iframe 收到 postMessage 后会
+        //   localStorage.setItem('cc-theme', t) 触发 storage 事件 → bindStorageSync
+        //   再次 applyTheme → setAttribute → MutationObserver 又触发 broadcast → 循环。
+        //   守卫：相同值不重复 setAttribute，break the loop。
+        if (document.documentElement.getAttribute('data-theme') === resolved) return;
         document.documentElement.setAttribute('data-theme', resolved);
       }
 
@@ -1735,21 +1740,24 @@
       function buildSwitcherHTML() {
         var isEn = false;
         try { isEn = (localStorage.getItem('cc-locale')||'zh')==='en'; } catch(e) {}
-        // v13：色块图标用户嫌丑"还不如文字"。回滚到完整词文本（双字 / 全拼）。
+        // v14.1：自绘 SVG 图标（语言无关）。用户拒绝色块、拒绝文字、拒绝标准 emoji。
+        //   Warm  = 地平线上的太阳（夕阳/编辑感暖光） — 半圆 + 横线
+        //   Light = 圆形太阳带 8 条放射线 — 标准明亮
+        //   Dark  = 月牙
         var L = isEn
           ? { box: 'Theme', boxAria: 'Theme switcher',
-              warm: 'Editorial', warmLabel: 'Warm',
-              dark: 'Dark', darkLabel: 'Dark',
-              light: 'Light', lightLabel: 'Light' }
+              warm: 'Warm (Editorial)', dark: 'Dark', light: 'Light' }
           : { box: '主题', boxAria: '主题切换器',
-              warm: '暖色（编辑感）', warmLabel: '暖色',
-              dark: '深色模式', darkLabel: '深色',
-              light: '浅色模式', lightLabel: '浅色' };
+              warm: '暖色（编辑感）', dark: '深色', light: '浅色' };
+        // 自绘 SVG（24×24，stroke-based，统一线宽）
+        var iconWarm = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 17a7 7 0 0114 0"/><line x1="3" y1="20" x2="21" y2="20"/><line x1="12" y1="3" x2="12" y2="5.5"/><line x1="5.5" y1="9.5" x2="6.8" y2="10.4"/><line x1="18.5" y1="9.5" x2="17.2" y2="10.4"/></svg>';
+        var iconLight = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="4"/><line x1="12" y1="2" x2="12" y2="4.5"/><line x1="12" y1="19.5" x2="12" y2="22"/><line x1="2" y1="12" x2="4.5" y2="12"/><line x1="19.5" y1="12" x2="22" y2="12"/><line x1="5" y1="5" x2="6.7" y2="6.7"/><line x1="17.3" y1="17.3" x2="19" y2="19"/><line x1="5" y1="19" x2="6.7" y2="17.3"/><line x1="17.3" y1="6.7" x2="19" y2="5"/></svg>';
+        var iconDark = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20.5 13.5A8 8 0 0110.5 3.5a8 8 0 1010 10z"/></svg>';
         return [
           '<div class="cc-theme-switcher" title="'+L.box+'" aria-label="'+L.boxAria+'">',
-          '  <button class="cc-theme-btn" data-theme="warm"  title="'+L.warm+'" aria-label="'+L.warm+'">'+L.warmLabel+'</button>',
-          '  <button class="cc-theme-btn" data-theme="light" title="'+L.light+'" aria-label="'+L.light+'">'+L.lightLabel+'</button>',
-          '  <button class="cc-theme-btn" data-theme="dark"  title="'+L.dark+'" aria-label="'+L.dark+'">'+L.darkLabel+'</button>',
+          '  <button class="cc-theme-btn" data-theme="warm"  title="'+L.warm+'" aria-label="'+L.warm+'">'+iconWarm+'</button>',
+          '  <button class="cc-theme-btn" data-theme="light" title="'+L.light+'" aria-label="'+L.light+'">'+iconLight+'</button>',
+          '  <button class="cc-theme-btn" data-theme="dark"  title="'+L.dark+'" aria-label="'+L.dark+'">'+iconDark+'</button>',
           '</div>'
         ].join('');
       }
@@ -1770,8 +1778,12 @@
       function bindStorageSync() {
         window.addEventListener('storage', function(e) {
           if (e.key === 'cc-theme' && e.newValue) {
-            applyTheme(e.newValue);
-            updateSwitcherUI(e.newValue);
+            // v14.1 守卫：仅当值真不同才应用（避免 iframe 回写引发循环）
+            var cur = document.documentElement.getAttribute('data-theme');
+            if (e.newValue !== cur && e.newValue !== 'auto') {
+              applyTheme(e.newValue);
+              updateSwitcherUI(e.newValue);
+            }
           }
         });
       }

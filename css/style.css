@@ -7216,34 +7216,29 @@ body.cc-lang-switching .cc-lang-btn {
   font-size: 0.72rem;
   padding: 1px 6px;
 }
-.dict-graph-btn {
+/* v14.1：dict-graph-btn 移到 header actions，与 share/star 同样的 32×32 方按钮 */
+.dict-card-actions .dict-graph-btn {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 8px;
+  cursor: pointer;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  background: transparent;
-  border: 1px solid var(--border, rgba(120,120,120,0.3));
-  border-radius: 999px;
-  padding: 2px 9px;
-  cursor: pointer;
-  font-size: 0.72rem;
-  font-weight: 500;
-  color: var(--text-muted);
-  font-family: inherit;
-  line-height: 1.4;
-  transition: all 0.12s ease;
-  white-space: nowrap;
+  justify-content: center;
+  transition: color .12s, background .12s, border-color .12s;
 }
-.dict-graph-btn:hover {
-  background: var(--gold-soft, rgba(199,125,46,.12));
+.dict-card-actions .dict-graph-btn svg {
+  width: 16px;
+  height: 16px;
+}
+.dict-card-actions .dict-graph-btn:hover {
   color: var(--accent-gold, #c77d2e);
   border-color: rgba(199,125,46,.4);
-}
-.dict-graph-btn svg {
-  flex-shrink: 0;
-  opacity: .85;
-}
-.dict-graph-btn:hover svg {
-  opacity: 1;
+  background: var(--gold-soft, rgba(199,125,46,.08));
 }
 
 /* Concept map overlay */
@@ -9256,44 +9251,43 @@ body.cc-lang-switching .cc-lang-btn {
     text-transform: lowercase;
   }
 
-  /* ===== 主题切换 desktop：v13 回滚到文字标签（暖色 / 浅色 / 深色） ===== */
+  /* ===== 主题切换 desktop：v14.1 自绘 SVG 图标（语言无关） ===== */
   #topnav .cc-theme-switcher {
     display: inline-flex;
-    gap: 0;
-    padding: 2px;
+    gap: 2px;
+    padding: 3px;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 8px;
-    height: 30px;
-    align-items: stretch;
+    height: 32px;
+    align-items: center;
   }
   #topnav .cc-theme-switcher .cc-theme-btn {
-    min-width: auto;
+    width: 26px;
     height: 26px;
-    padding: 0 11px;
+    min-width: 26px;
+    padding: 0;
     border: 0;
     background: transparent;
     color: var(--text-muted);
-    font-size: 12px;
-    font-weight: 500;
     border-radius: 6px;
-    line-height: 1;
     cursor: pointer;
-    font-family: inherit;
-    letter-spacing: .02em;
     display: inline-flex;
     align-items: center;
     justify-content: center;
     transition: color .12s, background .12s;
   }
+  #topnav .cc-theme-switcher .cc-theme-btn svg {
+    width: 16px;
+    height: 16px;
+  }
   #topnav .cc-theme-switcher .cc-theme-btn:hover {
     color: var(--text-primary);
-    background: var(--bg-hover, rgba(0,0,0,.03));
+    background: var(--bg-hover, rgba(0,0,0,.04));
   }
   #topnav .cc-theme-switcher .cc-theme-btn.active {
     background: var(--gold-soft, rgba(199,125,46,.16));
     color: var(--accent-gold, #c77d2e);
-    font-weight: 600;
   }
   /* 防御 auto 隐藏 */
   #topnav .cc-theme-switcher .cc-theme-btn[data-theme="auto"] { display: none !important; }
