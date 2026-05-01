@@ -13,7 +13,7 @@
 
 - 线上版（中文）：<https://insidecc.dev/>
 - Live (English UI): <https://insidecc.dev/?lang=en>
-- 源仓库（公仓镜像）：<https://github.com/HERO-1900/claude-code-whitepaper>
+- 源仓库（公仓镜像）：<https://github.com/HERO-1900/insideCC>
 
 > 中英双语 · 三主题（dark / warm / light）· 移动端适配 · 无需登录、无需注册
 
@@ -117,7 +117,7 @@
 
 ## 反馈 · Feedback
 
-- **GitHub Issues**：纠错、补例、勘误、提问都欢迎 — <https://github.com/HERO-1900/claude-code-whitepaper/issues>
+- **GitHub Issues**：纠错、补例、勘误、提问都欢迎 — <https://github.com/HERO-1900/insideCC/issues>
 - **Star & Share**：如果这份工作对你有帮助，给仓库一个 Star，或转发给可能感兴趣的开发者
 - 项目以**业余研究**形式维护，不承诺响应时间，也不提供商业支持
 
