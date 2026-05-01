@@ -76,13 +76,12 @@ html, body {
 body:has(#welcome.active) {
   background: #000 !important;
 }
+/* v13：welcome 动画期间整个顶栏（含 nav-right 主题/语言/齿轮）一律隐藏，
+   动画结束 + 用户进入正式视图后才出现 */
 #welcome.active ~ #topnav .nav-left,
-#welcome.active ~ #topnav .nav-center {
-  display: none !important;
-}
+#welcome.active ~ #topnav .nav-center,
 #welcome.active ~ #topnav .nav-right {
-  pointer-events: auto;
-  margin-left: auto;
+  display: none !important;
 }
 
 #topnav {
@@ -7166,41 +7165,53 @@ body.cc-lang-switching .cc-lang-btn {
 }
 
 /* ===== B10 · see_also chips + concept map overlay ===== */
+/* ===== v13 重写：seealso 单行布局，颜色统一暖色系（不再蓝色乱入），label/chips/graph-btn 同基线 ===== */
 .dict-seealso {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
-  margin: .65rem 0 4px;
-  padding-top: .65rem;
+  margin: .55rem 0 4px;
+  padding-top: .55rem;
   border-top: 1px solid var(--border);
   font-size: 0.78rem;
   flex-wrap: wrap;
 }
 .dict-seealso-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   color: var(--text-muted);
   font-weight: 500;
   white-space: nowrap;
-  padding-top: 2px;
+  font-size: .74rem;
+  letter-spacing: .02em;
+}
+.dict-seealso-bullet {
+  color: var(--accent-gold, #c77d2e);
+  flex-shrink: 0;
 }
 .dict-seealso-chips {
   display: flex;
   flex-wrap: wrap;
   gap: 4px;
   align-items: center;
+  flex: 1;
 }
 .dict-seealso-chip {
-  background: rgba(46, 108, 182, 0.08);
-  color: #2e6cb6 !important;
-  border: 1px solid rgba(46, 108, 182, 0.3);
-  padding: 1px 8px;
+  background: color-mix(in srgb, var(--accent-gold) 10%, transparent);
+  color: var(--accent-gold, #c77d2e) !important;
+  border: 1px solid color-mix(in srgb, var(--accent-gold) 30%, transparent);
+  padding: 2px 9px;
   border-radius: 999px;
   text-decoration: none !important;
-  font-size: 0.74rem;
+  font-size: 0.72rem;
+  font-weight: 500;
+  line-height: 1.4;
   transition: all 0.12s ease;
 }
 .dict-seealso-chip:hover {
-  background: rgba(46, 108, 182, 0.18);
-  border-color: rgba(46, 108, 182, 0.55);
+  background: color-mix(in srgb, var(--accent-gold) 20%, transparent);
+  border-color: color-mix(in srgb, var(--accent-gold) 55%, transparent);
   text-decoration: none !important;
 }
 .dict-seealso-more {
@@ -7209,21 +7220,33 @@ body.cc-lang-switching .cc-lang-btn {
   padding: 1px 6px;
 }
 .dict-graph-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   background: transparent;
   border: 1px solid var(--border, rgba(120,120,120,0.3));
   border-radius: 999px;
-  padding: 1px 6px 1px 6px;
+  padding: 2px 9px;
   cursor: pointer;
-  font-size: 0.78rem;
+  font-size: 0.72rem;
+  font-weight: 500;
   color: var(--text-muted);
-  margin-left: 4px;
-  line-height: 1.2;
+  font-family: inherit;
+  line-height: 1.4;
   transition: all 0.12s ease;
+  white-space: nowrap;
 }
 .dict-graph-btn:hover {
-  background: rgba(46, 108, 182, 0.1);
-  color: #2e6cb6;
-  border-color: rgba(46, 108, 182, 0.4);
+  background: var(--gold-soft, rgba(199,125,46,.12));
+  color: var(--accent-gold, #c77d2e);
+  border-color: rgba(199,125,46,.4);
+}
+.dict-graph-btn svg {
+  flex-shrink: 0;
+  opacity: .85;
+}
+.dict-graph-btn:hover svg {
+  opacity: 1;
 }
 
 /* Concept map overlay */
@@ -7629,10 +7652,12 @@ body.cc-lang-switching .cc-lang-btn {
   color: var(--text-primary);
 }
 
+/* v13：卡片用 flex column；body 区 flex:1 撑开；关联 + footer 自然落到底
+   foot 永远在最末，加入生词本位置稳定不漂移 */
+.dict-card-body { flex: 1 1 auto; }
 .dict-card-foot {
   display: flex; justify-content: space-between; align-items: center;
   gap: .5rem;
-  margin-top: auto;   /* 把 footer 推到卡片底部，对齐齐整 */
   padding-top: .55rem;
   border-top: 1px dashed var(--border);
 }
@@ -7640,7 +7665,7 @@ body.cc-lang-switching .cc-lang-btn {
   display: flex; align-items: center; gap: .35rem; flex-wrap: wrap;
 }
 .dict-card-foot-right { justify-content: flex-end; }
-.dict-card { display: flex; flex-direction: column; }   /* 让 margin-top:auto 生效 */
+.dict-card { display: flex; flex-direction: column; }
 .dict-fav, .dict-jump {
   background: transparent;
   border: 1px solid var(--border);
@@ -9200,53 +9225,46 @@ body.cc-lang-switching .cc-lang-btn {
     text-transform: lowercase;
   }
 
-  /* ===== 主题切换 desktop：v12 改色块图标（语言无关） ===== */
+  /* ===== 主题切换 desktop：v13 回滚到文字标签（暖色 / 浅色 / 深色） ===== */
   #topnav .cc-theme-switcher {
     display: inline-flex;
-    gap: 4px;
-    padding: 3px 6px;
+    gap: 0;
+    padding: 2px;
     background: var(--bg-card);
     border: 1px solid var(--border);
     border-radius: 8px;
-    height: 32px;
-    align-items: center;
+    height: 30px;
+    align-items: stretch;
   }
   #topnav .cc-theme-switcher .cc-theme-btn {
-    width: 26px;
+    min-width: auto;
     height: 26px;
-    min-width: 26px;
-    padding: 0;
+    padding: 0 11px;
     border: 0;
     background: transparent;
+    color: var(--text-muted);
+    font-size: 12px;
+    font-weight: 500;
     border-radius: 6px;
+    line-height: 1;
     cursor: pointer;
+    font-family: inherit;
+    letter-spacing: .02em;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: background .12s;
+    transition: color .12s, background .12s;
   }
   #topnav .cc-theme-switcher .cc-theme-btn:hover {
-    background: var(--bg-hover, rgba(0,0,0,.04));
+    color: var(--text-primary);
+    background: var(--bg-hover, rgba(0,0,0,.03));
   }
   #topnav .cc-theme-switcher .cc-theme-btn.active {
-    background: var(--gold-soft, rgba(199,125,46,.18));
-    box-shadow: inset 0 0 0 1px rgba(199,125,46,.45);
+    background: var(--gold-soft, rgba(199,125,46,.16));
+    color: var(--accent-gold, #c77d2e);
+    font-weight: 600;
   }
-  /* 色块本身（语言无关） */
-  .theme-swatch {
-    display: inline-block;
-    width: 16px;
-    height: 16px;
-    border-radius: 4px;
-  }
-  .swatch-warm { background: #e8d8b8; border: 1px solid #c8a868; }
-  .swatch-light { background: #ffffff; border: 1px solid #d0d0d0; }
-  .swatch-dark { background: #1a1a1a; border: 1px solid #444; }
-  /* active 状态色块加亮描边 */
-  #topnav .cc-theme-switcher .cc-theme-btn.active .theme-swatch {
-    box-shadow: 0 0 0 1.5px var(--accent-gold, #c77d2e);
-  }
-  /* 防御 auto 隐藏（buildSwitcherHTML 已不渲染该按钮） */
+  /* 防御 auto 隐藏 */
   #topnav .cc-theme-switcher .cc-theme-btn[data-theme="auto"] { display: none !important; }
 
   /* 语言切换 desktop 紧凑对齐主题 */

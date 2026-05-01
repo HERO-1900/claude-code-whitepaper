@@ -663,19 +663,25 @@
   }
 
   // B10 · see_also chips + 关系图按钮
+  // v13：换 label "🔗 关联" → "相关词条"（带 SVG bullet）；🕸️ → 3 节点 SVG
   function renderSeeAlsoChips(entry) {
     const see = (entry.see_also || []).filter(id => entries.find(e => e.id === id && !e._suppressed));
     if (!see.length) return '';
     const en = isEn();
-    const label = en ? '🔗 Related' : '🔗 关联';
+    const labelText = en ? 'Related' : '相关词条';
+    // 小三角 bullet SVG，比 🔗 emoji 精致
+    const labelIcon = '<svg class="dict-seealso-bullet" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M3 2 L9 6 L3 10 Z" fill="currentColor"/></svg>';
+    const label = `<span class="dict-seealso-label">${labelIcon}<span>${labelText}</span></span>`;
     const chips = see.slice(0, 6).map(id => {
       const e = entries.find(x => x.id === id);
       const txt = e ? (en ? (e.term_en || e.term_zh) : (e.term_zh || e.term_en)) : id;
       return `<a class="dict-seealso-chip" href="#dict-${escapeHtml(id)}" data-dict-id="${escapeHtml(id)}">${escapeHtml(txt || id)}</a>`;
     }).join('');
     const more = see.length > 6 ? `<span class="dict-seealso-more">+${see.length - 6}</span>` : '';
-    const graphBtn = `<button class="dict-graph-btn" data-id="${escapeHtml(entry.id)}" title="${en ? 'Show concept map' : '展开关系图'}">🕸️ ${escapeHtml(en ? 'Map' : '关系图')}</button>`;
-    return `<div class="dict-seealso"><span class="dict-seealso-label">${label}</span><div class="dict-seealso-chips">${chips}${more}${graphBtn}</div></div>`;
+    // 节点图 SVG（3 圆点 + 2 连线），替代 🕸️ 蜘蛛网
+    const graphIcon = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><line x1="7.5" y1="7.5" x2="11" y2="16"/><line x1="16.5" y1="7.5" x2="13" y2="16"/></svg>';
+    const graphBtn = `<button class="dict-graph-btn" data-id="${escapeHtml(entry.id)}" title="${en ? 'Show concept map' : '展开关系图'}">${graphIcon}<span>${escapeHtml(en ? 'Map' : '关系图')}</span></button>`;
+    return `<div class="dict-seealso">${label}<div class="dict-seealso-chips">${chips}${more}${graphBtn}</div></div>`;
   }
 
   function renderCard(entry) {
@@ -730,8 +736,12 @@
         ${suppressed ? `<span class="dict-badge dict-supp-badge" title="${en ? 'Conceptual entry — term may not appear verbatim in text' : '正文中未直接出现该字面术语，作概念条目保留'}">${en ? 'Concept' : '概念条'}</span>` : ''}
       </div>
 
-      ${def ? `<p class="dict-def">${escapeHtml(def)}</p>` : ''}
-      ${plain ? `<div class="dict-plain">${escapeHtml(plain)}</div>` : ''}
+      <div class="dict-card-body">
+        ${def ? `<p class="dict-def">${escapeHtml(def)}</p>` : ''}
+        ${plain ? `<div class="dict-plain">${escapeHtml(plain)}</div>` : ''}
+      </div>
+
+      ${renderSeeAlsoChips(entry)}
 
       <footer class="dict-card-foot">
         <div class="dict-card-foot-left">
@@ -743,8 +753,6 @@
           </button>
         </div>
       </footer>
-
-      ${renderSeeAlsoChips(entry)}
     </article>`;
   }
 

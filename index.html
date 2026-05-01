@@ -1323,10 +1323,12 @@
   <!-- v10: FAB 已移除（用户反馈不要悬浮形式），目录入口回归顶栏左侧 ☰ -->
 
   <!-- v12: 移动端右下三悬浮按钮（reader 视图、滚动中、非顶非底时显示）
-       上：回顶 / 中：上一章 / 下：下一章 -->
+       上：回顶 / 中：上一章 / 下：下一章
+       v13: 回顶 icon 改为"竖杠 + 上箭头"区分于 prev/next 普通箭头 -->
   <div id="reader-fab-stack" class="reader-fab-stack" aria-hidden="true">
     <button class="rf-btn rf-top" id="rf-top" aria-label="回到顶部" title="回到顶部">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+      <!-- 顶部横线 + 向上箭头：直观表达"回到最顶端" -->
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="3" x2="19" y2="3"/><line x1="12" y1="21" x2="12" y2="9"/><polyline points="6 14 12 8 18 14"/></svg>
     </button>
     <button class="rf-btn rf-prev" id="rf-prev" aria-label="上一章" title="上一章">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
@@ -1733,18 +1735,21 @@
       function buildSwitcherHTML() {
         var isEn = false;
         try { isEn = (localStorage.getItem('cc-locale')||'zh')==='en'; } catch(e) {}
-        // v12：用户反馈"暖/浅/深 中文字英文用户看不懂"，改成三色色块（语言无关）：
-        //   warm 米色 / light 白色 / dark 深灰。aria-label 保留语义，悬停 title 提示。
+        // v13：色块图标用户嫌丑"还不如文字"。回滚到完整词文本（双字 / 全拼）。
         var L = isEn
           ? { box: 'Theme', boxAria: 'Theme switcher',
-              warm: 'Warm (Editorial)', dark: 'Dark', light: 'Light' }
+              warm: 'Editorial', warmLabel: 'Warm',
+              dark: 'Dark', darkLabel: 'Dark',
+              light: 'Light', lightLabel: 'Light' }
           : { box: '主题', boxAria: '主题切换器',
-              warm: '暖色（编辑感）', dark: '深色', light: '浅色' };
+              warm: '暖色（编辑感）', warmLabel: '暖色',
+              dark: '深色模式', darkLabel: '深色',
+              light: '浅色模式', lightLabel: '浅色' };
         return [
           '<div class="cc-theme-switcher" title="'+L.box+'" aria-label="'+L.boxAria+'">',
-          '  <button class="cc-theme-btn" data-theme="warm"  title="'+L.warm+'" aria-label="'+L.warm+'"><span class="theme-swatch swatch-warm"></span></button>',
-          '  <button class="cc-theme-btn" data-theme="light" title="'+L.light+'" aria-label="'+L.light+'"><span class="theme-swatch swatch-light"></span></button>',
-          '  <button class="cc-theme-btn" data-theme="dark"  title="'+L.dark+'" aria-label="'+L.dark+'"><span class="theme-swatch swatch-dark"></span></button>',
+          '  <button class="cc-theme-btn" data-theme="warm"  title="'+L.warm+'" aria-label="'+L.warm+'">'+L.warmLabel+'</button>',
+          '  <button class="cc-theme-btn" data-theme="light" title="'+L.light+'" aria-label="'+L.light+'">'+L.lightLabel+'</button>',
+          '  <button class="cc-theme-btn" data-theme="dark"  title="'+L.dark+'" aria-label="'+L.dark+'">'+L.darkLabel+'</button>',
           '</div>'
         ].join('');
       }
