@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>v15 · dict-term 高亮 4 变体 Preview</title>
+<style>
+  /* ===== 基础重置 ===== */
+  *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Noto Sans SC", sans-serif;
+    min-height: 100vh;
+    transition: background .3s, color .3s;
+    line-height: 1.75;
+  }
+
+  /* ===== 三主题定义 ===== */
+  :root, [data-theme="dark"] {
+    --bg-primary:   #12121a;
+    --bg-card:      #1a1a26;
+    --bg-hover:     #252536;
+    --accent-gold:  #ffd93d;
+    --accent-cyan:  #00d4ff;
+    --text-primary: #f0f0f5;
+    --text-secondary:#9898a8;
+    --text-muted:   #6a6a7a;
+    --border:       #2a2a3a;
+  }
+  [data-theme="light"] {
+    --bg-primary:   #fafafa;
+    --bg-card:      #ffffff;
+    --bg-hover:     #f0f0f5;
+    --accent-gold:  #d97706;
+    --accent-cyan:  #0088cc;
+    --text-primary: #1a1a2e;
+    --text-secondary:#4a4a5a;
+    --text-muted:   #6a6a7a;
+    --border:       #e8e8f0;
+  }
+  [data-theme="sepia"] {
+    --bg-primary:   #f4ecd8;
+    --bg-card:      #fdf6e3;
+    --bg-hover:     #eee8d5;
+    --accent-gold:  #b58900;
+    --accent-cyan:  #268bd2;
+    --text-primary: #433422;
+    --text-secondary:#586e75;
+    --text-muted:   #93a1a1;
+    --border:       #d5c9a8;
+  }
+
+  body { background: var(--bg-primary); color: var(--text-primary); }
+
+  /* ===== 顶部工具栏 ===== */
+  .toolbar {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    height: 48px;
+    background: rgba(18,18,26,.92);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+  }
+  [data-theme="light"] .toolbar,
+  [data-theme="sepia"] .toolbar { background: rgba(250,250,250,.92); }
+  .toolbar h1 { font-size: .9rem; font-weight: 600; letter-spacing: .02em; }
+  .theme-switch { display: flex; gap: 6px; }
+  .theme-switch button {
+    padding: 4px 12px; border: 1px solid var(--border); border-radius: 4px;
+    background: var(--bg-card); color: var(--text-secondary);
+    font-size: .75rem; cursor: pointer; transition: all .15s;
+  }
+  .theme-switch button:hover { border-color: var(--accent-cyan); color: var(--text-primary); }
+  .theme-switch button.active {
+    border-color: var(--accent-cyan); color: var(--accent-cyan); font-weight: 600;
+  }
+
+  /* ===== 页面布局 ===== */
+  .page { padding: 80px 24px 60px; max-width: 900px; margin: 0 auto; }
+  .section-title {
+    font-size: 1.05rem; font-weight: 700; margin: 2.5rem 0 .8rem;
+    padding-bottom: .4rem; border-bottom: 1px solid var(--border);
+    display: flex; align-items: baseline; gap: .6rem;
+  }
+  .section-title:first-child { margin-top: 0; }
+  .section-sub { color: var(--text-muted); font-size: .78rem; font-weight: 400; }
+
+  /* 正文段落外壳 */
+  .demo-body {
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 1.4rem 1.6rem;
+    font-size: .95rem;
+    line-height: 1.85;
+    color: var(--text-secondary);
+    margin-bottom: 2rem;
+  }
+  .demo-body p + p { margin-top: 1rem; }
+
+  /* ========== 当前版本（虚线下划线，用户觉得太轻） ========== */
+  .v-current .dict-term {
+    border-bottom: 1px dashed color-mix(in srgb, var(--accent-cyan) 60%, transparent);
+    cursor: pointer;
+    border-radius: 2px;
+    padding: 0 1px;
+    transition: background .12s, border-color .12s;
+  }
+  .v-current .dict-term:hover {
+    background: rgba(255, 217, 61, .18);
+    border-bottom-color: var(--accent-cyan);
+  }
+
+  /* ========== B1: 暖色实底 chip 内联 ========== */
+  .v-b1 .dict-term {
+    background: color-mix(in srgb, var(--accent-gold) 14%, transparent);
+    padding: 1px 5px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: background .12s;
+    text-decoration: none;
+    border-bottom: none;
+  }
+  .v-b1 .dict-term:hover {
+    background: color-mix(in srgb, var(--accent-gold) 26%, transparent);
+  }
+
+  /* ========== B2: 暖色波浪线 ========== */
+  .v-b2 .dict-term {
+    text-decoration: underline wavy color-mix(in srgb, var(--accent-gold) 75%, transparent);
+    text-decoration-thickness: 1.5px;
+    text-underline-offset: 3px;
+    cursor: pointer;
+    padding: 0 1px;
+    border-radius: 2px;
+    transition: background .12s, text-decoration-color .12s;
+    border-bottom: none;
+  }
+  .v-b2 .dict-term:hover {
+    background: color-mix(in srgb, var(--accent-gold) 10%, transparent);
+    text-decoration-color: var(--accent-gold);
+  }
+
+  /* ========== B3: 暖色实线 2px 下划线 + hover 浅底 ========== */
+  .v-b3 .dict-term {
+    border-bottom: 2px solid color-mix(in srgb, var(--accent-gold) 70%, transparent);
+    cursor: pointer;
+    padding: 0 2px;
+    border-radius: 2px;
+    transition: background .12s, border-color .12s;
+    text-decoration: none;
+  }
+  .v-b3 .dict-term:hover {
+    background: color-mix(in srgb, var(--accent-gold) 6%, transparent);
+    border-bottom-color: var(--accent-gold);
+  }
+
+  /* ========== B4: 加 ° 上标 + 暖色文字 ========== */
+  .v-b4 .dict-term {
+    color: color-mix(in srgb, var(--accent-gold) 85%, var(--text-primary));
+    cursor: pointer;
+    padding: 0 1px;
+    border-radius: 2px;
+    transition: background .12s;
+    text-decoration: none;
+    border-bottom: none;
+    font-weight: 500;
+  }
+  .v-b4 .dict-term::after {
+    content: "°";
+    font-size: .65em;
+    vertical-align: super;
+    margin-left: 1px;
+    opacity: .75;
+    color: var(--accent-gold);
+  }
+  .v-b4 .dict-term:hover {
+    background: color-mix(in srgb, var(--accent-gold) 10%, transparent);
+  }
+</style>
+</head>
+<body data-theme="dark">
+
+<!-- 工具栏 -->
+<div class="toolbar">
+  <h1>v15 · dict-term 高亮 4 变体 Preview</h1>
+  <div class="theme-switch">
+    <button data-t="dark" class="active">Dark</button>
+    <button data-t="light">Light</button>
+    <button data-t="sepia">Sepia</button>
+  </div>
+</div>
+
+<div class="page">
+
+  <!-- 当前版本 -->
+  <h2 class="section-title">
+    当前版本（虚线 cyan，用户觉得太轻）<span class="section-sub">← 对照基准</span>
+  </h2>
+  <div class="demo-body v-current">
+    <p>
+      <span class="dict-term">Agent Loop</span> 是 Claude 在单次请求内部的自主决策循环，与外部的
+      <span class="dict-term">多轮对话</span> 不同，它在后台静默执行
+      <span class="dict-term">工具调用</span>、
+      <span class="dict-term">文件读写</span> 等操作。每次循环的产出会进入
+      <span class="dict-term">Context Window</span>，供下一轮推理使用。当模型需要处理复杂任务时，
+      <span class="dict-term">Prompt Caching</span> 可以显著降低重复前缀的 token 开销。
+    </p>
+    <p>
+      在 <span class="dict-term">Claude Code</span> 的实现中，
+      <span class="dict-term">子 Agent</span> 机制允许主模型将子任务委派给专门的
+      <span class="dict-term">代码审查</span> 或 <span class="dict-term">安全审计</span> 模型。
+      这种 <span class="dict-term">分而治之</span> 的策略，本质上是一种分布式的
+      <span class="dict-term">认知架构</span>。
+    </p>
+  </div>
+
+  <!-- B1 -->
+  <h2 class="section-title">
+    B1: 暖色实底 chip 内联 <span class="section-sub">inline pill highlight</span>
+  </h2>
+  <div class="demo-body v-b1">
+    <p>
+      <span class="dict-term">Agent Loop</span> 是 Claude 在单次请求内部的自主决策循环，与外部的
+      <span class="dict-term">多轮对话</span> 不同，它在后台静默执行
+      <span class="dict-term">工具调用</span>、
+      <span class="dict-term">文件读写</span> 等操作。每次循环的产出会进入
+      <span class="dict-term">Context Window</span>，供下一轮推理使用。当模型需要处理复杂任务时，
+      <span class="dict-term">Prompt Caching</span> 可以显著降低重复前缀的 token 开销。
+    </p>
+    <p>
+      在 <span class="dict-term">Claude Code</span> 的实现中，
+      <span class="dict-term">子 Agent</span> 机制允许主模型将子任务委派给专门的
+      <span class="dict-term">代码审查</span> 或 <span class="dict-term">安全审计</span> 模型。
+      这种 <span class="dict-term">分而治之</span> 的策略，本质上是一种分布式的
+      <span class="dict-term">认知架构</span>。
+    </p>
+  </div>
+
+  <!-- B2 -->
+  <h2 class="section-title">
+    B2: 暖色波浪线 <span class="section-sub">wavy underline</span>
+  </h2>
+  <div class="demo-body v-b2">
+    <p>
+      <span class="dict-term">Agent Loop</span> 是 Claude 在单次请求内部的自主决策循环，与外部的
+      <span class="dict-term">多轮对话</span> 不同，它在后台静默执行
+      <span class="dict-term">工具调用</span>、
+      <span class="dict-term">文件读写</span> 等操作。每次循环的产出会进入
+      <span class="dict-term">Context Window</span>，供下一轮推理使用。当模型需要处理复杂任务时，
+      <span class="dict-term">Prompt Caching</span> 可以显著降低重复前缀的 token 开销。
+    </p>
+    <p>
+      在 <span class="dict-term">Claude Code</span> 的实现中，
+      <span class="dict-term">子 Agent</span> 机制允许主模型将子任务委派给专门的
+      <span class="dict-term">代码审查</span> 或 <span class="dict-term">安全审计</span> 模型。
+      这种 <span class="dict-term">分而治之</span> 的策略，本质上是一种分布式的
+      <span class="dict-term">认知架构</span>。
+    </p>
+  </div>
+
+  <!-- B3 -->
+  <h2 class="section-title">
+    B3: 暖色实线 2px 下划线 + hover 浅底 <span class="section-sub">solid underline, heavier</span>
+  </h2>
+  <div class="demo-body v-b3">
+    <p>
+      <span class="dict-term">Agent Loop</span> 是 Claude 在单次请求内部的自主决策循环，与外部的
+      <span class="dict-term">多轮对话</span> 不同，它在后台静默执行
+      <span class="dict-term">工具调用</span>、
+      <span class="dict-term">文件读写</span> 等操作。每次循环的产出会进入
+      <span class="dict-term">Context Window</span>，供下一轮推理使用。当模型需要处理复杂任务时，
+      <span class="dict-term">Prompt Caching</span> 可以显著降低重复前缀的 token 开销。
+    </p>
+    <p>
+      在 <span class="dict-term">Claude Code</span> 的实现中，
+      <span class="dict-term">子 Agent</span> 机制允许主模型将子任务委派给专门的
+      <span class="dict-term">代码审查</span> 或 <span class="dict-term">安全审计</span> 模型。
+      这种 <span class="dict-term">分而治之</span> 的策略，本质上是一种分布式的
+      <span class="dict-term">认知架构</span>。
+    </p>
+  </div>
+
+  <!-- B4 -->
+  <h2 class="section-title">
+    B4: 加 ° 上标 + 暖色文字 <span class="section-sub">superscript degree + gold text</span>
+  </h2>
+  <div class="demo-body v-b4">
+    <p>
+      <span class="dict-term">Agent Loop</span> 是 Claude 在单次请求内部的自主决策循环，与外部的
+      <span class="dict-term">多轮对话</span> 不同，它在后台静默执行
+      <span class="dict-term">工具调用</span>、
+      <span class="dict-term">文件读写</span> 等操作。每次循环的产出会进入
+      <span class="dict-term">Context Window</span>，供下一轮推理使用。当模型需要处理复杂任务时，
+      <span class="dict-term">Prompt Caching</span> 可以显著降低重复前缀的 token 开销。
+    </p>
+    <p>
+      在 <span class="dict-term">Claude Code</span> 的实现中，
+      <span class="dict-term">子 Agent</span> 机制允许主模型将子任务委派给专门的
+      <span class="dict-term">代码审查</span> 或 <span class="dict-term">安全审计</span> 模型。
+      这种 <span class="dict-term">分而治之</span> 的策略，本质上是一种分布式的
+      <span class="dict-term">认知架构</span>。
+    </p>
+  </div>
+
+</div>
+
+<script>
+  document.querySelectorAll('.theme-switch button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.theme-switch button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      document.body.setAttribute('data-theme', btn.dataset.t);
+    });
+  });
+</script>
+</body>
+</html>
