@@ -1769,6 +1769,11 @@
   // ===== SHORTCUTS MODAL =====
   const shortcutsBtn = document.getElementById('shortcuts-hint');
   const shortcutsModal = document.getElementById('shortcuts-modal');
+  // v12：齿轮 popover 里的"查看快捷键"按钮也触发同一个 modal
+  const popoverShortcutsBtn = document.getElementById('msp-shortcuts-btn');
+  function openShortcutsModal() {
+    if (shortcutsModal) shortcutsModal.classList.remove('hidden');
+  }
   if (shortcutsBtn && shortcutsModal) {
     shortcutsBtn.addEventListener('click', () => shortcutsModal.classList.toggle('hidden'));
     shortcutsModal.addEventListener('click', (e) => {
@@ -1777,16 +1782,90 @@
       }
     });
   }
+  if (popoverShortcutsBtn) {
+    popoverShortcutsBtn.addEventListener('click', () => {
+      // 关闭 popover + 打开 shortcuts modal
+      const sp = document.getElementById('mobile-settings-popover');
+      if (sp) sp.classList.remove('open');
+      const sb = document.getElementById('mobile-settings-btn');
+      if (sb) sb.setAttribute('aria-expanded', 'false');
+      openShortcutsModal();
+    });
+  }
 
   // ===== READING PROGRESS =====
   const chapterContent = document.getElementById('chapter-content');
   const progressBar = document.getElementById('reading-progress');
+
+  // ===== v12 移动端阅读 FAB（右下三按钮：回顶 / 上一章 / 下一章）=====
+  // 显示时机：reader 视图 + 滚动中 + 非顶非底；静止 1.5s 自动隐藏
+  const readerFabStack = document.getElementById('reader-fab-stack');
+  const fabTopBtn = document.getElementById('rf-top');
+  const fabPrevBtn = document.getElementById('rf-prev');
+  const fabNextBtn = document.getElementById('rf-next');
+  let fabIdleTimer = null;
+  function showFabStack() {
+    if (!readerFabStack) return;
+    if (currentView !== 'reader') return;
+    readerFabStack.classList.add('visible');
+    readerFabStack.setAttribute('aria-hidden', 'false');
+    clearTimeout(fabIdleTimer);
+    fabIdleTimer = setTimeout(hideFabStack, 1500);
+  }
+  function hideFabStack() {
+    if (!readerFabStack) return;
+    readerFabStack.classList.remove('visible');
+    readerFabStack.setAttribute('aria-hidden', 'true');
+    clearTimeout(fabIdleTimer);
+  }
+  function updateFabPrevNextEnabled() {
+    // 复用现有 prev-chapter / next-chapter 的 disabled 状态
+    const realPrev = document.getElementById('prev-chapter');
+    const realNext = document.getElementById('next-chapter');
+    if (fabPrevBtn) fabPrevBtn.disabled = realPrev ? realPrev.disabled : true;
+    if (fabNextBtn) fabNextBtn.disabled = realNext ? realNext.disabled : true;
+  }
+  if (fabTopBtn) {
+    fabTopBtn.addEventListener('click', () => {
+      const sc = document.getElementById('chapter-content');
+      if (sc) sc.scrollTo({ top: 0, behavior: 'smooth' });
+      else window.scrollTo({ top: 0, behavior: 'smooth' });
+      hideFabStack();
+    });
+  }
+  if (fabPrevBtn) {
+    fabPrevBtn.addEventListener('click', () => {
+      const realPrev = document.getElementById('prev-chapter');
+      if (realPrev && !realPrev.disabled) realPrev.click();
+    });
+  }
+  if (fabNextBtn) {
+    fabNextBtn.addEventListener('click', () => {
+      const realNext = document.getElementById('next-chapter');
+      if (realNext && !realNext.disabled) realNext.click();
+    });
+  }
+
   if (chapterContent && progressBar) {
     chapterContent.addEventListener('scroll', () => {
       const { scrollTop, scrollHeight, clientHeight } = chapterContent;
       const pct = scrollHeight <= clientHeight ? 100 : (scrollTop / (scrollHeight - clientHeight)) * 100;
       progressBar.style.width = Math.min(100, pct) + '%';
-    });
+
+      // FAB 显示判定：reader 视图 + 非顶非底（>100px 距顶 + >100px 距底）
+      if (currentView === 'reader' && scrollHeight > clientHeight) {
+        const distFromTop = scrollTop;
+        const distFromBottom = scrollHeight - clientHeight - scrollTop;
+        if (distFromTop > 100 && distFromBottom > 100) {
+          updateFabPrevNextEnabled();
+          showFabStack();
+        } else {
+          hideFabStack();
+        }
+      } else {
+        hideFabStack();
+      }
+    }, { passive: true });
   }
 
   // ===== AGENT LOOP VISUALIZATION =====

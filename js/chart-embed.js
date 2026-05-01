@@ -509,11 +509,10 @@
         iframe.setAttribute('loading', 'lazy');
         iframe.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-popups');
         iframe.setAttribute('title', displayName);
-        // warm 主题下给 iframe 图表加滤镜（方案 B，用户确认颜色 OK）
-        if (document.documentElement.getAttribute('data-theme') === 'warm') {
-          iframe.style.filter = 'invert(0.85) sepia(0.2) saturate(0.7) hue-rotate(10deg) brightness(1.05)';
-          iframe.style.borderRadius = '8px';
-        }
+        // v12（2026-05-01）：移除 warm filter — 用户反馈"色彩蒙层很丑"。
+        //   原 invert(.85) sepia(.2) saturate(.7) 是 hack：把深色图表 hue-rotate 成"看似 warm"
+        //   但实际产生紫蓝偏色。深色图表保持原色嵌入暖色容器靠 chart-embed-container 区分。
+        iframe.style.borderRadius = '8px';
 
         iframe.addEventListener('load', () => {
           iframe.classList.add('is-loaded');

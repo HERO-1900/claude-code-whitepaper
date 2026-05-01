@@ -710,36 +710,41 @@
       : '';
 
     const suppressed = !!entry._suppressed;
-    const copyTitle = en ? 'Copy link' : '复制链接';
+    const shareTitle = en ? 'Copy share link' : '复制分享链接';
+    const shareLabel = en ? 'Share' : '分享';
     return `<article class="dict-card${suppressed ? ' dict-card-suppressed' : ''}" data-id="${escapeHtml(entry.id)}" id="dict-${escapeHtml(entry.id)}">
       <header class="dict-card-head">
         <div class="dict-card-titles">
           <div class="dict-term-primary">${escapeHtml(term1 || '')}</div>
           ${term2 ? `<div class="dict-term-secondary">${escapeHtml(term2)}</div>` : ''}
         </div>
-        <div class="dict-card-badges">
-          <span class="dict-badge dict-cat-badge" style="--chip-color:${catColor};">${escapeHtml(catLabel)}</span>
-          <span class="dict-badge dict-prio-badge prio-${prio}">${escapeHtml(prioLabel)}</span>
-          ${entry.mention_count ? `<span class="dict-badge dict-count-badge" title="${escapeHtml(lab.mention_count.replace('{n}', entry.mention_count))}">×${entry.mention_count}</span>` : ''}
-          ${suppressed ? `<span class="dict-badge dict-supp-badge" title="${en ? 'Conceptual entry — term may not appear verbatim in text' : '正文中未直接出现该字面术语，作概念条目保留'}">${en ? 'Concept' : '概念条'}</span>` : ''}
-        </div>
+        <button class="dict-share-btn" data-id="${escapeHtml(entry.id)}" title="${escapeHtml(shareTitle)}" aria-label="${escapeHtml(shareLabel)}">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+        </button>
       </header>
+
+      <div class="dict-card-tags">
+        <span class="dict-badge dict-cat-badge" style="--chip-color:${catColor};">${escapeHtml(catLabel)}</span>
+        <span class="dict-badge dict-prio-badge prio-${prio}">${escapeHtml(prioLabel)}</span>
+        ${entry.mention_count ? `<span class="dict-badge dict-count-badge" title="${escapeHtml(lab.mention_count.replace('{n}', entry.mention_count))}">×${entry.mention_count}</span>` : ''}
+        ${suppressed ? `<span class="dict-badge dict-supp-badge" title="${en ? 'Conceptual entry — term may not appear verbatim in text' : '正文中未直接出现该字面术语，作概念条目保留'}">${en ? 'Concept' : '概念条'}</span>` : ''}
+      </div>
 
       ${def ? `<p class="dict-def">${escapeHtml(def)}</p>` : ''}
       ${plain ? `<div class="dict-plain">${escapeHtml(plain)}</div>` : ''}
-      ${renderSeeAlsoChips(entry)}
 
       <footer class="dict-card-foot">
         <div class="dict-card-foot-left">
           ${chHTML}
         </div>
         <div class="dict-card-foot-right">
-          <button class="dict-link-btn" data-id="${escapeHtml(entry.id)}" title="${escapeHtml(en ? 'Copy share link' : '复制此词条的分享链接')}" aria-label="${escapeHtml(copyTitle)}">🔗 ${escapeHtml(copyTitle)}</button>
           <button class="dict-fav ${inWordbook ? 'added' : ''}" data-id="${escapeHtml(entry.id)}">
             ${inWordbook ? lab.added_wordbook : lab.add_wordbook}
           </button>
         </div>
       </footer>
+
+      ${renderSeeAlsoChips(entry)}
     </article>`;
   }
 
@@ -799,7 +804,7 @@
     });
 
     // wire up 复制链接（B9 deep-link）
-    listEl.querySelectorAll('.dict-link-btn').forEach(btn => {
+    listEl.querySelectorAll('.dict-share-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
         e.stopPropagation();
         const id = btn.dataset.id;

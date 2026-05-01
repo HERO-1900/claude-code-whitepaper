@@ -1271,6 +1271,15 @@
         </button>
       </div>
     </div>
+    <!-- 5. 键盘快捷键 / Keyboard Shortcuts（v12：从顶栏移到这里） -->
+    <div class="msp-row" id="msp-shortcuts-row">
+      <span class="msp-label">快捷键 <span class="msp-label-en">Shortcuts</span></span>
+      <div class="msp-control">
+        <button class="msp-toggle" id="msp-shortcuts-btn" aria-label="打开键盘快捷键说明">
+          <span class="msp-toggle-zh">查看</span> <span class="msp-toggle-en">View</span>
+        </button>
+      </div>
+    </div>
   </div>
 
   <!-- ==================== Mobile Nav Drawer (≤600px 才显示) ====================
@@ -1312,6 +1321,20 @@
   <div id="mobile-toc-backdrop" class="mobile-toc-backdrop" aria-hidden="true"></div>
 
   <!-- v10: FAB 已移除（用户反馈不要悬浮形式），目录入口回归顶栏左侧 ☰ -->
+
+  <!-- v12: 移动端右下三悬浮按钮（reader 视图、滚动中、非顶非底时显示）
+       上：回顶 / 中：上一章 / 下：下一章 -->
+  <div id="reader-fab-stack" class="reader-fab-stack" aria-hidden="true">
+    <button class="rf-btn rf-top" id="rf-top" aria-label="回到顶部" title="回到顶部">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="18 15 12 9 6 15"/></svg>
+    </button>
+    <button class="rf-btn rf-prev" id="rf-prev" aria-label="上一章" title="上一章">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+    </button>
+    <button class="rf-btn rf-next" id="rf-next" aria-label="下一章" title="下一章">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"/></svg>
+    </button>
+  </div>
 
   <!-- Keyboard shortcuts modal -->
   <div id="shortcuts-modal" class="shortcuts-modal hidden">
@@ -1710,22 +1733,18 @@
       function buildSwitcherHTML() {
         var isEn = false;
         try { isEn = (localStorage.getItem('cc-locale')||'zh')==='en'; } catch(e) {}
-        // v11：用户反馈"📖🌙☀️ 大家看不懂"，改用文字（中文：暖/浅/深；英文：Warm/Light/Dark），
-        //      auto 模式整体废弃（用户拍板只保留 3 种）。
+        // v12：用户反馈"暖/浅/深 中文字英文用户看不懂"，改成三色色块（语言无关）：
+        //   warm 米色 / light 白色 / dark 深灰。aria-label 保留语义，悬停 title 提示。
         var L = isEn
           ? { box: 'Theme', boxAria: 'Theme switcher',
-              warm: 'Editorial', warmLabel: 'Warm',
-              dark: 'Dark', darkLabel: 'Dark',
-              light: 'Light', lightLabel: 'Light' }
+              warm: 'Warm (Editorial)', dark: 'Dark', light: 'Light' }
           : { box: '主题', boxAria: '主题切换器',
-              warm: '暖色（编辑感）', warmLabel: '暖',
-              dark: '深色', darkLabel: '深',
-              light: '浅色', lightLabel: '浅' };
+              warm: '暖色（编辑感）', dark: '深色', light: '浅色' };
         return [
           '<div class="cc-theme-switcher" title="'+L.box+'" aria-label="'+L.boxAria+'">',
-          '  <button class="cc-theme-btn" data-theme="warm"  title="'+L.warm+'" aria-label="'+L.warm+'">'+L.warmLabel+'</button>',
-          '  <button class="cc-theme-btn" data-theme="light" title="'+L.light+'" aria-label="'+L.light+'">'+L.lightLabel+'</button>',
-          '  <button class="cc-theme-btn" data-theme="dark"  title="'+L.dark+'" aria-label="'+L.dark+'">'+L.darkLabel+'</button>',
+          '  <button class="cc-theme-btn" data-theme="warm"  title="'+L.warm+'" aria-label="'+L.warm+'"><span class="theme-swatch swatch-warm"></span></button>',
+          '  <button class="cc-theme-btn" data-theme="light" title="'+L.light+'" aria-label="'+L.light+'"><span class="theme-swatch swatch-light"></span></button>',
+          '  <button class="cc-theme-btn" data-theme="dark"  title="'+L.dark+'" aria-label="'+L.dark+'"><span class="theme-swatch swatch-dark"></span></button>',
           '</div>'
         ].join('');
       }
