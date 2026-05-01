@@ -6947,8 +6947,8 @@ body.cc-lang-switching .cc-lang-btn {
 .dict-stat-num { color: var(--text-primary); font-weight: 700; font-size: 1.05rem; }
 .dict-desc {
   color: var(--text-secondary);
-  font-size: .92rem;
-  line-height: 1.6;
+  font-size: 1rem;
+  line-height: 1.65;
   max-width: 80ch;
 }
 
@@ -7429,7 +7429,7 @@ body.cc-lang-switching .cc-lang-btn {
   color: var(--text-primary);
   padding: .55rem .85rem;
   border-radius: .5rem;
-  font-size: .92rem;
+  font-size: 14px;
   outline: none;
   transition: border-color .2s, box-shadow .2s;
 }
@@ -7442,9 +7442,9 @@ body.cc-lang-switching .cc-lang-btn {
   background: var(--bg-card);
   border: 1px solid var(--border);
   color: var(--text-primary);
-  padding: .55rem .85rem;
+  padding: .6rem .85rem;
   border-radius: .5rem;
-  font-size: .9rem;
+  font-size: 13px;
   cursor: pointer;
   outline: none;
 }
@@ -7460,9 +7460,9 @@ body.cc-lang-switching .cc-lang-btn {
   background: var(--bg-card);
   border: 1px solid var(--border);
   color: var(--text-secondary);
-  padding: .35rem .7rem;
+  padding: .28rem .6rem;
   border-radius: 999px;
-  font-size: .8rem;
+  font-size: 13px;
   cursor: pointer;
   transition: all .15s;
   display: inline-flex; align-items: center; gap: .35rem;

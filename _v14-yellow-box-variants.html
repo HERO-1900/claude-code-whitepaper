@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dict 卡片「通俗理解」黄色框 4 种替代方案</title>
+  <style>
+    /* ============================================================
+       三主题变量（精简自 tokens.css，仅保留本页所需）
+       ============================================================ */
+    :root {
+      --accent-gold: #ffd93d;
+      --bg-primary: #0a0e17;
+      --bg-secondary: #0d1520;
+      --bg-card: #111827;
+      --bg-hover: #1a2332;
+      --border: #1e2d42;
+      --text-primary: #e0e6ed;
+      --text-secondary: #8a9bb5;
+      --text-muted: #4a5568;
+      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", system-ui, sans-serif;
+    }
+    [data-theme="light"] {
+      --accent-gold: #c8900a;
+      --bg-primary: #f8f9fc;
+      --bg-secondary: #f0f2f7;
+      --bg-card: #ffffff;
+      --bg-hover: #e8ecf4;
+      --border: #d0d7e8;
+      --text-primary: #1a2035;
+      --text-secondary: #4a5878;
+      --text-muted: #7a8ba8;
+    }
+    [data-theme="warm"] {
+      --accent-gold: #c8900a;
+      --bg-primary: #f5f2ed;
+      --bg-secondary: #efeae1;
+      --bg-card: #fbf9f4;
+      --bg-hover: #e8e1d2;
+      --border: #d8cfbc;
+      --text-primary: #2b2a27;
+      --text-secondary: #6b5d4a;
+      --text-muted: #9a8b76;
+    }
+
+    html, body {
+      margin: 0; padding: 0;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-family: var(--font-sans);
+      font-size: 16px;
+      line-height: 1.6;
+    }
+
+    /* ===== 页面框架 ===== */
+    .page-wrap {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem 4rem;
+    }
+    h1 {
+      font-size: 1.6rem;
+      margin: 0 0 .5rem;
+      color: var(--accent-gold);
+    }
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: .95rem;
+      margin-bottom: 1.25rem;
+    }
+    .notice {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: .5rem;
+      padding: .75rem 1rem;
+      font-size: .9rem;
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    /* ===== 主题切换器 ===== */
+    .theme-bar {
+      display: flex;
+      gap: .5rem;
+      margin-bottom: 2rem;
+      align-items: center;
+    }
+    .theme-bar label {
+      font-size: .85rem;
+      color: var(--text-muted);
+      margin-right: .25rem;
+    }
+    .theme-btn {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      color: var(--text-secondary);
+      padding: .35rem .9rem;
+      border-radius: .4rem;
+      font-size: .85rem;
+      cursor: pointer;
+      transition: all .15s;
+    }
+    .theme-btn:hover { color: var(--text-primary); border-color: var(--text-muted); }
+    .theme-btn.active {
+      background: color-mix(in srgb, var(--accent-gold) 12%, transparent);
+      border-color: var(--accent-gold);
+      color: var(--text-primary);
+    }
+
+    /* ===== Variant 区块 ===== */
+    .variant-section {
+      margin-bottom: 2.5rem;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: .6rem;
+      padding: 1.25rem 1.25rem .75rem;
+    }
+    .variant-label {
+      font-size: .8rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .04em;
+      color: var(--accent-gold);
+      margin-bottom: .25rem;
+    }
+    .variant-name {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin: 0 0 .15rem;
+    }
+    .variant-desc {
+      font-size: .85rem;
+      color: var(--text-secondary);
+      margin: 0 0 1rem;
+    }
+    .cards-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 1rem;
+    }
+
+    /* ===== 字典卡片基础 ===== */
+    .dict-card {
+      background: var(--bg-primary);
+      border: 1px solid var(--border);
+      border-radius: .5rem;
+      padding: 1rem;
+    }
+    .dict-card-head {
+      display: flex; justify-content: space-between; align-items: baseline;
+      margin-bottom: .4rem;
+    }
+    .dict-term {
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .dict-cat {
+      font-size: .75rem;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      padding: .1rem .5rem;
+      border-radius: 999px;
+    }
+    .dict-def {
+      color: var(--text-secondary);
+      font-size: .88rem;
+      line-height: 1.6;
+      margin: 0 0 .6rem;
+    }
+
+    /* ===== 当前线上版本（Baseline） ===== */
+    .v-baseline {
+      background: color-mix(in srgb, var(--accent-gold) 10%, transparent);
+      border-left: 3px solid var(--accent-gold);
+      padding: .55rem .75rem;
+      border-radius: 0 .4rem .4rem 0;
+      font-size: .85rem;
+      line-height: 1.55;
+      color: var(--text-primary);
+    }
+
+    /* ===== Variant 1: 极淡黄底 + 无边框 ===== */
+    .v1 {
+      background: color-mix(in srgb, var(--accent-gold) 4%, transparent);
+      padding: .55rem .75rem;
+      border-radius: .4rem;
+      font-size: .85rem;
+      line-height: 1.55;
+      color: var(--text-primary);
+    }
+
+    /* ===== Variant 2: 灰底引文风 ===== */
+    .v2 {
+      background: var(--bg-hover);
+      border-left: 2px solid var(--border);
+      padding: .55rem .75rem;
+      border-radius: 0 .4rem .4rem 0;
+      font-size: .85rem;
+      line-height: 1.55;
+      color: var(--text-primary);
+    }
+
+    /* ===== Variant 3: 无背景 italic ===== */
+    .v3 {
+      padding: .2rem 0 .2rem 1rem;
+      font-size: .85rem;
+      line-height: 1.55;
+      color: var(--text-secondary);
+      font-style: italic;
+      border-left: 2px solid transparent;
+    }
+    .v3::before {
+      content: "💡 ";
+      font-style: normal;
+      color: var(--accent-gold);
+    }
+
+    /* ===== Variant 4: badge 前缀 ===== */
+    .v4-wrap { }
+    .v4-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: .25rem;
+      font-size: .72rem;
+      font-weight: 600;
+      letter-spacing: .02em;
+      color: var(--accent-gold);
+      background: color-mix(in srgb, var(--accent-gold) 8%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent-gold) 20%, transparent);
+      padding: .18rem .55rem;
+      border-radius: 999px;
+      margin-bottom: .35rem;
+    }
+    .v4-text {
+      font-size: .85rem;
+      line-height: 1.55;
+      color: var(--text-secondary);
+      padding-left: .1rem;
+    }
+
+    /* warm 主题下 dict-plain 覆盖（与线上保持一致） */
+    [data-theme="warm"] .v-baseline {
+      background: rgba(199,125,46,.10);
+    }
+    [data-theme="warm"] .v1 {
+      background: rgba(199,125,46,.04);
+    }
+    [data-theme="warm"] .v4-badge {
+      background: rgba(199,125,46,.08);
+      border-color: rgba(199,125,46,.18);
+    }
+  </style>
+</head>
+<body>
+  <div class="page-wrap">
+    <h1>Dict 卡片「通俗理解」黄色框 4 种替代方案</h1>
+    <p class="subtitle">当前线上的版本（黄色填充）放在最上面做对比，下面 4 个 variant 名称清楚标注。</p>
+
+    <div class="theme-bar">
+      <label>主题预览：</label>
+      <button class="theme-btn active" data-theme="dark" onclick="setTheme('dark')">Dark</button>
+      <button class="theme-btn" data-theme="light" onclick="setTheme('light')">Light</button>
+      <button class="theme-btn" data-theme="warm" onclick="setTheme('warm')">Warm</button>
+    </div>
+
+    <!-- Baseline: 当前线上 -->
+    <div class="variant-section">
+      <div class="variant-label">Baseline</div>
+      <div class="variant-name">当前线上版本（黄色填充 + 左边 3px 金条）</div>
+      <div class="variant-desc">.dict-plain { background: color-mix(in srgb, var(--accent-gold) 10%, transparent); border-left: 3px solid var(--accent-gold); }</div>
+      <div class="cards-row">
+        <div class="dict-card">
+          <div class="dict-card-head"><span class="dict-term">Agent Loop</span><span class="dict-cat">核心概念</span></div>
+          <p class="dict-def">Claude Code 的核心执行循环，由「读取 → 思考 → 行动 → 观察」四步组成。</p>
+          <div class="v-baseline">💡 想象一个厨师在厨房工作：先扫一眼订单（读取），想做什么菜（思考），动手切炒（行动），然后尝一口看咸淡（观察），周而复始。</div>
+        </div>
+        <div class="dict-card">
+          <div class="dict-card-head"><span class="dict-term">Tool Use</span><span class="dict-cat">能力机制</span></div>
+          <p class="dict-def">LLM 通过结构化输出调用外部工具（如文件读写、终端命令、网络请求）的能力。</p>
+          <div class="v-baseline">💡 就像你请了一位翻译官，但他不会亲自开车——他会写一张纸条给司机（调用工具），司机照做后回来汇报结果。</div>
+        </div>
+        <div class="dict-card">
+          <div class="dict-card-head"><span class="dict-term">Context Window</span><span class="dict-cat">模型参数</span></div>
+          <p class="dict-def">LLM 单次推理时可处理的最大 token 数量，决定了「同时记住多少信息」的上限。</p>
+          <div class="v-baseline">💡 好比考试时的草稿纸面积。纸越大，你能同时写下和参考的公式、步骤就越多；纸小了就得边写边擦。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Variant 1 -->
+    <div class="variant-section">
+      <div class="variant-label">Variant 1</div>
+      <div class="variant-name">极淡黄底 + 无边框</div>
+      <div class="variant-desc">把当前 10% 暖底降到 4%，去掉左边 3px 金色 bar。保留圆角，视觉上轻很多。</div>
+      <div class="cards-row">
+        <div class="dict-card">
+          <div class="dict-card-head"><span class="dict-term">Agent Loop</span><span class="dict-cat">核心概念</span></div>
+          <p class="dict-def">Claude Code 的核心执行循环，由「读取 → 思考 → 行动 → 观察」四步组成。</p>
+          <div class="v1">💡 想象一个厨师在厨房工作：先扫一眼订单（读取），想做什么菜（思考），动手切炒（行动），然后尝一口看咸淡（观察），周而复始。</div>
+        </div>
+        <div class="dict-card">
+          <div class="dict-card-head"><span class="dict-term">Tool Use</span><span class="dict-cat">能力机制</span></div>
+          <p class="dict-def">LLM 通过结构化输出调用外部工具（如文件读写、终端命令、网络请求）的能力。</p>
+          <div class="v1">💡 就像你请了一位翻译官，但他不会亲自开车——他会写一张纸条给司机（调用工具），司机照做后回来汇报结果。</div>
+        </div>
+        <div class="dict-card">
+          <div class="dict-card-head"><span class="dict-term">Context Window</span><span class="dict-cat">模型参数</span></div>
+          <p class="dict-def">LLM 单次推理时可处理的最大 token 数量，决定了「同时记住多少信息」的上限。</p>
+          <div class="v1">💡 好比考试时的草稿纸面积。纸越大，你能同时写下和参考的公式、步骤就越多；纸小了就得边写边擦。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Variant 2 -->
+    <div class="variant-section">
+      <div class="variant-label">Variant 2</div>
+      <div class="variant-name">灰底引文风</div>
+      <div class="variant-desc">中性 bg-hover 灰底 + 左边 2px 浅色 bar，像 GitHub blockquote。彻底去黄，完全融入卡片。</div>
+      <div class="cards-row">
+        <div class="dict-card">
+          <div class="dict-card-head"><span class="dict-term">Agent Loop</span><span class="dict-cat">核心概念</span></div>
+          <p class="dict-def">Claude Code 的核心执行循环，由「读取 → 思考 → 行动 → 观察」四步组成。</p>
+          <div class="v2">💡 想象一个厨师在厨房工作：先扫一眼订单（读取），想做什么菜（思考），动手切炒（行动），然后尝一口看咸淡（观察），周而复始。</div>
+        </div>
+        <div class="dict-card">
+          <div class="dict-card-head"><span class="dict-term">Tool Use</span><span class="dict-cat">能力机制</span></div>
+          <p class="dict-def">LLM 通过结构化输出调用外部工具（如文件读写、终端命令、网络请求）的能力。</p>
+          <div class="v2">💡 就像你请了一位翻译官，但他不会亲自开车——他会写一张纸条给司机（调用工具），司机照做后回来汇报结果。</div>
+        </div>
+        <div class="dict-card">
+          <div class="dict-card-head"><span class="dict-term">Context Window</span><span class="dict-cat">模型参数</span></div>
+          <p class="dict-def">LLM 单次推理时可处理的最大 token 数量，决定了「同时记住多少信息」的上限。</p>
+          <div class="v2">💡 好比考试时的草稿纸面积。纸越大，你能同时写下和参考的公式、步骤就越多；纸小了就得边写边擦。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Variant 3 -->
+    <div class="variant-section">
+      <div class="variant-label">Variant 3</div>
+      <div class="variant-name">无背景 italic</div>
+      <div class="variant-desc">不要 bg / border，用 italic 字体 + 缩进 + 前缀「💡」。最轻量级，纯排版区分。</div>
+      <div class="cards-row">
+        <div class="dict-card">
+          <div class="dict-card-head"><span class="dict-term">Agent Loop</span><span class="dict-cat">核心概念</span></div>
+          <p class="dict-def">Claude Code 的核心执行循环，由「读取 → 思考 → 行动 → 观察」四步组成。</p>
+          <div class="v3">想象一个厨师在厨房工作：先扫一眼订单（读取），想做什么菜（思考），动手切炒（行动），然后尝一口看咸淡（观察），周而复始。</div>
+        </div>
+        <div class="dict-card">
+          <div class="dict-card-head"><span class="dict-term">Tool Use</span><span class="dict-cat">能力机制</span></div>
+          <p class="dict-def">LLM 通过结构化输出调用外部工具（如文件读写、终端命令、网络请求）的能力。</p>
+          <div class="v3">就像你请了一位翻译官，但他不会亲自开车——他会写一张纸条给司机（调用工具），司机照做后回来汇报结果。</div>
+        </div>
+        <div class="dict-card">
+          <div class="dict-card-head"><span class="dict-term">Context Window</span><span class="dict-cat">模型参数</span></div>
+          <p class="dict-def">LLM 单次推理时可处理的最大 token 数量，决定了「同时记住多少信息」的上限。</p>
+          <div class="v3">好比考试时的草稿纸面积。纸越大，你能同时写下和参考的公式、步骤就越多；纸小了就得边写边擦。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Variant 4 -->
+    <div class="variant-section">
+      <div class="variant-label">Variant 4</div>
+      <div class="variant-name">Badge 前缀</div>
+      <div class="variant-desc">顶部一个小「💡 通俗理解」圆角 chip badge（warm tint），下面正文无 bg、普通段落。把「标签感」和「内容感」分离。</div>
+      <div class="cards-row">
+        <div class="dict-card">
+          <div class="dict-card-head"><span class="dict-term">Agent Loop</span><span class="dict-cat">核心概念</span></div>
+          <p class="dict-def">Claude Code 的核心执行循环，由「读取 → 思考 → 行动 → 观察」四步组成。</p>
+          <div class="v4-wrap">
+            <div class="v4-badge">💡 通俗理解</div>
+            <div class="v4-text">想象一个厨师在厨房工作：先扫一眼订单（读取），想做什么菜（思考），动手切炒（行动），然后尝一口看咸淡（观察），周而复始。</div>
+          </div>
+        </div>
+        <div class="dict-card">
+          <div class="dict-card-head"><span class="dict-term">Tool Use</span><span class="dict-cat">能力机制</span></div>
+          <p class="dict-def">LLM 通过结构化输出调用外部工具（如文件读写、终端命令、网络请求）的能力。</p>
+          <div class="v4-wrap">
+            <div class="v4-badge">💡 通俗理解</div>
+            <div class="v4-text">就像你请了一位翻译官，但他不会亲自开车——他会写一张纸条给司机（调用工具），司机照做后回来汇报结果。</div>
+          </div>
+        </div>
+        <div class="dict-card">
+          <div class="dict-card-head"><span class="dict-term">Context Window</span><span class="dict-cat">模型参数</span></div>
+          <p class="dict-def">LLM 单次推理时可处理的最大 token 数量，决定了「同时记住多少信息」的上限。</p>
+          <div class="v4-wrap">
+            <div class="v4-badge">💡 通俗理解</div>
+            <div class="v4-text">好比考试时的草稿纸面积。纸越大，你能同时写下和参考的公式、步骤就越多；纸小了就得边写边擦。</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function setTheme(t) {
+      document.documentElement.setAttribute('data-theme', t);
+      document.querySelectorAll('.theme-btn').forEach(b => b.classList.toggle('active', b.dataset.theme === t));
+    }
+  </script>
+</body>
+</html>
