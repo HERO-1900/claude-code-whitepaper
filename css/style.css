@@ -2925,23 +2925,28 @@ pre:hover .copy-btn,
   /* v7：移动端中央改放 4 视图 tab，breadcrumb 整体隐藏 */
   #topnav #breadcrumb { display: none !important; }
 
-  /* v7：4 视图顶栏 tab — 紧凑文字 + 下划线 active 指示，居中铺满 nav-center */
+  /* v7：4 视图顶栏 tab — 44px 触控段控，active 用胶囊底色避免下划线切字 */
   #mobile-view-tabs {
     display: flex !important;
     flex: 1;
-    align-items: stretch;
+    align-items: center;
     justify-content: center;
-    gap: 0;
-    height: 100%;
+    gap: 4px;
+    height: 44px;
     min-width: 0;
+    padding: 2px;
+    border-radius: 12px;
   }
   #mobile-view-tabs .mvt-tab {
     flex: 1;
     min-width: 0;
     background: transparent;
     border: 0;
-    padding: 0 4px;
-    font-size: 13.5px;
+    min-height: 44px;
+    height: 44px;
+    padding: 0 5px;
+    border-radius: 10px;
+    font-size: 12.5px;
     font-weight: 500;
     color: var(--text-muted);
     cursor: pointer;
@@ -2954,20 +2959,25 @@ pre:hover .copy-btn,
     -webkit-tap-highlight-color: transparent;
   }
   #mobile-view-tabs .mvt-tab.is-active {
-    color: var(--text-primary);
+    background: var(--gold-soft, rgba(199,125,46,.14));
+    color: var(--accent-gold, #c77d2e);
     font-weight: 600;
   }
   #mobile-view-tabs .mvt-tab.is-active::after {
-    content: '';
-    position: absolute;
-    bottom: 6px; left: 50%;
-    transform: translateX(-50%);
-    width: 22px; height: 2px;
-    background: var(--accent-gold, #c77d2e);
-    border-radius: 1px;
+    content: none;
+    display: none;
   }
   #mobile-view-tabs .mvt-tab:active {
     color: var(--text-primary);
+    background: var(--bg-hover);
+  }
+  [data-theme="dark"] #mobile-view-tabs .mvt-tab.is-active {
+    background: rgba(251,191,36,.14);
+    color: #fbbf24;
+  }
+  [data-theme="light"] #mobile-view-tabs .mvt-tab.is-active {
+    background: rgba(199,125,46,.12);
+    color: #9a5a1d;
   }
   /* 主题切换 / 中英切换 / 元喻 / 版本 / 快捷键 / 词典高亮开关 全部进齿轮 popover，顶栏不暴露 */
   #topnav .metaphor-toggle,
@@ -8661,15 +8671,39 @@ body.cc-lang-switching .cc-lang-btn {
   /* v6 sidebar 内容迁入抽屉时：隐藏 sidebar 自带的 "目录" h2（避免与上方导航
      形成视觉重复 — 用户反馈 "中间是目录分级，下面又是目录"）。搜索框保留。 */
   .mnd-toc-body .sidebar-header h2 { display: none !important; }
-  .mnd-toc-body .sidebar-header { margin: 4px 8px 8px; }
+  .mnd-toc-body .sidebar-header { margin: 2px 8px 4px; }
   .mnd-toc-body #toc-search {
-    width: calc(100% - 4px);
-    padding: 8px 10px;
+    width: 100%;
+    height: 30px;
+    margin-top: 0;
+    padding: 5px 8px;
     border: 1px solid var(--border);
-    border-radius: 8px;
-    background: var(--bg-card, #fff);
+    border-radius: 7px;
+    background: var(--bg-primary, var(--bg-card, #fff));
     color: var(--text-primary);
-    font-size: 13px;
+    font-size: 12px;
+    line-height: 1.2;
+  }
+  .mnd-toc-body .toc-filter-bar {
+    flex-wrap: nowrap;
+    gap: 4px;
+    margin: 3px 8px 8px;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .mnd-toc-body .toc-filter-bar::-webkit-scrollbar {
+    display: none;
+  }
+  .mnd-toc-body .toc-filter {
+    flex: 0 0 auto;
+    min-height: 26px;
+    padding: 0 7px;
+    border-radius: 999px;
+    font-size: 10.5px;
+    font-weight: 600;
+    line-height: 1;
+    white-space: nowrap;
   }
   /* sidebar 内容迁入抽屉时的 reader 章节列表样式调整 — 紧凑 */
   .mnd-toc-body .toc-chapter,
