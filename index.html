@@ -1795,6 +1795,15 @@
         bindEvents();
         bindStorageSync();
         bindSystemPreferenceChange();
+        // v14：locale 切换时重建 switcher（修复"切到 EN 仍显示中文"的 bug —
+        //   buildSwitcherHTML 的 isEn 在 init 时计算一次，不会自动 reactive）
+        window.addEventListener('cc-locale-change', function() {
+          var old = document.querySelector('.cc-theme-switcher');
+          if (old && old.parentNode) old.parentNode.removeChild(old);
+          injectSwitcher();
+          var t = localStorage.getItem('cc-theme') || 'warm';
+          updateSwitcherUI(t);
+        });
       }
 
       // DOM Ready 后执行

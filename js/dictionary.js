@@ -662,26 +662,26 @@
     });
   }
 
-  // B10 · see_also chips + 关系图按钮
-  // v13：换 label "🔗 关联" → "相关词条"（带 SVG bullet）；🕸️ → 3 节点 SVG
+  // B10 · 关联段：v14 三行布局 — Label / Chips / Graph button 各自独占一行
+  //   用户最后一次机会：label 不再和 chips 同一行；graph 按钮固定在底部右
   function renderSeeAlsoChips(entry) {
     const see = (entry.see_also || []).filter(id => entries.find(e => e.id === id && !e._suppressed));
-    if (!see.length) return '';
     const en = isEn();
+    if (!see.length) return '';
     const labelText = en ? 'Related' : '相关词条';
-    // 小三角 bullet SVG，比 🔗 emoji 精致
-    const labelIcon = '<svg class="dict-seealso-bullet" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true"><path d="M3 2 L9 6 L3 10 Z" fill="currentColor"/></svg>';
-    const label = `<span class="dict-seealso-label">${labelIcon}<span>${labelText}</span></span>`;
-    const chips = see.slice(0, 6).map(id => {
+    const chips = see.slice(0, 8).map(id => {
       const e = entries.find(x => x.id === id);
       const txt = e ? (en ? (e.term_en || e.term_zh) : (e.term_zh || e.term_en)) : id;
       return `<a class="dict-seealso-chip" href="#dict-${escapeHtml(id)}" data-dict-id="${escapeHtml(id)}">${escapeHtml(txt || id)}</a>`;
     }).join('');
-    const more = see.length > 6 ? `<span class="dict-seealso-more">+${see.length - 6}</span>` : '';
-    // 节点图 SVG（3 圆点 + 2 连线），替代 🕸️ 蜘蛛网
+    const more = see.length > 8 ? `<span class="dict-seealso-more">+${see.length - 8}</span>` : '';
     const graphIcon = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="6" cy="6" r="2"/><circle cx="18" cy="6" r="2"/><circle cx="12" cy="18" r="2"/><line x1="7.5" y1="7.5" x2="11" y2="16"/><line x1="16.5" y1="7.5" x2="13" y2="16"/></svg>';
-    const graphBtn = `<button class="dict-graph-btn" data-id="${escapeHtml(entry.id)}" title="${en ? 'Show concept map' : '展开关系图'}">${graphIcon}<span>${escapeHtml(en ? 'Map' : '关系图')}</span></button>`;
-    return `<div class="dict-seealso">${label}<div class="dict-seealso-chips">${chips}${more}${graphBtn}</div></div>`;
+    const graphBtn = `<button class="dict-graph-btn" data-id="${escapeHtml(entry.id)}" title="${en ? 'Show concept map' : '展开关系图'}">${graphIcon}<span>${escapeHtml(en ? 'View map' : '查看关系图')}</span></button>`;
+    return `<section class="dict-seealso">
+      <div class="dict-seealso-label">${labelText}</div>
+      <div class="dict-seealso-chips">${chips}${more}</div>
+      <div class="dict-seealso-graph-row">${graphBtn}</div>
+    </section>`;
   }
 
   function renderCard(entry) {
@@ -718,15 +718,27 @@
     const suppressed = !!entry._suppressed;
     const shareTitle = en ? 'Copy share link' : '复制分享链接';
     const shareLabel = en ? 'Share' : '分享';
+    const favTitleAdded = en ? 'Remove from wordbook' : '从生词本移除';
+    const favTitle = en ? 'Add to wordbook' : '加入生词本';
+    // v14：右上角 share + 收藏星 并列；删 footer 加入生词本（移到 header）
+    //      star 状态：未收藏 = 线框轮廓；已收藏 = 实心金色填充
+    const starIcon = inWordbook
+      ? '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15 9 22 10 17 15 18 22 12 19 6 22 7 15 2 10 9 9 12 2"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15 9 22 10 17 15 18 22 12 19 6 22 7 15 2 10 9 9 12 2"/></svg>';
     return `<article class="dict-card${suppressed ? ' dict-card-suppressed' : ''}" data-id="${escapeHtml(entry.id)}" id="dict-${escapeHtml(entry.id)}">
       <header class="dict-card-head">
         <div class="dict-card-titles">
           <div class="dict-term-primary">${escapeHtml(term1 || '')}</div>
           ${term2 ? `<div class="dict-term-secondary">${escapeHtml(term2)}</div>` : ''}
         </div>
-        <button class="dict-share-btn" data-id="${escapeHtml(entry.id)}" title="${escapeHtml(shareTitle)}" aria-label="${escapeHtml(shareLabel)}">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
-        </button>
+        <div class="dict-card-actions">
+          <button class="dict-share-btn" data-id="${escapeHtml(entry.id)}" title="${escapeHtml(shareTitle)}" aria-label="${escapeHtml(shareLabel)}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 12v7a2 2 0 002 2h12a2 2 0 002-2v-7"/><polyline points="16 6 12 2 8 6"/><line x1="12" y1="2" x2="12" y2="15"/></svg>
+          </button>
+          <button class="dict-fav-star ${inWordbook ? 'added' : ''}" data-id="${escapeHtml(entry.id)}" title="${escapeHtml(inWordbook ? favTitleAdded : favTitle)}" aria-label="${escapeHtml(inWordbook ? favTitleAdded : favTitle)}" aria-pressed="${inWordbook ? 'true' : 'false'}">
+            ${starIcon}
+          </button>
+        </div>
       </header>
 
       <div class="dict-card-tags">
@@ -741,18 +753,9 @@
         ${plain ? `<div class="dict-plain">${escapeHtml(plain)}</div>` : ''}
       </div>
 
-      ${renderSeeAlsoChips(entry)}
+      ${chHTML ? `<div class="dict-card-jump">${chHTML}</div>` : ''}
 
-      <footer class="dict-card-foot">
-        <div class="dict-card-foot-left">
-          ${chHTML}
-        </div>
-        <div class="dict-card-foot-right">
-          <button class="dict-fav ${inWordbook ? 'added' : ''}" data-id="${escapeHtml(entry.id)}">
-            ${inWordbook ? lab.added_wordbook : lab.add_wordbook}
-          </button>
-        </div>
-      </footer>
+      ${renderSeeAlsoChips(entry)}
     </article>`;
   }
 
@@ -852,16 +855,29 @@
       });
     });
 
-    // wire up wordbook toggle
-    listEl.querySelectorAll('.dict-fav').forEach(btn => {
+    // wire up wordbook toggle (v14: .dict-fav-star icon button at header right)
+    listEl.querySelectorAll('.dict-fav-star, .dict-fav').forEach(btn => {
       btn.addEventListener('click', () => {
         const id = btn.dataset.id;
         const added = toggleWordbook(id);
         btn.classList.toggle('added', added);
-        btn.textContent = added ? L().added_wordbook : L().add_wordbook;
-        // 即时刷新顶部生词本徽章计数（用户反馈需要立刻跳动）
+        btn.setAttribute('aria-pressed', added ? 'true' : 'false');
+        const en = isEn();
+        const title = added
+          ? (en ? 'Remove from wordbook' : '从生词本移除')
+          : (en ? 'Add to wordbook' : '加入生词本');
+        btn.title = title;
+        btn.setAttribute('aria-label', title);
+        // v14: 切换 SVG 填充态（实心 vs 线框）
+        if (btn.classList.contains('dict-fav-star')) {
+          btn.innerHTML = added
+            ? '<svg viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15 9 22 10 17 15 18 22 12 19 6 22 7 15 2 10 9 9 12 2"/></svg>'
+            : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polygon points="12 2 15 9 22 10 17 15 18 22 12 19 6 22 7 15 2 10 9 9 12 2"/></svg>';
+        } else {
+          // 兼容：旧 .dict-fav 文字按钮（如生词本视图） — 仍刷新文本
+          btn.textContent = added ? L().added_wordbook : L().add_wordbook;
+        }
         refreshWordbookBadge();
-        // 通知其他组件（章节内 popup / annotator）— 用 storage 事件 + 自定义事件
         try { window.dispatchEvent(new CustomEvent('cc-wordbook-changed', { detail: { id, added }})); } catch(e){}
       });
     });

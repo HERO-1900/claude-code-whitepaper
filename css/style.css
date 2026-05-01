@@ -7165,37 +7165,34 @@ body.cc-lang-switching .cc-lang-btn {
 }
 
 /* ===== B10 · see_also chips + concept map overlay ===== */
-/* ===== v13 重写：seealso 单行布局，颜色统一暖色系（不再蓝色乱入），label/chips/graph-btn 同基线 ===== */
+/* ===== v14 重写：seealso 三行布局（label / chips / graph-btn 各自独立）
+   删除所有 border-top 横线；用纯空间区分层级 ===== */
 .dict-seealso {
   display: flex;
-  align-items: center;
-  gap: 8px;
-  margin: .55rem 0 4px;
-  padding-top: .55rem;
-  border-top: 1px solid var(--border);
+  flex-direction: column;
+  gap: 6px;
+  margin-top: .9rem;
+  padding-top: 0;
+  border-top: 0 !important;
   font-size: 0.78rem;
-  flex-wrap: wrap;
 }
 .dict-seealso-label {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
   color: var(--text-muted);
-  font-weight: 500;
-  white-space: nowrap;
-  font-size: .74rem;
-  letter-spacing: .02em;
-}
-.dict-seealso-bullet {
-  color: var(--accent-gold, #c77d2e);
-  flex-shrink: 0;
+  font-weight: 600;
+  font-size: .72rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
 }
 .dict-seealso-chips {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 5px;
   align-items: center;
-  flex: 1;
+}
+.dict-seealso-graph-row {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
 }
 .dict-seealso-chip {
   background: color-mix(in srgb, var(--accent-gold) 10%, transparent);
@@ -7652,20 +7649,54 @@ body.cc-lang-switching .cc-lang-btn {
   color: var(--text-primary);
 }
 
-/* v13：卡片用 flex column；body 区 flex:1 撑开；关联 + footer 自然落到底
-   foot 永远在最末，加入生词本位置稳定不漂移 */
+/* v14：卡片重排 — 收藏星 移到右上 header；删除所有横线分隔线；
+   关联段三行布局；body 区 flex:1 撑开；卡片底部由 .dict-seealso 自然占据 */
 .dict-card-body { flex: 1 1 auto; }
-.dict-card-foot {
-  display: flex; justify-content: space-between; align-items: center;
-  gap: .5rem;
-  padding-top: .55rem;
-  border-top: 1px dashed var(--border);
-}
-.dict-card-foot-left, .dict-card-foot-right {
-  display: flex; align-items: center; gap: .35rem; flex-wrap: wrap;
-}
-.dict-card-foot-right { justify-content: flex-end; }
 .dict-card { display: flex; flex-direction: column; }
+
+/* v14：header 右侧 actions（share + 收藏星 并列） */
+.dict-card-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.dict-card-actions button {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-muted);
+  border-radius: 8px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color .12s, background .12s, border-color .12s;
+}
+.dict-card-actions button svg {
+  width: 16px;
+  height: 16px;
+}
+.dict-card-actions button:hover {
+  color: var(--accent-gold, #c77d2e);
+  border-color: rgba(199,125,46,.4);
+  background: var(--gold-soft, rgba(199,125,46,.08));
+}
+.dict-fav-star.added {
+  color: var(--accent-gold, #c77d2e) !important;
+  border-color: rgba(199,125,46,.55) !important;
+  background: var(--gold-soft, rgba(199,125,46,.16)) !important;
+}
+
+/* v14：跳转章节单独成块（无 border-top） */
+.dict-card-jump {
+  margin-top: .25rem;
+}
+.dict-card-jump .dict-jump {
+  display: inline-flex;
+}
 .dict-fav, .dict-jump {
   background: transparent;
   border: 1px solid var(--border);
