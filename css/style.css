@@ -2922,20 +2922,52 @@ pre:hover .copy-btn,
   /* v5（2026-05-01 凌晨）顶栏化简：只剩 ☰ + "Inside CC 白皮书" 静态 + ⚙
      breadcrumb 不再可点；动态视图名/版本号文字一律不显示。
      i18n 通过 data-lang 切换静态文案 "Inside CC 白皮书" → "Inside CC Whitepaper"。 */
-  /* v5：breadcrumb 在移动端是静态品牌文字（JS showView 控制内容），CSS 只负责样式 */
-  #topnav #breadcrumb {
-    display: inline-flex !important;
-    align-items: center;
-    font-size: 14.5px;
-    line-height: 1;
-    font-weight: 600;
-    color: var(--text-primary);
-    user-select: none;
-    padding: 0;
+  /* v7：移动端中央改放 4 视图 tab，breadcrumb 整体隐藏 */
+  #topnav #breadcrumb { display: none !important; }
+
+  /* v7：4 视图顶栏 tab — 紧凑文字 + 下划线 active 指示，居中铺满 nav-center */
+  #mobile-view-tabs {
+    display: flex !important;
+    flex: 1;
+    align-items: stretch;
+    justify-content: center;
+    gap: 0;
+    height: 100%;
+    min-width: 0;
+  }
+  #mobile-view-tabs .mvt-tab {
+    flex: 1;
+    min-width: 0;
     background: transparent;
-    pointer-events: none;
-    letter-spacing: .005em;
-    white-space: nowrap;
+    border: 0;
+    padding: 0 4px;
+    font-size: 13.5px;
+    font-weight: 500;
+    color: var(--text-muted);
+    cursor: pointer;
+    position: relative;
+    line-height: 1;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    transition: color .12s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  #mobile-view-tabs .mvt-tab.is-active {
+    color: var(--text-primary);
+    font-weight: 600;
+  }
+  #mobile-view-tabs .mvt-tab.is-active::after {
+    content: '';
+    position: absolute;
+    bottom: 6px; left: 50%;
+    transform: translateX(-50%);
+    width: 22px; height: 2px;
+    background: var(--accent-gold, #c77d2e);
+    border-radius: 1px;
+  }
+  #mobile-view-tabs .mvt-tab:active {
+    color: var(--text-primary);
   }
   /* 主题切换 / 中英切换 / 元喻 / 版本 / 快捷键 / 词典高亮开关 全部进齿轮 popover，顶栏不暴露 */
   #topnav .metaphor-toggle,
@@ -2959,26 +2991,49 @@ pre:hover .copy-btn,
   #shortcuts-hint,
   #shortcuts-modal { display: none !important; }
   .nav-left, .nav-right { gap: 6px; flex-wrap: nowrap; }
-  /* v5：☰ hamburger 重新启用 — 抽屉收纳 4 视图 + reader 章节目录 */
+  /* v7：☰ 章节目录入口 —— 仅 reader 视图显示（其他视图无章节概念） */
   #topnav #mobile-toc-toggle {
     width: 38px; height: 38px; min-width: 38px; min-height: 38px;
     padding: 0; gap: 0;
     background: rgba(255,255,255,.55) !important;
     border: 1px solid rgba(120,90,60,.18) !important;
     border-radius: 10px !important;
-    display: inline-flex !important;
+    display: none !important;
     align-items: center; justify-content: center;
     color: var(--text-primary) !important;
   }
-  [data-theme="dark"] #mobile-toc-toggle {
-    background: rgba(255,255,255,.06) !important;
-    border-color: rgba(255,255,255,.14) !important;
+  body[data-active-view="reader"] #topnav #mobile-toc-toggle {
+    display: inline-flex !important;
+  }
+  /* dark / light theme button bg —— 同时覆盖 ☰ 和 ⚙ 按钮，避免 dark 下 active 灰蒙蒙 */
+  [data-theme="dark"] #topnav #mobile-toc-toggle,
+  [data-theme="dark"] #mobile-settings-btn {
+    background: rgba(255,255,255,.08) !important;
+    border-color: rgba(255,255,255,.16) !important;
+    color: #e0d8c5 !important;
+  }
+  [data-theme="light"] #topnav #mobile-toc-toggle,
+  [data-theme="light"] #mobile-settings-btn {
+    background: rgba(0,0,0,.04) !important;
+    border-color: rgba(0,0,0,.10) !important;
     color: var(--text-primary) !important;
   }
-  #mobile-toc-toggle:active,
-  #mobile-toc-toggle[aria-expanded="true"] {
-    background: var(--gold-soft, rgba(199,125,46,.16)) !important;
-    border-color: rgba(199,125,46,.45) !important;
+  /* active 态：warm 默认金；dark 用更亮的琥珀，避免灰蒙蒙观感 */
+  #topnav #mobile-toc-toggle:active,
+  #topnav #mobile-toc-toggle[aria-expanded="true"],
+  #mobile-settings-btn:active,
+  #mobile-settings-btn[aria-expanded="true"] {
+    background: rgba(199,125,46,.20) !important;
+    border-color: rgba(199,125,46,.55) !important;
+    color: #c77d2e !important;
+  }
+  [data-theme="dark"] #topnav #mobile-toc-toggle:active,
+  [data-theme="dark"] #topnav #mobile-toc-toggle[aria-expanded="true"],
+  [data-theme="dark"] #mobile-settings-btn:active,
+  [data-theme="dark"] #mobile-settings-btn[aria-expanded="true"] {
+    background: rgba(251,191,36,.18) !important;
+    border-color: rgba(251,191,36,.45) !important;
+    color: #fbbf24 !important;
   }
   #mobile-toc-toggle svg { width: 20px; height: 20px; }
   /* nav-center 显示移动端站点标题 — 覆盖前面 .nav-center{display:none} 的旧规则 */

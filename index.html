@@ -1188,6 +1188,13 @@
     </div>
     <div class="nav-center">
       <span id="breadcrumb" data-i18n="nav.breadcrumb">Claude Code 2.1.88 · 架构全景</span>
+      <!-- v7 移动端中间不显示标题，改放 4 视图 tab 切换（CSS 仅 mobile 显示）-->
+      <div id="mobile-view-tabs" class="mobile-view-tabs" role="tablist" aria-label="视图切换">
+        <button class="mvt-tab" data-view="landing" role="tab"><span data-i18n="nav.panorama">全景</span></button>
+        <button class="mvt-tab" data-view="reader" role="tab"><span data-i18n="nav.reader">阅读</span></button>
+        <button class="mvt-tab" data-view="inspiration" role="tab"><span data-i18n="nav.inspiration">灵感</span></button>
+        <button class="mvt-tab" data-view="dictionary" role="tab"><span data-i18n="nav.dictionary">词典</span></button>
+      </div>
     </div>
     <div class="nav-right">
       <button id="metaphor-toggle" class="metaphor-toggle" title="切换比喻体系" data-i18n-attr="title:metaphor.toggle_title">
@@ -1244,12 +1251,12 @@
         <button class="msp-pill" data-theme="auto">⚙️ <span class="msp-pill-zh">跟系统</span> <span class="msp-pill-en">Auto</span></button>
       </div>
     </div>
-    <!-- 3. 比喻体系 / Metaphor -->
+    <!-- 3. 比喻体系 / Metaphor（v7：实际系统支持 city / os 两个，"厨房" 是 mockup 误植已修正）-->
     <div class="msp-row" id="msp-metaphor-row">
       <span class="msp-label">比喻体系 <span class="msp-label-en">Metaphor</span></span>
       <div class="msp-control">
         <button class="msp-pill" data-metaphor="city">🏙 <span class="msp-pill-zh">城市</span> <span class="msp-pill-en">City</span></button>
-        <button class="msp-pill" data-metaphor="kitchen">🍳 <span class="msp-pill-zh">厨房</span> <span class="msp-pill-en">Kitchen</span></button>
+        <button class="msp-pill" data-metaphor="os">🖥 <span class="msp-pill-zh">操作系统</span> <span class="msp-pill-en">OS</span></button>
       </div>
     </div>
     <!-- 4. 词典高亮 / Term Highlight -->
@@ -1266,29 +1273,21 @@
   <!-- ==================== Mobile Nav Drawer (≤600px 才显示) ====================
        v2 (2026-05-01): 精简版 — 只 4 个大视图 + 底部一行工具图标栏。
        章节目录不在这里！章节目录是 reader 视图内的二级结构，独立入口。 -->
-  <aside id="mobile-nav-drawer" class="mobile-nav-drawer" aria-hidden="true" aria-label="移动端主菜单">
+  <!-- v7（2026-05-01）抽屉化简：4 视图已挪到顶栏 tab，抽屉只剩章节目录（reader 专属） -->
+  <aside id="mobile-nav-drawer" class="mobile-nav-drawer" aria-hidden="true" aria-label="章节目录">
     <header class="mnd-header">
       <div class="mnd-logo">
         <span class="mnd-logo-dot"></span>
-        <span class="mnd-logo-text">Inside CC</span>
-        <span class="mnd-logo-ver">v2.1.88</span>
+        <span class="mnd-logo-text" data-i18n="reader.toc_title">章节目录</span>
       </div>
       <button class="mnd-close" aria-label="关闭" data-i18n-attr="aria-label:nav.drawer_close_aria">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg>
       </button>
     </header>
     <div class="mnd-body">
-      <div class="mnd-nav-list" id="mnd-nav-list">
-        <!-- JS clones #topnav main nav buttons here -->
-      </div>
-      <!-- reader 视图：4 视图下方追加章节目录段（CSS 仅 reader 时显示）
-           v6（2026-05-01）：移除中间冗余 "章节目录" label —— 章节列表本身已自明，
-           保留极淡分隔线即可。-->
-      <div class="mnd-toc-section" id="mnd-toc-section">
-        <div class="mnd-toc-divider"></div>
-        <div class="mnd-toc-body" id="mnd-toc-body">
-          <!-- 打开抽屉 + 当前 reader 视图时：sidebar 内容临时迁入；关闭还原 -->
-        </div>
+      <!-- v7：4 视图 tab 已挪到顶栏；抽屉 body 只装章节目录（sidebar 内容动态迁入） -->
+      <div class="mnd-toc-body" id="mnd-toc-body">
+        <!-- 打开抽屉时 sidebar 子节点迁入；关闭还原 -->
       </div>
     </div>
   </aside>

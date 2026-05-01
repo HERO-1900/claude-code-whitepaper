@@ -164,6 +164,8 @@
 
   function setMetaphor(type) {
     currentMetaphor = type;
+    // v7：持久化到 localStorage，让设置 popover 的 syncSettingsPopoverState 能正确读到
+    try { localStorage.setItem('cc-metaphor', type); } catch(e) {}
     const _isEnMeta = (function(){ try { return (localStorage.getItem('cc-locale')||'zh')==='en'; } catch(e){ return false; } })();
     if (type === 'city') {
       metaphorIcon.textContent = '🏙';
@@ -200,7 +202,12 @@
   const panoramaBtn = document.getElementById('enter-panorama');
   if (panoramaBtn) panoramaBtn.addEventListener('click', () => showView('landing'));
 
-  setMetaphor('city'); // default
+  // v7：默认从 localStorage 读，保留用户偏好（默认 city）
+  (function initMetaphor() {
+    let saved = 'city';
+    try { saved = localStorage.getItem('cc-metaphor') || 'city'; } catch(e) {}
+    setMetaphor(saved === 'os' ? 'os' : 'city');
+  })();
 
   // ===== VIEW ROUTING =====
   function showView(name) {
@@ -209,6 +216,10 @@
     });
     Object.entries(navBtns).forEach(([k, btn]) => {
       if (btn) btn.classList.toggle('active', k === name);
+    });
+    // v7：同步顶栏 4 视图 tab active 状态
+    document.querySelectorAll('#mobile-view-tabs .mvt-tab').forEach(t => {
+      t.classList.toggle('is-active', t.dataset.view === name);
     });
     currentView = name;
     // 同步 body[data-active-view]（取代 400ms 轮询，避免重复 setAttribute 触发 backdrop-filter 重绘闪烁）
@@ -225,9 +236,10 @@
 
     const _isEn = (function(){ try { return (localStorage.getItem('cc-locale')||'zh')==='en'; } catch(e){ return false; } })();
     // v5 移动端：breadcrumb 一律显示静态品牌名（不展示动态视图名）
+    // v7：移动端中央改为 4 视图 tab，breadcrumb 已 CSS 隐藏；这里仍写文本作为 fallback
     const _isMobile = window.matchMedia('(max-width: 600px)').matches;
     if (_isMobile) {
-      breadcrumb.textContent = _isEn ? 'Inside CC Whitepaper' : 'Inside CC 白皮书';
+      breadcrumb.textContent = _isEn ? 'InsideCC Whitepaper' : 'InsideCC 白皮书';
     } else {
       const BC = _isEn
         ? { landing: 'System Overview', welcome: 'Welcome', gallery: 'Chart Gallery', inspiration: 'Inspiration Lab', dictionary: 'Dictionary' }
@@ -628,6 +640,24 @@
     if (typeof showView === 'function' && currentView) showView(currentView);
     syncSettingsPopoverState();
   });
+
+  // v7：顶栏 4 视图 tab 点击 → 触发对应 nav 按钮（直通底层 showView 逻辑）
+  const mobileViewTabs = document.getElementById('mobile-view-tabs');
+  if (mobileViewTabs) {
+    mobileViewTabs.addEventListener('click', (e) => {
+      const tab = e.target.closest('.mvt-tab');
+      if (!tab || !tab.dataset.view) return;
+      const view = tab.dataset.view;
+      const navBtn = (
+        view === 'landing' ? navBtns.home :
+        view === 'reader' ? navBtns.reader :
+        view === 'inspiration' ? navBtns.inspiration :
+        view === 'dictionary' ? navBtns.dictionary : null
+      );
+      if (navBtn) navBtn.click();
+      else showView(view);
+    });
+  }
   if (settingsPopover) {
     settingsPopover.addEventListener('click', (e) => {
       // 1. 语言切换
