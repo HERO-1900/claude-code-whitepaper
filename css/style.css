@@ -7669,6 +7669,44 @@ body.cc-lang-switching .cc-lang-btn {
   align-items: center;
   justify-content: center;
   transition: color .12s, background .12s, border-color .12s;
+  position: relative;
+}
+/* v14.2 自绘瞬时 tooltip（替代浏览器 700ms 延迟的 title 提示） */
+.dict-card-actions button::before {
+  content: attr(title);
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--text-primary, #1a1a1a);
+  color: var(--bg-card, #fff);
+  padding: 4px 9px;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: .02em;
+  white-space: nowrap;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .12s ease;
+  z-index: 100;
+  box-shadow: 0 2px 8px rgba(0,0,0,.15);
+}
+.dict-card-actions button::after {
+  content: '';
+  position: absolute;
+  bottom: calc(100% + 1px);
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: var(--text-primary, #1a1a1a);
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity .12s ease;
+}
+.dict-card-actions button:hover::before,
+.dict-card-actions button:hover::after {
+  opacity: 1;
 }
 .dict-card-actions button svg {
   width: 16px;

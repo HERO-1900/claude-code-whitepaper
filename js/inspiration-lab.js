@@ -210,9 +210,13 @@
       sparks.forEach(s => { sparkDictRel[s.id] = scan(s); });
       blueprints.forEach(b => { sparkDictRel[b.id] = scan(b); });
       // 渲染中的话，刷新一下（找到当前容器再 render）
+      // v14.2：用 #inspiration-container（视图内的子容器），不要拿 #inspiration 整个 view，
+      //   否则 render(c) 会把 #inspiration-container 子节点连同其他 view 子节点全擦掉，
+      //   导致后续 cc-locale-change 监听找不到 #inspiration-container（永远 null）— 触发"切到 EN 不更新"bug
       try {
-        const c = document.getElementById('inspiration');
-        if (c && !c.classList.contains('hidden')) render(c);
+        const c = document.getElementById('inspiration-container');
+        const v = document.getElementById('inspiration');
+        if (c && v && !v.classList.contains('hidden')) render(c);
       } catch(e){}
     } catch (e) {
       console.warn('[B8] dict crossref build failed:', e);

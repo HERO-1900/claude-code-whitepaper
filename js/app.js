@@ -242,9 +242,13 @@
       breadcrumb.textContent = _isEn ? 'InsideCC Whitepaper' : 'InsideCC 白皮书';
     } else {
       const BC = _isEn
-        ? { landing: 'System Overview', welcome: 'Welcome', gallery: 'Chart Gallery', inspiration: 'Inspiration Lab', dictionary: 'Dictionary' }
-        : { landing: '架构全景', welcome: '欢迎', gallery: '图表画廊', inspiration: '灵感实验室', dictionary: '词典' };
-      if (BC[name]) {
+        ? { landing: 'System Overview', welcome: 'Welcome', reader: 'Reader', gallery: 'Chart Gallery', inspiration: 'Inspiration Lab', dictionary: 'Dictionary' }
+        : { landing: '架构全景', welcome: '欢迎', reader: '章节阅读', gallery: '图表画廊', inspiration: '灵感实验室', dictionary: '词典' };
+      // v14.2 修：reader 视图也要刷 breadcrumb；
+      //   若已选章节则保留章节标题（loadChapter 会再次覆写），否则显示"章节阅读"占位
+      if (name === 'reader' && currentChapter) {
+        // currentChapter 存在时不动 breadcrumb（loadChapter 已设过章节名）
+      } else if (BC[name]) {
         breadcrumb.textContent = `Claude Code 2.1.88 · ${BC[name]}`;
       }
     }
