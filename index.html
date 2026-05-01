@@ -41,10 +41,11 @@
   <script>
     (function() {
       try {
-        // V4 一次性迁移：旧用户 localStorage 里存着 'dark'，首次升级后强制切 warm
+        // V4 迁移：旧 'dark' 用户首次升级后切 warm 已成历史
+        // V15.4：新用户默认 dark（用户拍板），已有 cc-theme-v4 用户保持自己的偏好不动
         var migrated = localStorage.getItem('cc-theme-v4');
         if (!migrated) {
-          localStorage.setItem('cc-theme', 'warm');
+          localStorage.setItem('cc-theme', 'dark');
           localStorage.setItem('cc-theme-v4', '1');
         }
         var stored = localStorage.getItem('cc-theme');

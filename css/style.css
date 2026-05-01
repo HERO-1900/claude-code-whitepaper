@@ -987,22 +987,37 @@ mark.search-highlight {
 .chapter-nav-btn:disabled { opacity: 0.3; cursor: default; }
 #chapter-position, #chapter-position-bottom { font-size: 12px; color: var(--text-muted); }
 
+/* v15.4：阅读字号通过 CSS var，所有 chapter-body 相关规则统一引用，
+   解决 warm 主题 #chapter-body 等规则用 fixed px 覆盖 reader-font 设置的问题 */
+:root {
+  --reader-fs-body: 15px;
+  --reader-fs-blockquote: 17px;
+  --reader-fs-h1: 28px;
+  --reader-fs-h2: 22px;
+  --reader-fs-h3: 18px;
+  --reader-fs-h4: 16px;
+}
+body[data-reader-font="small"] {
+  --reader-fs-body: 13.5px;
+  --reader-fs-blockquote: 15px;
+  --reader-fs-h1: 24px;
+  --reader-fs-h2: 19px;
+  --reader-fs-h3: 16px;
+  --reader-fs-h4: 14px;
+}
+body[data-reader-font="large"] {
+  --reader-fs-body: 17px;
+  --reader-fs-blockquote: 19px;
+  --reader-fs-h1: 32px;
+  --reader-fs-h2: 25px;
+  --reader-fs-h3: 20px;
+  --reader-fs-h4: 17px;
+}
 #chapter-body {
-  font-size: 15px;
+  font-size: var(--reader-fs-body);
   line-height: 1.70;
   color: var(--text-primary);
 }
-/* v15.3：阅读字号 3 档（默认中=15px；小=13.5px 适配 13" Macbook；大=17px） */
-body[data-reader-font="small"] #chapter-body { font-size: 13.5px; }
-body[data-reader-font="medium"] #chapter-body { font-size: 15px; }
-body[data-reader-font="large"] #chapter-body { font-size: 17px; }
-/* warm 主题 h 序列也同步 scale，用 em 而非 fixed px 让 heading 跟随 */
-body[data-reader-font="small"] [data-theme="warm"] #chapter-body h1 { font-size: 26px; }
-body[data-reader-font="small"] [data-theme="warm"] #chapter-body h2 { font-size: 20px; }
-body[data-reader-font="small"] [data-theme="warm"] #chapter-body h3 { font-size: 16px; }
-body[data-reader-font="large"] [data-theme="warm"] #chapter-body h1 { font-size: 30px; }
-body[data-reader-font="large"] [data-theme="warm"] #chapter-body h2 { font-size: 24px; }
-body[data-reader-font="large"] [data-theme="warm"] #chapter-body h3 { font-size: 19px; }
 #chapter-body h1 {
   font-size: 28px;
   margin-bottom: 24px;
@@ -5359,7 +5374,7 @@ pre:hover .copy-btn,
    - 在 900px 屏自动缩到 ~830px 留 70px padding */
 [data-theme="warm"] #chapter-body {
   font-family: Georgia, "Noto Serif SC", "Source Han Serif SC", "PingFang SC", serif;
-  font-size: 16px;
+  font-size: var(--reader-fs-body);   /* v15.4: 跟随 reader-font 切换 */
   line-height: 1.7;
   color: #2b2a27;
   letter-spacing: 0.01em;
@@ -5369,12 +5384,12 @@ pre:hover .copy-btn,
 }
 
 /* 2. 标题层级 */
-[data-theme="warm"] #chapter-body h1 { font-family: Georgia, "Noto Serif SC", serif; font-size: 28px; font-weight: 600; color: #2b2a27; margin: 36px 0 16px; line-height: 1.3; }
-[data-theme="warm"] #chapter-body h2 { font-family: Georgia, "Noto Serif SC", serif; font-size: 22px; font-weight: 600; color: #2b2a27; margin: 48px 0 14px; line-height: 1.35; border-top: 1px solid #d8cfbc; padding-top: 24px; }
+[data-theme="warm"] #chapter-body h1 { font-family: Georgia, "Noto Serif SC", serif; font-size: var(--reader-fs-h1); font-weight: 600; color: #2b2a27; margin: 36px 0 16px; line-height: 1.3; }
+[data-theme="warm"] #chapter-body h2 { font-family: Georgia, "Noto Serif SC", serif; font-size: var(--reader-fs-h2); font-weight: 600; color: #2b2a27; margin: 48px 0 14px; line-height: 1.35; border-top: 1px solid #d8cfbc; padding-top: 24px; }
 [data-theme="warm"] #chapter-body h2:first-child { border-top: none; padding-top: 0; margin-top: 0; }
-[data-theme="warm"] #chapter-body h3 { font-family: Georgia, "Noto Serif SC", serif; font-size: 18px; font-weight: 600; color: #3d3028; margin: 44px 0 14px; padding-top: 20px; border-top: 1px dashed #e5ddc9; }
+[data-theme="warm"] #chapter-body h3 { font-family: Georgia, "Noto Serif SC", serif; font-size: var(--reader-fs-h3); font-weight: 600; color: #3d3028; margin: 44px 0 14px; padding-top: 20px; border-top: 1px dashed #e5ddc9; }
 [data-theme="warm"] #chapter-body h3:first-child { border-top: none; padding-top: 0; margin-top: 0; }
-[data-theme="warm"] #chapter-body h4 { font-family: "PingFang SC", "Noto Sans SC", sans-serif; font-size: 16px; font-weight: 500; color: #6b5d4a; margin: 20px 0 6px; }
+[data-theme="warm"] #chapter-body h4 { font-family: "PingFang SC", "Noto Sans SC", sans-serif; font-size: var(--reader-fs-h4); font-weight: 500; color: #6b5d4a; margin: 20px 0 6px; }
 
 /* 3. 段落和间距 */
 [data-theme="warm"] #chapter-body p { margin-bottom: 1em; }
@@ -5387,7 +5402,7 @@ pre:hover .copy-btn,
   border-radius: 0 8px 8px 0;
   padding: 20px 24px;
   margin: 24px 0;
-  font-size: 17px;
+  font-size: var(--reader-fs-blockquote);   /* v15.4: 跟随 reader-font */
   line-height: 1.8;
   color: #3d3028;
 }
@@ -7215,6 +7230,12 @@ body.cc-lang-switching .cc-lang-btn {
   justify-content: flex-end;
   margin-top: 4px;
 }
+/* v15.4：空 seealso 占位 — 无相关词条时也保留与 plain 同高的视觉留白
+   让 plain 距卡片底部的视觉距离在所有卡片间保持一致 */
+.dict-seealso-empty {
+  min-height: 1.6rem;
+  margin-top: .9rem;
+}
 .dict-seealso-chip {
   background: color-mix(in srgb, var(--accent-gold) 10%, transparent);
   color: var(--accent-gold, #c77d2e) !important;
@@ -7857,8 +7878,9 @@ body.cc-lang-switching .cc-lang-btn {
 :root[data-theme="warm"] .dict-card:hover {
   box-shadow: 0 6px 18px rgba(0,0,0,.07);
 }
+/* v15.4：暖色主题下 .dict-plain 不再加底色（用户："底部出现颜色"），保持透明 */
 :root[data-theme="warm"] .dict-plain {
-  background: rgba(199,125,46,.10);
+  background: transparent;
 }
 
 /* ====================================================================

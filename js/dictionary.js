@@ -662,12 +662,14 @@
     });
   }
 
-  // B10 · 关联段：v14.1 移除 graph row（按钮上提到 header 与 share/star 并列）
-  //   底部只剩 label + chips 两行
+  // B10 · 关联段：v15.4 始终渲染 section（无内容时为占位，让 plain 距底高度稳定）
   function renderSeeAlsoChips(entry) {
     const see = (entry.see_also || []).filter(id => entries.find(e => e.id === id && !e._suppressed));
     const en = isEn();
-    if (!see.length) return '';
+    if (!see.length) {
+      // 占位空 section — 让无 seealso 卡片的 plain 与有 seealso 卡片的 plain 距底距离一致
+      return `<section class="dict-seealso dict-seealso-empty" aria-hidden="true"></section>`;
+    }
     const labelText = en ? 'Related' : '相关词条';
     const chips = see.slice(0, 8).map(id => {
       const e = entries.find(x => x.id === id);
