@@ -4146,7 +4146,8 @@ pre:hover .copy-btn,
 /* ===== INSPIRATION LAB ===== */
 #inspiration { overflow-y: auto; padding-top: 48px; padding-left: 24px; padding-right: 24px; box-sizing: border-box; }
 /* 修复：左右 24px 内边距给视觉呼吸空间 */
-#inspiration-container { max-width: min(1600px, 94vw); margin: 0 auto; padding: 2rem 1.5rem; }
+/* v15：用户反馈"灵感火花最多 3 列没自适应"，移除 1600 上限让大屏继续扩 */
+#inspiration-container { max-width: 96vw; margin: 0 auto; padding: 2rem 1.5rem; }
 @media (min-width: 1100px) {
   #inspiration { padding-left: 48px; padding-right: 48px; }
 }
