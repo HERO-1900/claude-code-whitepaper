@@ -7634,14 +7634,23 @@ body.cc-lang-switching .cc-lang-btn {
   line-height: 1.6;
   margin: 0;
 }
+/* v14.4：用户拍板 Variant 3 — 无背景 italic + 💡 暖色前缀 + 左缩进
+   不再用黄色填充框（用户："太重，太抢戏"） */
 .dict-plain {
-  background: color-mix(in srgb, var(--accent-gold) 10%, transparent);
-  border-left: 3px solid var(--accent-gold);
-  padding: .55rem .75rem;
-  border-radius: 0 .4rem .4rem 0;
+  padding: .2rem 0 .2rem 1rem;
   font-size: .85rem;
   line-height: 1.55;
-  color: var(--text-primary);
+  color: var(--text-secondary);
+  font-style: italic;
+  background: transparent;
+  border: none;
+  border-radius: 0;
+}
+.dict-plain::before {
+  content: "💡 ";
+  font-style: normal;
+  color: var(--accent-gold, #c77d2e);
+  margin-right: 2px;
 }
 
 /* v14：卡片重排 — 收藏星 移到右上 header；删除所有横线分隔线；

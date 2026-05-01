@@ -754,7 +754,7 @@
 
       <div class="dict-card-body">
         ${def ? `<p class="dict-def">${escapeHtml(def)}</p>` : ''}
-        ${plain ? `<div class="dict-plain">${escapeHtml(plain)}</div>` : ''}
+        ${plain ? `<div class="dict-plain">${escapeHtml(plain.replace(/^[\u{1F4A1}\u{1F31F}\u{2728}]\s*/u, ''))}</div>` : ''}
       </div>
 
       ${chHTML ? `<div class="dict-card-jump">${chHTML}</div>` : ''}
