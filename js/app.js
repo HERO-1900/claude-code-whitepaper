@@ -620,6 +620,12 @@
     settingsPopover.querySelectorAll('.msp-pill[data-metaphor]').forEach(p => {
       p.classList.toggle('is-on', p.dataset.metaphor === curMeta);
     });
+    // v15.3：阅读字号 pills
+    let curFs = 'medium';
+    try { curFs = localStorage.getItem('cc-reader-fontsize') || 'medium'; } catch(e){}
+    settingsPopover.querySelectorAll('.msp-pill[data-fontsize]').forEach(p => {
+      p.classList.toggle('is-on', p.dataset.fontsize === curFs);
+    });
     // dict-highlight toggle（对齐 dict-annotator.js 的 'on'/'off' key）
     let curDictOn = false;
     try { curDictOn = localStorage.getItem('cc-dict-highlight') === 'on'; } catch(e){}
@@ -662,8 +668,28 @@
       else showView(view);
     });
   }
+  // v15.3：阅读字号初始化（默认 medium）
+  (function initReaderFontSize() {
+    let saved = 'medium';
+    try { saved = localStorage.getItem('cc-reader-fontsize') || 'medium'; } catch(e) {}
+    if (!['small','medium','large'].includes(saved)) saved = 'medium';
+    document.body.setAttribute('data-reader-font', saved);
+  })();
+  function setReaderFontSize(size) {
+    if (!['small','medium','large'].includes(size)) return;
+    try { localStorage.setItem('cc-reader-fontsize', size); } catch(e) {}
+    document.body.setAttribute('data-reader-font', size);
+  }
+
   if (settingsPopover) {
     settingsPopover.addEventListener('click', (e) => {
+      // 0. 阅读字号
+      const fsPill = e.target.closest('.msp-pill[data-fontsize]');
+      if (fsPill) {
+        setReaderFontSize(fsPill.dataset.fontsize);
+        syncSettingsPopoverState();
+        return;
+      }
       // 1. 语言切换
       const langPill = e.target.closest('.msp-pill[data-locale]');
       if (langPill) {

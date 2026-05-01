@@ -992,6 +992,17 @@ mark.search-highlight {
   line-height: 1.70;
   color: var(--text-primary);
 }
+/* v15.3：阅读字号 3 档（默认中=15px；小=13.5px 适配 13" Macbook；大=17px） */
+body[data-reader-font="small"] #chapter-body { font-size: 13.5px; }
+body[data-reader-font="medium"] #chapter-body { font-size: 15px; }
+body[data-reader-font="large"] #chapter-body { font-size: 17px; }
+/* warm 主题 h 序列也同步 scale，用 em 而非 fixed px 让 heading 跟随 */
+body[data-reader-font="small"] [data-theme="warm"] #chapter-body h1 { font-size: 26px; }
+body[data-reader-font="small"] [data-theme="warm"] #chapter-body h2 { font-size: 20px; }
+body[data-reader-font="small"] [data-theme="warm"] #chapter-body h3 { font-size: 16px; }
+body[data-reader-font="large"] [data-theme="warm"] #chapter-body h1 { font-size: 30px; }
+body[data-reader-font="large"] [data-theme="warm"] #chapter-body h2 { font-size: 24px; }
+body[data-reader-font="large"] [data-theme="warm"] #chapter-body h3 { font-size: 19px; }
 #chapter-body h1 {
   font-size: 28px;
   margin-bottom: 24px;
@@ -4146,8 +4157,16 @@ pre:hover .copy-btn,
 /* ===== INSPIRATION LAB ===== */
 #inspiration { overflow-y: auto; padding-top: 48px; padding-left: 24px; padding-right: 24px; box-sizing: border-box; }
 /* 修复：左右 24px 内边距给视觉呼吸空间 */
-/* v15：用户反馈"灵感火花最多 3 列没自适应"，移除 1600 上限让大屏继续扩 */
-#inspiration-container { max-width: 96vw; margin: 0 auto; padding: 2rem 1.5rem; }
+/* v15.3：根因找到 — `.view.active` 用 flex column + 默认 stretch，但
+   `margin: 0 auto` 触发 flex item shrink-to-content 反而让容器被挤回 1175px。
+   去掉 auto margins 让 flex 默认 stretch 接管，配合 width:100% 真撑满 */
+#inspiration-container {
+  width: 100%;
+  max-width: none;
+  margin: 0;
+  padding: 2rem 1.5rem;
+  box-sizing: border-box;
+}
 @media (min-width: 1100px) {
   #inspiration { padding-left: 48px; padding-right: 48px; }
 }
