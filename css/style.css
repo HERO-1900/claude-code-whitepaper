@@ -6924,7 +6924,8 @@ body.cc-lang-switching .cc-lang-btn {
   padding-top: 48px;
 }
 #dictionary-container {
-  max-width: min(1500px, 96vw);
+  /* v11：移除 1500px 上限 — 大屏继续撑宽（用户反馈横向无法继续扩） */
+  max-width: 96vw;
   margin: 0 auto;
   padding: 1.5rem 1.25rem 4rem;
 }
@@ -9089,10 +9090,178 @@ body.cc-lang-switching .cc-lang-btn {
   }
 }
 
-/* 桌面端这些元素隐藏 */
+/* ===== 桌面端 (≥601px) 顶栏重设计 v11 =====
+   用户反馈：mobile-view-tabs 不应在桌面显示；删 v2.1.88；比喻/词典高亮 进齿轮；
+   主题保留 3 模式（暖/浅/深）+ 改用中文字。 */
 @media (min-width: 601px) {
+  /* mobile 专属元素彻底隐藏 */
   #title-view-menu,
   #title-view-backdrop,
-  #mobile-settings-popover { display: none !important; }
+  #mobile-view-tabs { display: none !important; }
+
+  /* 顶栏隐藏：版本号 / 比喻 / 词典高亮（移到齿轮 popover） */
+  #topnav .version-badge,
+  #topnav .metaphor-toggle,
+  #topnav .cc-dict-highlight-toggle { display: none !important; }
+
+  /* 顶栏 ⌨ 快捷键 icon 紧凑 */
+  #topnav #shortcuts-hint {
+    width: 32px; height: 32px;
+    padding: 0;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  /* 齿轮按钮在桌面也可见 + popover 桌面也能弹 */
+  #mobile-settings-btn {
+    display: inline-flex !important;
+    width: 32px; height: 32px;
+    min-width: 32px;
+    padding: 0;
+    background: transparent;
+    border: 1px solid var(--border, rgba(120,90,60,.2));
+    border-radius: 8px;
+    color: var(--text-primary);
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+  #mobile-settings-btn svg { width: 16px; height: 16px; }
+  #mobile-settings-btn:hover { background: var(--bg-hover); }
+  #mobile-settings-btn[aria-expanded="true"] {
+    background: var(--gold-soft, rgba(199,125,46,.16));
+    border-color: rgba(199,125,46,.45);
+    color: var(--accent-gold, #c77d2e);
+  }
+  /* popover 在桌面也能开，但内容只剩 metaphor + dict-highlight（语言/主题已独立） */
+  #mobile-settings-popover {
+    position: fixed;
+    top: 56px;
+    right: 16px;
+    min-width: 260px;
+    max-width: 320px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    box-shadow: 0 12px 32px rgba(0,0,0,.16);
+    padding: 14px 16px;
+    z-index: 1100;
+    display: none;
+    flex-direction: column;
+    gap: 14px;
+  }
+  #mobile-settings-popover.open { display: flex; }
+  /* desktop 不重复显示 lang / theme 行（已在顶栏独立） */
+  #mobile-settings-popover #msp-lang-row,
+  #mobile-settings-popover #msp-theme-row { display: none !important; }
+  /* msp-row / msp-pill / msp-toggle 通用样式（mobile 已定义，桌面继承不重复） */
+  #mobile-settings-popover .msp-row { display: flex; flex-direction: column; gap: 6px; }
+  #mobile-settings-popover .msp-label {
+    font-size: 11px; color: var(--text-muted);
+    letter-spacing: .04em; font-weight: 700;
+    display: inline-flex; align-items: baseline; gap: 6px;
+  }
+  #mobile-settings-popover .msp-label-en {
+    font-size: 9.5px; color: var(--text-muted); opacity: .7;
+    font-weight: 500; letter-spacing: .04em; text-transform: uppercase;
+  }
+  #mobile-settings-popover .msp-control {
+    display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+  }
+  #mobile-settings-popover .msp-pill,
+  #mobile-settings-popover .msp-toggle {
+    display: inline-flex; align-items: center; gap: 4px;
+    padding: 7px 12px;
+    background: transparent;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 12.5px;
+    color: var(--text-primary);
+    cursor: pointer;
+  }
+  #mobile-settings-popover .msp-pill.is-on,
+  #mobile-settings-popover .msp-toggle[aria-pressed="true"] {
+    background: var(--gold-soft, rgba(199,125,46,.16));
+    border-color: rgba(199,125,46,.45);
+    color: var(--accent-gold, #c77d2e);
+    font-weight: 600;
+  }
+  #mobile-settings-popover .msp-pill .msp-pill-en,
+  #mobile-settings-popover .msp-toggle .msp-toggle-en {
+    font-size: 9.5px; opacity: .55; margin-left: 1px;
+    text-transform: lowercase;
+  }
+
+  /* ===== 主题切换 desktop：改成中文字（暖/浅/深），删 auto ===== */
+  #topnav .cc-theme-switcher {
+    display: inline-flex;
+    gap: 0;
+    padding: 2px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    height: 32px;
+  }
+  #topnav .cc-theme-switcher .cc-theme-btn {
+    width: auto;
+    min-width: 36px;
+    height: 26px;
+    padding: 0 10px;
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    font-weight: 500;
+    border-radius: 6px;
+    line-height: 1;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  #topnav .cc-theme-switcher .cc-theme-btn:hover { color: var(--text-primary); }
+  #topnav .cc-theme-switcher .cc-theme-btn.active {
+    background: var(--gold-soft, rgba(199,125,46,.16));
+    color: var(--accent-gold, #c77d2e);
+    font-weight: 600;
+  }
+  /* 隐藏 auto 按钮（用户拍板只保留 3 模式） */
+  #topnav .cc-theme-switcher .cc-theme-btn[data-theme="auto"] { display: none !important; }
+
+  /* 语言切换 desktop 紧凑对齐主题 */
+  #topnav .cc-lang-switcher {
+    display: inline-flex;
+    gap: 0;
+    padding: 2px;
+    background: var(--bg-card);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    height: 32px;
+  }
+  #topnav .cc-lang-switcher .cc-lang-btn {
+    width: auto;
+    min-width: 36px;
+    height: 26px;
+    padding: 0 10px;
+    border: 0;
+    background: transparent;
+    color: var(--text-muted);
+    font-size: 12.5px;
+    font-weight: 500;
+    border-radius: 6px;
+    line-height: 1;
+    cursor: pointer;
+  }
+  #topnav .cc-lang-switcher .cc-lang-btn:hover { color: var(--text-primary); }
+  #topnav .cc-lang-switcher .cc-lang-btn.active {
+    background: var(--gold-soft, rgba(199,125,46,.16));
+    color: var(--accent-gold, #c77d2e);
+    font-weight: 600;
+  }
+
+  /* nav-right 排列：theme | lang | gear（gear 最右） */
+  #topnav .cc-theme-switcher { order: 1; }
+  #topnav .cc-lang-switcher { order: 2; }
+  #topnav #mobile-settings-btn { order: 3; }
 }
 

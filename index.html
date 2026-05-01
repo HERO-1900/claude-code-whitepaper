@@ -48,15 +48,17 @@
           localStorage.setItem('cc-theme-v4', '1');
         }
         var stored = localStorage.getItem('cc-theme');
-        // 合法值：'dark' | 'light' | 'warm' | 'auto'
-        // auto 在 FOUC 阶段就解析为具体主题，避免空 data-theme → :root 默认 light → 与 stored=warm 用户预期不一致 + 视觉跳变
+        // v11：auto 模式废弃。如果旧用户存着 'auto'，迁移成具体主题（按系统偏好解析一次）
+        if (stored === 'auto') {
+          var prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
+          stored = prefersLight ? 'light' : 'warm';
+          try { localStorage.setItem('cc-theme', stored); } catch(e) {}
+        }
+        // 合法值：'dark' | 'light' | 'warm'
         if (stored === 'light') {
           document.documentElement.setAttribute('data-theme', 'light');
         } else if (stored === 'dark') {
           document.documentElement.setAttribute('data-theme', 'dark');
-        } else if (stored === 'auto') {
-          var prefersLight = window.matchMedia('(prefers-color-scheme: light)').matches;
-          document.documentElement.setAttribute('data-theme', prefersLight ? 'light' : 'warm');
         } else {
           document.documentElement.setAttribute('data-theme', 'warm');
         }
@@ -1204,8 +1206,8 @@
       </button>
       <span class="version-badge" data-i18n="hero.meta_version">v2.1.88</span>
       <button id="shortcuts-hint" class="shortcuts-btn" title="键盘快捷键" data-i18n-attr="title:shortcuts.btn_title">⌨</button>
-      <!-- 移动端齿轮设置（手机端可见，收纳词典高亮 + 比喻体系两个不常用开关）-->
-      <button id="mobile-settings-btn" class="mobile-only nav-btn" title="设置" aria-label="设置" aria-expanded="false" aria-controls="mobile-settings-popover" data-i18n-attr="title:nav.settings_title;aria-label:nav.settings_aria">
+      <!-- v11：齿轮设置在桌面也可见（手机收纳 4 行；桌面只剩 比喻 + 词典高亮 2 行）-->
+      <button id="mobile-settings-btn" class="nav-btn" title="设置" aria-label="设置" aria-expanded="false" aria-controls="mobile-settings-popover" data-i18n-attr="title:nav.settings_title;aria-label:nav.settings_aria">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 00.33 1.82l.06.06a2 2 0 11-2.83 2.83l-.06-.06a1.65 1.65 0 00-1.82-.33 1.65 1.65 0 00-1 1.51V21a2 2 0 11-4 0v-.09a1.65 1.65 0 00-1-1.51 1.65 1.65 0 00-1.82.33l-.06.06a2 2 0 11-2.83-2.83l.06-.06a1.65 1.65 0 00.33-1.82 1.65 1.65 0 00-1.51-1H3a2 2 0 110-4h.09a1.65 1.65 0 001.51-1 1.65 1.65 0 00-.33-1.82l-.06-.06a2 2 0 112.83-2.83l.06.06a1.65 1.65 0 001.82.33h0a1.65 1.65 0 001-1.51V3a2 2 0 114 0v.09a1.65 1.65 0 001 1.51 1.65 1.65 0 001.82-.33l.06-.06a2 2 0 112.83 2.83l-.06.06a1.65 1.65 0 00-.33 1.82v0a1.65 1.65 0 001.51 1H21a2 2 0 110 4h-.09a1.65 1.65 0 00-1.51 1z"/></svg>
       </button>
     </div>
@@ -1249,7 +1251,7 @@
         <button class="msp-pill" data-theme="warm">📖 <span class="msp-pill-zh">暖色</span> <span class="msp-pill-en">Warm</span></button>
         <button class="msp-pill" data-theme="dark">🌙 <span class="msp-pill-zh">暗色</span> <span class="msp-pill-en">Dark</span></button>
         <button class="msp-pill" data-theme="light">☀️ <span class="msp-pill-zh">浅色</span> <span class="msp-pill-en">Light</span></button>
-        <button class="msp-pill" data-theme="auto">⚙️ <span class="msp-pill-zh">跟系统</span> <span class="msp-pill-en">Auto</span></button>
+        <!-- v11：用户拍板只保留 3 种主题，auto 模式废弃 -->
       </div>
     </div>
     <!-- 3. 比喻体系 / Metaphor（v7：实际系统支持 city / os 两个，"厨房" 是 mockup 误植已修正）-->
@@ -1708,23 +1710,22 @@
       function buildSwitcherHTML() {
         var isEn = false;
         try { isEn = (localStorage.getItem('cc-locale')||'zh')==='en'; } catch(e) {}
+        // v11：用户反馈"📖🌙☀️ 大家看不懂"，改用文字（中文：暖/浅/深；英文：Warm/Light/Dark），
+        //      auto 模式整体废弃（用户拍板只保留 3 种）。
         var L = isEn
-          ? { box: 'Switch theme', boxAria: 'Theme switcher',
-              warm: 'Editorial (warm)', warmAria: 'Editorial mode',
-              dark: 'Dark', darkAria: 'Dark mode',
-              light: 'Light', lightAria: 'Light mode',
-              auto: 'Follow system', autoAria: 'Follow system' }
-          : { box: '切换显示主题', boxAria: '主题切换器',
-              warm: '编辑感（暖色）', warmAria: '编辑感模式',
-              dark: '暗色模式', darkAria: '暗色模式',
-              light: '亮色模式', lightAria: '亮色模式',
-              auto: '跟随系统', autoAria: '跟随系统' };
+          ? { box: 'Theme', boxAria: 'Theme switcher',
+              warm: 'Editorial', warmLabel: 'Warm',
+              dark: 'Dark', darkLabel: 'Dark',
+              light: 'Light', lightLabel: 'Light' }
+          : { box: '主题', boxAria: '主题切换器',
+              warm: '暖色（编辑感）', warmLabel: '暖',
+              dark: '深色', darkLabel: '深',
+              light: '浅色', lightLabel: '浅' };
         return [
           '<div class="cc-theme-switcher" title="'+L.box+'" aria-label="'+L.boxAria+'">',
-          '  <button class="cc-theme-btn" data-theme="warm"  title="'+L.warm+'" aria-label="'+L.warmAria+'">📖</button>',
-          '  <button class="cc-theme-btn" data-theme="dark"  title="'+L.dark+'" aria-label="'+L.darkAria+'">🌙</button>',
-          '  <button class="cc-theme-btn" data-theme="light" title="'+L.light+'" aria-label="'+L.lightAria+'">☀️</button>',
-          '  <button class="cc-theme-btn" data-theme="auto"  title="'+L.auto+'" aria-label="'+L.autoAria+'">⚙️</button>',
+          '  <button class="cc-theme-btn" data-theme="warm"  title="'+L.warm+'" aria-label="'+L.warm+'">'+L.warmLabel+'</button>',
+          '  <button class="cc-theme-btn" data-theme="light" title="'+L.light+'" aria-label="'+L.light+'">'+L.lightLabel+'</button>',
+          '  <button class="cc-theme-btn" data-theme="dark"  title="'+L.dark+'" aria-label="'+L.dark+'">'+L.darkLabel+'</button>',
           '</div>'
         ].join('');
       }
