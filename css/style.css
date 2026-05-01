@@ -2841,28 +2841,6 @@ pre:hover .copy-btn,
   #reader.active ~ #topnav .mobile-only,
   body:has(#reader.active) #topnav .mobile-only,
   #topnav .mobile-only { display: inline-flex !important; }
-  /* hamburger 增强可见性（MiniMax usertest 反馈对比度不足） */
-  #mobile-toc-toggle {
-    background: rgba(199, 125, 46, 0.12);  /* warm amber tint 12% */
-    border: 1px solid rgba(199, 125, 46, 0.35);
-    border-radius: 8px;
-    color: var(--text-primary, #2b2a27);
-  }
-  #mobile-toc-toggle:active, #mobile-toc-toggle[aria-expanded="true"] {
-    background: rgba(199, 125, 46, 0.28);
-    border-color: rgba(199, 125, 46, 0.65);
-    box-shadow: 0 0 0 2px rgba(199, 125, 46, 0.18);
-  }
-  [data-theme="dark"] #mobile-toc-toggle {
-    background: rgba(251, 191, 36, 0.12);
-    border-color: rgba(251, 191, 36, 0.35);
-    color: #fff;
-  }
-  [data-theme="dark"] #mobile-toc-toggle:active,
-  [data-theme="dark"] #mobile-toc-toggle[aria-expanded="true"] {
-    background: rgba(251, 191, 36, 0.26);
-    border-color: rgba(251, 191, 36, 0.6);
-  }
   /* slide-in drawer */
   #sidebar.mobile-open {
     display: block !important;
@@ -2925,26 +2903,23 @@ pre:hover .copy-btn,
   /* v7：移动端中央改放 4 视图 tab，breadcrumb 整体隐藏 */
   #topnav #breadcrumb { display: none !important; }
 
-  /* v7：4 视图顶栏 tab — 44px 触控段控，active 用胶囊底色避免下划线切字 */
+  /* v9：4 视图顶栏 tab — 固定左上，加大间距，不再因 ☰ 漂移 */
   #mobile-view-tabs {
     display: flex !important;
-    flex: 1;
     align-items: center;
-    justify-content: center;
-    gap: 4px;
+    justify-content: flex-start;
+    gap: 10px;
     height: 44px;
     min-width: 0;
     padding: 2px;
     border-radius: 12px;
   }
   #mobile-view-tabs .mvt-tab {
-    flex: 1;
-    min-width: 0;
     background: transparent;
     border: 0;
     min-height: 44px;
     height: 44px;
-    padding: 0 5px;
+    padding: 0 10px;
     border-radius: 10px;
     font-size: 12.5px;
     font-weight: 500;
@@ -3001,59 +2976,71 @@ pre:hover .copy-btn,
   #shortcuts-hint,
   #shortcuts-modal { display: none !important; }
   .nav-left, .nav-right { gap: 6px; flex-wrap: nowrap; }
-  /* v7：☰ 章节目录入口 —— 仅 reader 视图显示（其他视图无章节概念） */
-  #topnav #mobile-toc-toggle {
-    width: 38px; height: 38px; min-width: 38px; min-height: 38px;
-    padding: 0; gap: 0;
-    background: rgba(255,255,255,.55) !important;
-    border: 1px solid rgba(120,90,60,.18) !important;
-    border-radius: 10px !important;
-    display: none !important;
-    align-items: center; justify-content: center;
-    color: var(--text-primary) !important;
-  }
-  body[data-active-view="reader"] #topnav #mobile-toc-toggle {
-    display: inline-flex !important;
-  }
-  /* dark / light theme button bg —— 同时覆盖 ☰ 和 ⚙ 按钮，避免 dark 下 active 灰蒙蒙 */
-  [data-theme="dark"] #topnav #mobile-toc-toggle,
+  /* dark / light theme button bg —— ⚙ 按钮 */
   [data-theme="dark"] #mobile-settings-btn {
     background: rgba(255,255,255,.08) !important;
     border-color: rgba(255,255,255,.16) !important;
     color: #e0d8c5 !important;
   }
-  [data-theme="light"] #topnav #mobile-toc-toggle,
   [data-theme="light"] #mobile-settings-btn {
     background: rgba(0,0,0,.04) !important;
     border-color: rgba(0,0,0,.10) !important;
     color: var(--text-primary) !important;
   }
   /* active 态：warm 默认金；dark 用更亮的琥珀，避免灰蒙蒙观感 */
-  #topnav #mobile-toc-toggle:active,
-  #topnav #mobile-toc-toggle[aria-expanded="true"],
   #mobile-settings-btn:active,
   #mobile-settings-btn[aria-expanded="true"] {
     background: rgba(199,125,46,.20) !important;
     border-color: rgba(199,125,46,.55) !important;
     color: #c77d2e !important;
   }
-  [data-theme="dark"] #topnav #mobile-toc-toggle:active,
-  [data-theme="dark"] #topnav #mobile-toc-toggle[aria-expanded="true"],
   [data-theme="dark"] #mobile-settings-btn:active,
   [data-theme="dark"] #mobile-settings-btn[aria-expanded="true"] {
     background: rgba(251,191,36,.18) !important;
     border-color: rgba(251,191,36,.45) !important;
     color: #fbbf24 !important;
   }
-  #mobile-toc-toggle svg { width: 20px; height: 20px; }
   /* nav-center 显示移动端站点标题 — 覆盖前面 .nav-center{display:none} 的旧规则 */
   .nav-center {
-    flex: 1; min-width: 0;
+    flex: 0 0 auto; min-width: 0;
     padding: 0 4px;
     display: flex !important;
     flex-direction: column; justify-content: center;
-    align-items: center;  /* breadcrumb 居中 */
+    align-items: flex-start;  /* v9: tab 左对齐固定 */
     gap: 1px;
+  }
+  /* v9: reader 视图左下角 FAB — 章节目录入口 */
+  #mobile-toc-fab {
+    display: none;
+    position: fixed;
+    bottom: 24px;
+    left: 16px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--accent-gold, #c77d2e);
+    color: #fff;
+    border: none;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+    align-items: center;
+    justify-content: center;
+    z-index: 200;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body[data-active-view="reader"] #mobile-toc-fab {
+    display: flex !important;
+  }
+  [data-theme="dark"] #mobile-toc-fab {
+    background: #fbbf24;
+    color: #1c1917;
+  }
+  #mobile-toc-fab:active {
+    transform: scale(0.95);
+  }
+  #mobile-toc-fab svg {
+    width: 22px;
+    height: 22px;
   }
   /* 旧的 ::before / ::after 站点标题改为隐藏 — breadcrumb 接管标题位 + 下拉菜单触发器 */
   .nav-center::before,

@@ -267,7 +267,7 @@
   // ===== Mobile Nav System v2 (2026-05-01) =====
   // - 主菜单抽屉 (#mobile-nav-drawer)：4 大视图 + 底部工具图标栏
   // - 章节目录 sheet (#mobile-toc-sheet)：reader 视图独有
-  const mobileTocBtn = document.getElementById('mobile-toc-toggle');         // ☰ 主菜单
+  const mobileTocBtn = document.getElementById('mobile-toc-fab');            // v9: FAB 主菜单
   const chapterTocBtn = document.getElementById('mobile-chapter-toc-btn');   // 📚 章节目录（reader-only）
   const sidebarEl = document.getElementById('sidebar');
   const drawerEl = document.getElementById('mobile-nav-drawer');

@@ -1160,10 +1160,6 @@
   <!-- ==================== NAVIGATION BAR ==================== -->
   <nav id="topnav">
     <div class="nav-left">
-      <!-- Mobile TOC drawer 开关（<=600px 下显示；其他时候隐藏） -->
-      <button id="mobile-toc-toggle" class="nav-btn mobile-only" title="主菜单" aria-label="打开主菜单" aria-expanded="false" aria-controls="mobile-nav-drawer" data-i18n-attr="title:nav.menu_title;aria-label:nav.menu_aria">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
-      </button>
       <button id="mobile-chapter-toc-btn" class="nav-btn mobile-only mobile-reader-only" title="章节目录" aria-label="打开章节目录" aria-expanded="false" aria-controls="mobile-toc-sheet" data-i18n-attr="title:nav.mobile_toc_title;aria-label:nav.mobile_toc_aria">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
       </button>
@@ -1307,6 +1303,11 @@
     </div>
   </div>
   <div id="mobile-toc-backdrop" class="mobile-toc-backdrop" aria-hidden="true"></div>
+
+  <!-- v9: 左下角 FAB —— reader 视图专属章节目录入口 -->
+  <button id="mobile-toc-fab" class="mobile-only" title="章节目录" aria-label="打开章节目录" aria-expanded="false" aria-controls="mobile-nav-drawer" data-i18n-attr="title:nav.mobile_toc_title;aria-label:nav.mobile_toc_aria">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+  </button>
 
   <!-- Keyboard shortcuts modal -->
   <div id="shortcuts-modal" class="shortcuts-modal hidden">
