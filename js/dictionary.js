@@ -754,8 +754,12 @@
 
       <div class="dict-card-body">
         ${def ? `<p class="dict-def">${escapeHtml(def)}</p>` : ''}
-        ${plain ? `<div class="dict-plain">${escapeHtml(plain.replace(/^[\u{1F4A1}\u{1F31F}\u{2728}]\s*/u, ''))}</div>` : ''}
       </div>
+
+      ${plain ? `<section class="dict-plain-block">
+        <div class="dict-plain-label">${en ? 'Plain' : '通俗理解'}</div>
+        <div class="dict-plain">${escapeHtml(plain.replace(/^[\u{1F4A1}\u{1F31F}\u{2728}]\s*/u, ''))}</div>
+      </section>` : ''}
 
       ${chHTML ? `<div class="dict-card-jump">${chHTML}</div>` : ''}
 

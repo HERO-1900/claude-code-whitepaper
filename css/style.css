@@ -7635,24 +7635,31 @@ body.cc-lang-switching .cc-lang-btn {
   line-height: 1.6;
   margin: 0;
 }
-/* v14.4：用户拍板 Variant 3 — 无背景 italic + 💡 暖色前缀 + 左缩进
-   不再用黄色填充框（用户："太重，太抢戏"） */
+/* v15：用户拍板 Variant A2 — RELATED 风小标题 + 无背景；plain-block 拉出 body
+   贴卡片底部对齐，与正文距离自适应（body flex:1 撑开），与下面相关词条距离固定（无横线） */
+.dict-plain-block {
+  /* margin-top auto 让 plain-block 贴到剩余空间底部（body flex:1 之上） */
+  margin-top: auto;
+  padding-top: .9rem;
+}
+.dict-plain-label {
+  color: var(--text-muted);
+  font-weight: 600;
+  font-size: .72rem;
+  letter-spacing: .06em;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
 .dict-plain {
-  padding: .2rem 0 .2rem 1rem;
-  font-size: .85rem;
-  line-height: 1.55;
+  font-size: .84rem;
+  line-height: 1.6;
   color: var(--text-secondary);
-  font-style: italic;
+  padding: 0;
   background: transparent;
   border: none;
-  border-radius: 0;
-}
-.dict-plain::before {
-  content: "💡 ";
   font-style: normal;
-  color: var(--accent-gold, #c77d2e);
-  margin-right: 2px;
 }
+.dict-plain::before { content: none; }
 
 /* v14：卡片重排 — 收藏星 移到右上 header；删除所有横线分隔线；
    关联段三行布局；body 区 flex:1 撑开；卡片底部由 .dict-seealso 自然占据 */
@@ -7870,31 +7877,31 @@ body.cc-lang-switching .cc-lang-btn {
   background: rgba(199,125,46,.12);
 }
 
-/* 章节内 .dict-term —— 浅虚线下划线，hover 加深 + 浅黄底 */
+/* v15：章节内 .dict-term — 用户拍板 B4（° 上标 + 暖色文字，维基风）
+   不再虚线下划线（用户："太轻太淡"） */
 .dict-term {
-  border-bottom: 1px dashed color-mix(in srgb, var(--accent-cyan) 60%, transparent);
+  color: color-mix(in srgb, var(--accent-gold, #c77d2e) 85%, var(--text-primary));
   cursor: pointer;
-  border-radius: 2px;
   padding: 0 1px;
-  transition: background .12s, border-color .12s;
+  border-radius: 2px;
+  text-decoration: none;
+  border-bottom: none;
+  font-weight: 500;
+  transition: background .12s, color .12s;
+}
+.dict-term::after {
+  content: "°";
+  font-size: .65em;
+  vertical-align: super;
+  margin-left: 1px;
+  opacity: .75;
+  color: var(--accent-gold, #c77d2e);
 }
 .dict-term:hover {
-  background: rgba(255, 217, 61, .18);
-  border-bottom-color: var(--accent-cyan);
+  background: color-mix(in srgb, var(--accent-gold, #c77d2e) 10%, transparent);
 }
-:root[data-theme="warm"] .dict-term {
-  border-bottom-color: rgba(199, 125, 46, .55);
-}
-:root[data-theme="warm"] .dict-term:hover {
-  background: rgba(255, 217, 61, .22);
-  border-bottom-color: #c77d2e;
-}
-:root[data-theme="light"] .dict-term {
-  border-bottom-color: rgba(64, 130, 180, .55);
-}
-:root[data-theme="light"] .dict-term:hover {
-  background: rgba(255, 217, 61, .35);
-  border-bottom-color: #4082b4;
+.dict-term:hover::after {
+  opacity: 1;
 }
 
 /* Tooltip */
