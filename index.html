@@ -1160,6 +1160,10 @@
   <!-- ==================== NAVIGATION BAR ==================== -->
   <nav id="topnav">
     <div class="nav-left">
+      <!-- v10：☰ 章节目录入口重新放回顶栏左侧。CSS 控制 visibility（保留占位空间不漂移），仅 reader 视图可见 -->
+      <button id="mobile-toc-toggle" class="nav-btn mobile-only" title="章节目录" aria-label="打开章节目录" aria-expanded="false" aria-controls="mobile-nav-drawer" data-i18n-attr="title:nav.mobile_toc_title;aria-label:nav.mobile_toc_aria">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
+      </button>
       <button id="mobile-chapter-toc-btn" class="nav-btn mobile-only mobile-reader-only" title="章节目录" aria-label="打开章节目录" aria-expanded="false" aria-controls="mobile-toc-sheet" data-i18n-attr="title:nav.mobile_toc_title;aria-label:nav.mobile_toc_aria">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
       </button>
@@ -1184,10 +1188,11 @@
     </div>
     <div class="nav-center">
       <span id="breadcrumb" data-i18n="nav.breadcrumb">Claude Code 2.1.88 · 架构全景</span>
-      <!-- v7 移动端中间不显示标题，改放 4 视图 tab 切换（CSS 仅 mobile 显示）-->
+      <!-- v7 移动端中间不显示标题，改放 4 视图 tab 切换（CSS 仅 mobile 显示）
+           v10 顺序调整：阅读 / 全景 / 灵感 / 词典（阅读优先） -->
       <div id="mobile-view-tabs" class="mobile-view-tabs" role="tablist" aria-label="视图切换">
-        <button class="mvt-tab" data-view="landing" role="tab"><span data-i18n="nav.panorama">全景</span></button>
         <button class="mvt-tab" data-view="reader" role="tab"><span data-i18n="nav.reader">阅读</span></button>
+        <button class="mvt-tab" data-view="landing" role="tab"><span data-i18n="nav.panorama">全景</span></button>
         <button class="mvt-tab" data-view="inspiration" role="tab"><span data-i18n="nav.inspiration">灵感</span></button>
         <button class="mvt-tab" data-view="dictionary" role="tab"><span data-i18n="nav.dictionary">词典</span></button>
       </div>
@@ -1304,10 +1309,7 @@
   </div>
   <div id="mobile-toc-backdrop" class="mobile-toc-backdrop" aria-hidden="true"></div>
 
-  <!-- v9: 左下角 FAB —— reader 视图专属章节目录入口 -->
-  <button id="mobile-toc-fab" class="mobile-only" title="章节目录" aria-label="打开章节目录" aria-expanded="false" aria-controls="mobile-nav-drawer" data-i18n-attr="title:nav.mobile_toc_title;aria-label:nav.mobile_toc_aria">
-    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 016.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 014 19.5v-15A2.5 2.5 0 016.5 2z"/></svg>
-  </button>
+  <!-- v10: FAB 已移除（用户反馈不要悬浮形式），目录入口回归顶栏左侧 ☰ -->
 
   <!-- Keyboard shortcuts modal -->
   <div id="shortcuts-modal" class="shortcuts-modal hidden">

@@ -2903,11 +2903,13 @@ pre:hover .copy-btn,
   /* v7：移动端中央改放 4 视图 tab，breadcrumb 整体隐藏 */
   #topnav #breadcrumb { display: none !important; }
 
-  /* v9：4 视图顶栏 tab — 固定左上，加大间距，不再因 ☰ 漂移 */
+  /* v10：4 视图 tab 居中固定（左槽永远占 38px 给 ☰，nav-right 占 38px 给 ⚙
+     无论哪个视图 tab 都在同一位置，不再漂移）。顺序：阅读 / 全景 / 灵感 / 词典 */
   #mobile-view-tabs {
     display: flex !important;
+    flex: 1;                        /* 撑满 nav-center */
     align-items: center;
-    justify-content: flex-start;
+    justify-content: center;        /* 居中 */
     gap: 10px;
     height: 44px;
     min-width: 0;
@@ -2915,6 +2917,7 @@ pre:hover .copy-btn,
     border-radius: 12px;
   }
   #mobile-view-tabs .mvt-tab {
+    flex-shrink: 0;
     background: transparent;
     border: 0;
     min-height: 44px;
@@ -2930,7 +2933,8 @@ pre:hover .copy-btn,
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    transition: color .12s;
+    white-space: nowrap;
+    transition: color .12s, background .12s;
     -webkit-tap-highlight-color: transparent;
   }
   #mobile-view-tabs .mvt-tab.is-active {
@@ -3000,48 +3004,64 @@ pre:hover .copy-btn,
     border-color: rgba(251,191,36,.45) !important;
     color: #fbbf24 !important;
   }
-  /* nav-center 显示移动端站点标题 — 覆盖前面 .nav-center{display:none} 的旧规则 */
+  /* v10：nav-center 撑满中段，让 4 tab 真正居中。左槽 nav-left 永远占 38px 给 ☰ */
   .nav-center {
-    flex: 0 0 auto; min-width: 0;
+    flex: 1 1 auto;
+    min-width: 0;
     padding: 0 4px;
     display: flex !important;
-    flex-direction: column; justify-content: center;
-    align-items: flex-start;  /* v9: tab 左对齐固定 */
-    gap: 1px;
+    flex-direction: row;
+    justify-content: center;
+    align-items: center;
   }
-  /* v9: reader 视图左下角 FAB — 章节目录入口 */
-  #mobile-toc-fab {
-    display: none;
-    position: fixed;
-    bottom: 24px;
-    left: 16px;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-    background: var(--accent-gold, #c77d2e);
-    color: #fff;
-    border: none;
-    box-shadow: 0 4px 14px rgba(0,0,0,0.25);
+  .nav-left {
+    flex: 0 0 38px;            /* 永远占 38px，无论 ☰ 是否可见 */
+    min-width: 38px;
+    width: 38px;
+    justify-content: flex-start;
+  }
+  /* v10：☰ 按钮在 nav-left，仅 reader 视图可见；其他视图 visibility:hidden 占位但不显示
+     这样 4 tab 永远在同一位置不漂移 */
+  #topnav #mobile-toc-toggle {
+    width: 38px; height: 38px;
+    min-width: 38px; min-height: 38px;
+    padding: 0; gap: 0;
+    background: rgba(255,255,255,.55);
+    border: 1px solid rgba(120,90,60,.18);
+    border-radius: 10px;
+    display: inline-flex !important;
     align-items: center;
     justify-content: center;
-    z-index: 200;
-    cursor: pointer;
-    -webkit-tap-highlight-color: transparent;
+    color: var(--text-primary);
+    visibility: hidden;        /* 默认隐藏但占位 */
   }
-  body[data-active-view="reader"] #mobile-toc-fab {
-    display: flex !important;
+  body[data-active-view="reader"] #topnav #mobile-toc-toggle {
+    visibility: visible;
   }
-  [data-theme="dark"] #mobile-toc-fab {
-    background: #fbbf24;
-    color: #1c1917;
+  [data-theme="dark"] #topnav #mobile-toc-toggle {
+    background: rgba(255,255,255,.08);
+    border-color: rgba(255,255,255,.16);
+    color: #e0d8c5;
   }
-  #mobile-toc-fab:active {
-    transform: scale(0.95);
+  [data-theme="light"] #topnav #mobile-toc-toggle {
+    background: rgba(0,0,0,.04);
+    border-color: rgba(0,0,0,.10);
+    color: var(--text-primary);
   }
-  #mobile-toc-fab svg {
-    width: 22px;
-    height: 22px;
+  #topnav #mobile-toc-toggle:active,
+  #topnav #mobile-toc-toggle[aria-expanded="true"] {
+    background: rgba(199,125,46,.20);
+    border-color: rgba(199,125,46,.55);
+    color: #c77d2e;
   }
+  [data-theme="dark"] #topnav #mobile-toc-toggle:active,
+  [data-theme="dark"] #topnav #mobile-toc-toggle[aria-expanded="true"] {
+    background: rgba(251,191,36,.18);
+    border-color: rgba(251,191,36,.45);
+    color: #fbbf24;
+  }
+  /* FAB 整体废弃（v10：用户拒绝悬浮形式） */
+  #mobile-toc-fab { display: none !important; }
   /* 旧的 ::before / ::after 站点标题改为隐藏 — breadcrumb 接管标题位 + 下拉菜单触发器 */
   .nav-center::before,
   .nav-center::after { display: none !important; content: none !important; }
