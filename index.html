@@ -1281,10 +1281,11 @@
       <div class="mnd-nav-list" id="mnd-nav-list">
         <!-- JS clones #topnav main nav buttons here -->
       </div>
-      <!-- reader 视图：4 视图下方追加章节目录段（CSS 仅 reader 时显示） -->
+      <!-- reader 视图：4 视图下方追加章节目录段（CSS 仅 reader 时显示）
+           v6（2026-05-01）：移除中间冗余 "章节目录" label —— 章节列表本身已自明，
+           保留极淡分隔线即可。-->
       <div class="mnd-toc-section" id="mnd-toc-section">
         <div class="mnd-toc-divider"></div>
-        <div class="mnd-toc-title" data-i18n="reader.toc_title">章节目录</div>
         <div class="mnd-toc-body" id="mnd-toc-body">
           <!-- 打开抽屉 + 当前 reader 视图时：sidebar 内容临时迁入；关闭还原 -->
         </div>
@@ -1464,11 +1465,12 @@
         if (liveIndicator) liveIndicator.style.opacity = '1';
       }, 800);
 
+      // v6（2026-05-01）：用户反馈"消失太慢"，2000 → 900
       setTimer(function () {
         skipBtn.classList.add('v4h-hidden');
         finished = true;
         heroPlayed = true;
-      }, 2000);
+      }, 900);
     }
 
     // ---------- 编排 ----------
@@ -1512,6 +1514,14 @@
     }
 
     skipBtn.addEventListener('click', skipToFinal);
+
+    // v6（2026-05-01）用户反馈"消失太慢"：不管动画走到哪一步，2.5s 内必须自动隐藏
+    // 用户没点也别一直挂着；想看完动画的人继续看（hide 只是把按钮隐了，动画继续）
+    setTimeout(function () {
+      if (skipBtn && !skipBtn.classList.contains('v4h-hidden')) {
+        skipBtn.classList.add('v4h-hidden');
+      }
+    }, 2500);
 
     // Esc / Space / Enter 也可跳过
     document.addEventListener('keydown', function (e) {

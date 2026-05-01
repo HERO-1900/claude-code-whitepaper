@@ -2896,13 +2896,15 @@ pre:hover .copy-btn,
     padding: 0 12px;
     height: 52px;
     gap: 8px;
-    background: rgba(var(--cc-bg-primary-rgb), 0.72);
-    -webkit-backdrop-filter: blur(16px) saturate(160%);
-    backdrop-filter: blur(16px) saturate(160%);
+    /* v6（2026-05-01）用户反馈"切色系滑动后狂闪"。诊断：iOS Safari 的 backdrop-filter
+       + 主题切换 + 滚动会触发持续重栅化风暴。改用纯不透明背景 + GPU layer 强制提升
+       layer，避免重绘风暴。 */
+    background: var(--bg-primary);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
     border-bottom: 1px solid rgba(120, 90, 60, .10);
-  }
-  @supports not (backdrop-filter: blur(1px)) {
-    #topnav { background: var(--bg-primary); }
+    transform: translateZ(0);
+    will-change: transform;
   }
   /* welcome 期间维持透明 */
   #welcome.active ~ #topnav {
@@ -2942,8 +2944,15 @@ pre:hover .copy-btn,
   #topnav .cc-dict-highlight-toggle,
   #topnav .cc-theme-switcher,
   #topnav .cc-lang-switcher { display: none !important; }
-  /* 章节目录 📚 独立按钮也撤掉：章节目录回到主抽屉里 */
-  #topnav #mobile-chapter-toc-btn { display: none !important; }
+  /* 章节目录 📚 独立按钮也撤掉：章节目录回到主抽屉里
+     注意：必须用更高 specificity（双 ID + class）才能覆盖
+     `body[data-active-view="reader"] #topnav .mobile-reader-only { display: inline-flex !important; }` */
+  #topnav #mobile-chapter-toc-btn,
+  #topnav #mobile-chapter-toc-btn.mobile-reader-only,
+  body[data-active-view="reader"] #topnav #mobile-chapter-toc-btn,
+  body[data-active-view="reader"] #topnav #mobile-chapter-toc-btn.mobile-reader-only {
+    display: none !important;
+  }
   /* 旧 title-view-menu 已不需要 */
   #title-view-menu, #title-view-backdrop { display: none !important; }
   /* 手机端无键盘 → 整个 shortcuts 系统隐藏 */
@@ -5429,24 +5438,24 @@ pre:hover .copy-btn,
   background: #f5f2ed;
 }
 
-/* -- Skip button -- */
+/* -- Skip button --
+   v6（2026-05-01）：风格调和到与齿轮一致 — rounded pill + warm tint，无 mono */
 .v4h-skip-btn {
   position: absolute;
   top: 24px;
   right: 24px;
   z-index: 50;
-  padding: 8px 14px;
-  font-family: var(--font-mono, SFMono-Regular, Menlo, Consolas, monospace);
+  padding: 7px 13px;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", system-ui, sans-serif;
   font-size: 12px;
-  font-weight: 400;
-  color: rgba(255, 255, 255, 0.55);
-  background: rgba(255, 255, 255, 0.04);
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.62);
+  background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.14);
-  border-radius: 4px;
+  border-radius: 10px;
   cursor: pointer;
-  letter-spacing: 0.04em;
-  backdrop-filter: blur(4px);
-  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, opacity 0.4s ease;
+  letter-spacing: .01em;
+  transition: color 0.2s ease, background 0.2s ease, border-color 0.2s ease, opacity 0.5s ease;
 }
 /* Global skip 按钮挂在 #welcome 层，z-index 更高，对浅/暖主题也要有对比度
    位置：bottom-right —— 避开顶栏 nav-right 的 lang/theme 切换器（2026-04-29 修） */
@@ -5460,15 +5469,17 @@ pre:hover .copy-btn,
 }
 [data-theme="light"] .v4h-skip-btn--global,
 [data-theme="warm"] .v4h-skip-btn--global {
-  color: rgba(26, 32, 53, 0.7);
-  background: rgba(255, 255, 255, 0.7);
-  border-color: rgba(26, 32, 53, 0.2);
+  color: rgba(120, 90, 60, 0.85);
+  background: rgba(255, 255, 255, 0.55);
+  border-color: rgba(120, 90, 60, 0.18);
 }
 [data-theme="light"] .v4h-skip-btn--global:hover,
-[data-theme="warm"] .v4h-skip-btn--global:hover {
-  color: rgba(26, 32, 53, 0.95);
-  background: rgba(255, 255, 255, 0.9);
-  border-color: rgba(26, 32, 53, 0.4);
+[data-theme="warm"] .v4h-skip-btn--global:hover,
+[data-theme="light"] .v4h-skip-btn--global:active,
+[data-theme="warm"] .v4h-skip-btn--global:active {
+  color: rgba(120, 90, 60, 1);
+  background: rgba(199, 125, 46, 0.16);
+  border-color: rgba(199, 125, 46, 0.45);
 }
 .v4h-skip-btn:hover {
   color: rgba(255, 255, 255, 0.9);
@@ -8582,21 +8593,28 @@ body.cc-lang-switching .cc-lang-btn {
   /* ----- v5：抽屉内章节目录段（仅 reader 视图显示） ----- */
   .mnd-toc-section { display: none; }
   body[data-active-view="reader"] .mnd-toc-section { display: block; }
+  /* v6 极淡分隔，章节列表自明，不再加 "章节目录" label */
   .mnd-toc-divider {
     height: 1px;
     background: var(--border);
-    margin: 14px 12px 14px;
-  }
-  .mnd-toc-title {
-    font-size: 11px;
-    color: var(--text-muted);
-    text-transform: uppercase;
-    letter-spacing: .08em;
-    font-weight: 700;
-    margin: 0 16px 10px;
+    margin: 6px 14px 8px;
+    opacity: .55;
   }
   .mnd-toc-body {
-    padding: 0 4px 12px;
+    padding: 0 2px 12px;
+  }
+  /* v6 sidebar 内容迁入抽屉时：隐藏 sidebar 自带的 "目录" h2（避免与上方导航
+     形成视觉重复 — 用户反馈 "中间是目录分级，下面又是目录"）。搜索框保留。 */
+  .mnd-toc-body .sidebar-header h2 { display: none !important; }
+  .mnd-toc-body .sidebar-header { margin: 4px 8px 8px; }
+  .mnd-toc-body #toc-search {
+    width: calc(100% - 4px);
+    padding: 8px 10px;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--bg-card, #fff);
+    color: var(--text-primary);
+    font-size: 13px;
   }
   /* sidebar 内容迁入抽屉时的 reader 章节列表样式调整 — 紧凑 */
   .mnd-toc-body .toc-chapter,
